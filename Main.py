@@ -17,6 +17,11 @@ def on_ready():
 def chirp():
     yield from bot.say('CHIRP CHIRP')
 
+@bot.command()
+@asyncio.coroutine
+def exam():
+    yield from bot.say('https://www.mcgill.ca/students/exams/files/students.exams/december_2016_final_exam_schedule_with_room_locationsd8.pdf')
+
 @bot.command(pass_context=True)
 @asyncio.coroutine
 def course(ctx, *, query: str):
@@ -45,7 +50,7 @@ def course(ctx, *, query: str):
         (a, b) = i.get_text().split(':', 1)
         tidbits.append((a.strip(), b.strip()))
 
-    em = discord.Embed(title=title, description=link, colour=0xFF0000)
+    em = discord.Embed(title=title, description=link, colour=0xDA291C)
     em.add_field(name="Overview", value=overview, inline=False)
     em.add_field(name="Terms", value=terms, inline=False)
     em.add_field(name="Instructor(s)", value=instructors, inline=False)
