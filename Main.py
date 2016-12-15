@@ -58,4 +58,26 @@ def course(ctx, *, query: str):
         em.add_field(name=a, value=b, inline=False)
     yield from bot.send_message(ctx.message.channel, embed=em)
 
+@bot.command(pass_context=True)
+@asyncio.coroutine
+def urban(ctx, *, query: str):
+    link = "http://www.urbandictionary.com/define.php?term=%s" % query.replace(' ', '+')
+    try:
+        r = urllib.request.urlopen(link)
+    except urllib.error.HTTPError:
+        print("Error")
+        yield from bot.say("SOMETHING'S WRONG. CHIRP.")
+        return
+    soup = BeautifulSoup(r, 'html.parser')
+    word = soup.find('div', {'class': 'def-header'}).a
+    if not word:
+        yield from bot.say("No definition found for **%s**." % query)
+        return
+    word = word.get_text()
+    definition = soup.find('div', {'class': 'meaning'}).get_text()
+    examples = soup.find('div', {'class': 'example'}).get_text().strip()
+    em = discord.Embed(title=word, description=definition, colour=0x1D2439).set_footer(text="Fetched from the top definition on UrbanDictionary.", icon_url='http://d2gatte9o95jao.cloudfront.net/assets/apple-touch-icon-2f29e978facd8324960a335075aa9aa3.png')
+    # em.add_field(name="Examples", value=examples)
+    yield from bot.send_message(ctx.message.channel, embed=em)
+
 bot.run('TOKEN')
