@@ -4,6 +4,7 @@ import asyncio
 import urllib.request
 import urllib.error
 from bs4 import BeautifulSoup
+from sympy import preview
 
 bot = commands.Bot(command_prefix='?')
 
@@ -80,4 +81,23 @@ def urban(ctx, *, query: str):
     # em.add_field(name="Examples", value=examples)
     yield from bot.send_message(ctx.message.channel, embed=em)
 
-bot.run('TOKEN')
+@bot.command(pass_context=True)
+@asyncio.coroutine
+def latex(ctx, *, query: str):
+    if "$" in ctx.message.content:
+        tex=""
+        sp=ctx.message.content.split('$')
+        if(len(sp)<3):
+             yield from bot.send_message(ctx.message.channel, 'PLEASE USE \'$\' AROUND YOUR LATEX EQUATIONS. CHIRP.')
+             return
+        #yield from bot.send_message(ctx.message.channel, 'LATEX FOUND. CHIRP.')
+        up = int(len(sp)/2)
+        for i in range(up):
+            tex+="\["+sp[2*i+1]+"\]"
+        fn ='tmp.png'
+        preview(tex, viewer='file', filename=fn)
+        yield from bot.send_file(ctx.message.channel, fn)
+    else:
+         yield from bot.send_message(ctx.message.channel, 'PLEASE USE \'$\' AROUND YOUR LATEX EQUATIONS. CHIRP.')
+
+bot.run('token')
