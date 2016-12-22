@@ -5,7 +5,7 @@ Discord bot for McGill
 * [discord.py](https://github.com/Rapptz/discord.py)
 * [beautifulsoup4](https://www.crummy.com/software/BeautifulSoup/)
 
-Both dependencies are available via pip.
+Both dependencies are available via pip; see their respective links for detailed installation instructions.
 
 ## Installation
 In order to run bots on Discord, you need to [create a bot account](https://discordapp.com/developers/applications/me).
