@@ -1,9 +1,11 @@
 import discord
 from discord.ext import commands
 import asyncio
+import requests
 import urllib.request
 import urllib.error
 from bs4 import BeautifulSoup
+from sympy import preview
 
 bot = commands.Bot(command_prefix='?')
 
@@ -80,4 +82,56 @@ def urban(ctx, *, query: str):
     # em.add_field(name="Examples", value=examples)
     yield from bot.send_message(ctx.message.channel, embed=em)
 
-bot.run('TOKEN')
+#prints latex equations
+@bot.command(pass_context=True)
+@asyncio.coroutine
+def tex(ctx, *, query: str):
+    if "$" in ctx.message.content:
+        tex=""
+        sp=ctx.message.content.split('$')
+        if(len(sp)<3):
+             yield from bot.send_message(ctx.message.channel, 'PLEASE USE \'$\' AROUND YOUR LATEX EQUATIONS. CHIRP.')
+             return
+        #yield from bot.send_message(ctx.message.channel, 'LATEX FOUND. CHIRP.')
+        up = int(len(sp)/2)
+        for i in range(up):
+            tex+="\["+sp[2*i+1]+"\]"
+        fn ='tmp.png'
+        preview(tex, viewer='file', filename=fn)
+        yield from bot.send_file(ctx.message.channel, fn)
+    else:
+        yield from bot.send_message(ctx.message.channel, 'PLEASE USE \'$\' AROUND YOUR LATEX EQUATIONS. CHIRP.')
+
+#searches for keyword in mcgill courses and prints results
+@bot.command(pass_context=True)
+@asyncio.coroutine
+def search(ctx, *, query: str):
+    keyword=query.replace (" ", "+")
+    pagenum=0
+    courses=[]
+    while(True):
+        url = "http://www.mcgill.ca/study/2016-2017/courses/search\
+        ?search_api_views_fulltext=%s&sort_by=field_subject_code&page=%d" % (keyword, pagenum)
+        r = requests.get(url)
+        soup = BeautifulSoup(r.content , "html.parser")
+        found = soup.find_all("div", {"class": "views-row"})
+        if(len(found)<1):
+            break
+        else:
+            courses = courses+found
+            pagenum+=1
+    if(len(courses)<1):
+        print("Error")
+        yield from bot.say("No course found for: %s." % query)
+        return
+                
+    em = discord.Embed(title="Courses Found", colour=0xDA291C)
+    res=''
+    for course in courses:
+        #split results into titles + information
+        title = course.find_all("h4")[0].get_text().split(" ")
+        em.add_field(name=' '.join(title[:2]), value=' '.join(title[2:]))
+
+    yield from bot.send_message(ctx.message.channel, embed=em)
+
+bot.run('token')
