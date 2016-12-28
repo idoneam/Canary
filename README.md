@@ -5,7 +5,8 @@ Discord bot for McGill
 * [discord.py](https://github.com/Rapptz/discord.py)
 * [beautifulsoup4](https://www.crummy.com/software/BeautifulSoup/)
 * [sympy](https://github.com/sympy/sympy)
-* [dvipng](https://sourceforge.net/projects/dvipng/): (bundled with miktex on windows)
+* [requests](https://pypi.python.org/pypi/requests/)
+* [dvipng](https://sourceforge.net/projects/dvipng/) (Bundled with [MiKTeX](https://miktex.org/) on Windows)
 
 Dependencies are available via pip except for dvipng; see their respective links for detailed installation instructions.
 
