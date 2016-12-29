@@ -126,11 +126,11 @@ def search(ctx, *, query: str):
         return
                 
     em = discord.Embed(title="Courses Found", colour=0xDA291C)
-    res=''
     for course in courses:
         #split results into titles + information
         title = course.find_all("h4")[0].get_text().split(" ")
-        em.add_field(name=' '.join(title[:2]), value=' '.join(title[2:]))
+        if(len(title)>2):
+            em.add_field(name=' '.join(title[:2]), value=' '.join(title[2:]))
 
     yield from bot.send_message(ctx.message.channel, embed=em)
 
