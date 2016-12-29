@@ -17,16 +17,17 @@ def on_ready():
 @bot.command()
 @asyncio.coroutine
 def chirp():
+    """:^)"""
     yield from bot.say('CHIRP CHIRP')
-
-@bot.command()
-@asyncio.coroutine
-def exam():
-    yield from bot.say('https://www.mcgill.ca/students/exams/files/students.exams/december_2016_final_exam_schedule_with_room_locationsd8.pdf')
 
 @bot.command(pass_context=True)
 @asyncio.coroutine
 def course(ctx, *, query: str):
+    """Prints a summary of the queried course, taken from the course calendar.
+    For now, you must include a space between the course code and number.
+    ie. '?course comp 206' works, but '?course comp206' does not.
+
+    Note: Bullet points without colons (':') are not parsed because I have yet to see one that actually has useful information."""
     link = "http://www.mcgill.ca/study/2016-2017/courses/%s" % query.replace(' ', '-')
     try:
         r = urllib.request.urlopen(link)
@@ -63,6 +64,7 @@ def course(ctx, *, query: str):
 @bot.command(pass_context=True)
 @asyncio.coroutine
 def urban(ctx, *, query: str):
+    """Fetches the top definition from Urban Dictionary."""
     link = "http://www.urbandictionary.com/define.php?term=%s" % query.replace(' ', '+')
     try:
         r = urllib.request.urlopen(link)
@@ -82,63 +84,63 @@ def urban(ctx, *, query: str):
     # em.add_field(name="Examples", value=examples)
     yield from bot.send_message(ctx.message.channel, embed=em)
 
-#prints latex equations
 @bot.command(pass_context=True)
 @asyncio.coroutine
 def tex(ctx, *, query: str):
+    """Parses and prints LaTeX equations."""
     if "$" in ctx.message.content:
-        tex=""
-        sp=ctx.message.content.split('$')
-        if(len(sp)<3):
-             yield from bot.send_message(ctx.message.channel, 'PLEASE USE \'$\' AROUND YOUR LATEX EQUATIONS. CHIRP.')
-             return
-        #yield from bot.send_message(ctx.message.channel, 'LATEX FOUND. CHIRP.')
-        up = int(len(sp)/2)
+        tex = ""
+        sp = ctx.message.content.split('$')
+        if(len(sp) < 3):
+            yield from bot.send_message(ctx.message.channel, 'PLEASE USE \'$\' AROUND YOUR LATEX EQUATIONS. CHIRP.')
+            return
+        # yield from bot.send_message(ctx.message.channel, 'LATEX FOUND. CHIRP.')
+        up = int(len(sp) / 2)
         for i in range(up):
-            tex+="\["+sp[2*i+1]+"\]"
-        fn ='tmp.png'
+            tex += "\["+sp[2*i+1]+"\]"
+        fn = 'tmp.png'
         preview(tex, viewer='file', filename=fn)
         yield from bot.send_file(ctx.message.channel, fn)
     else:
         yield from bot.send_message(ctx.message.channel, 'PLEASE USE \'$\' AROUND YOUR LATEX EQUATIONS. CHIRP.')
 
-#searches for keyword in mcgill courses and prints results
 @bot.command(pass_context=True)
 @asyncio.coroutine
 def search(ctx, *, query: str):
-    keyword=query.replace (" ", "+")
+    """Shows results for the queried keyword(s) in McGill courses"""
+    keyword = query.replace(" ", "+")
     pagelimit = 5
-    pagenum=0
-    courses=[]
-    while(True and pagenum < pagelimit ):
+    pagenum = 0
+    courses = []
+    while(True and pagenum < pagelimit):
         url = "http://www.mcgill.ca/study/2016-2017/courses/search\
         ?search_api_views_fulltext=%s&sort_by=field_subject_code&page=%d" % (keyword, pagenum)
         r = requests.get(url)
-        soup = BeautifulSoup(r.content , "html.parser")
+        soup = BeautifulSoup(r.content, "html.parser")
         found = soup.find_all("div", {"class": "views-row"})
-        if(len(found)<1):
+        if(len(found) < 1):
             break
         else:
-            courses = courses+found
-            pagenum+=1
-    if(len(courses)<1):
+            courses = courses + found
+            pagenum += 1
+    if(len(courses) < 1):
         print("No course found error")
         yield from bot.say("No course found for: %s." % query)
         return
-                
+
     em = discord.Embed(title="Courses Found 1 / %d" % (len(courses)/24+1), colour=0xDA291C)
     c = 1
-    #create a new message every 24 results 
+    # create a new message every 24 results
     for course in courses:
-        #split results into titles + information
+        # split results into titles + information
         title = course.find_all("h4")[0].get_text().split(" ")
-        if(len(title)>2):
+        if(len(title) > 2):
             em.add_field(name=' '.join(title[:2]), value=' '.join(title[2:]))
-            c+=1
-            if(c%24==0):
+            c += 1
+            if(c%24 == 0):
                 yield from bot.send_message(ctx.message.channel, embed=em)
-                em = discord.Embed(title="Courses Found %d / %d" % (c/24+1,len(courses)/24+1), colour=0xDA291C) 
+                em = discord.Embed(title="Courses Found %d / %d" % (c/24+1,len(courses)/24+1), colour=0xDA291C)
     yield from bot.send_message(ctx.message.channel, embed=em)
     return
-    
+
 bot.run('token')
