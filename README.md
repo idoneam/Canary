@@ -13,4 +13,8 @@ Dependencies are available via pip except for dvipng; see their respective links
 ## Installation
 In order to run bots on Discord, you need to [create a bot account](https://github.com/reactiflux/discord-irc/wiki/Creating-a-discord-bot-&-getting-a-token).
 
-In your terminal, export your Discord token as an environment variable: `export DISCORD_TOKEN='your-token-here'. You will have to do this each time you restart your shell.
+In your terminal, export your Discord token as an environment variable.
+```
+$ export DISCORD_TOKEN='your-token-here'
+```
+You will have to do this each time you restart your shell.
