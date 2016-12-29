@@ -126,7 +126,7 @@ def search(ctx, *, query: str):
         yield from bot.say("No course found for: %s." % query)
         return
                 
-    em = discord.Embed(title="Courses Found 1 / %d" % len(courses)/24, colour=0xDA291C)
+    em = discord.Embed(title="Courses Found 1 / %d" % (len(courses)/24), colour=0xDA291C)
     c = 1
     #create a new message every 24 results 
     for course in courses:
