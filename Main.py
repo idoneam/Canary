@@ -107,9 +107,10 @@ def tex(ctx, *, query: str):
 @asyncio.coroutine
 def search(ctx, *, query: str):
     keyword=query.replace (" ", "+")
+    pagelimit = 5
     pagenum=0
     courses=[]
-    while(True):
+    while(True and pagenum < pagelimit ):
         url = "http://www.mcgill.ca/study/2016-2017/courses/search\
         ?search_api_views_fulltext=%s&sort_by=field_subject_code&page=%d" % (keyword, pagenum)
         r = requests.get(url)
@@ -121,17 +122,23 @@ def search(ctx, *, query: str):
             courses = courses+found
             pagenum+=1
     if(len(courses)<1):
-        print("Error")
+        print("No course found error")
         yield from bot.say("No course found for: %s." % query)
         return
                 
-    em = discord.Embed(title="Courses Found", colour=0xDA291C)
+    em = discord.Embed(title="Courses Found 1 / %d" % (len(courses)/24+1), colour=0xDA291C)
+    c = 1
+    #create a new message every 24 results 
     for course in courses:
         #split results into titles + information
         title = course.find_all("h4")[0].get_text().split(" ")
         if(len(title)>2):
             em.add_field(name=' '.join(title[:2]), value=' '.join(title[2:]))
-
+            c+=1
+            if(c%24==0):
+                yield from bot.send_message(ctx.message.channel, embed=em)
+                em = discord.Embed(title="Courses Found %d / %d" % (c/24+1,len(courses)/24+1), colour=0xDA291C) 
     yield from bot.send_message(ctx.message.channel, embed=em)
-
+    return
+    
 bot.run('token')
