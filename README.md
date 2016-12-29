@@ -11,6 +11,6 @@ Discord bot for McGill
 Dependencies are available via pip except for dvipng; see their respective links for detailed installation instructions.
 
 ## Installation
-In order to run bots on Discord, you need to [create a bot account](https://discordapp.com/developers/applications/me).
-Replace `bot.run('TOKEN')` with the generated token for your bot account before running.
+In order to run bots on Discord, you need to [create a bot account](https://github.com/reactiflux/discord-irc/wiki/Creating-a-discord-bot-&-getting-a-token).
 
+In your terminal, export your Discord token as an environment variable: `export DISCORD_TOKEN='your-token-here'. You will have to do this each time you restart your shell.
