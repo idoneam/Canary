@@ -4,6 +4,7 @@ import asyncio
 import requests
 import urllib.request
 import urllib.error
+import os
 from bs4 import BeautifulSoup
 from sympy import preview
 
@@ -143,4 +144,4 @@ def search(ctx, *, query: str):
     yield from bot.send_message(ctx.message.channel, embed=em)
     return
 
-bot.run('token')
+bot.run(os.environ.get("DISCORD_TOKEN"))
