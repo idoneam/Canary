@@ -26,8 +26,10 @@ def chirp():
 def weather():
     """Retrieves current conditions from http://weather.gc.ca/city/pages/qc-147_metric_e.html"""
     # Replace link with any city weather link from http://weather.gc.ca/
-    url = urllib2.urlopen("http://weather.gc.ca/city/pages/qc-147_metric_e.html")
-    soup = BeautifulSoup(url, "html.parser")
+    url = "http://weather.gc.ca/city/pages/qc-147_metric_e.html"
+    r = requests.get(url)
+    soup = BeautifulSoup(r.content, "html.parser")
+    r.close()
     # Get date
     observed_label = soup.find("dt",string="Date: ")
     observed = observed_label.find_next_sibling().get_text().rstrip()
@@ -54,7 +56,7 @@ def weather():
     except:
         pass
 
-    weather_now = u"Conditions observed at: *%s*.\nTemperature: *%s*\nCondition: *%s*\nPressure: *%s*\nTendency: *%s*\nWind speed: *%s*\nWind chill: *%s*" % (observed,temperature,condition,pressure,tendency,wind,windchill)
+    weather_now = u"Conditions observed at: **%s**.\nTemperature: **%s**\nCondition: **%s**\nPressure: **%s**\nTendency: **%s**\nWind speed: **%s**\nWind chill: **%s**" % (observed,temperature,condition,pressure,tendency,wind,windchill)
 
     yield from bot.say(weather_now)
 
