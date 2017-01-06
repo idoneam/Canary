@@ -7,6 +7,7 @@ import urllib.error
 import os
 from bs4 import BeautifulSoup
 from sympy import preview
+import re
 
 bot = commands.Bot(command_prefix='?')
 
@@ -182,5 +183,37 @@ def search(ctx, *, query: str):
                 em = discord.Embed(title="Courses Found %d / %d" % (c/24+1,len(courses)/24+1), colour=0xDA291C)
     yield from bot.send_message(ctx.message.channel, embed=em)
     return
+
+@bot.command(pass_context=True)
+@asyncio.coroutine
+def xe(ctx, *, query: str):
+    """Currency conversion.
+    Uses real-time exchange rates taken from http://www.xe.com.
+    Usage: ?xe <AMOUNT> <CURRENCY> to <CURRENCY>
+    ie. ?xe 60.00 CAD to EUR
+
+    The currencies supported for conversion (and their abbreviations) can be found at http://www.xe.com/currency/.
+    """
+    if '.' in query.split(' ')[0]:  # Distinguish regex between floats and ints
+        re1 = '([+-]?\\d*\\.\\d+)(?![-+0-9\\.])'
+    else:
+        re1 = '(\\d+)'
+    re2 = '((?:[a-z][a-z]+))' # Currency FROM
+    re3 = '(to)' 
+    re4 = '((?:[a-z][a-z]+))' # Currency TO
+    ws = '(\\s+)' # Whitespace
+    rg = re.compile(re1+ws+re2+ws+re3+ws+re4,re.IGNORECASE|re.DOTALL)
+    m = rg.search(query)
+    if m:
+        r = urllib.request.urlopen('http://www.xe.com/currencyconverter/convert/?Amount=%s&From=%s&To=%s' % (m.group(1),m.group(3),m.group(7)))
+        soup = BeautifulSoup(r, "html.parser")
+        r.close()
+        convertedCOST = soup.find('span', {'class':'uccResultAmount'}).get_text()
+        #FIXME: there has to be a more elegant way to print this
+        yield from bot.say("%s %s = %s %s" % (m.group(1),m.group(3).upper(),convertedCOST,m.group(7).upper()))
+    else:
+        yield from bot.say(""":warning: Wrong format.
+        The correct format is `?xe <AMOUNT> <CURRENCY> to <CURRENCY>`.
+        ie. `?xe 60.00 CAD to EUR`""")
 
 bot.run(os.environ.get("DISCORD_TOKEN"))
