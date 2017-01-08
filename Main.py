@@ -8,8 +8,13 @@ import os
 from bs4 import BeautifulSoup
 from sympy import preview
 import re
+import cleverbot
+import wolframalpha
 
 bot = commands.Bot(command_prefix='?')
+
+cleverbot_client = cleverbot.Cleverbot()
+wa_client = wolframalpha.Client('APP_ID')
 
 @bot.event
 @asyncio.coroutine
@@ -217,3 +222,20 @@ def xe(ctx, *, query: str):
         ie. `?xe 60.00 CAD to EUR`""")
 
 bot.run(os.environ.get("DISCORD_TOKEN"))
+@bot.command(pass_context=True)
+@asyncio.coroutine
+def wa(ctx, *, query: str):
+    """Searches WolframAlpha"""
+    res = wa_client.query(query)
+    yield from bot.say(next(res.results).text)
+
+@bot.event
+@asyncio.coroutine
+def on_message(message):
+    if message.author == bot.user:
+        return
+    if bot.user in message.mentions:
+        # Cleverbot function for bot mentions
+        yield from bot.send_message(message.channel, cleverbot_client.ask(message.content))
+    yield from bot.process_commands(message)
+
