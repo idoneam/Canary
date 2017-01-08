@@ -221,7 +221,6 @@ def xe(ctx, *, query: str):
         The correct format is `?xe <AMOUNT> <CURRENCY> to <CURRENCY>`.
         ie. `?xe 60.00 CAD to EUR`""")
 
-bot.run(os.environ.get("DISCORD_TOKEN"))
 @bot.command(pass_context=True)
 @asyncio.coroutine
 def wa(ctx, *, query: str):
@@ -239,3 +238,4 @@ def on_message(message):
         yield from bot.send_message(message.channel, cleverbot_client.ask(message.content))
     yield from bot.process_commands(message)
 
+bot.run(os.environ.get("DISCORD_TOKEN"))
