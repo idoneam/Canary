@@ -1,13 +1,17 @@
+#!/usr/bin/env python3
+
+# discord.py requirements
 import discord
 from discord.ext import commands
 import asyncio
+
+# URL access and parsing
 import requests
-import urllib.request
-import urllib.error
-import os
 from bs4 import BeautifulSoup
+
+# Other utilities
 from sympy import preview
-import re
+import re, os
 
 bot = commands.Bot(command_prefix='?')
 
@@ -25,7 +29,8 @@ def chirp():
 @bot.command()
 @asyncio.coroutine
 def weather():
-    """Retrieves current conditions from http://weather.gc.ca/city/pages/qc-147_metric_e.html"""
+    """Retrieves current weather conditions.
+    Data taken from http://weather.gc.ca/city/pages/qc-147_metric_e.html"""
     # Replace link with any city weather link from http://weather.gc.ca/
     url = "http://weather.gc.ca/city/pages/qc-147_metric_e.html"
     r = requests.get(url)
@@ -69,18 +74,16 @@ def course(ctx, *, query: str):
     ie. '?course comp 206' works, but '?course comp206' does not.
 
     Note: Bullet points without colons (':') are not parsed because I have yet to see one that actually has useful information."""
-    link = "http://www.mcgill.ca/study/2016-2017/courses/%s" % query.replace(' ', '-')
-    try:
-        r = urllib.request.urlopen(link)
-    except urllib.error.HTTPError:
-        print("Error")
-        yield from bot.say("No course found for: %s." % query)
-        return
-    soup = BeautifulSoup(r, "html.parser")
+    url = "http://www.mcgill.ca/study/2016-2017/courses/%s" % query.replace(' ', '-')
+    r = requests.get(url)
+    soup = BeautifulSoup(r.content, "html.parser")
     r.close()
 
     # XXX: brute-force parsing at the moment
     title = soup.find_all("h1", {"id": "page-title"})[0].get_text().strip()
+    if title == 'Page not found':
+        yield from bot.send_message(ctx.message.channel, "No course found for %s." % query)
+        return
     content = soup.find_all("div", {"class": "content"})[3]
     overview = content.p.get_text().strip()
     terms = soup.find_all("p", {"class": "catalog-terms"})[0].get_text().split(':')[1].strip()
@@ -94,7 +97,7 @@ def course(ctx, *, query: str):
         (a, b) = i.get_text().split(':', 1)
         tidbits.append((a.strip(), b.strip()))
 
-    em = discord.Embed(title=title, description=link, colour=0xDA291C)
+    em = discord.Embed(title=title, description=url, colour=0xDA291C)
     em.add_field(name="Overview", value=overview, inline=False)
     em.add_field(name="Terms", value=terms, inline=False)
     em.add_field(name="Instructor(s)", value=instructors, inline=False)
@@ -106,14 +109,10 @@ def course(ctx, *, query: str):
 @asyncio.coroutine
 def urban(ctx, *, query: str):
     """Fetches the top definition from Urban Dictionary."""
-    link = "http://www.urbandictionary.com/define.php?term=%s" % query.replace(' ', '+')
-    try:
-        r = urllib.request.urlopen(link)
-    except urllib.error.HTTPError:
-        print("Error")
-        yield from bot.say("SOMETHING'S WRONG. CHIRP.")
-        return
-    soup = BeautifulSoup(r, 'html.parser')
+    url = "http://www.urbandictionary.com/define.php?term=%s" % query.replace(' ', '+')
+    r = requests.get(url)
+    soup = BeautifulSoup(r.content, 'html.parser')
+    r.close()
     word = soup.find('div', {'class': 'def-header'}).a
     if not word:
         yield from bot.say("No definition found for **%s**." % query)
@@ -205,8 +204,9 @@ def xe(ctx, *, query: str):
     rg = re.compile(re1+ws+re2+ws+re3+ws+re4,re.IGNORECASE|re.DOTALL)
     m = rg.search(query)
     if m:
-        r = urllib.request.urlopen('http://www.xe.com/currencyconverter/convert/?Amount=%s&From=%s&To=%s' % (m.group(1),m.group(3),m.group(7)))
-        soup = BeautifulSoup(r, "html.parser")
+        url = 'http://www.xe.com/currencyconverter/convert/?Amount=%s&From=%s&To=%s' % (m.group(1),m.group(3),m.group(7))
+        r = requests.get(url)
+        soup = BeautifulSoup(r.content, "html.parser")
         r.close()
         convertedCOST = soup.find('span', {'class':'uccResultAmount'}).get_text()
         #FIXME: there has to be a more elegant way to print this
