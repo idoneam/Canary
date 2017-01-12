@@ -11,7 +11,7 @@ from bs4 import BeautifulSoup
 
 # Other utilities
 from sympy import preview
-import re, os
+import re, os, sys
 import cleverbot
 import wolframalpha
 
@@ -146,6 +146,7 @@ def tex(ctx, *, query: str):
         fn = 'tmp.png'
         preview(tex, viewer='file', filename=fn)
         yield from bot.send_file(ctx.message.channel, fn)
+        fn.close()
     else:
         yield from bot.send_message(ctx.message.channel, 'PLEASE USE \'$\' AROUND YOUR LATEX EQUATIONS. CHIRP.')
 
@@ -203,7 +204,7 @@ def xe(ctx, *, query: str):
     else:
         re1 = '(\\d+)'
     re2 = '((?:[a-z][a-z]+))' # Currency FROM
-    re3 = '(to)' 
+    re3 = '(to)'
     re4 = '((?:[a-z][a-z]+))' # Currency TO
     ws = '(\\s+)' # Whitespace
     rg = re.compile(re1+ws+re2+ws+re3+ws+re4,re.IGNORECASE|re.DOTALL)
@@ -227,6 +228,13 @@ def wa(ctx, *, query: str):
     """Searches WolframAlpha"""
     res = wa_client.query(query)
     yield from bot.say(next(res.results).text)
+
+@bot.command(pass_context=True)
+@asyncio.coroutine
+def restart():
+    yield from bot.say('https://streamable.com/dli1')
+    python = sys.executable
+    os.execl(python, python, *sys.argv)
 
 @bot.event
 @asyncio.coroutine
