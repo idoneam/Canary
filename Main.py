@@ -13,12 +13,10 @@ from bs4 import BeautifulSoup
 from sympy import preview
 import re, os, sys
 import cleverbot
-import wolframalpha
 
 bot = commands.Bot(command_prefix='?')
 
 cleverbot_client = cleverbot.Cleverbot()
-wa_client = wolframalpha.Client('APP_ID')
 
 @bot.event
 @asyncio.coroutine
@@ -31,9 +29,9 @@ def chirp():
     """:^)"""
     yield from bot.say('CHIRP CHIRP')
 
-@bot.command()
+@bot.command(pass_context=True)
 @asyncio.coroutine
-def weather():
+def weather(ctx):
     """Retrieves current weather conditions.
     Data taken from http://weather.gc.ca/city/pages/qc-147_metric_e.html"""
     # Replace link with any city weather link from http://weather.gc.ca/
@@ -67,19 +65,30 @@ def weather():
     except:
         pass
 
-    weather_now = u"Conditions observed at: **%s**.\nTemperature: **%s**\nCondition: **%s**\nPressure: **%s**\nTendency: **%s**\nWind speed: **%s**\nWind chill: **%s**" % (observed,temperature,condition,pressure,tendency,wind,windchill)
-
-    yield from bot.say(weather_now)
+    # weather_now = u"Conditions observed at: **%s**.\nTemperature: **%s**\nCondition: **%s**\nPressure: **%s**\nTendency: **%s**\nWind speed: **%s**\nWind chill: **%s**" % (observed,temperature,condition,pressure,tendency,wind,windchill)
+    weather_now = discord.Embed(title='Current Weather', description='Conditions observed at %s' % observed, colour=0x7EC0EE)
+    weather_now.add_field(name="Temperature", value=temperature, inline=True)
+    weather_now.add_field(name="Condition", value=condition, inline=True)
+    weather_now.add_field(name="Pressure", value=pressure, inline=True)
+    weather_now.add_field(name="Tendency", value=tendency, inline=True)
+    weather_now.add_field(name="Wind Speed", value=wind, inline=True)
+    weather_now.add_field(name="Wind Chill", value=windchill, inline=True)
+    yield from bot.send_message(ctx.message.channel, embed=weather_now)
 
 @bot.command(pass_context=True)
 @asyncio.coroutine
 def course(ctx, *, query: str):
     """Prints a summary of the queried course, taken from the course calendar.
-    For now, you must include a space between the course code and number.
-    ie. '?course comp 206' works, but '?course comp206' does not.
+    ie. ?course comp 206
 
     Note: Bullet points without colons (':') are not parsed because I have yet to see one that actually has useful information."""
-    url = "http://www.mcgill.ca/study/2016-2017/courses/%s" % query.replace(' ', '-')
+    fac = '((?:[a-z][a-z]+))'
+    num = '(\\d+)'
+    result = re.compile(fac+'\\s?'+num, re.IGNORECASE|re.DOTALL).search(query)
+    if not result:
+        yield from bot.say(':warning: Incorrect format. The correct format is `?course <course name>`.')
+    search_term = result.group(1) + '-' + result.group(2)
+    url = "http://www.mcgill.ca/study/2016-2017/courses/%s" % search_term
     r = requests.get(url)
     soup = BeautifulSoup(r.content, "html.parser")
     r.close()
@@ -221,13 +230,6 @@ def xe(ctx, *, query: str):
         yield from bot.say(""":warning: Wrong format.
         The correct format is `?xe <AMOUNT> <CURRENCY> to <CURRENCY>`.
         ie. `?xe 60.00 CAD to EUR`""")
-
-@bot.command(pass_context=True)
-@asyncio.coroutine
-def wa(ctx, *, query: str):
-    """Searches WolframAlpha"""
-    res = wa_client.query(query)
-    yield from bot.say(next(res.results).text)
 
 @bot.command(pass_context=True)
 @asyncio.coroutine
