@@ -5,7 +5,7 @@ from discord.ext import commands
 import asyncio
 import sqlite3
 from datetime import datetime
-import random
+import random, os
 
 # Set path to your .db file here
 DB_PATH = 'PATH_TO_DB'
