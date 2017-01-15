@@ -1,11 +1,9 @@
 #!/usr/bin/env python3
 
-import discord
+import discord,asyncio,sqlite3,random,os
 from discord.ext import commands
-import asyncio
-import sqlite3
 from datetime import datetime
-import random
+
 
 # Set path to your .db file here
 QUOTES_DB_PATH = 'QUOTES_DB_PATH'
@@ -84,4 +82,4 @@ def delq(ctx):
 		conn.commit()
 		conn.close()
 
-bot.run('TOKEN')
+bot.run(os.environ.get("DISCORD_TOKEN"))

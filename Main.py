@@ -82,9 +82,9 @@ def course(ctx, *, query: str):
     ie. ?course comp 206
 
     Note: Bullet points without colons (':') are not parsed because I have yet to see one that actually has useful information."""
-    fac = '((?:[a-z][a-z]+))'
-    num = '(\\d+)'
-    result = re.compile(fac+'\\s?'+num, re.IGNORECASE|re.DOTALL).search(query)
+    fac = r'([a-zA-Z]{4})'
+    num = r'(\d{3})'
+    result = re.compile(fac+r'\s?'+num, re.IGNORECASE|re.DOTALL).search(query)
     if not result:
         yield from bot.say(':warning: Incorrect format. The correct format is `?course <course name>`.')
     search_term = result.group(1) + '-' + result.group(2)
