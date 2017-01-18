@@ -8,7 +8,6 @@ Discord bot for McGill
 * [sympy](https://github.com/sympy/sympy)
 * [requests](https://pypi.python.org/pypi/requests/)
 * [cleverbot](https://github.com/folz/cleverbot.py)
-* [wolframalpha](https://github.com/jaraco/wolframalpha)
 * [dvipng](https://sourceforge.net/projects/dvipng/) (Bundled with [MiKTeX](https://miktex.org/) on Windows)
 
 Dependencies are available via `python3 -m pip install --user requirements.txt` except for dvipng; see their respective links for detailed installation instructions.

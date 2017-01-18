@@ -3,4 +3,3 @@ beautifulsoup4==4.5.3
 sympy==1.0.0
 requests==2.12.4
 cleverbot==1.1.1
-wolframalpha==3.0.0
