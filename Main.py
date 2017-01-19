@@ -11,7 +11,8 @@ from bs4 import BeautifulSoup
 
 # Other utilities
 from sympy import preview
-import re, os, sys
+import re, os, sys, random
+from html import unescape
 import cleverbot
 
 bot = commands.Bot(command_prefix='?')
@@ -237,6 +238,45 @@ def restart():
     yield from bot.say('https://streamable.com/dli1')
     python = sys.executable
     os.execl(python, python, *sys.argv)
+
+@bot.command(pass_context=True)
+@asyncio.coroutine
+def trivia(ctx, questions: int=10):
+    """Starts a trivia game.
+    Optional number of questions as argument; defaults to 10 questions."""
+    if questions <= 2:
+        # At least 3 questions
+        yield from bot.say(":warning: Too little questions!")
+        return
+    # TODO: implement a scoreboard to keep track of the winner
+    scoreboard = {}
+    for i in range(questions):
+        r = requests.get('https://opentdb.com/api.php?amount=1&type=multiple')
+        q = r.json()
+        q = q['results'][0]
+        r.close()
+        question, category, answer = (unescape(q['question']), unescape(q['category']), unescape(q['correct_answer']))
+        print(question, answer)
+        yield from bot.say("**Category: **%s\n**Question: **%s" % (category, question))
+
+        def check(msg):
+            if msg.content.lower() == answer.lower():
+                return True
+            return False
+
+        response = yield from bot.wait_for_message(timeout=4.0, check=check)
+        if response != None:
+            yield from bot.say("%s is correct!" % response.author.mention)
+            continue
+
+        clue = ''.join('?' if random.randint(0,3) and i!=' ' else i for i in answer)
+        yield from bot.say("`Clue: %s`" % clue)
+
+        response = yield from bot.wait_for_message(timeout=20.0, check=check)
+        if response != None:
+            yield from bot.say("%s is correct!" % response.author.mention)
+        else:
+            yield from bot.say("Time's up!\n**Answer: **%s" % answer)
 
 @bot.event
 @asyncio.coroutine
