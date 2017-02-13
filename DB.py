@@ -30,11 +30,15 @@ def addq(ctx, member: discord.Member, *, quote: str):
 
 @bot.command()
 @asyncio.coroutine
-def q(member: discord.Member):
+def q(member: discord.Member, *, query: str=None):
 	conn = sqlite3.connect(DB_PATH)
 	c = conn.cursor()
 	t = (member.id,)
-	quoteslist = c.execute('SELECT Quote FROM Quotes WHERE ID=?',t).fetchall()
+	if query is None:
+		quoteslist = c.execute('SELECT Quote FROM Quotes WHERE ID=?',t).fetchall()
+	else:
+		t = (member.id, '%'+query+'%')
+		quoteslist = c.execute('SELECT Quote FROM Quotes WHERE ID=? AND Quote LIKE ?',t).fetchall()
 	if not quoteslist:
 		yield from bot.say('No quotes found.')
 		conn.close()
