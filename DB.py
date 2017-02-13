@@ -105,6 +105,13 @@ def on_reaction_add(reaction,user):
     conn.commit()
     conn.close()
 
+@bot.command(pass_context=True)
+@asyncio.coroutine
+def restart():
+    yield from bot.say('https://streamable.com/dli1')
+    python = sys.executable
+    os.execl(python, python, *sys.argv)
+
 @bot.event
 @asyncio.coroutine
 def on_reaction_remove(reaction,user):
