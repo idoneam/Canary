@@ -278,6 +278,18 @@ def trivia(ctx, questions: int=10):
         else:
             yield from bot.say("Time's up!\n**Answer: **%s" % answer)
 
+@bot.command(pass_context=True)
+@asyncio.coroutine
+def mose(ctx, dollar: int):
+    """Currency conversion. Converts whole dollar values to the equivalent number of samosas, based on holy prices.
+    Usage: `?mose <AMOUNT>`
+    i.e. ?mose 200
+    """
+    total = dollar/2*3
+    if(dollar%2==1):
+        total = total + 1
+    yield from bot.say("$%d is worth %d samosas" % (dollar,total))
+
 @bot.event
 @asyncio.coroutine
 def on_message(message):
