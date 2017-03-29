@@ -89,7 +89,7 @@ def course(ctx, *, query: str):
     if not result:
         yield from bot.say(':warning: Incorrect format. The correct format is `?course <course name>`.')
     search_term = result.group(1) + '-' + result.group(2)
-    url = "http://www.mcgill.ca/study/2016-2017/courses/%s" % search_term
+    url = "http://www.mcgill.ca/study/2017-2018/courses/%s" % search_term
     r = requests.get(url)
     soup = BeautifulSoup(r.content, "html.parser")
     r.close()
