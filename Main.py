@@ -13,11 +13,8 @@ from bs4 import BeautifulSoup
 from sympy import preview
 import re, os, sys, random
 from html import unescape
-import cleverbot
 
 bot = commands.Bot(command_prefix='?')
-
-cleverbot_client = cleverbot.Cleverbot()
 
 @bot.event
 @asyncio.coroutine
@@ -154,7 +151,7 @@ def tex(ctx, *, query: str):
         for i in range(up):
             tex += "\["+sp[2*i+1]+"\]"
         fn = 'tmp.png'
-        preview(tex, viewer='file', filename=fn)
+        preview(tex, viewer='file', filename=fn, euler=False)
         yield from bot.send_file(ctx.message.channel, fn)
         fn.close()
     else:
