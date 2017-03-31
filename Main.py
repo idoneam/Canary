@@ -292,9 +292,6 @@ def mose(ctx, dollar: int):
 def on_message(message):
     if message.author == bot.user:
         return
-    if bot.user in message.mentions:
-        # Cleverbot function for bot mentions
-        yield from bot.send_message(message.channel, cleverbot_client.ask(message.content))
     yield from bot.process_commands(message)
 
 bot.run(os.environ.get("DISCORD_TOKEN"))
