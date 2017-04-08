@@ -6,6 +6,7 @@ import asyncio
 import sqlite3
 from datetime import datetime
 import random, os
+from tabulate import tabulate
 
 # Set path to your .db file here
 DB_PATH = 'PATH_TO_DB'
@@ -111,6 +112,18 @@ def restart():
     yield from bot.say('https://streamable.com/dli1')
     python = sys.executable
     os.execl(python, python, *sys.argv)
+
+@bot.command(pass_context=True)
+@asyncio.coroutine
+def ranking(ctx):
+	conn = sqlite3.connect(DB_PATH)
+	c = conn.cursor()
+	c.execute("SELECT * FROM Members ORDER BY Upmartlet DESC;")
+	members = c.fetchall()[:7]
+	table = []
+	for (ID, DisplayName, Upmartlet) in members:
+		table.append((DisplayName, Upmartlet))
+	yield from bot.send_message(ctx.message.channel, '```Java\n'+tabulate(table, headers=["NAME","#"], tablefmt="fancy_grid")+'```')
 
 @bot.event
 @asyncio.coroutine

@@ -282,7 +282,7 @@ def mose(ctx, dollar: int):
     Usage: `?mose <AMOUNT>`
     i.e. ?mose 200
     """
-    total = dollar/2*3
+    total = dollar//2*3
     if(dollar%2==1):
         total = total + 1
     yield from bot.say("$%d is worth %d samosas" % (dollar,total))
