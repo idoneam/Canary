@@ -11,7 +11,7 @@ from bs4 import BeautifulSoup
 
 # Other utilities
 from sympy import preview
-import re, os, sys, random
+import re, os, sys, random, math
 from html import unescape
 
 bot = commands.Bot(command_prefix='?')
@@ -277,15 +277,18 @@ def trivia(ctx, questions: int=10):
 
 @bot.command(pass_context=True)
 @asyncio.coroutine
-def mose(ctx, dollar: int):
-    """Currency conversion. Converts whole dollar values to the equivalent number of samosas, based on holy prices.
+def mose(ctx, dollar: float):
+    """Currency conversion. Converts $$$ to the equivalent number of samosas, based on holy prices.
     Usage: `?mose <AMOUNT>`
     i.e. ?mose 200
     """
+    if dollar<0:
+        yield from bot.say("Trying to owe samosas now, are we? :wink:")
+        return
     total = dollar//2*3
-    if(dollar%2==1):
-        total = total + 1
-    yield from bot.say("$%d is worth %d samosas" % (dollar,total))
+    if(math.floor(dollar)%2==1):
+        total += 1
+    yield from bot.say("$%.2f is worth %d samosas." % (dollar,total))
 
 @bot.event
 @asyncio.coroutine
