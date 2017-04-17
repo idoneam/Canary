@@ -26,6 +26,11 @@ def on_ready():
 def chirp():
     """:^)"""
     yield from bot.say('CHIRP CHIRP')
+    
+@bot.command()
+@asyncio.coroutine
+def exam():
+    yield from bot.say('https://www.mcgill.ca/students/exams/files/students.exams/final_alpha_testswa5_0.pdf')
 
 @bot.command(pass_context=True)
 @asyncio.coroutine
