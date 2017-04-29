@@ -26,11 +26,6 @@ def on_ready():
 def chirp():
     """:^)"""
     yield from bot.say('CHIRP CHIRP')
-    
-@bot.command()
-@asyncio.coroutine
-def exam():
-    yield from bot.say('https://www.mcgill.ca/students/exams/files/students.exams/final_alpha_testswa5_0.pdf')
 
 @bot.command(pass_context=True)
 @asyncio.coroutine
@@ -77,6 +72,12 @@ def weather(ctx):
     weather_now.add_field(name="Wind Speed", value=wind, inline=True)
     weather_now.add_field(name="Wind Chill", value=windchill, inline=True)
     yield from bot.send_message(ctx.message.channel, embed=weather_now)
+
+@bot.command(pass_context=True)
+@asyncio.coroutine
+def wttr(ctx):
+    em = discord.Embed(title="Weather in Montreal").set_image(url='http://wttr.in/Montreal_0mpq_lang=en.png')   
+    yield from bot.send_message(ctx.message.channel, embed=em)
 
 @bot.command(pass_context=True)
 @asyncio.coroutine
