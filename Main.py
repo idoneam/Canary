@@ -76,7 +76,7 @@ def weather(ctx):
 @bot.command(pass_context=True)
 @asyncio.coroutine
 def wttr(ctx):
-    em = discord.Embed(title="Weather in Montreal").set_image(url='http://wttr.in/Montreal_0mpq_lang=en.png')   
+    em = discord.Embed(title="Weather in Montreal").set_image(url='http://wttr.in/Montreal_2mpq_lang=en.png')   
     yield from bot.send_message(ctx.message.channel, embed=em)
 
 @bot.command(pass_context=True)
