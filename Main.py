@@ -11,7 +11,7 @@ from bs4 import BeautifulSoup
 
 # Other utilities
 from sympy import preview
-import re, os, sys, random, math
+import re, os, sys, random, math, time
 from html import unescape
 
 bot = commands.Bot(command_prefix='?')
@@ -76,7 +76,7 @@ def weather(ctx):
 @bot.command(pass_context=True)
 @asyncio.coroutine
 def wttr(ctx):
-    em = discord.Embed(title="Weather in Montreal").set_image(url='http://wttr.in/Montreal_2mpq_lang=en.png')   
+    em = discord.Embed(title="Weather in Montreal").set_image(url='http://wttr.in/Montreal_2mpq_lang=en.png?_=%d' % round(time.time()))
     yield from bot.send_message(ctx.message.channel, embed=em)
 
 @bot.command(pass_context=True)
