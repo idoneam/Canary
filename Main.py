@@ -14,13 +14,19 @@ from sympy import preview
 import re, os, sys, random, math, time
 from html import unescape
 
-bot = commands.Bot(command_prefix='?')
+bot = commands.Bot(command_prefix=['?','dammit mar'])
 
 @bot.event
 @asyncio.coroutine
 def on_ready():
     print('Logged in as {0} ({1})'.format(bot.user.name, bot.user.id))
 
+@bot.command()
+@asyncio.coroutine
+def ty():
+    """:c"""
+    yield from bot.say(':c')    
+    
 @bot.command()
 @asyncio.coroutine
 def chirp():
