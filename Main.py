@@ -14,7 +14,7 @@ from sympy import preview
 import re, os, sys, random, math, time
 from html import unescape
 
-bot = commands.Bot(command_prefix='>')
+bot = commands.Bot(command_prefix='?')
 
 @bot.event
 @asyncio.coroutine
@@ -317,4 +317,4 @@ def on_message(message):
         yield from bot.send_message(message.channel, ":c")
     yield from bot.process_commands(message)
 
-bot.run("bots_token")
+bot.run(os.environ.get("DISCORD_TOKEN")
