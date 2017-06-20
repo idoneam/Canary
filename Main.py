@@ -317,4 +317,4 @@ def on_message(message):
         yield from bot.send_message(message.channel, ":c")
     yield from bot.process_commands(message)
 
-bot.run(os.environ.get("DISCORD_TOKEN")
+bot.run(os.environ.get("DISCORD_TOKEN"))
