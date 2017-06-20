@@ -14,12 +14,24 @@ from sympy import preview
 import re, os, sys, random, math, time
 from html import unescape
 
-bot = commands.Bot(command_prefix='?')
+bot = commands.Bot(command_prefix='>')
 
 @bot.event
 @asyncio.coroutine
 def on_ready():
     print('Logged in as {0} ({1})'.format(bot.user.name, bot.user.id))
+ 
+#For sending gifs 
+@bot.command(pass_context=True)
+@asyncio.coroutine
+def gif(ctx):
+    """
+    Sends a gif
+    """
+    #path = "images\\yes.gif"
+    #yield from bot.send_file(ctx.message.channel, path) #From stored on server
+    yield from bot.send_message(ctx.message.channel, "http://i.imgur.com/GgNi3Xr.gif") #From internet
+    yield from bot.delete_message(ctx.message)
     
 @bot.command()
 @asyncio.coroutine
@@ -305,4 +317,4 @@ def on_message(message):
         yield from bot.send_message(message.channel, ":c")
     yield from bot.process_commands(message)
 
-bot.run(os.environ.get("DISCORD_TOKEN"))
+bot.run("bots_token")
