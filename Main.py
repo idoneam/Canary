@@ -20,7 +20,7 @@ bot = commands.Bot(command_prefix='?')
 @asyncio.coroutine
 def on_ready():
     print('Logged in as {0} ({1})'.format(bot.user.name, bot.user.id))
-
+    
 @bot.command()
 @asyncio.coroutine
 def chirp():
@@ -301,6 +301,8 @@ def mose(ctx, dollar: float):
 def on_message(message):
     if message.author == bot.user:
         return
+    if message.content == "dammit marty":
+        yield from bot.send_message(message.channel, ":c")
     yield from bot.process_commands(message)
 
 bot.run(os.environ.get("DISCORD_TOKEN"))
