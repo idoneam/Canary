@@ -21,17 +21,133 @@ bot = commands.Bot(command_prefix='?')
 def on_ready():
     print('Logged in as {0} ({1})'.format(bot.user.name, bot.user.id))
  
-#For sending gifs 
+"""For sending gifs 
 @bot.command(pass_context=True)
 @asyncio.coroutine
 def gif(ctx):
-    """
-    Sends a gif
-    """
     #path = "images\\yes.gif"
     #yield from bot.send_file(ctx.message.channel, path) #From stored on server
     yield from bot.send_message(ctx.message.channel, "http://i.imgur.com/GgNi3Xr.gif") #From internet
     yield from bot.delete_message(ctx.message)
+"""   
+    
+@bot.command(pass_context=True)
+@asyncio.coroutine
+def lenny(ctx):
+    """
+    Lenny face
+    """
+    yield from bot.send_message(ctx.message.channel, "( ͡° ͜ʖ ͡°)")
+    yield from bot.delete_message(ctx.message)  
+
+    
+@bot.command(pass_context=True)
+@asyncio.coroutine
+def awyiss(ctx):
+    """
+    aw yiss mother fucking breadcrumbs
+    """
+    yield from bot.send_message(ctx.message.channel, "http://gph.is/294XA0F")
+    yield from bot.delete_message(ctx.message)       
+
+@bot.command(pass_context=True)
+@asyncio.coroutine    
+def gohere(ctx):
+    """
+    for future mcgillians
+    """
+    yield from bot.send_message(ctx.message.channel, "http://gph.is/1cN9wO1")
+    yield from bot.delete_message(ctx.message)     
+
+@bot.command(pass_context=True)
+@asyncio.coroutine    
+def todo(ctx):
+    """
+    when its the weekend
+    """
+    yield from bot.send_message(ctx.message.channel, "http://gph.is/2dnMUJ6")
+    yield from bot.delete_message(ctx.message)    
+
+@bot.command(pass_context=True)
+@asyncio.coroutine    
+def love(ctx):
+    """
+    back off yo
+    """
+    yield from bot.send_message(ctx.message.channel, "http://gph.is/2eePP6k")
+    yield from bot.delete_message(ctx.message)     
+
+@bot.command(pass_context=True)
+@asyncio.coroutine    
+def tunak(ctx):
+    """
+    bitch pls
+    """
+    yield from bot.send_message(ctx.message.channel, "http://i.imgur.com/rNNLyjK.gif")
+    yield from bot.delete_message(ctx.message)
+
+@bot.command(pass_context=True)
+@asyncio.coroutine    
+def bb8(ctx):
+    """
+    nice job bb8
+    """
+    yield from bot.send_message(ctx.message.channel, "http://i.imgur.com/SUvaUM2.gif")
+    yield from bot.delete_message(ctx.message)
+
+@bot.command(pass_context=True)
+@asyncio.coroutine    
+def longtime(ctx):
+    """
+    That's a name I've not heard in a long time
+    """
+    yield from bot.send_message(ctx.message.channel, "http://i.imgur.com/e1T1xcq.mp4")
+    yield from bot.delete_message(ctx.message)
+
+@bot.command(pass_context=True)
+@asyncio.coroutine    
+def overhead(ctx):
+    """
+    Not actually what this gif does...
+    """
+    yield from bot.send_message(ctx.message.channel, "http://i.imgur.com/xCS121c.gif")
+    yield from bot.delete_message(ctx.message)   
+
+@bot.command(pass_context=True)
+@asyncio.coroutine    
+def sideglance(ctx):
+    """
+    when even bernie sanders hates you
+    """
+    yield from bot.send_message(ctx.message.channel, "http://i.imgur.com/xc6gMIo.gif")
+    yield from bot.delete_message(ctx.message)
+
+@bot.command(pass_context=True)
+@asyncio.coroutine    
+def ye(ctx):
+    """
+    Better Call Saul is awesome
+    """
+    yield from bot.send_message(ctx.message.channel, "http://i.imgur.com/iSMh7zO.gif")
+    yield from bot.delete_message(ctx.message)    
+
+@bot.command(pass_context=True)
+@asyncio.coroutine    
+def dealwithit(ctx):
+    """
+    deal with it trump
+    """
+    yield from bot.send_message(ctx.message.channel, "http://i.imgur.com/5jzN8zV.mp4")
+    yield from bot.delete_message(ctx.message)
+    
+@bot.command(pass_context=True)
+@asyncio.coroutine    
+def lmao(ctx):
+    """
+    that's hilarious
+    """
+    yield from bot.send_message(ctx.message.channel, "http://i.imgur.com/o5Cc3i2.mp4")
+    yield from bot.delete_message(ctx.message)    
     
 @bot.command()
 @asyncio.coroutine
