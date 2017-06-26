@@ -14,30 +14,72 @@ from sympy import preview
 import re, os, sys, random, math, time
 from html import unescape
 
+# Pillow for image manipulation
+import PIL
+from PIL import ImageFont
+from PIL import Image
+from PIL import ImageDraw
+import textwrap
+
 bot = commands.Bot(command_prefix='?')
 
 @bot.event
 @asyncio.coroutine
 def on_ready():
     print('Logged in as {0} ({1})'.format(bot.user.name, bot.user.id))
- 
-"""For sending gifs 
+
 @bot.command(pass_context=True)
 @asyncio.coroutine
-def gif(ctx):
+def notsure(ctx, arg1 : str, arg2 : str):
+    '''
+    not sure meme, ?notsure topline bottomline
+    '''
+    para = textwrap.wrap(arg1, width=27)
+    lara = textwrap.wrap(arg2, width=27)
+
+
+    im = Image.open("images\\notsure.png")
+    MAX_W, MAX_H = im.size
+    draw = ImageDraw.Draw(im)
+    font = ImageFont.truetype("fonts\\impact\\impact.ttf", 40) #Need a outline font still
+
+    current_h, pad = 40, 1 #Determines the starting line, and the spacing between lines
+    for line in para:
+        w, h = draw.textsize(line, font=font)
+        draw.text(((MAX_W - w) / 2, current_h), line, font=font)
+        current_h += h + pad
+    newlineh, pad = 275, 1
+    for line in lara:
+        w, h = draw.textsize(line, font=font)
+        draw.text(((MAX_W - w) / 2, newlineh), line, font=font)
+        newlineh += h + pad    
+
+    im.save('newnotsure.png')
+    path = "newnotsure.png"
+
+    yield from bot.send_file(ctx.message.channel, path)
+    yield from bot.delete_message(ctx.message) 
+
+
+
+"""For sending gifs 
+@bot.command
+@asyncio.coroutine
+def gifs(ctx):
+
     #path = "images\\yes.gif"
     #yield from bot.send_file(ctx.message.channel, path) #From stored on server
-    yield from bot.send_message(ctx.message.channel, "http://i.imgur.com/GgNi3Xr.gif") #From internet
-    yield from bot.delete_message(ctx.message)
-"""   
-    
+    #yield from bot.send_message(ctx.message.channel, "http://i.imgur.com/GgNi3Xr.gif") #From internet
+    #yield from bot.delete_message(ctx.message)
+"""        
+
 @bot.command(pass_context=True)
 @asyncio.coroutine
 def lenny(ctx):
     """
     Lenny face
     """
-    yield from bot.send_message(ctx.message.channel, "( ͡° ͜ʖ ͡°)")
+    yield from bot.send_message(ctx.message.channel, "( ͡° ͜ʖ ͡°) ")
     yield from bot.delete_message(ctx.message)  
 
     
@@ -212,7 +254,6 @@ def wttr(ctx):
 def course(ctx, *, query: str):
     """Prints a summary of the queried course, taken from the course calendar.
     ie. ?course comp 206
-
     Note: Bullet points without colons (':') are not parsed because I have yet to see one that actually has useful information."""
     fac = r'([a-zA-Z]{4})'
     num = r'(\d{3})'
@@ -337,7 +378,6 @@ def xe(ctx, *, query: str):
     Uses real-time exchange rates taken from http://www.xe.com.
     Usage: ?xe <AMOUNT> <CURRENCY> to <CURRENCY>
     ie. ?xe 60.00 CAD to EUR
-
     The currencies supported for conversion (and their abbreviations) can be found at http://www.xe.com/currency/.
     """
     if '.' in query.split(' ')[0]:  # Distinguish regex between floats and ints
@@ -431,6 +471,8 @@ def on_message(message):
         return
     if message.content == "dammit marty":
         yield from bot.send_message(message.channel, ":c")
+    if message.content == "worm":
+        yield from bot.send_message(message.channel, "walk without rhythm, and it won't attract the worm.")
     yield from bot.process_commands(message)
 
 bot.run(os.environ.get("DISCORD_TOKEN"))
