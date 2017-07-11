@@ -10,7 +10,7 @@ Discord bot for McGill
 * [Pillow](https://github.com/python-pillow/Pillow)
 * [dvipng](https://sourceforge.net/projects/dvipng/) (Bundled with [MiKTeX](https://miktex.org/) on Windows)
 
-Dependencies are available via `python3 -m pip install --user requirements.txt` except for dvipng and Pillow; see their respective links for detailed installation instructions.
+Dependencies are available via `python3 -m pip install --user -r requirements.txt` except for dvipng; see their respective links for detailed installation instructions.
 
 ## Installation
 In order to run bots on Discord, you need to [create a bot account](https://github.com/reactiflux/discord-irc/wiki/Creating-a-discord-bot-&-getting-a-token).
