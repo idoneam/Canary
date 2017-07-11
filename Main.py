@@ -32,16 +32,15 @@ def on_ready():
 @asyncio.coroutine
 def notsure(ctx, arg1 : str, arg2 : str):
     '''
-    not sure meme, ?notsure topline bottomline
+    not sure meme, ?notsure "topString" "botString"
     '''
     para = textwrap.wrap(arg1, width=27)
     lara = textwrap.wrap(arg2, width=27)
 
-
-    im = Image.open("images\\notsure.png")
+    im = Image.open("images/notsure.png")
     MAX_W, MAX_H = im.size
     draw = ImageDraw.Draw(im)
-    font = ImageFont.truetype("fonts\\impact\\impact.ttf", 40) #Need a outline font still
+    font = ImageFont.truetype("fonts/impact/impact.ttf", 40) #Need a outline font still
 
     current_h, pad = 40, 1 #Determines the starting line, and the spacing between lines
     for line in para:
