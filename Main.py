@@ -28,6 +28,33 @@ bot = commands.Bot(command_prefix='?')
 def on_ready():
     print('Logged in as {0} ({1})'.format(bot.user.name, bot.user.id))
 
+
+@bot.command(pass_context=True)
+@asyncio.coroutine
+def isMayo(ctx, arg1 : str):
+    '''
+    Patrick's question, ?isMayo "text here"
+    '''
+    para = textwrap.wrap(arg1, width=27)
+
+    im = Image.open("images/isMayo.png")
+    MAX_W, MAX_H = im.size
+    draw = ImageDraw.Draw(im)
+    font = ImageFont.truetype("fonts/impact/impact.ttf", 40) #Need a outline font still
+
+    current_h, pad = 40, 1 #Determines the starting line, and the spacing between lines
+    for line in para:
+        w, h = draw.textsize(line, font=font)
+        draw.text(((MAX_W - w) / 2, current_h), line, font=font)
+        current_h += h + pad  
+
+    im.save('newisMayo.png')
+    path = "newisMayo.png"
+
+    yield from bot.send_file(ctx.message.channel, path)
+    yield from bot.delete_message(ctx.message) 
+    
+    
 @bot.command(pass_context=True)
 @asyncio.coroutine
 def notsure(ctx, arg1 : str, arg2 : str):
