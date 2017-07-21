@@ -49,7 +49,7 @@ def chosenOne(ctx, arg2 : str):
         w, h = draw.textsize(line, font=font)
         draw.text(((MAX_W - w) / 2, current_h), line, font=font)
         current_h += h + pad
-    newlineh, pad = 275, 1
+    newlineh, pad = 200, 1
     for line in lara:
         w, h = draw.textsize(line, font=font)
         draw.text(((MAX_W - w) / 2, newlineh), line, font=font)
