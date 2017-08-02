@@ -65,9 +65,20 @@ def delq(ctx):
 	else:
 		msg = "Please choose a quote you would like to delete.\n\n```"
 		for i in range(len(quoteslist)):
-			msg += '[%d] %s\n' % (i+1, quoteslist[i][0])
-		msg += '\n[0] Exit without deleting quotes```'
-	yield from bot.say(msg)
+			if ((len(msg) + len('[%d] %s\n' % (i+1, quoteslist[i][0]))) > 1996):
+				msg += '```'
+				yield from bot.say(msg)
+				msg = '```[%d] %s\n' % (i+1, quoteslist[i][0])
+			else:  
+				msg += '[%d] %s\n' % (i+1, quoteslist[i][0])
+		if ((len(msg) + len('\n[0] Exit without deleting quotes```')) < 1996):
+			msg += '\n[0] Exit without deleting quotes```'
+			yield from bot.say(msg)
+		else:
+			msg += '```'
+			yield from bot.say(msg)
+			msg = '```\n[0] Exit without deleting quotes```'
+			yield from bot.say(msg)
 
 	def check(choice):
 		if 0<=int(choice.content)<=(1+len(quoteslist)):
