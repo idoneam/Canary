@@ -31,26 +31,55 @@ def addq(ctx, member: discord.Member, *, quote: str):
 
 @bot.command()
 @asyncio.coroutine
-def q(member: discord.Member, *, query: str=None):
+def q(member: discord.Member=None, *, query: str=None):
 	conn = sqlite3.connect(DB_PATH)
 	c = conn.cursor()
-	t = (member.id,)
-	if query is None:
-		quoteslist = c.execute('SELECT Quote FROM Quotes WHERE ID=?',t).fetchall()
+	if member is None:
+		quotes = c.execute('SELECT Quote FROM Quotes').fetchall()
+		quote = random.choice(quotes)[0]
+		ID = c.execute('SELECT ID FROM Quotes WHERE Quote LIKE "%%%s%%"' % quote).fetchall()[0][0]
+		yield from bot.say("<@%(ID)s> :mega: %(quote)s" % {"ID": ID, "quote": quote})
+		conn.close
 	else:
-		t = (member.id, '%'+query+'%')
-		quoteslist = c.execute('SELECT Quote FROM Quotes WHERE ID=? AND Quote LIKE ?',t).fetchall()
-	if not quoteslist:
-		yield from bot.say('No quotes found.')
-		conn.close()
-		return
-	else:
-		quote = random.choice(quoteslist)[0]
-		yield from bot.say(":mega: %s" % quote)
-		conn.close()
+		t = (member.id,)
+		if query is None:
+			quoteslist = c.execute('SELECT Quote FROM Quotes WHERE ID=?',t).fetchall()
+		else:
+			t = (member.id, '%'+query+'%')
+			quoteslist = c.execute('SELECT Quote FROM Quotes WHERE ID=? AND Quote LIKE ?',t).fetchall()
+		if not quoteslist:
+			yield from bot.say('No quotes found.')
+			conn.close()
+			return
+		else:
+			quote = random.choice(quoteslist)[0]
+			yield from bot.say(":mega: %s" % quote)
+			conn.close()
 
-# This WILL throw a HTTPError if the quote list is too long
-# TODO: Find a solution to fix that
+@bot.command()
+@asyncio.coroutine
+def lsq(member: discord.Member):
+	conn = sqlite3.connect(DB_PATH)	
+	c = conn.cursor()
+	t = (member.id,)
+	quoteslist = c.execute('SELECT Quote FROM Quotes WHERE ID=?',t).fetchall()
+	msg = "```Quotes: \n"
+	for i in range(len(quoteslist)):
+		if ((len(msg) + len('[%d] %s\n' % (i+1, quoteslist[i][0]))) > 1996):
+			msg += '```'
+			yield from bot.say(msg)
+			msg = '```[%d] %s\n' % (i+1, quoteslist[i][0])
+		else:  
+			msg += '[%d] %s\n' % (i+1, quoteslist[i][0])
+	if ((len(msg) + len('\n ~ End of Quotes ~```')) < 1996):
+		msg += '\n ~ End of Quotes ~```'
+		yield from bot.say(msg)
+	else:
+		msg += '```'
+		yield from bot.say(msg)
+		msg = '```\n ~ End of Quotes ~```'
+		yield from bot.say(msg)
+
 @bot.command(pass_context=True)
 @asyncio.coroutine
 def delq(ctx):
@@ -63,6 +92,7 @@ def delq(ctx):
 		conn.close()
 		return
 	else:
+		# print the quotes of the user in pages
 		msg = "Please choose a quote you would like to delete.\n\n```"
 		for i in range(len(quoteslist)):
 			if ((len(msg) + len('[%d] %s\n' % (i+1, quoteslist[i][0]))) > 1996):
