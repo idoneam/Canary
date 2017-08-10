@@ -58,7 +58,7 @@ def q(member: discord.Member=None, *, query: str=None):
 
 @bot.command()
 @asyncio.coroutine
-def lsq(member: discord.Member):
+def lq(member: discord.Member):
 	conn = sqlite3.connect(DB_PATH)	
 	c = conn.cursor()
 	t = (member.id,)
