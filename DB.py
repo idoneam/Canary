@@ -36,10 +36,10 @@ def q(member: discord.Member=None, *, query: str=None):
 	c = conn.cursor()
 	if member is None:
 		quotes = c.execute('SELECT Quote FROM Quotes').fetchall()
-		quote = random.choice(quotes)[0]
-		ID = c.execute('SELECT ID FROM Quotes WHERE Quote LIKE "%%%s%%"' % quote).fetchall()[0][0]
-		yield from bot.say("<@%(ID)s> :mega: %(quote)s" % {"ID": ID, "quote": quote})
-		conn.close
+		quote = random.choice(quotes)
+		ID = c.execute('SELECT ID FROM Quotes WHERE Quote LIKE ?', quote).fetchall()[0][0]
+		yield from bot.say("<@%(ID)s> :mega: %(quote)s" % {"ID": ID, "quote": quote[0]})
+		conn.close()
 	else:
 		t = (member.id,)
 		if query is None:
