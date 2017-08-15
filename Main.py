@@ -27,7 +27,7 @@ from datetime import datetime
 from tabulate import tabulate
 
 # Set path to your .db file here
-DB_PATH = ' '
+DB_PATH = './Martlet.db'
 
 bot = commands.Bot(command_prefix='?')
 
