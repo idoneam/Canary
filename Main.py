@@ -555,30 +555,53 @@ def addq(ctx, member: discord.Member, *, quote: str):
 
 @bot.command()
 @asyncio.coroutine
-def q(member: discord.Member=None, *, query: str=None):
-	conn = sqlite3.connect(DB_PATH)
-	c = conn.cursor()
-	if member is None:
-		quotes = c.execute('SELECT Quote FROM Quotes').fetchall()
-		quote = random.choice(quotes)
-		ID = c.execute('SELECT ID FROM Quotes WHERE Quote LIKE ?', quote).fetchall()[0][0]
-		yield from bot.say("<@%(ID)s> :mega: %(quote)s" % {"ID": ID, "quote": quote[0]})
-		conn.close()
-	else:
-		t = (member.id,)
-		if query is None:
-			quoteslist = c.execute('SELECT Quote FROM Quotes WHERE ID=?',t).fetchall()
-		else:
-			t = (member.id, '%'+query+'%')
-			quoteslist = c.execute('SELECT Quote FROM Quotes WHERE ID=? AND Quote LIKE ?',t).fetchall()
-		if not quoteslist:
-			yield from bot.say('No quotes found.')
-			conn.close()
-			return
-		else:
-			quote = random.choice(quoteslist)[0]
-			yield from bot.say(":mega: %s" % quote)
-			conn.close()
+def q(str1: str=None, *, str2: str=None):   #member: discord.Member=None, *, query: str=None):
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    if str1 is None:    # no argument
+        quotes = c.execute('SELECT Quote FROM Quotes').fetchall()
+        quote = random.choice(quotes)
+        ID = c.execute('SELECT ID FROM Quotes WHERE Quote LIKE ?', quote).fetchall()[0][0]
+        yield from bot.say("<@%(ID)s> :mega: %(quote)s" % {"ID": ID, "quote": quote[0]})
+        conn.close()
+        return
+    elif str2 is None:  # 1 argument
+        numArgs = 1
+        args = str1
+    else:   # 2 arguments
+        numArgs = 2
+        argl = [str1, str2]
+        args = ' '.join(argl)
+    if (args[1] == '@'):    # member argument supplied
+        if numArgs == 2:    # query
+            args = args.split() 
+            t = ((args[0][2:(len(args[0])-1)]), '%'+(' '.join(args[1:]))+'%')
+            quoteslist = c.execute('SELECT Quote FROM Quotes WHERE ID=? AND Quote LIKE ?',t).fetchall()
+        else:   # no query
+            t = ((int)(args[2:(len(args[0])-2)]),)
+            quoteslist = c.execute('SELECT Quote FROM Quotes WHERE ID=?',t).fetchall()
+        if not quoteslist:  # no result
+            yield from bot.say('No quotes found.')
+            conn.close()
+            return
+        else:   # result
+            quote = random.choice(quoteslist)
+            yield from bot.say(":mega: %s" % quote)
+            conn.close()
+            return
+    else:   # no member argument - only query
+        t = ('%'+args[0:]+'%',)
+        quoteslist = c.execute('SELECT Quote FROM Quotes WHERE Quote LIKE ?', t).fetchall()
+        if not quoteslist:
+            yield from bot.say('No quotes found.')
+            conn.close()
+            return
+        else:
+            quote = random.choice(quoteslist)
+            ID = c.execute('SELECT ID FROM Quotes WHERE Quote LIKE ?', quote).fetchall()[0][0]
+            yield from bot.say("<@%(ID)s> :mega: %(quote)s" % {"ID": ID, "quote": quote[0]})
+            conn.close()
+            return
 
 @bot.command()
 @asyncio.coroutine
