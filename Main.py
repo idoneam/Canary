@@ -561,8 +561,8 @@ def q(str1: str=None, *, str2: str=None):   #member: discord.Member=None, *, que
     if str1 is None:    # no argument
         quotes = c.execute('SELECT Quote FROM Quotes').fetchall()
         quote = random.choice(quotes)
-        ID = c.execute('SELECT ID FROM Quotes WHERE Quote LIKE ?', quote).fetchall()[0][0]
-        yield from bot.say("<@%(ID)s> :mega: %(quote)s" % {"ID": ID, "quote": quote[0]})
+        Name = c.execute('SELECT Name FROM Quotes WHERE Quote LIKE ?', quote).fetchall()[0][0]
+        yield from bot.say("%(ID)s :mega: %(quote)s" % {"ID": Name, "quote": quote[0]})
         conn.close()
         return
     elif str2 is None:  # 1 argument
@@ -598,8 +598,8 @@ def q(str1: str=None, *, str2: str=None):   #member: discord.Member=None, *, que
             return
         else:
             quote = random.choice(quoteslist)
-            ID = c.execute('SELECT ID FROM Quotes WHERE Quote LIKE ?', quote).fetchall()[0][0]
-            yield from bot.say("<@%(ID)s> :mega: %(quote)s" % {"ID": ID, "quote": quote[0]})
+            Name = c.execute('SELECT Name FROM Quotes WHERE Quote LIKE ?', quote).fetchall()[0][0]
+            yield from bot.say("%(ID)s :mega: %(quote)s" % {"ID": Name, "quote": quote[0]})
             conn.close()
             return
 
