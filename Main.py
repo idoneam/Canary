@@ -541,7 +541,7 @@ def on_message(message):
         yield from bot.send_message(message.channel, "walk without rhythm, and it won't attract the worm.")
     yield from bot.process_commands(message)
 
-# DB Merge
+# Quote Database Commands
 @bot.command(pass_context=True)
 @asyncio.coroutine
 def addq(ctx, member: discord.Member, *, quote: str):
@@ -620,12 +620,12 @@ def lq(member: discord.Member):
 			msg += '[%d] %s\n' % (i+1, quoteslist[i][0])
 	if ((len(msg) + len('\n ~ End of Quotes ~```')) < 1996):
 		msg += '\n ~ End of Quotes ~```'
-		yield from bot.say(msg)
+		yield from bot.say(msg, delete_after=30)
 	else:
 		msg += '```'
-		yield from bot.say(msg)
+		yield from bot.say(msg, delete_after=30)
 		msg = '```\n ~ End of Quotes ~```'
-		yield from bot.say(msg)
+		yield from bot.say(msg, delete_after=30)
 
 @bot.command(pass_context=True)
 @asyncio.coroutine
@@ -650,12 +650,12 @@ def delq(ctx):
 				msg += '[%d] %s\n' % (i+1, quoteslist[i][0])
 		if ((len(msg) + len('\n[0] Exit without deleting quotes```')) < 1996):
 			msg += '\n[0] Exit without deleting quotes```'
-			yield from bot.say(msg)
+			yield from bot.say(msg, delete_after=30)
 		else:
 			msg += '```'
-			yield from bot.say(msg)
+			yield from bot.say(msg, delete_after=30)
 			msg = '```\n[0] Exit without deleting quotes```'
-			yield from bot.say(msg)
+			yield from bot.say(msg, delete_after=30)
 
 	def check(choice):
 		if 0<=int(choice.content)<=(1+len(quoteslist)):
@@ -704,7 +704,7 @@ def ranking(ctx):
 	table = []
 	for (ID, DisplayName, Upmartlet) in members:
 		table.append((DisplayName, Upmartlet))
-	yield from bot.send_message(ctx.message.channel, '```Java\n'+tabulate(table, headers=["NAME","#"], tablefmt="fancy_grid")+'```')
+	yield from bot.say(ctx.message.channel, '```Java\n'+tabulate(table, headers=["NAME","#"], tablefmt="fancy_grid")+'```', delete_after=30)
 
 @bot.event
 @asyncio.coroutine
