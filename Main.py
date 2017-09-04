@@ -573,12 +573,16 @@ def q(str1: str=None, *, str2: str=None):   #member: discord.Member=None, *, que
         argl = [str1, str2]
         args = ' '.join(argl)
     if (args[1] == '@'):    # member argument supplied
+        args = args.split() 
+        qId = ''
+        for i in range(len(args[0])):
+            if (args[0][i] in '0123456789'):
+                qId = qId + args[0][i]
         if numArgs == 2:    # query
-            args = args.split() 
-            t = ((args[0][3:(len(args[0])-1)]), '%'+(' '.join(args[1:]))+'%')
+            t = (qId, '%'+(' '.join(args[1:]))+'%')
             quoteslist = c.execute('SELECT Quote FROM Quotes WHERE ID=? AND Quote LIKE ?',t).fetchall()
         else:   # no query
-            t = ((args[3:(len(args[0])-2)]),)
+            t = (qId,)
             quoteslist = c.execute('SELECT Quote FROM Quotes WHERE ID=?',t).fetchall()
         if not quoteslist:  # no result
             yield from bot.say('No quotes found.')
