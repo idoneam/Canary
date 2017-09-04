@@ -4,3 +4,4 @@ sympy==1.0.0
 requests==2.12.4
 cleverbot==1.1.1
 tabulate==0.7.7
+pillow==4.2.1
