@@ -232,6 +232,15 @@ def sideglance(ctx):
 
 @bot.command(pass_context=True)
 @asyncio.coroutine    
+def thonk(ctx):
+    """
+    when thonking consumes you
+    """
+    yield from bot.send_message(ctx.message.channel, "https://i.imgur.com/VADGUwj.gifv")
+    yield from bot.delete_message(ctx.message)
+
+@bot.command(pass_context=True)
+@asyncio.coroutine    
 def ye(ctx):
     """
     Better Call Saul is awesome
