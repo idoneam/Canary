@@ -271,6 +271,11 @@ def lmao(ctx):
 def chirp():
     """:^)"""
     yield from bot.say('CHIRP CHIRP')
+    
+@bot.command()
+@asyncio.coroutine
+def exam():
+    yield from bot.say('http://www.mcgill.ca/students/exams/files/students.exams/december_2017_final_exam_schedule_7.pdf')
 
 @bot.command(pass_context=True)
 @asyncio.coroutine
