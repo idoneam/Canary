@@ -275,7 +275,7 @@ def chirp():
 @bot.command()
 @asyncio.coroutine
 def exam():
-    yield from bot.say('http://www.mcgill.ca/students/exams/files/students.exams/december_2017_final_exam_schedule_7.pdf')
+    yield from bot.say('https://www.mcgill.ca/students/exams/files/students.exams/december_2017_final_schedule_with_room_locations_12.pdf')
 
 @bot.command(pass_context=True)
 @asyncio.coroutine
