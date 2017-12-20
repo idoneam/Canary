@@ -745,5 +745,14 @@ def on_reaction_remove(reaction,user):
     conn.commit()
     conn.close()
 
-bot.run(os.environ.get("DISCORD_TOKEN"))
+@bot.command(pass_context=True)
+@asyncio.coroutine
+def mix(ctx, *, inputStr: str=None):
+    if inputStr is None:
+        yield from bot.say()
+    words = inputStr.split()
+    msg = "".join([(c.upper() if random.randint(0, 1) else c.lower()) for c in inputStr])
+    yield from bot.say(msg)
+    yield from bot.delete_message(ctx.message)
 
+bot.run(os.environ.get("DISCORD_TOKEN"))
