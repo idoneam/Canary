@@ -553,23 +553,25 @@ def on_message(message):
         yield from bot.send_message(message.channel, ":c")
     if message.content == "worm":
         yield from bot.send_message(message.channel, "walk without rhythm, and it won't attract the worm.")
+    if message.content == "hey":
+        yield from bot.send_message(message.channel, "whats going on?")
     yield from bot.process_commands(message)
 
 # Quote Database Commands
 @bot.command(pass_context=True)
 @asyncio.coroutine
 def addq(ctx, member: discord.Member, *, quote: str):
-	conn = sqlite3.connect(DB_PATH)
-	c = conn.cursor()
-	t = (member.id, member.name, quote, ctx.message.timestamp.strftime("%c"))
-	c.execute('INSERT INTO Quotes VALUES (?,?,?,?)', t)
-	yield from bot.say('`Quote added.`')
-	conn.commit()
-	conn.close()
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    t = (member.id, member.name, quote, ctx.message.timestamp.strftime("%c"))
+    c.execute('INSERT INTO Quotes VALUES (?,?,?,?)', t)
+    yield from bot.say('`Quote added.`')
+    conn.commit()
+    conn.close()
 
 @bot.command()
 @asyncio.coroutine
-def q(str1: str=None, *, str2: str=None):   #member: discord.Member=None, *, query: str=None):
+def q(str1: str=None, *, str2: str=None):   
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
     if str1 is None:    # no argument
@@ -587,6 +589,9 @@ def q(str1: str=None, *, str2: str=None):   #member: discord.Member=None, *, que
         argl = [str1, str2]
         args = ' '.join(argl)
     if (args[1] == '@'):    # member argument supplied
+        if numArgs == 2:    # has query
+            args = args.split() 
+            t = ((args[0][3:(len(args[0])-1)]), '%'+(' '.join(args[1:]))+'%')
         args = args.split() 
         qId = ''
         for i in range(len(args[0])):
@@ -621,84 +626,88 @@ def q(str1: str=None, *, str2: str=None):   #member: discord.Member=None, *, que
             conn.close()
             return
 
-@bot.command()
+@bot.command(pass_context=True)
 @asyncio.coroutine
-def lq(member: discord.Member):
-	conn = sqlite3.connect(DB_PATH)	
-	c = conn.cursor()
-	t = (member.id,)
-	quoteslist = c.execute('SELECT Quote FROM Quotes WHERE ID=?',t).fetchall()
-	msg = "```Quotes: \n"
-	for i in range(len(quoteslist)):
-		if ((len(msg) + len('[%d] %s\n' % (i+1, quoteslist[i][0]))) > 1996):
-			msg += '```'
-			yield from bot.say(msg)
-			msg = '```[%d] %s\n' % (i+1, quoteslist[i][0])
-		else:  
-			msg += '[%d] %s\n' % (i+1, quoteslist[i][0])
-	if ((len(msg) + len('\n ~ End of Quotes ~```')) < 1996):
-		msg += '\n ~ End of Quotes ~```'
-		yield from bot.say(msg, delete_after=30)
-	else:
-		msg += '```'
-		yield from bot.say(msg, delete_after=30)
-		msg = '```\n ~ End of Quotes ~```'
-		yield from bot.say(msg, delete_after=30)
+def lq(ctx, str1: str=None):
+    if str1 is None:
+        member = ctx.message.author
+        t = (member.id,)
+    else:
+        t = ((str1[3:(len(str1[0])-2)]),)
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    quoteslist = c.execute('SELECT Quote FROM Quotes WHERE ID=?',t).fetchall()
+    msg = "```Quotes: \n"
+    for i in range(len(quoteslist)):
+        if ((len(msg) + len('[%d] %s\n' % (i+1, quoteslist[i][0]))) > 1996):
+            msg += '```'
+            yield from bot.say(msg, delete_after=30)
+            msg = '```[%d] %s\n' % (i+1, quoteslist[i][0])
+        else:  
+            msg += '[%d] %s\n' % (i+1, quoteslist[i][0])
+    if ((len(msg) + len('\n ~ End of Quotes ~```')) < 1996):
+        msg += '\n ~ End of Quotes ~```'
+        yield from bot.say(msg, delete_after=30)
+    else:
+        msg += '```'
+        yield from bot.say(msg, delete_after=30)
+        msg = '```\n ~ End of Quotes ~```'
+        yield from bot.say(msg, delete_after=30)
 
 @bot.command(pass_context=True)
 @asyncio.coroutine
 def delq(ctx):
-	conn = sqlite3.connect(DB_PATH)
-	c = conn.cursor()
-	t = (ctx.message.author.id,)
-	quoteslist = c.execute('SELECT Quote FROM Quotes WHERE ID=?',t).fetchall()
-	if not quoteslist:
-		yield from bot.say('No quotes found.')
-		conn.close()
-		return
-	else:
-		# print the quotes of the user in pages
-		msg = "Please choose a quote you would like to delete.\n\n```"
-		for i in range(len(quoteslist)):
-			if ((len(msg) + len('[%d] %s\n' % (i+1, quoteslist[i][0]))) > 1996):
-				msg += '```'
-				yield from bot.say(msg)
-				msg = '```[%d] %s\n' % (i+1, quoteslist[i][0])
-			else:  
-				msg += '[%d] %s\n' % (i+1, quoteslist[i][0])
-		if ((len(msg) + len('\n[0] Exit without deleting quotes```')) < 1996):
-			msg += '\n[0] Exit without deleting quotes```'
-			yield from bot.say(msg, delete_after=30)
-		else:
-			msg += '```'
-			yield from bot.say(msg, delete_after=30)
-			msg = '```\n[0] Exit without deleting quotes```'
-			yield from bot.say(msg, delete_after=30)
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    t = (ctx.message.author.id,)
+    quoteslist = c.execute('SELECT Quote FROM Quotes WHERE ID=?',t).fetchall()
+    if not quoteslist:
+        yield from bot.say('No quotes found.')
+        conn.close()
+        return
+    else:
+        # print the quotes of the user in pages
+        msg = "Please choose a quote you would like to delete.\n\n```"
+        for i in range(len(quoteslist)):
+            if ((len(msg) + len('[%d] %s\n' % (i+1, quoteslist[i][0]))) > 1996):
+                msg += '```'
+                yield from bot.say(msg, delete_after=30)
+                msg = '```[%d] %s\n' % (i+1, quoteslist[i][0])
+            else:  
+                msg += '[%d] %s\n' % (i+1, quoteslist[i][0])
+        if ((len(msg) + len('\n[0] Exit without deleting quotes```')) < 1996):
+            msg += '\n[0] Exit without deleting quotes```'
+            yield from bot.say(msg, delete_after=30)
+        else:
+            msg += '```'
+            yield from bot.say(msg, delete_after=30)
+            msg = '```\n[0] Exit without deleting quotes```'
+            yield from bot.say(msg, delete_after=30)
 
-	def check(choice):
-		if 0<=int(choice.content)<=(1+len(quoteslist)):
-			return True
-		else:
-			yield from bot.say("Invalid input.")
-			return False
+    def check(choice):
+        if 0<=int(choice.content)<=(1+len(quoteslist)):
+            return True
+        else:
+            yield from bot.say("Invalid input.")
+            return False
 
-	response = yield from bot.wait_for_message(author=ctx.message.author, check=check)
-	choice = int(response.content)
-	if choice==0:
-		yield from bot.say("Exited quote deletion menu.")
-		conn.close()
-		return
-	else:
-		t = (quoteslist[choice-1][0], ctx.message.author.id)
-		c.execute('DELETE FROM Quotes WHERE Quote=? AND ID=?', t)
-		yield from bot.say("Quote successfully deleted.")
-		conn.commit()
-		conn.close()
+    response = yield from bot.wait_for_message(author=ctx.message.author, check=check)
+    choice = int(response.content)
+    if choice==0:
+        yield from bot.say("Exited quote deletion menu.")
+        conn.close()
+        return
+    else:
+        t = (quoteslist[choice-1][0], ctx.message.author.id)
+        c.execute('DELETE FROM Quotes WHERE Quote=? AND ID=?', t)
+        yield from bot.say("Quote successfully deleted.")
+        conn.commit()
+        conn.close()
 
 @bot.event
 @asyncio.coroutine
 def on_reaction_add(reaction,user):
-	# Check for Martlet emoji + upmartletting yourself
+    # Check for Martlet emoji + upmartletting yourself
     if reaction.emoji.id != "240730706303516672" or reaction.message.author == user:
         return
     conn = sqlite3.connect(DB_PATH)
@@ -715,14 +724,14 @@ def on_reaction_add(reaction,user):
 @bot.command(pass_context=True)
 @asyncio.coroutine
 def ranking(ctx):
-	conn = sqlite3.connect(DB_PATH)
-	c = conn.cursor()
-	c.execute("SELECT * FROM Members ORDER BY Upmartlet DESC;")
-	members = c.fetchall()[:7]
-	table = []
-	for (ID, DisplayName, Upmartlet) in members:
-		table.append((DisplayName, Upmartlet))
-	yield from bot.say(ctx.message.channel, '```Java\n'+tabulate(table, headers=["NAME","#"], tablefmt="fancy_grid")+'```', delete_after=30)
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute("SELECT * FROM Members ORDER BY Upmartlet DESC;")
+    members = c.fetchall()[:7]
+    table = []
+    for (ID, DisplayName, Upmartlet) in members:
+        table.append((DisplayName, Upmartlet))
+    yield from bot.say('```Java\n'+tabulate(table, headers=["NAME","#"], tablefmt="fancy_grid")+'```', delete_after=30)
 
 @bot.event
 @asyncio.coroutine
@@ -735,5 +744,15 @@ def on_reaction_remove(reaction,user):
     c.execute('UPDATE Members SET Upmartlet=Upmartlet-1 WHERE ID=?',t)
     conn.commit()
     conn.close()
+
+@bot.command(pass_context=True)
+@asyncio.coroutine
+def mix(ctx, *, inputStr: str=None):
+    if inputStr is None:
+        yield from bot.say()
+    words = inputStr.split()
+    msg = "".join([(c.upper() if random.randint(0, 1) else c.lower()) for c in inputStr])
+    yield from bot.say(msg)
+    yield from bot.delete_message(ctx.message)
 
 bot.run(os.environ.get("DISCORD_TOKEN"))
