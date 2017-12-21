@@ -5,5 +5,7 @@ python:
 
 install: python3 -m pip install -r requirements.txt
 
-script:
- - pytest Main.py
+script: py.test Main.py
+
+notifications:
+ email: false
