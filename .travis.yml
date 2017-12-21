@@ -1,8 +1,11 @@
 language: python
 
 python:
-	- "3.6
+ - "3.6"
 
 install: python3 -m pip install -r requirements.txt
 
-pytest
+script: python3 Main.py
+
+notifications:
+ email: false
