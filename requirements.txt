@@ -1,5 +1,5 @@
-discord.py==0.16.3
-beautifulsoup4==4.5.3
+discord.py==0.16.12
+beautifulsoup4==4.6.0
 sympy==1.0.0
 requests==2.12.4
 cleverbot==1.1.1

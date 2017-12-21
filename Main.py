@@ -57,7 +57,7 @@ def chosenOne(ctx, arg2 : str):
         w, h = draw.textsize(line, font=font)
         draw.text(((MAX_W - w) / 2, current_h), line, font=font)
         current_h += h + pad
-    newlineh, pad = 200, 1
+        newlineh, pad = 200, 1
     for line in lara:
         w, h = draw.textsize(line, font=font)
         draw.text(((MAX_W - w) / 2, newlineh), line, font=font)
@@ -114,7 +114,7 @@ def notsure(ctx, arg1 : str, arg2 : str):
         w, h = draw.textsize(line, font=font)
         draw.text(((MAX_W - w) / 2, current_h), line, font=font)
         current_h += h + pad
-    newlineh, pad = 275, 1
+        newlineh, pad = 275, 1
     for line in lara:
         w, h = draw.textsize(line, font=font)
         draw.text(((MAX_W - w) / 2, newlineh), line, font=font)
@@ -306,6 +306,11 @@ def weather(ctx):
     wind_label = soup.find("dt",string="Wind:")
     wind = wind_label.find_next_sibling().get_text().strip()
     windchill = u"N/A"
+
+    warning_url = "https://weather.gc.ca/warnings/report_e.html?qc67"
+    r = requests.get(warning_url)
+    soup = BeautifulSoup(r.content, "html.parser")
+    r.close()
     try:
         # Get windchill, only if it can be found.
         windchill_label = soup.find("a",string="Wind Chill")
@@ -340,11 +345,11 @@ def course(ctx, *, query: str):
     result = re.compile(fac+r'\s?'+num, re.IGNORECASE|re.DOTALL).search(query)
     if not result:
         yield from bot.say(':warning: Incorrect format. The correct format is `?course <course name>`.')
-    search_term = result.group(1) + '-' + result.group(2)
-    url = "http://www.mcgill.ca/study/2017-2018/courses/%s" % search_term
-    r = requests.get(url)
-    soup = BeautifulSoup(r.content, "html.parser")
-    r.close()
+        search_term = result.group(1) + '-' + result.group(2)
+        url = "http://www.mcgill.ca/study/2017-2018/courses/%s" % search_term
+        r = requests.get(url)
+        soup = BeautifulSoup(r.content, "html.parser")
+        r.close()
 
     # XXX: brute-force parsing at the moment
     title = soup.find_all("h1", {"id": "page-title"})[0].get_text().strip()
@@ -370,7 +375,7 @@ def course(ctx, *, query: str):
     em.add_field(name="Instructor(s)", value=instructors, inline=False)
     for (a, b) in tidbits:
         em.add_field(name=a, value=b, inline=False)
-    yield from bot.send_message(ctx.message.channel, embed=em)
+        yield from bot.send_message(ctx.message.channel, embed=em)
 
 @bot.command(pass_context=True)
 @asyncio.coroutine
@@ -405,10 +410,10 @@ def tex(ctx, *, query: str):
         up = int(len(sp) / 2)
         for i in range(up):
             tex += "\["+sp[2*i+1]+"\]"
-        fn = 'tmp.png'
-        preview(tex, viewer='file', filename=fn, euler=False)
-        yield from bot.send_file(ctx.message.channel, fn)
-        fn.close()
+            fn = 'tmp.png'
+            preview(tex, viewer='file', filename=fn, euler=False)
+            yield from bot.send_file(ctx.message.channel, fn)
+            fn.close()
     else:
         yield from bot.send_message(ctx.message.channel, 'PLEASE USE \'$\' AROUND YOUR LATEX EQUATIONS. CHIRP.')
 
@@ -448,7 +453,7 @@ def search(ctx, *, query: str):
             if(c%24 == 0):
                 yield from bot.send_message(ctx.message.channel, embed=em)
                 em = discord.Embed(title="Courses Found %d / %d" % (c/24+1,len(courses)/24+1), colour=0xDA291C)
-    yield from bot.send_message(ctx.message.channel, embed=em)
+                yield from bot.send_message(ctx.message.channel, embed=em)
     return
 
 @bot.command(pass_context=True)
@@ -464,12 +469,12 @@ def xe(ctx, *, query: str):
         re1 = '([+-]?\\d*\\.\\d+)(?![-+0-9\\.])'
     else:
         re1 = '(\\d+)'
-    re2 = '((?:[a-z][a-z]+))' # Currency FROM
-    re3 = '(to)'
-    re4 = '((?:[a-z][a-z]+))' # Currency TO
-    ws = '(\\s+)' # Whitespace
-    rg = re.compile(re1+ws+re2+ws+re3+ws+re4,re.IGNORECASE|re.DOTALL)
-    m = rg.search(query)
+        re2 = '((?:[a-z][a-z]+))' # Currency FROM
+        re3 = '(to)'
+        re4 = '((?:[a-z][a-z]+))' # Currency TO
+        ws = '(\\s+)' # Whitespace
+        rg = re.compile(re1+ws+re2+ws+re3+ws+re4,re.IGNORECASE|re.DOTALL)
+        m = rg.search(query)
     if m:
         url = 'http://www.xe.com/currencyconverter/convert/?Amount=%s&From=%s&To=%s' % (m.group(1),m.group(3),m.group(7))
         r = requests.get(url)
@@ -542,7 +547,7 @@ def mose(ctx, dollar: float):
     total = dollar//2*3
     if(math.floor(dollar)%2==1):
         total += 1
-    yield from bot.say("$%.2f is worth %d samosas." % (dollar,total))
+        yield from bot.say("$%.2f is worth %d samosas." % (dollar,total))
 
 @bot.event
 @asyncio.coroutine
@@ -555,7 +560,7 @@ def on_message(message):
         yield from bot.send_message(message.channel, "walk without rhythm, and it won't attract the worm.")
     if message.content == "hey":
         yield from bot.send_message(message.channel, "whats going on?")
-    yield from bot.process_commands(message)
+        yield from bot.process_commands(message)
 
 # Quote Database Commands
 @bot.command(pass_context=True)
@@ -592,8 +597,8 @@ def q(str1: str=None, *, str2: str=None):
         if numArgs == 2:    # has query
             args = args.split() 
             t = ((args[0][3:(len(args[0])-1)]), '%'+(' '.join(args[1:]))+'%')
-        args = args.split() 
-        qId = ''
+            args = args.split() 
+            qId = ''
         for i in range(len(args[0])):
             if (args[0][i] in '0123456789'):
                 qId = qId + args[0][i]
@@ -634,10 +639,10 @@ def lq(ctx, str1: str=None):
         t = (member.id,)
     else:
         t = ((str1[3:(len(str1[0])-2)]),)
-    conn = sqlite3.connect(DB_PATH)
-    c = conn.cursor()
-    quoteslist = c.execute('SELECT Quote FROM Quotes WHERE ID=?',t).fetchall()
-    msg = "```Quotes: \n"
+        conn = sqlite3.connect(DB_PATH)
+        c = conn.cursor()
+        quoteslist = c.execute('SELECT Quote FROM Quotes WHERE ID=?',t).fetchall()
+        msg = "```Quotes: \n"
     for i in range(len(quoteslist)):
         if ((len(msg) + len('[%d] %s\n' % (i+1, quoteslist[i][0]))) > 1996):
             msg += '```'
@@ -718,8 +723,8 @@ def on_reaction_add(reaction,user):
         c.execute('INSERT INTO Members VALUES (?,?,?)', t)
     else:
         c.execute('UPDATE Members SET Upmartlet=Upmartlet+1 WHERE ID=?',t)
-    conn.commit()
-    conn.close()
+        conn.commit()
+        conn.close()
 
 @bot.command(pass_context=True)
 @asyncio.coroutine
@@ -731,7 +736,7 @@ def ranking(ctx):
     table = []
     for (ID, DisplayName, Upmartlet) in members:
         table.append((DisplayName, Upmartlet))
-    yield from bot.say('```Java\n'+tabulate(table, headers=["NAME","#"], tablefmt="fancy_grid")+'```', delete_after=30)
+        yield from bot.say('```Java\n'+tabulate(table, headers=["NAME","#"], tablefmt="fancy_grid")+'```', delete_after=30)
 
 @bot.event
 @asyncio.coroutine
@@ -750,9 +755,9 @@ def on_reaction_remove(reaction,user):
 def mix(ctx, *, inputStr: str=None):
     if inputStr is None:
         yield from bot.say()
-    words = inputStr.split()
-    msg = "".join([(c.upper() if random.randint(0, 1) else c.lower()) for c in inputStr])
-    yield from bot.say(msg)
-    yield from bot.delete_message(ctx.message)
+        words = inputStr.split()
+        msg = "".join([(c.upper() if random.randint(0, 1) else c.lower()) for c in inputStr])
+        yield from bot.say(msg)
+        yield from bot.delete_message(ctx.message)
 
 bot.run(os.environ.get("DISCORD_TOKEN"))
