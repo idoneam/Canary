@@ -634,7 +634,7 @@ def lq(ctx, str1: str=None):
         t = (member.id,)
     else:
         t = ((str1[3:(len(str1[0])-2)]),)
-    conn = sqlite3.connect(DB_PATH)DB_PATH
+    conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
     quoteslist = c.execute('SELECT Quote FROM Quotes WHERE ID=?',t).fetchall()
     msg = "```Quotes: \n"
