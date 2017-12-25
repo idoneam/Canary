@@ -31,11 +31,14 @@ DB_PATH = './Martlet.db'
 
 bot = commands.Bot(command_prefix='?')
 
+# LABEL: Functioning
 @bot.event
 @asyncio.coroutine
 def on_ready():
     print('Logged in as {0} ({1})'.format(bot.user.name, bot.user.id))
 
+
+# LABEL: Memes
 @bot.command(pass_context=True)
 @asyncio.coroutine
 def chosenOne(ctx, arg2 : str):
@@ -68,7 +71,9 @@ def chosenOne(ctx, arg2 : str):
 
     yield from bot.send_file(ctx.message.channel, path)
     yield from bot.delete_message(ctx.message) 
-    
+
+
+# LABEL: Memes
 @bot.command(pass_context=True)
 @asyncio.coroutine
 def isMayo(ctx, arg1 : str):
@@ -94,7 +99,8 @@ def isMayo(ctx, arg1 : str):
     yield from bot.send_file(ctx.message.channel, path)
     yield from bot.delete_message(ctx.message) 
     
-    
+
+# LABEL: Memes
 @bot.command(pass_context=True)
 @asyncio.coroutine
 def notsure(ctx, arg1 : str, arg2 : str):
@@ -139,6 +145,7 @@ def gifs(ctx):
     #yield from bot.delete_message(ctx.message)
 """        
 
+# LABEL: Memes    
 @bot.command(pass_context=True)
 @asyncio.coroutine
 def lenny(ctx):
@@ -148,7 +155,8 @@ def lenny(ctx):
     yield from bot.send_message(ctx.message.channel, "( ͡° ͜ʖ ͡°) ")
     yield from bot.delete_message(ctx.message)  
 
-    
+
+# LABEL: Memes        
 @bot.command(pass_context=True)
 @asyncio.coroutine
 def awyiss(ctx):
@@ -158,6 +166,7 @@ def awyiss(ctx):
     yield from bot.send_message(ctx.message.channel, "http://gph.is/294XA0F")
     yield from bot.delete_message(ctx.message)       
 
+# LABEL: Memes
 @bot.command(pass_context=True)
 @asyncio.coroutine    
 def gohere(ctx):
@@ -167,6 +176,7 @@ def gohere(ctx):
     yield from bot.send_message(ctx.message.channel, "http://gph.is/1cN9wO1")
     yield from bot.delete_message(ctx.message)     
 
+# LABEL: Memes    
 @bot.command(pass_context=True)
 @asyncio.coroutine    
 def todo(ctx):
@@ -176,6 +186,7 @@ def todo(ctx):
     yield from bot.send_message(ctx.message.channel, "http://gph.is/2dnMUJ6")
     yield from bot.delete_message(ctx.message)    
 
+# LABEL: Memes   
 @bot.command(pass_context=True)
 @asyncio.coroutine    
 def love(ctx):
@@ -185,6 +196,7 @@ def love(ctx):
     yield from bot.send_message(ctx.message.channel, "http://gph.is/2eePP6k")
     yield from bot.delete_message(ctx.message)     
 
+# LABEL: Memes    
 @bot.command(pass_context=True)
 @asyncio.coroutine    
 def tunak(ctx):
@@ -194,6 +206,7 @@ def tunak(ctx):
     yield from bot.send_message(ctx.message.channel, "http://i.imgur.com/rNNLyjK.gif")
     yield from bot.delete_message(ctx.message)
 
+# LABEL: Memes    
 @bot.command(pass_context=True)
 @asyncio.coroutine    
 def bb8(ctx):
@@ -203,6 +216,7 @@ def bb8(ctx):
     yield from bot.send_message(ctx.message.channel, "http://i.imgur.com/SUvaUM2.gif")
     yield from bot.delete_message(ctx.message)
 
+# LABEL: Memes    
 @bot.command(pass_context=True)
 @asyncio.coroutine    
 def longtime(ctx):
@@ -212,6 +226,7 @@ def longtime(ctx):
     yield from bot.send_message(ctx.message.channel, "http://i.imgur.com/e1T1xcq.mp4")
     yield from bot.delete_message(ctx.message)
 
+# LABEL: Memes    
 @bot.command(pass_context=True)
 @asyncio.coroutine    
 def overhead(ctx):
@@ -221,6 +236,7 @@ def overhead(ctx):
     yield from bot.send_message(ctx.message.channel, "http://i.imgur.com/xCS121c.gif")
     yield from bot.delete_message(ctx.message)   
 
+# LABEL: Memes    
 @bot.command(pass_context=True)
 @asyncio.coroutine    
 def sideglance(ctx):
@@ -230,6 +246,7 @@ def sideglance(ctx):
     yield from bot.send_message(ctx.message.channel, "http://i.imgur.com/xc6gMIo.gif")
     yield from bot.delete_message(ctx.message)
 
+# LABEL: Memes    
 @bot.command(pass_context=True)
 @asyncio.coroutine    
 def thonk(ctx):
@@ -239,6 +256,7 @@ def thonk(ctx):
     yield from bot.send_message(ctx.message.channel, "https://i.imgur.com/VADGUwj.gifv")
     yield from bot.delete_message(ctx.message)
 
+# LABEL: Memes    
 @bot.command(pass_context=True)
 @asyncio.coroutine    
 def ye(ctx):
@@ -248,6 +266,7 @@ def ye(ctx):
     yield from bot.send_message(ctx.message.channel, "http://i.imgur.com/iSMh7zO.gif")
     yield from bot.delete_message(ctx.message)    
 
+# LABEL: Memes    
 @bot.command(pass_context=True)
 @asyncio.coroutine    
 def dealwithit(ctx):
@@ -256,7 +275,8 @@ def dealwithit(ctx):
     """
     yield from bot.send_message(ctx.message.channel, "http://i.imgur.com/5jzN8zV.mp4")
     yield from bot.delete_message(ctx.message)
-    
+
+# LABEL: Memes        
 @bot.command(pass_context=True)
 @asyncio.coroutine    
 def lmao(ctx):
@@ -265,18 +285,21 @@ def lmao(ctx):
     """
     yield from bot.send_message(ctx.message.channel, "http://i.imgur.com/o5Cc3i2.mp4")
     yield from bot.delete_message(ctx.message)    
-    
+
+# LABEL: Memes       
 @bot.command()
 @asyncio.coroutine
 def chirp():
     """:^)"""
     yield from bot.say('CHIRP CHIRP')
     
+# LABEL: Utility    
 @bot.command()
 @asyncio.coroutine
 def exam():
     yield from bot.say('https://www.mcgill.ca/students/exams/files/students.exams/december_2017_final_schedule_with_room_locations_12.pdf')
 
+# LABEL: Utility
 @bot.command(pass_context=True)
 @asyncio.coroutine
 def weather(ctx):
@@ -323,12 +346,14 @@ def weather(ctx):
     weather_now.add_field(name="Wind Chill", value=windchill, inline=True)
     yield from bot.send_message(ctx.message.channel, embed=weather_now)
 
+# LABEL: Utility
 @bot.command(pass_context=True)
 @asyncio.coroutine
 def wttr(ctx):
     em = discord.Embed(title="Weather in Montreal").set_image(url='http://wttr.in/Montreal_2mpq_lang=en.png?_=%d' % round(time.time()))
     yield from bot.send_message(ctx.message.channel, embed=em)
 
+# LABEL: Utility
 @bot.command(pass_context=True)
 @asyncio.coroutine
 def course(ctx, *, query: str):
@@ -372,6 +397,7 @@ def course(ctx, *, query: str):
         em.add_field(name=a, value=b, inline=False)
     yield from bot.send_message(ctx.message.channel, embed=em)
 
+# LABEL: Utility
 @bot.command(pass_context=True)
 @asyncio.coroutine
 def urban(ctx, *, query: str):
@@ -391,6 +417,7 @@ def urban(ctx, *, query: str):
     # em.add_field(name="Examples", value=examples)
     yield from bot.send_message(ctx.message.channel, embed=em)
 
+# LABEL: Utility
 @bot.command(pass_context=True)
 @asyncio.coroutine
 def tex(ctx, *, query: str):
@@ -412,6 +439,7 @@ def tex(ctx, *, query: str):
     else:
         yield from bot.send_message(ctx.message.channel, 'PLEASE USE \'$\' AROUND YOUR LATEX EQUATIONS. CHIRP.')
 
+# LABEL: Utility
 @bot.command(pass_context=True)
 @asyncio.coroutine
 def search(ctx, *, query: str):
@@ -451,6 +479,7 @@ def search(ctx, *, query: str):
     yield from bot.send_message(ctx.message.channel, embed=em)
     return
 
+# LABEL: Utility
 @bot.command(pass_context=True)
 @asyncio.coroutine
 def xe(ctx, *, query: str):
@@ -483,6 +512,7 @@ def xe(ctx, *, query: str):
         The correct format is `?xe <AMOUNT> <CURRENCY> to <CURRENCY>`.
         ie. `?xe 60.00 CAD to EUR`""")
 
+# LABEL: Functioning
 @bot.command(pass_context=True)
 @asyncio.coroutine
 def restart():
@@ -490,6 +520,8 @@ def restart():
     python = sys.executable
     os.execl(python, python, *sys.argv)
 
+# LABEL: Memes
+# TODO: Is this the right label?
 @bot.command(pass_context=True)
 @asyncio.coroutine
 def trivia(ctx, questions: int=10):
@@ -529,6 +561,18 @@ def trivia(ctx, questions: int=10):
         else:
             yield from bot.say("Time's up!\n**Answer: **%s" % answer)
 
+# LABEL: Memes
+@bot.command(pass_context=True)
+@asyncio.coroutine
+def mix(ctx, *, inputStr: str=None):
+    if inputStr is None:
+        yield from bot.say()
+    words = inputStr.split()
+    msg = "".join([(c.upper() if random.randint(0, 1) else c.lower()) for c in inputStr])
+    yield from bot.say(msg)
+    yield from bot.delete_message(ctx.message)
+
+# LABEL: Utility
 @bot.command(pass_context=True)
 @asyncio.coroutine
 def mose(ctx, dollar: float):
@@ -544,6 +588,7 @@ def mose(ctx, dollar: float):
         total += 1
     yield from bot.say("$%.2f is worth %d samosas." % (dollar,total))
 
+# LABEL: Functioning
 @bot.event
 @asyncio.coroutine
 def on_message(message):
@@ -557,7 +602,7 @@ def on_message(message):
         yield from bot.send_message(message.channel, "whats going on?")
     yield from bot.process_commands(message)
 
-# Quote Database Commands
+# Quote Database Commands 
 @bot.command(pass_context=True)
 @asyncio.coroutine
 def addq(ctx, member: discord.Member, *, quote: str):
@@ -745,14 +790,6 @@ def on_reaction_remove(reaction,user):
     conn.commit()
     conn.close()
 
-@bot.command(pass_context=True)
-@asyncio.coroutine
-def mix(ctx, *, inputStr: str=None):
-    if inputStr is None:
-        yield from bot.say()
-    words = inputStr.split()
-    msg = "".join([(c.upper() if random.randint(0, 1) else c.lower()) for c in inputStr])
-    yield from bot.say(msg)
-    yield from bot.delete_message(ctx.message)
+
 
 bot.run(os.environ.get("DISCORD_TOKEN"))
