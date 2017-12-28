@@ -23,6 +23,9 @@ class Db():
     @commands.command(pass_context=True)
     @asyncio.coroutine
     def addq(self, ctx, member: discord.Member, *, quote: str):
+        """
+        Add a quote to a user's quote database.
+        """
         conn = sqlite3.connect(DB_PATH)
         c = conn.cursor()
         t = (member.id, member.name, quote, ctx.message.timestamp.strftime("%c"))
@@ -33,7 +36,10 @@ class Db():
 
     @commands.command()
     @asyncio.coroutine
-    def q(self, str1: str=None, *, str2: str=None):   
+    def q(self, str1: str=None, *, str2: str=None):
+        """
+        Retrieve a quote with a specified keyword / mention.
+        """
         conn = sqlite3.connect(DB_PATH)
         c = conn.cursor()
         if str1 is None:    # no argument
@@ -91,6 +97,9 @@ class Db():
     @commands.command(pass_context=True)
     @asyncio.coroutine
     def lq(self, ctx, str1: str=None):
+        """
+        List your quotes or the quotes of a mentioned user.
+        """
         if str1 is None:
             member = ctx.message.author
             t = (member.id,)
@@ -119,6 +128,9 @@ class Db():
     @commands.command(pass_context=True)
     @asyncio.coroutine
     def delq(self, ctx):
+        """
+        Delete a specific quote from your quotes.
+        """
         conn = sqlite3.connect(DB_PATH)
         c = conn.cursor()
         t = (ctx.message.author.id,)
@@ -169,6 +181,9 @@ class Db():
     @commands.command(pass_context=True)
     @asyncio.coroutine
     def ranking(self, ctx):
+        """
+        Upmartlet Rankings! :^)
+        """
         conn = sqlite3.connect(DB_PATH)
         c = conn.cursor()
         c.execute("SELECT * FROM Members ORDER BY Upmartlet DESC;")
