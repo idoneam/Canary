@@ -77,16 +77,6 @@ class Memes():
  
     @commands.command(pass_context=True)
     @asyncio.coroutine    
-    def overhead(self, ctx):
-        """
-        Not actually what this gif does...
-        """
-        yield from self.bot.send_message(ctx.message.channel, "http://i.imgur.com/xCS121c.gif")
-        yield from self.bot.delete_message(ctx.message)   
-
- 
-    @commands.command(pass_context=True)
-    @asyncio.coroutine    
     def thonk(self, ctx):
         """
         when thonking consumes you
