@@ -28,114 +28,12 @@ class Memes():
 
     @commands.command(pass_context=True)
     @asyncio.coroutine
-    def chosenOne(self, ctx, arg2 : str):
-        '''
-        ObiWan feeling the pain, ?chosenOne "botString"
-        '''
-        
-        arg1 = "You were the chosen one!"
-        para = textwrap.wrap(arg1, width=27)
-        lara = textwrap.wrap(arg2, width=27)
-
-        im = Image.open("images/chosenOne.png")
-        MAX_W, MAX_H = im.size
-        draw = ImageDraw.Draw(im)
-        font = ImageFont.truetype("fonts/impact/impact.ttf", 40) #Need a outline font still
-
-        current_h, pad = 40, 1 #Determines the starting line, and the spacing between lines
-        for line in para:
-            w, h = draw.textsize(line, font=font)
-            draw.text(((MAX_W - w) / 2, current_h), line, font=font)
-            current_h += h + pad
-        newlineh, pad = 200, 1
-        for line in lara:
-            w, h = draw.textsize(line, font=font)
-            draw.text(((MAX_W - w) / 2, newlineh), line, font=font)
-            newlineh += h + pad    
-
-        im.save('newchosenOne.png')
-        path = "newchosenOne.png"
-
-        yield from self.bot.send_file(ctx.message.channel, path)
-        yield from self.bot.delete_message(ctx.message) 
-
-
-    @commands.command(pass_context=True)
-    @asyncio.coroutine
-    def isMayo(self, ctx, arg1 : str):
-        '''
-        Patrick's question, ?isMayo "text here"
-        '''
-        para = textwrap.wrap(arg1, width=27)
-
-        im = Image.open("images/isMayo.png")
-        MAX_W, MAX_H = im.size
-        draw = ImageDraw.Draw(im)
-        font = ImageFont.truetype("fonts/impact/impact.ttf", 40) #Need a outline font still
-
-        current_h, pad = 40, 1 #Determines the starting line, and the spacing between lines
-        for line in para:
-            w, h = draw.textsize(line, font=font)
-            draw.text(((MAX_W - w) / 2, current_h), line, font=font)
-            current_h += h + pad  
-
-        im.save('newisMayo.png')
-        path = "newisMayo.png"
-
-        yield from self.bot.send_file(ctx.message.channel, path)
-        yield from self.bot.delete_message(ctx.message) 
-        
-
-    @commands.command(pass_context=True)
-    @asyncio.coroutine
-    def notsure(self, ctx, arg1 : str, arg2 : str):
-        '''
-        not sure meme, ?notsure "topString" "botString"
-        '''
-        para = textwrap.wrap(arg1, width=27)
-        lara = textwrap.wrap(arg2, width=27)
-
-        im = Image.open("images/notsure.png")
-        MAX_W, MAX_H = im.size
-        draw = ImageDraw.Draw(im)
-        font = ImageFont.truetype("fonts/impact/impact.ttf", 40) #Need a outline font still
-
-        current_h, pad = 40, 1 #Determines the starting line, and the spacing between lines
-        for line in para:
-            w, h = draw.textsize(line, font=font)
-            draw.text(((MAX_W - w) / 2, current_h), line, font=font)
-            current_h += h + pad
-        newlineh, pad = 275, 1
-        for line in lara:
-            w, h = draw.textsize(line, font=font)
-            draw.text(((MAX_W - w) / 2, newlineh), line, font=font)
-            newlineh += h + pad    
-
-        im.save('newnotsure.png')
-        path = "newnotsure.png"
-
-        yield from self.bot.send_file(ctx.message.channel, path)
-        yield from self.bot.delete_message(ctx.message)
-
-
-    @commands.command(pass_context=True)
-    @asyncio.coroutine
     def lenny(self, ctx):
         """
         Lenny face
         """
         yield from self.bot.send_message(ctx.message.channel, "( ͡° ͜ʖ ͡°) ")
         yield from self.bot.delete_message(ctx.message)  
-
-       
-    @commands.command(pass_context=True)
-    @asyncio.coroutine
-    def awyiss(self, ctx):
-        """
-        aw yiss mother fucking breadcrumbs
-        """
-        yield from self.bot.send_message(ctx.message.channel, "http://gph.is/294XA0F")
-        yield from self.bot.delete_message(ctx.message)       
 
 
     @commands.command(pass_context=True)
@@ -145,28 +43,7 @@ class Memes():
         for future mcgillians
         """
         yield from self.bot.send_message(ctx.message.channel, "http://gph.is/1cN9wO1")
-        yield from self.bot.delete_message(ctx.message)     
-
-  
-    @commands.command(pass_context=True)
-    @asyncio.coroutine    
-    def todo(self, ctx):
-        """
-        when its the weekend
-        """
-        yield from self.bot.send_message(ctx.message.channel, "http://gph.is/2dnMUJ6")
-        yield from self.bot.delete_message(ctx.message)    
-
- 
-    @commands.command(pass_context=True)
-    @asyncio.coroutine    
-    def love(self, ctx):
-        """
-        back off yo
-        """
-        yield from self.bot.send_message(ctx.message.channel, "http://gph.is/2eePP6k")
-        yield from self.bot.delete_message(ctx.message)     
-
+        yield from self.bot.delete_message(ctx.message)
   
     @commands.command(pass_context=True)
     @asyncio.coroutine    
@@ -210,32 +87,12 @@ class Memes():
  
     @commands.command(pass_context=True)
     @asyncio.coroutine    
-    def sideglance(self, ctx):
-        """
-        when even bernie sanders hates you
-        """
-        yield from self.bot.send_message(ctx.message.channel, "http://i.imgur.com/xc6gMIo.gif")
-        yield from self.bot.delete_message(ctx.message)
-
- 
-    @commands.command(pass_context=True)
-    @asyncio.coroutine    
     def thonk(self, ctx):
         """
         when thonking consumes you
         """
         yield from self.bot.send_message(ctx.message.channel, "https://i.imgur.com/VADGUwj.gifv")
         yield from self.bot.delete_message(ctx.message)
-
-   
-    @commands.command(pass_context=True)
-    @asyncio.coroutine    
-    def ye(self, ctx):
-        """
-        Better Call Saul is awesome
-        """
-        yield from self.bot.send_message(ctx.message.channel, "http://i.imgur.com/iSMh7zO.gif")
-        yield from self.bot.delete_message(ctx.message)    
 
    
     @commands.command(pass_context=True)
