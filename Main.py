@@ -30,9 +30,10 @@ def load(extension_name: str):
         bot.load_extension(extension_name)
     except (AttributeError, ImportError) as e:
         yield from bot.say("```{}: {}\n```".format(type(e).__name__,str(e)))
+
         return
     yield from bot.say("{} loaded.".format(extension_name))
-
+    
 
 @bot.command()
 @asyncio.coroutine
@@ -42,7 +43,7 @@ def unload(extension_name: str):
     '''
     bot.unload_extension(extension_name)
     yield from bot.say("Unloaded {}.".format(extension_name))
-
+    
 
 @bot.command(pass_context=True)
 @asyncio.coroutine
@@ -66,9 +67,9 @@ def on_reaction_add(reaction,user):
         c.execute('INSERT INTO Members VALUES (?,?,?)', t)
     else:
         c.execute('UPDATE Members SET Upmartlet=Upmartlet+1 WHERE ID=?',t)
-    conn.commit()
-    conn.close()
-
+        conn.commit()
+        conn.close()
+        
 
 @bot.event
 @asyncio.coroutine
