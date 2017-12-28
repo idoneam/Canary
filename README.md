@@ -20,3 +20,6 @@ In your terminal, export your Discord token as an environment variable.
 $ export DISCORD_TOKEN='your-token-here'
 ```
 You will have to do this each time you restart your shell.
+
+## Running the bot
+Run `python3 Main.py` in your shell. Make sure DB_PATH in db.py is set correctly and that the DB file exists.
