@@ -37,39 +37,60 @@ class Helpers():
         r.close()
         # Get date
         observed_label = soup.find("dt",string="Date: ")
-        observed = observed_label.find_next_sibling().get_text().rstrip()
         # Get temperature
         temperature_label = soup.find("dt",string="Temperature:")
-        temperature = temperature_label.find_next_sibling().get_text().strip()
         # Get condition
         condition_label = soup.find("dt",string="Condition:")
-        condition = condition_label.find_next_sibling().get_text().strip()
         # Get pressure
         pressure_label = soup.find("dt",string="Pressure:")
-        pressure = pressure_label.find_next_sibling().get_text().strip()
         # Get tendency
         tendency_label = soup.find("dt",string="Tendency:")
-        tendency = tendency_label.find_next_sibling().get_text().strip()
         # Get wind
         wind_label = soup.find("dt",string="Wind:")
-        wind = wind_label.find_next_sibling().get_text().strip()
-        windchill = u"N/A"
+        # Get windchill, only if it can be found.
         try:
-            # Get windchill, only if it can be found.
             windchill_label = soup.find("a",string="Wind Chill")
             windchill = windchill_label.find_next().get_text().strip() + u"\xb0C"
         except:
-            pass
+            windchill = u"N/A"
 
-        # weather_now = u"Conditions observed at: **%s**.\nTemperature: **%s**\nCondition: **%s**\nPressure: **%s**\nTendency: **%s**\nWind speed: **%s**\nWind chill: **%s**" % (observed,temperature,condition,pressure,tendency,wind,windchill)
-        weather_now = discord.Embed(title='Current Weather', description='Conditions observed at %s' % observed, colour=0x7EC0EE)
-        weather_now.add_field(name="Temperature", value=temperature, inline=True)
-        weather_now.add_field(name="Condition", value=condition, inline=True)
-        weather_now.add_field(name="Pressure", value=pressure, inline=True)
-        weather_now.add_field(name="Tendency", value=tendency, inline=True)
-        weather_now.add_field(name="Wind Speed", value=wind, inline=True)
+        weather_now = discord.Embed(title='Current Weather', description='Conditions observed at %s' % observed_label.find_next_sibling().get_text().rstrip(), colour=0x7EC0EE)
+        weather_now.add_field(name="Temperature", value=temperature_label.find_next_sibling().get_text().strip(), inline=True)
+        weather_now.add_field(name="Condition", value=condition_label.find_next_sibling().get_text().strip(), inline=True)
+        weather_now.add_field(name="Pressure", value=pressure_label.find_next_sibling().get_text().strip(), inline=True)
+        weather_now.add_field(name="Tendency", value=tendency_label.find_next_sibling().get_text().strip(), inline=True)
+        weather_now.add_field(name="Wind Speed", value=wind_label.find_next_sibling().get_text().strip(), inline=True)
         weather_now.add_field(name="Wind Chill", value=windchill, inline=True)
+
+        # Weather alerts
+
+        alert_url = "https://weather.gc.ca/warnings/report_e.html?qc67"
+        r_alert = requests.get(alert_url)
+        alert_soup = BeautifulSoup(r_alert.content, "html.parser")
+        # Exists
+        alert_title = alert_soup.find("h1",string=re.compile("Alerts.*"))
+        # Only gets first <p> of warning. Subsequent paragraphs are ignored.
+        try:
+            alert_category = alert_title.find_next("h2")
+            alert_date = alert_category.find_next("span")
+            alert_heading = alert_date.find_next("strong")
+            # This is a string for some reason.
+            alert_location = alert_heading.find_next(string=re.compile("Montréal.*"))
+            # Only gets first <p> of warning. Subsequent paragraphs are ignored
+            alert_content = alert_location.find_next("p").get_text().strip()
+            alert_content = ". ".join(alert_content.split(".")).strip()
+
+            weather_alert = discord.Embed(title=alert_title.get_text().strip(), description="**%s** at %s" % (alert_category.get_text().strip(),alert_date.get_text().strip()), colour=0xFF0000)
+            weather_alert.add_field(name=alert_heading.get_text().strip(), value="**%s**\n%s" %(alert_location.strip(),alert_content), inline=True)
+            
+        except:
+            weather_alert = discord.Embed(title=alert_title.get_text().strip(), description="No alerts in effect.", colour=0xFF0000)
+
+        # TODO Finish final message. Test on no-alert condition.
+        
+        # Sending final message
         yield from self.bot.send_message(ctx.message.channel, embed=weather_now)
+        yield from self.bot.send_message(ctx.message.channel, embed=weather_alert)
 
 
     @commands.command(pass_context=True)
