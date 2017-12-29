@@ -37,36 +37,29 @@ class Helpers():
         r.close()
         # Get date
         observed_label = soup.find("dt",string="Date: ")
-        observed = observed_label.find_next_sibling().get_text().rstrip()
         # Get temperature
         temperature_label = soup.find("dt",string="Temperature:")
-        temperature = temperature_label.find_next_sibling().get_text().strip()
         # Get condition
         condition_label = soup.find("dt",string="Condition:")
-        condition = condition_label.find_next_sibling().get_text().strip()
         # Get pressure
         pressure_label = soup.find("dt",string="Pressure:")
-        pressure = pressure_label.find_next_sibling().get_text().strip()
         # Get tendency
         tendency_label = soup.find("dt",string="Tendency:")
-        tendency = tendency_label.find_next_sibling().get_text().strip()
         # Get wind
         wind_label = soup.find("dt",string="Wind:")
-        wind = wind_label.find_next_sibling().get_text().strip()
         # Get windchill, only if it can be found.
-        windchill = u"N/A"
         try:
             windchill_label = soup.find("a",string="Wind Chill")
             windchill = windchill_label.find_next().get_text().strip() + u"\xb0C"
         except:
-            pass
+            windchill = u"N/A"
 
-        weather_now = discord.Embed(title='Current Weather', description='Conditions observed at %s' % observed, colour=0x7EC0EE)
-        weather_now.add_field(name="Temperature", value=temperature, inline=True)
-        weather_now.add_field(name="Condition", value=condition, inline=True)
-        weather_now.add_field(name="Pressure", value=pressure, inline=True)
-        weather_now.add_field(name="Tendency", value=tendency, inline=True)
-        weather_now.add_field(name="Wind Speed", value=wind, inline=True)
+        weather_now = discord.Embed(title='Current Weather', description='Conditions observed at %s' % observed_label.find_next_sibling().get_text().rstrip(), colour=0x7EC0EE)
+        weather_now.add_field(name="Temperature", value=temperature_label.find_next_sibling().get_text().strip(), inline=True)
+        weather_now.add_field(name="Condition", value=condition_label.find_next_sibling().get_text().strip(), inline=True)
+        weather_now.add_field(name="Pressure", value=pressure_label.find_next_sibling().get_text().strip(), inline=True)
+        weather_now.add_field(name="Tendency", value=tendency_label.find_next_sibling().get_text().strip(), inline=True)
+        weather_now.add_field(name="Wind Speed", value=wind_label.find_next_sibling().get_text().strip(), inline=True)
         weather_now.add_field(name="Wind Chill", value=windchill, inline=True)
 
         # Weather alerts
