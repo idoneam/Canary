@@ -69,6 +69,23 @@ class Helpers():
         weather_now.add_field(name="Tendency", value=tendency, inline=True)
         weather_now.add_field(name="Wind Speed", value=wind, inline=True)
         weather_now.add_field(name="Wind Chill", value=windchill, inline=True)
+
+        # Weather alerts
+        
+        alert_url = "https://weather.gc.ca/warnings/report_e.html?qc67"
+        r_alert = requests.get(url)
+        alert_soup = BeautifulSoup(r_alert.content, "html.parser")
+        alert_title = soup.find("h1",string=re.compile("Alerts.*"))
+        alert_category = alert_title.find_next("h2")
+        alert_date = alert_category.find_next("span")
+        alert_heading = alert_date.find_next("strong")
+        alert_location = alert_heading.find_next(string=re.compile("Montréal.*"))
+        # Only gets first <p> of warning. Subsequent paragraphs are ignored.
+        alert_content = alert_location.find_next("p")
+
+        # TODO Finish final message. Test on no-alert condition.
+        
+        # Sending final message
         yield from self.bot.send_message(ctx.message.channel, embed=weather_now)
 
 
