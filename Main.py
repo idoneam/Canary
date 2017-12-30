@@ -21,6 +21,7 @@ def on_ready():
 
 
 @bot.command()
+@commands.has_any_role("Discord Moderator")
 @asyncio.coroutine
 def load(extension_name: str):
     '''
@@ -36,6 +37,7 @@ def load(extension_name: str):
     
 
 @bot.command()
+@commands.has_any_role("Discord Moderator")
 @asyncio.coroutine
 def unload(extension_name: str):
     '''
@@ -45,17 +47,23 @@ def unload(extension_name: str):
     yield from bot.say("Unloaded {}.".format(extension_name))
     
 
-@bot.command(pass_context=True)
+@bot.command()
 @asyncio.coroutine
 def restart():
+    '''
+    Restart the bot
+    '''
     yield from bot.say('https://streamable.com/dli1')
     python = sys.executable
     os.execl(python, python, *sys.argv)
 
 
-@bot.command(pass_context=True)
+@bot.command()
 @asyncio.coroutine
 def update():
+    '''
+    Update the bot by pulling changes from the git repository
+    '''
     yield from bot.say('https://streamable.com/c7s2o')
     os.system('git pull')
     
