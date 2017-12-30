@@ -14,13 +14,6 @@ from sympy import preview
 import re, os, sys, random, math, time
 from html import unescape
 
-# Pillow for image manipulation
-import PIL
-from PIL import ImageFont
-from PIL import Image
-from PIL import ImageDraw
-import textwrap
-
 class Memes():
     def __init__(self, bot):
         self.bot = bot
