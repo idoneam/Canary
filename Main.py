@@ -53,6 +53,13 @@ def restart():
     os.execl(python, python, *sys.argv)
 
 
+@bot.command(pass_context=True)
+@asyncio.coroutine
+def update():
+    yield from bot.say('https://streamable.com/c7s2o')
+    os.system('git pull')
+    
+
 @bot.event
 @asyncio.coroutine
 def on_reaction_add(reaction,user):
