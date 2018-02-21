@@ -1,4 +1,4 @@
-# Martlet
+# Canary
 Python3 Discord bot.
 
 ## Installation
