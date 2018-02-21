@@ -1,5 +1,5 @@
 # Martlet
-Python3 Discord bot for McGill
+Python3 Discord bot.
 
 ## Installation
 
