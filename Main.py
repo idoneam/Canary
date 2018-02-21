@@ -9,9 +9,9 @@ import asyncio
 import os, sys
 
 # List the extensions (modules) that should be loaded on startup.
-startup= ["db", "memes", "helpers"]
+startup = ["db", "memes", "helpers"]
 
-bot=commands.Bot(command_prefix='?')
+bot = commands.Bot(command_prefix='?')
 
 
 @bot.event
@@ -30,11 +30,11 @@ def load(extension_name: str):
     try:
         bot.load_extension(extension_name)
     except (AttributeError, ImportError) as e:
-        yield from bot.say("```{}: {}\n```".format(type(e).__name__,str(e)))
+        yield from bot.say("```{}: {}\n```".format(type(e).__name__, str(e)))
 
         return
     yield from bot.say("{} loaded.".format(extension_name))
-    
+
 
 @bot.command()
 @commands.has_any_role("Discord Moderator")
