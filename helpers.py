@@ -11,8 +11,9 @@ from bs4 import BeautifulSoup
 
 # Other utilities
 from sympy import preview
-import re, os, sys, random, math, time
-from html import unescape
+import re
+import math
+import time
 
 
 class Helpers():
@@ -22,8 +23,7 @@ class Helpers():
     @commands.command()
     @asyncio.coroutine
     def exam(self):
-        yield from self.bot.say('https://www.mcgill.ca/students/exams/files/students.exams/december_2017_final_schedule_with_room_locations_12.pdf')
-
+        yield from self.bot.say('https://www.mcgill.ca/students/exams/files/students.exams/final_april_2018_exam_schedulef22.pdf')
 
     @commands.command(pass_context=True)
     @asyncio.coroutine
@@ -36,20 +36,20 @@ class Helpers():
         soup = BeautifulSoup(r.content, "html.parser")
         r.close()
         # Get date
-        observed_label = soup.find("dt",string="Date: ")
+        observed_label = soup.find("dt", string="Date: ")
         # Get temperature
-        temperature_label = soup.find("dt",string="Temperature:")
+        temperature_label = soup.find("dt", string="Temperature:")
         # Get condition
-        condition_label = soup.find("dt",string="Condition:")
+        condition_label = soup.find("dt", string="Condition:")
         # Get pressure
-        pressure_label = soup.find("dt",string="Pressure:")
+        pressure_label = soup.find("dt", string="Pressure:")
         # Get tendency
-        tendency_label = soup.find("dt",string="Tendency:")
+        tendency_label = soup.find("dt", string="Tendency:")
         # Get wind
-        wind_label = soup.find("dt",string="Wind:")
+        wind_label = soup.find("dt", string="Wind:")
         # Get windchill, only if it can be found.
         try:
-            windchill_label = soup.find("a",string="Wind Chill")
+            windchill_label = soup.find("a", string="Wind Chill")
             windchill = windchill_label.find_next().get_text().strip() + u"\xb0C"
         except:
             windchill = u"N/A"
