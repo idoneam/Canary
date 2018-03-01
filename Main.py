@@ -5,13 +5,27 @@ import discord
 from discord.ext import commands
 import asyncio
 
+#for database
+import sqlite3
+
+# logger
+import logging
+
 # Other utilities
 import os, sys
 
 # List the extensions (modules) that should be loaded on startup.
 startup = ["db", "memes", "helpers"]
+DB_PATH = './Martlet.db'
 
 bot = commands.Bot(command_prefix='?')
+
+# Logging configuration
+logger = logging.getLogger('discord')
+logger.setLevel(logging.ERROR)
+handler = logging.FileHandler(filename='discord.log', encoding='utf-8', mode = 'w')
+handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
+logger.addHandler(handler)
 
 
 @bot.event
@@ -72,7 +86,7 @@ def update():
 @asyncio.coroutine
 def on_reaction_add(reaction,user):
     # Check for Martlet emoji + upmartletting yourself
-    if reaction.emoji.id != "240730706303516672" or reaction.message.author == user:
+    if reaction.emoji.name != "upmartlet" or reaction.author.user == user:
         return
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
@@ -80,6 +94,8 @@ def on_reaction_add(reaction,user):
     if not c.execute('SELECT * FROM Members WHERE ID=?', t).fetchall():
         t = (reaction.message.author.id, reaction.message.author.name, 1)
         c.execute('INSERT INTO Members VALUES (?,?,?)', t)
+        conn.commit()
+        conn.close()
     else:
         c.execute('UPDATE Members SET Upmartlet=Upmartlet+1 WHERE ID=?',t)
         conn.commit()
