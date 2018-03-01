@@ -86,6 +86,8 @@ def update():
 @asyncio.coroutine
 def on_reaction_add(reaction,user):
     # Check for Martlet emoji + upmartletting yourself
+    if not reaction.custom_emoji:
+        return
     if reaction.emoji.name != "upmartlet" or reaction.message.author == user:
         return
     conn = sqlite3.connect(DB_PATH)
