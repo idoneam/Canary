@@ -48,8 +48,14 @@ class Db():
             quote = random.choice(quotes)
             Name = c.execute('SELECT Name FROM Quotes WHERE Quote LIKE ?',
                              quote).fetchall()[0][0]
-            yield from self.bot.say("%(ID)s :mega: %(quote)s" %
-                                    {"ID": Name, "quote": quote[0]})
+            quote_split = quote[0].replace('"', '')
+            if (len(quote_split) > 500):
+                yield from self.bot.say("%(ID)s :mega: %(quote)s" %
+                                    {"ID": Name, "quote": quote[0]}, delete_after=600)
+            else:
+                yield from self.bot.say("%(ID)s :mega: %(quote)s" %
+                                    {"ID": Name, "quote": quote[0]}, delete_after=600)
+
             conn.close()
             return
         elif str2 is None:  # 1 argument
@@ -84,7 +90,12 @@ class Db():
                 return
             else:   # result
                 quote = random.choice(quoteslist)
-                yield from self.bot.say(":mega: %s" % quote)
+                quote_stripped = quote.replace('"', '')
+                if len(quote_stripped) > 500:
+                    yield from self.bot.say(":mega: %s" % quote, delete_after=600)
+                else:
+                    yield from self.bot.say(":mega: %s" % quote, delete_after=3600)
+
                 conn.close()
                 return
         else:   # no member argument - only query
@@ -100,8 +111,14 @@ class Db():
                 Name = c.execute(
                     'SELECT Name FROM Quotes WHERE Quote LIKE ?',
                     quote).fetchall()[0][0]
-                yield from self.bot.say("%(ID)s :mega: %(quote)s"
-                                        % {"ID": Name, "quote": quote[0]})
+                quote_stripped = quote[0].replace('"', '')
+                if len(quote_stripped) > 500:
+                    yield from self.bot.say("%(ID)s :mega: %(quote)s"
+                                        % {"ID": Name, "quote": quote[0]}, delete_after=600)
+                else:
+                    yield from self.bot.say("%(ID)s :mega: %(quote)s"
+                                        % {"ID": Name, "quote": quote[0]}, delete_after=3600)
+
                 conn.close()
                 return
 
