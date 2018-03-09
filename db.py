@@ -54,7 +54,7 @@ class Db():
                                     {"ID": Name, "quote": quote[0]}, delete_after=600)
             else:
                 yield from self.bot.say("%(ID)s :mega: %(quote)s" %
-                                    {"ID": Name, "quote": quote[0]}, delete_after=600)
+                                    {"ID": Name, "quote": quote[0]}, delete_after=3600)
 
             conn.close()
             return
@@ -91,7 +91,7 @@ class Db():
             else:   # result
                 quote = random.choice(quoteslist)
                 quote_stripped = quote.replace('"', '')
-                if len(quote_stripped) > 500:
+                if (len(quote_stripped) > 500):
                     yield from self.bot.say(":mega: %s" % quote, delete_after=600)
                 else:
                     yield from self.bot.say(":mega: %s" % quote, delete_after=3600)
@@ -112,7 +112,7 @@ class Db():
                     'SELECT Name FROM Quotes WHERE Quote LIKE ?',
                     quote).fetchall()[0][0]
                 quote_stripped = quote[0].replace('"', '')
-                if len(quote_stripped) > 500:
+                if (len(quote_stripped) > 500):
                     yield from self.bot.say("%(ID)s :mega: %(quote)s"
                                         % {"ID": Name, "quote": quote[0]}, delete_after=600)
                 else:
