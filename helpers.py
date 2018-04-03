@@ -112,7 +112,7 @@ class Helpers():
         if not result:
             yield from self.bot.say(':warning: Incorrect format. The correct format is `?course <course name>`.')
         search_term = result.group(1) + '-' + result.group(2)
-        url = "http://www.mcgill.ca/study/2017-2018/courses/%s" % search_term
+        url = "http://www.mcgill.ca/study/2018-2019/courses/%s" % search_term
         r = requests.get(url)
         soup = BeautifulSoup(r.content, "html.parser")
         r.close()
@@ -195,7 +195,7 @@ class Helpers():
         pagenum = 0
         courses = []
         while(True and pagenum < pagelimit):
-            url = "http://www.mcgill.ca/study/2016-2017/courses/search\
+            url = "http://www.mcgill.ca/study/2018-2019/courses/search\
             ?search_api_views_fulltext=%s&sort_by=field_subject_code&page=%d" % (keyword, pagenum)
             r = requests.get(url)
             soup = BeautifulSoup(r.content, "html.parser")
