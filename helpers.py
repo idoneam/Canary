@@ -23,7 +23,7 @@ class Helpers():
     @commands.command()
     @asyncio.coroutine
     def exam(self):
-        yield from self.bot.say('https://www.mcgill.ca/students/exams/files/students.exams/final_april_2018_exam_schedulef22.pdf')
+        yield from self.bot.say('https://mcgill.ca/students/exams/files/students.exams/april_2018_final_exam_schedule_with_room_locations.pdf')
 
     @commands.command(pass_context=True)
     @asyncio.coroutine
