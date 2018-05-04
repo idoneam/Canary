@@ -66,8 +66,8 @@ class Db():
             argl = [str1, str2]
             args = ' '.join(argl)
         if (args[1] == '@'):    # member argument supplied
+            args = args.split()
             if numArgs == 2:    # has query
-                args = args.split() 
                 t = ((args[0][3:(len(args[0])-1)]),
                      '%'+(' '.join(args[1:]))+'%')
             qId = ''
