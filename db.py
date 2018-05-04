@@ -70,7 +70,6 @@ class Db():
                 args = args.split() 
                 t = ((args[0][3:(len(args[0])-1)]),
                      '%'+(' '.join(args[1:]))+'%')
-            args = args.split() 
             qId = ''
             for i in range(len(args[0])):
                 if (args[0][i] in '0123456789'):
@@ -90,7 +89,7 @@ class Db():
                 return
             else:   # result
                 quote = random.choice(quoteslist)
-                quote_stripped = quote.replace('"', '')
+                quote_stripped = quote[0].replace('"', '')
                 if (len(quote_stripped) > 500):
                     yield from self.bot.say(":mega: %s" % quote, delete_after=600)
                 else:
