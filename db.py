@@ -29,15 +29,15 @@ class Db():
         conn = sqlite3.connect(DB_PATH)
         c = conn.cursor()
         t = (member.id, member.name, quote,
-             ctx.message.created_at.strftime("%c"))
+             ctx.message.timestamp.strftime("%c"))
         c.execute('INSERT INTO Quotes VALUES (?,?,?,?)', t)
-        yield from ctx.send('`Quote added.`')
+        yield from self.bot.say('`Quote added.`')
         conn.commit()
         conn.close()
 
-    @commands.command(pass_context=True)
+    @commands.command()
     @asyncio.coroutine
-    def q(self, ctx, str1: str=None, *, str2: str=None):
+    def q(self, str1: str=None, *, str2: str=None):
         """
         Retrieve a quote with a specified keyword / mention.
         """
@@ -50,10 +50,10 @@ class Db():
                              quote).fetchall()[0][0]
             quote_split = quote[0].replace('"', '')
             if (len(quote_split) > 500):
-                yield from ctx.send("%(ID)s :mega: %(quote)s" %
+                yield from self.bot.say("%(ID)s :mega: %(quote)s" %
                                     {"ID": Name, "quote": quote[0]}, delete_after=600)
             else:
-                yield from ctx.send("%(ID)s :mega: %(quote)s" %
+                yield from self.bot.say("%(ID)s :mega: %(quote)s" %
                                     {"ID": Name, "quote": quote[0]}, delete_after=3600)
 
             conn.close()
@@ -84,16 +84,16 @@ class Db():
                 quoteslist = c.execute(
                     'SELECT Quote FROM Quotes WHERE ID=?',t).fetchall()
             if not quoteslist:  # no result
-                yield from ctx.send('No quotes found.')
+                yield from self.bot.say('No quotes found.')
                 conn.close()
                 return
             else:   # result
                 quote = random.choice(quoteslist)
                 quote_stripped = quote[0].replace('"', '')
                 if (len(quote_stripped) > 500):
-                    yield from ctx.send(":mega: %s" % quote, delete_after=600)
+                    yield from self.bot.say(":mega: %s" % quote, delete_after=600)
                 else:
-                    yield from ctx.send(":mega: %s" % quote, delete_after=3600)
+                    yield from self.bot.say(":mega: %s" % quote, delete_after=3600)
 
                 conn.close()
                 return
@@ -102,7 +102,7 @@ class Db():
             quoteslist = c.execute(
                 'SELECT Quote FROM Quotes WHERE Quote LIKE ?', t).fetchall()
             if not quoteslist:
-                yield from ctx.send('No quotes found.')
+                yield from self.bot.say('No quotes found.')
                 conn.close()
                 return
             else:
@@ -112,10 +112,10 @@ class Db():
                     quote).fetchall()[0][0]
                 quote_stripped = quote[0].replace('"', '')
                 if (len(quote_stripped) > 500):
-                    yield from ctx.send("%(ID)s :mega: %(quote)s"
+                    yield from self.bot.say("%(ID)s :mega: %(quote)s"
                                         % {"ID": Name, "quote": quote[0]}, delete_after=600)
                 else:
-                    yield from ctx.send("%(ID)s :mega: %(quote)s"
+                    yield from self.bot.say("%(ID)s :mega: %(quote)s"
                                         % {"ID": Name, "quote": quote[0]}, delete_after=3600)
 
                 conn.close()
@@ -132,7 +132,6 @@ class Db():
             t = (member.id,)
         else:
             t = ((str1[3:(len(str1[0])-2)]),)
-            print(t)
         conn = sqlite3.connect(DB_PATH)
         c = conn.cursor()
         quoteslist = c.execute('SELECT Quote FROM Quotes WHERE ID=?',
@@ -142,18 +141,18 @@ class Db():
             if ((len(msg) + len('[%d] %s\n' %
                                 (i+1, quoteslist[i][0]))) > 1996):
                 msg += '```'
-                yield from ctx.send(msg, delete_after=30)
+                yield from self.bot.say(msg, delete_after=30)
                 msg = '```[%d] %s\n' % (i+1, quoteslist[i][0])
-            else:
+            else:  
                 msg += '[%d] %s\n' % (i+1, quoteslist[i][0])
         if ((len(msg) + len('\n ~ End of Quotes ~```')) < 1996):
             msg += '\n ~ End of Quotes ~```'
-            yield from ctx.send(msg, delete_after=30)
+            yield from self.bot.say(msg, delete_after=30)
         else:
             msg += '```'
-            yield from ctx.send(msg, delete_after=30)
+            yield from self.bot.say(msg, delete_after=30)
             msg = '```\n ~ End of Quotes ~```'
-            yield from ctx.send(msg, delete_after=30)
+            yield from self.bot.say(msg, delete_after=30)
 
     @commands.command(pass_context=True)
     @asyncio.coroutine
@@ -167,7 +166,7 @@ class Db():
         quoteslist = c.execute('SELECT Quote FROM Quotes WHERE ID=?',
                                t).fetchall()
         if not quoteslist:
-            yield from ctx.send('No quotes found.')
+            yield from self.bot.say('No quotes found.')
             conn.close()
             return
         else:
@@ -177,37 +176,38 @@ class Db():
                 if ((len(msg) + len('[%d] %s\n' %
                                     (i+1, quoteslist[i][0]))) > 1996):
                     msg += '```'
-                    yield from ctx.send(msg, delete_after=30)
+                    yield from self.bot.say(msg, delete_after=30)
                     msg = '```[%d] %s\n' % (i+1, quoteslist[i][0])
-                else:
+                else:  
                     msg += '[%d] %s\n' % (i+1, quoteslist[i][0])
             if ((len(msg) +
                  len('\n[0] Exit without deleting quotes```')) < 1996):
                 msg += '\n[0] Exit without deleting quotes```'
-                yield from ctx.send(msg, delete_after=30)
+                yield from self.bot.say(msg, delete_after=30)
             else:
                 msg += '```'
-                yield from ctx.send(msg, delete_after=30)
+                yield from self.bot.say(msg, delete_after=30)
                 msg = '```\n[0] Exit without deleting quotes```'
-                yield from ctx.send(msg, delete_after=30)
+                yield from self.bot.say(msg, delete_after=30)
 
         def check(choice):
-            if 0 <= int(choice.content) <= (1 + len(quoteslist)) and choice.author == message.author:
+            if 0 <= int(choice.content) <= (1 + len(quoteslist)):
                 return True
             else:
-                yield from ctx.send("Invalid input.")
+                yield from self.bot.say("Invalid input.")
                 return False
 
-        response = yield from self.bot.wait_for("message", check=check)
+        response = yield from self.bot.wait_for_message(
+            author=ctx.message.author, check=check)
         choice = int(response.content)
         if choice == 0:
-            yield from ctx.send("Exited quote deletion menu.")
+            yield from self.bot.say("Exited quote deletion menu.")
             conn.close()
             return
         else:
             t = (quoteslist[choice-1][0], ctx.message.author.id)
             c.execute('DELETE FROM Quotes WHERE Quote=? AND ID=?', t)
-            yield from ctx.send("Quote successfully deleted.")
+            yield from self.bot.say("Quote successfully deleted.")
             conn.commit()
             conn.close()
 
@@ -224,7 +224,7 @@ class Db():
         table = []
         for (ID, DisplayName, Upmartlet) in members:
             table.append((DisplayName, Upmartlet))
-        yield from ctx.send('```Java\n' +
+        yield from self.bot.say('```Java\n' +
                                 tabulate(table, headers=["NAME", "#"],
                                          tablefmt="fancy_grid") +
                                 '```', delete_after=30)
