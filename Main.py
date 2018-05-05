@@ -34,53 +34,53 @@ def on_ready():
     print('Logged in as {0} ({1})'.format(bot.user.name, bot.user.id))
 
 
-@bot.command(pass_context=True)
-@commands.has_role("Discord Moderator")
+@bot.command()
+@commands.has_any_role("Discord Moderator")
 @asyncio.coroutine
-def load(ctx, extension_name: str):
+def load(extension_name: str):
     '''
     Load a specific extension.
     '''
     try:
         bot.load_extension(extension_name)
     except (AttributeError, ImportError) as e:
-        yield from ctx.send("```{}: {}\n```".format(type(e).__name__, str(e)))
+        yield from bot.say("```{}: {}\n```".format(type(e).__name__, str(e)))
 
         return
-    yield from ctx.send("{} loaded.".format(extension_name))
+    yield from bot.say("{} loaded.".format(extension_name))
 
 
-@bot.command(pass_context=True)
-@commands.has_role("Discord Moderator")
+@bot.command()
+@commands.has_any_role("Discord Moderator")
 @asyncio.coroutine
-def unload(ctx, extension_name: str):
+def unload(extension_name: str):
     '''
     Unload a specific extension.
     '''
     bot.unload_extension(extension_name)
-    yield from ctx.send("Unloaded {}.".format(extension_name))
+    yield from bot.say("Unloaded {}.".format(extension_name))
+    
 
-
-@bot.command(pass_context=True)
+@bot.command()
 @asyncio.coroutine
-def restart(ctx):
+def restart():
     '''
     Restart the bot
     '''
-    yield from ctx.send('https://streamable.com/dli1')
+    yield from bot.say('https://streamable.com/dli1')
     python = sys.executable
     os.execl(python, python, *sys.argv)
 
 
-@bot.command(pass_context=True)
+@bot.command()
 @asyncio.coroutine
-def update(ctx):
+def update():
     '''
     Update the bot by pulling changes from the git repository
     '''
-    yield from ctx.send('https://streamable.com/c7s2o')
+    yield from bot.say('https://streamable.com/c7s2o')
     os.system('git pull')
-
+    
 
 @bot.event
 @asyncio.coroutine
@@ -102,7 +102,7 @@ def on_reaction_add(reaction,user):
         c.execute('UPDATE Members SET Upmartlet=Upmartlet+1 WHERE ID=?',t)
         conn.commit()
         conn.close()
-
+        
 
 @bot.event
 @asyncio.coroutine
@@ -110,11 +110,11 @@ def on_message(message):
     if message.author == bot.user:
         return
     if message.content == "dammit marty":
-        yield from message.channel.send(":c")
+        yield from bot.send_message(message.channel, ":c")
     if message.content == "worm":
-        yield from message.channel.send("walk without rhythm, and it won't attract the worm.")
+        yield from bot.send_message(message.channel, "walk without rhythm, and it won't attract the worm.")
     if message.content == "hey":
-        yield from message.channel.send("whats going on?")
+        yield from bot.send_message(message.channel, "whats going on?")
     yield from bot.process_commands(message)
 
 
