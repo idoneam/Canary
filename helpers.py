@@ -14,16 +14,17 @@ from sympy import preview
 import re
 import math
 import time
+import os
 
 
 class Helpers():
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command()
+    @commands.command(pass_context=True)
     @asyncio.coroutine
-    def exam(self):
-        yield from self.bot.say('https://mcgill.ca/students/exams/files/students.exams/april_2018_final_exam_schedule_with_room_locations.pdf')
+    def exam(self, ctx):
+        yield from ctx.send('https://mcgill.ca/students/exams/files/students.exams/april_2018_final_exam_schedule_with_room_locations.pdf')
 
     @commands.command(pass_context=True)
     @asyncio.coroutine
@@ -82,22 +83,22 @@ class Helpers():
 
             weather_alert = discord.Embed(title=alert_title.get_text().strip(), description="**%s** at %s" % (alert_category.get_text().strip(),alert_date.get_text().strip()), colour=0xFF0000)
             weather_alert.add_field(name=alert_heading.get_text().strip(), value="**%s**\n%s" %(alert_location.strip(),alert_content), inline=True)
-            
+
         except:
             weather_alert = discord.Embed(title=alert_title.get_text().strip(), description="No alerts in effect.", colour=0xFF0000)
 
         # TODO Finish final message. Test on no-alert condition.
-        
+
         # Sending final message
-        yield from self.bot.send_message(ctx.message.channel, embed=weather_now)
-        yield from self.bot.send_message(ctx.message.channel, embed=weather_alert)
+        yield from ctx.send(embed=weather_now)
+        yield from ctx.send(embed=weather_alert)
 
 
     @commands.command(pass_context=True)
     @asyncio.coroutine
     def wttr(self, ctx):
         em = discord.Embed(title="Weather in Montreal").set_image(url='http://wttr.in/Montreal_2mpq_lang=en.png?_=%d' % round(time.time()))
-        yield from self.bot.send_message(ctx.message.channel, embed=em)
+        yield from ctx.send(embed=em)
 
 
     @commands.command(pass_context=True)
@@ -110,7 +111,8 @@ class Helpers():
         num = r'(\d{3})'
         result = re.compile(fac+r'\s?'+num, re.IGNORECASE|re.DOTALL).search(query)
         if not result:
-            yield from self.bot.say(':warning: Incorrect format. The correct format is `?course <course name>`.')
+            yield from ctx.send(':warning: Incorrect format. The correct format is `?course <course name>`.')
+            return
         search_term = result.group(1) + '-' + result.group(2)
         url = "http://www.mcgill.ca/study/2018-2019/courses/%s" % search_term
         r = requests.get(url)
@@ -120,7 +122,7 @@ class Helpers():
         # XXX: brute-force parsing at the moment
         title = soup.find_all("h1", {"id": "page-title"})[0].get_text().strip()
         if title == 'Page not found':
-            yield from self.bot.send_message(ctx.message.channel, "No course found for %s." % query)
+            yield from ctx.send("No course found for %s." % query)
             return
         content = soup.find_all("div", {"class": "content"})[3]
         overview = content.p.get_text().strip()
@@ -141,7 +143,7 @@ class Helpers():
         em.add_field(name="Instructor(s)", value=instructors, inline=False)
         for (a, b) in tidbits:
             em.add_field(name=a, value=b, inline=False)
-        yield from self.bot.send_message(ctx.message.channel, embed=em)
+        yield from ctx.send(embed=em)
 
 
     @commands.command(pass_context=True)
@@ -154,14 +156,14 @@ class Helpers():
         r.close()
         word = soup.find('div', {'class': 'def-header'}).a
         if not word:
-            yield from self.bot.say("No definition found for **%s**." % query)
+            yield from ctx.send("No definition found for **%s**." % query)
             return
         word = word.get_text()
         definition = soup.find('div', {'class': 'meaning'}).get_text()
         examples = soup.find('div', {'class': 'example'}).get_text().strip()
         em = discord.Embed(title=word, description=definition, colour=0x1D2439).set_footer(text="Fetched from the top definition on UrbanDictionary.", icon_url='http://d2gatte9o95jao.cloudfront.net/assets/apple-touch-icon-2f29e978facd8324960a335075aa9aa3.png')
         # em.add_field(name="Examples", value=examples)
-        yield from self.bot.send_message(ctx.message.channel, embed=em)
+        yield from ctx.send(embed=em)
 
 
     @commands.command(pass_context=True)
@@ -172,7 +174,7 @@ class Helpers():
             tex = ""
             sp = ctx.message.content.split('$')
             if(len(sp) < 3):
-                yield from self.bot.send_message(ctx.message.channel, 'PLEASE USE \'$\' AROUND YOUR LATEX EQUATIONS. CHIRP.')
+                yield from ctx.send('PLEASE USE \'$\' AROUND YOUR LATEX EQUATIONS. CHIRP.')
                 return
             # yield from bot.send_message(ctx.message.channel, 'LATEX FOUND. CHIRP.')
             up = int(len(sp) / 2)
@@ -180,10 +182,10 @@ class Helpers():
                 tex += "\["+sp[2*i+1]+"\]"
             fn = 'tmp.png'
             preview(tex, viewer='file', filename=fn, euler=False)
-            yield from self.bot.send_file(ctx.message.channel, fn)
-            fn.close()
+            yield from ctx.send(file=discord.File(fp=fn))
+            os.remove(fn)
         else:
-            yield from self.bot.send_message(ctx.message.channel, 'PLEASE USE \'$\' AROUND YOUR LATEX EQUATIONS. CHIRP.')
+            yield from ctx.send('PLEASE USE \'$\' AROUND YOUR LATEX EQUATIONS. CHIRP.')
 
 
     @commands.command(pass_context=True)
@@ -207,7 +209,7 @@ class Helpers():
                 pagenum += 1
         if(len(courses) < 1):
             print("No course found error")
-            yield from self.bot.say("No course found for: %s." % query)
+            yield from ctx.send("No course found for: %s." % query)
             return
 
         em = discord.Embed(title="Courses Found 1 / %d" % (len(courses)/24+1), colour=0xDA291C)
@@ -220,9 +222,9 @@ class Helpers():
                 em.add_field(name=' '.join(title[:2]), value=' '.join(title[2:]))
                 c += 1
                 if(c%24 == 0):
-                    yield from self.bot.send_message(ctx.message.channel, embed=em)
+                    yield from ctx.send(embed=em)
                     em = discord.Embed(title="Courses Found %d / %d" % (c/24+1,len(courses)/24+1), colour=0xDA291C)
-        yield from self.bot.send_message(ctx.message.channel, embed=em)
+        yield from ctx.send(embed=em)
         return
 
 
@@ -252,9 +254,9 @@ class Helpers():
             r.close()
             convertedCOST = soup.find('span', {'class':'uccResultAmount'}).get_text()
             #FIXME: there has to be a more elegant way to print this
-            yield from self.bot.say("%s %s = %s %s" % (m.group(1),m.group(3).upper(),convertedCOST,m.group(7).upper()))
+            yield from ctx.send("%s %s = %s %s" % (m.group(1),m.group(3).upper(),convertedCOST,m.group(7).upper()))
         else:
-            yield from self.bot.say(""":warning: Wrong format.
+            yield from ctx.send(""":warning: Wrong format.
             The correct format is `?xe <AMOUNT> <CURRENCY> to <CURRENCY>`.
             ie. `?xe 60.00 CAD to EUR`""")
 
@@ -266,12 +268,12 @@ class Helpers():
         i.e. ?mose 200
         """
         if dollar<0:
-            yield from self.bot.say("Trying to owe samosas now, are we? :wink:")
+            yield from ctx.send("Trying to owe samosas now, are we? :wink:")
             return
         total = dollar//2*3
         if(math.floor(dollar)%2==1):
             total += 1
-        yield from self.bot.say("$%.2f is worth %d samosas." % (dollar,total))
+        yield from ctx.send("$%.2f is worth %d samosas." % (dollar,total))
 
 def setup(bot):
     bot.add_cog(Helpers(bot))
