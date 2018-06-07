@@ -15,7 +15,7 @@ import logging
 import os, sys
 
 # List the extensions (modules) that should be loaded on startup.
-startup = ["db", "memes", "helpers"]
+startup = ["db", "memes", "helpers", "mod"]
 DB_PATH = './Martlet.db'
 
 bot = commands.Bot(command_prefix='?')

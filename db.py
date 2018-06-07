@@ -67,6 +67,7 @@ class Db():
             args = ' '.join(argl)
         if (args[1] == '@'):    # member argument supplied
             args = args.split()
+            print(args[0][3:(len(args[0])-1)])
             if numArgs == 2:    # has query
                 t = ((args[0][3:(len(args[0])-1)]),
                      '%'+(' '.join(args[1:]))+'%')
@@ -131,8 +132,7 @@ class Db():
             member = ctx.message.author
             t = (member.id,)
         else:
-            t = ((str1[3:(len(str1[0])-2)]),)
-            print(t)
+            t = ((str1[2:(len(str1[0])-2)]),)
         conn = sqlite3.connect(DB_PATH)
         c = conn.cursor()
         quoteslist = c.execute('SELECT Quote FROM Quotes WHERE ID=?',
