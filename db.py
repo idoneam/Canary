@@ -209,7 +209,8 @@ class Db():
 
         def check(choice):
             if 0 <= int(choice.content) <= (
-                    1 + len(quoteslist)) and choice.author == choice.author:
+                    1 + len(
+                        quoteslist)) and choice.author == ctx.message.author:
                 return True
             else:
                 yield from ctx.send("Invalid input.")
