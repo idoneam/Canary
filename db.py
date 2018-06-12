@@ -75,7 +75,6 @@ class Db():
             args = ' '.join(argl)
         if (args[1] == '@'):    # member argument supplied
             args = args.split()
-            print(args[0][3:(len(args[0])-1)])
             if numArgs == 2:    # has query
                 t = ((args[0][3:(len(args[0])-1)]),
                      '%'+(' '.join(args[1:]))+'%')
@@ -207,17 +206,17 @@ class Db():
                 msg = '```\n[0] Exit without deleting quotes```'
                 yield from ctx.send(msg, delete_after=30)
 
-        def check(choice):
-            if 0 <= int(choice.content) <= (
+        def check(message):
+            if 0 <= int(message.content) <= (
                     1 + len(
-                        quoteslist)) and choice.author == ctx.message.author:
+                        quoteslist)) and message.author == ctx.message.author:
                 return True
             else:
                 yield from ctx.send("Invalid input.")
                 return False
 
         response = yield from self.bot.wait_for("message", check=check)
-        choice = response.content
+        choice = int(response.content)
         if choice == 0:
             yield from ctx.send("Exited quote deletion menu.")
             conn.close()
