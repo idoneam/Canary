@@ -4,10 +4,10 @@ import discord
 from discord.ext import commands
 import asyncio
 
+
 class Mod():
     def __init__(self, bot):
         self.bot = bot
-
 
     @asyncio.coroutine
     def on_message(self, message):
@@ -18,7 +18,6 @@ class Mod():
             msg = '{} 📣 {}'.format(str(message.author), message.content)
             yield from channelToSend.send(msg)
 
-
     @commands.command(pass_context=True)
     @commands.has_role('Discord Moderator')
     @asyncio.coroutine
@@ -28,7 +27,6 @@ class Mod():
         '''
         dest = user
         yield from dest.send(message)
-
 
     # @commands.command(pass_context=True, aliases=['cid'])
     # @commands.has_role('Discord Moderator')

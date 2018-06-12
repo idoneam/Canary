@@ -50,11 +50,19 @@ class Db():
                              quote).fetchall()[0][0]
             quote_split = quote[0].replace('"', '')
             if (len(quote_split) > 500):
-                yield from ctx.send("%(ID)s :mega: %(quote)s" %
-                                    {"ID": Name, "quote": quote[0]}, delete_after=600)
+                yield from ctx.send(
+                    "%(ID)s :mega: %(quote)s" % {
+                        "ID": Name,
+                        "quote": quote[0]
+                    },
+                    delete_after=600)
             else:
-                yield from ctx.send("%(ID)s :mega: %(quote)s" %
-                                    {"ID": Name, "quote": quote[0]}, delete_after=3600)
+                yield from ctx.send(
+                    "%(ID)s :mega: %(quote)s" % {
+                        "ID": Name,
+                        "quote": quote[0]
+                    },
+                    delete_after=3600)
 
             conn.close()
             return
@@ -67,7 +75,6 @@ class Db():
             args = ' '.join(argl)
         if (args[1] == '@'):    # member argument supplied
             args = args.split()
-            print(args[0][3:(len(args[0])-1)])
             if numArgs == 2:    # has query
                 t = ((args[0][3:(len(args[0])-1)]),
                      '%'+(' '.join(args[1:]))+'%')
@@ -83,7 +90,7 @@ class Db():
             else:   # no query
                 t = (qId,)
                 quoteslist = c.execute(
-                    'SELECT Quote FROM Quotes WHERE ID=?',t).fetchall()
+                    'SELECT Quote FROM Quotes WHERE ID=?', t).fetchall()
             if not quoteslist:  # no result
                 yield from ctx.send('No quotes found.')
                 conn.close()
@@ -114,10 +121,18 @@ class Db():
                 quote_stripped = quote[0].replace('"', '')
                 if (len(quote_stripped) > 500):
                     yield from ctx.send("%(ID)s :mega: %(quote)s"
-                                        % {"ID": Name, "quote": quote[0]}, delete_after=600)
+                                        % {
+                                            "ID": Name,
+                                            "quote": quote[0]
+                                        },
+                                        delete_after=600)
                 else:
                     yield from ctx.send("%(ID)s :mega: %(quote)s"
-                                        % {"ID": Name, "quote": quote[0]}, delete_after=3600)
+                                        % {
+                                            "ID": Name,
+                                            "quote": quote[0]
+                                        },
+                                        delete_after=3600)
 
                 conn.close()
                 return
@@ -191,8 +206,10 @@ class Db():
                 msg = '```\n[0] Exit without deleting quotes```'
                 yield from ctx.send(msg, delete_after=30)
 
-        def check(choice):
-            if 0 <= int(choice.content) <= (1 + len(quoteslist)) and choice.author == message.author:
+        def check(message):
+            if 0 <= int(message.content) <= (
+                    1 + len(
+                        quoteslist)) and message.author == ctx.message.author:
                 return True
             else:
                 yield from ctx.send("Invalid input.")
@@ -225,9 +242,9 @@ class Db():
         for (ID, DisplayName, Upmartlet) in members:
             table.append((DisplayName, Upmartlet))
         yield from ctx.send('```Java\n' +
-                                tabulate(table, headers=["NAME", "#"],
-                                         tablefmt="fancy_grid") +
-                                '```', delete_after=30)
+                            tabulate(table, headers=["NAME", "#"],
+                                     tablefmt="fancy_grid") +
+                            '```', delete_after=30)
 
     @asyncio.coroutine
     def on_member_join(self, member):
