@@ -50,11 +50,19 @@ class Db():
                              quote).fetchall()[0][0]
             quote_split = quote[0].replace('"', '')
             if (len(quote_split) > 500):
-                yield from ctx.send("%(ID)s :mega: %(quote)s" %
-                                    {"ID": Name, "quote": quote[0]}, delete_after=600)
+                yield from ctx.send(
+                    "%(ID)s :mega: %(quote)s" % {
+                        "ID": Name,
+                        "quote": quote[0]
+                    },
+                    delete_after=600)
             else:
-                yield from ctx.send("%(ID)s :mega: %(quote)s" %
-                                    {"ID": Name, "quote": quote[0]}, delete_after=3600)
+                yield from ctx.send(
+                    "%(ID)s :mega: %(quote)s" % {
+                        "ID": Name,
+                        "quote": quote[0]
+                    },
+                    delete_after=3600)
 
             conn.close()
             return
@@ -83,7 +91,7 @@ class Db():
             else:   # no query
                 t = (qId,)
                 quoteslist = c.execute(
-                    'SELECT Quote FROM Quotes WHERE ID=?',t).fetchall()
+                    'SELECT Quote FROM Quotes WHERE ID=?', t).fetchall()
             if not quoteslist:  # no result
                 yield from ctx.send('No quotes found.')
                 conn.close()
@@ -114,10 +122,18 @@ class Db():
                 quote_stripped = quote[0].replace('"', '')
                 if (len(quote_stripped) > 500):
                     yield from ctx.send("%(ID)s :mega: %(quote)s"
-                                        % {"ID": Name, "quote": quote[0]}, delete_after=600)
+                                        % {
+                                            "ID": Name,
+                                            "quote": quote[0]
+                                        },
+                                        delete_after=600)
                 else:
                     yield from ctx.send("%(ID)s :mega: %(quote)s"
-                                        % {"ID": Name, "quote": quote[0]}, delete_after=3600)
+                                        % {
+                                            "ID": Name,
+                                            "quote": quote[0]
+                                        },
+                                        delete_after=3600)
 
                 conn.close()
                 return
@@ -192,14 +208,15 @@ class Db():
                 yield from ctx.send(msg, delete_after=30)
 
         def check(choice):
-            if 0 <= int(choice.content) <= (1 + len(quoteslist)) and choice.author == message.author:
+            if 0 <= int(choice.content) <= (
+                    1 + len(quoteslist)) and choice.author == choice.author:
                 return True
             else:
                 yield from ctx.send("Invalid input.")
                 return False
 
         response = yield from self.bot.wait_for("message", check=check)
-        choice = int(response.content)
+        choice = response.content
         if choice == 0:
             yield from ctx.send("Exited quote deletion menu.")
             conn.close()
@@ -225,9 +242,9 @@ class Db():
         for (ID, DisplayName, Upmartlet) in members:
             table.append((DisplayName, Upmartlet))
         yield from ctx.send('```Java\n' +
-                                tabulate(table, headers=["NAME", "#"],
-                                         tablefmt="fancy_grid") +
-                                '```', delete_after=30)
+                            tabulate(table, headers=["NAME", "#"],
+                                     tablefmt="fancy_grid") +
+                            '```', delete_after=30)
 
 
 def setup(bot):
