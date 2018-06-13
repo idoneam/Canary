@@ -29,7 +29,7 @@ class Db():
         conn = sqlite3.connect(DB_PATH)
         c = conn.cursor()
         t = (member.id, member.name, quote,
-             ctx.message.created_at.strftime("%c"))
+             str(ctx.message.created_at))
         c.execute('INSERT INTO Quotes VALUES (?,?,?,?)', t)
         yield from ctx.send('`Quote added.`')
         conn.commit()
