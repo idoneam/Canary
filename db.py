@@ -43,124 +43,58 @@ class Db():
         """
         conn = sqlite3.connect(DB_PATH)
         c = conn.cursor()
-        if str1 is None:    # no argument
-            quotes = c.execute('SELECT Quote FROM Quotes').fetchall()
-            quote = random.choice(quotes)
-            Name = c.execute('SELECT Name FROM Quotes WHERE Quote LIKE ?',
-                             quote).fetchall()[0][0]
-            quote_split = quote[0].replace('"', '')
-            if (len(quote_split) > 500):
-                yield from ctx.send(
-                    "%(ID)s :mega: %(quote)s" % {
-                        "ID": Name,
-                        "quote": quote[0]
-                    },
-                    delete_after=600)
-            else:
-                yield from ctx.send(
-                    "%(ID)s :mega: %(quote)s" % {
-                        "ID": Name,
-                        "quote": quote[0]
-                    },
-                    delete_after=3600)
-
+        t = None
+        mentions = ctx.message.mentions
+        if str1 is None:        # No argument passed
+            quotes = c.execute('SELECT ID, Name, Quote FROM Quotes').fetchall()
+        elif mentions and mentions[0].mention == str1:  # Has args
+            id = mentions[0].id
+            if str2 is None:    # query for user only
+                t = (id, '%%',)
+            else:               # query for user and quote
+                t = (id, '%{}%'.format(str2))
+            c.execute('SELECT ID, Name, Quote FROM Quotes WHERE ID = ? AND Quote LIKE ?', t)
+            quotes = c.fetchall()
+        else:                   # query for quote only
+            query = str1 if str2 is None else str1 + ' ' + str2
+            t = ('%{}%'.format(query),)
+            c.execute('SELECT ID, Name, Quote FROM Quotes WHERE Quote LIKE ?', t)
+            quotes = c.fetchall()
+        if not quotes:
             conn.close()
-            return
-        elif str2 is None:  # 1 argument
-            numArgs = 1
-            args = str1
-        else:   # 2 arguments
-            numArgs = 2
-            argl = [str1, str2]
-            args = ' '.join(argl)
-        if (args[1] == '@'):    # member argument supplied
-            args = args.split()
-            if numArgs == 2:    # has query
-                t = ((args[0][3:(len(args[0])-1)]),
-                     '%'+(' '.join(args[1:]))+'%')
-            qId = ''
-            for i in range(len(args[0])):
-                if (args[0][i] in '0123456789'):
-                    qId = qId + args[0][i]
-            if numArgs == 2:    # query
-                t = (qId, '%'+(' '.join(args[1:]))+'%')
-                quoteslist = c.execute(
-                    'SELECT Quote FROM Quotes WHERE ID=? AND Quote LIKE ?',
-                    t).fetchall()
-            else:   # no query
-                t = (qId,)
-                quoteslist = c.execute(
-                    'SELECT Quote FROM Quotes WHERE ID=?', t).fetchall()
-            if not quoteslist:  # no result
-                yield from ctx.send('No quotes found.')
-                conn.close()
-                return
-            else:   # result
-                quote = random.choice(quoteslist)
-                quote_stripped = quote[0].replace('"', '')
-                if (len(quote_stripped) > 500):
-                    yield from ctx.send(":mega: %s" % quote, delete_after=600)
-                else:
-                    yield from ctx.send(":mega: %s" % quote, delete_after=3600)
-
-                conn.close()
-                return
-        else:   # no member argument - only query
-            t = ('%'+args[0:]+'%',)
-            quoteslist = c.execute(
-                'SELECT Quote FROM Quotes WHERE Quote LIKE ?', t).fetchall()
-            if not quoteslist:
-                yield from ctx.send('No quotes found.')
-                conn.close()
-                return
-            else:
-                quote = random.choice(quoteslist)
-                Name = c.execute(
-                    'SELECT Name FROM Quotes WHERE Quote LIKE ?',
-                    quote).fetchall()[0][0]
-                quote_stripped = quote[0].replace('"', '')
-                if (len(quote_stripped) > 500):
-                    yield from ctx.send("%(ID)s :mega: %(quote)s"
-                                        % {
-                                            "ID": Name,
-                                            "quote": quote[0]
-                                        },
-                                        delete_after=600)
-                else:
-                    yield from ctx.send("%(ID)s :mega: %(quote)s"
-                                        % {
-                                            "ID": Name,
-                                            "quote": quote[0]
-                                        },
-                                        delete_after=3600)
-
-                conn.close()
-                return
+            yield from ctx.send('Quote not found.')
+        else:
+            conn.close()
+            quote_tuple = random.choice(quotes)
+            author_id = int(quote_tuple[0])
+            name = quote_tuple[1]
+            quote = quote_tuple[2]
+            author = discord.utils.get(ctx.guild.members, id = author_id)
+            # get author name, if the user is still on the server, their current nick will be displayed, otherwise use the name stored in db
+            author_name = author.display_name if author else name
+            yield from ctx.send('{} 📣 {}'.format(author_name, quote))
 
     @commands.command(pass_context=True)
     @asyncio.coroutine
-    def lq(self, ctx, str1: str=None):
+    def lq(self, ctx, author: discord.User=None):
         """
         List your quotes or the quotes of a mentioned user.
         """
-        if str1 is None:
-            member = ctx.message.author
-            t = (member.id,)
-        else:
-            t = ((str1[2:(len(str1[0])-2)]),)
+        quote_author = author if author else ctx.message.author
+        author_id = quote_author.id
         conn = sqlite3.connect(DB_PATH)
         c = conn.cursor()
         quoteslist = c.execute('SELECT Quote FROM Quotes WHERE ID=?',
-                               t).fetchall()
+                               (author_id,)).fetchall()
         msg = "```Quotes: \n"
         for i in range(len(quoteslist)):
             if ((len(msg) + len('[%d] %s\n' %
                                 (i+1, quoteslist[i][0]))) > 1996):
                 msg += '```'
                 yield from ctx.send(msg, delete_after=30)
-                msg = '```[%d] %s\n' % (i+1, quoteslist[i][0])
+                msg = '```[%d] %s\n' % (i+1, quoteslist[i][0].replace('```', ''))
             else:
-                msg += '[%d] %s\n' % (i+1, quoteslist[i][0])
+                msg += '[%d] %s\n' % (i+1, quoteslist[i][0].replace('```', ''))
         if ((len(msg) + len('\n ~ End of Quotes ~```')) < 1996):
             msg += '\n ~ End of Quotes ~```'
             yield from ctx.send(msg, delete_after=30)
@@ -193,9 +127,9 @@ class Db():
                                     (i+1, quoteslist[i][0]))) > 1996):
                     msg += '```'
                     yield from ctx.send(msg, delete_after=30)
-                    msg = '```[%d] %s\n' % (i+1, quoteslist[i][0])
+                    msg = '```[%d] %s\n' % (i+1, quoteslist[i][0].replace('```', ''))
                 else:
-                    msg += '[%d] %s\n' % (i+1, quoteslist[i][0])
+                    msg += '[%d] %s\n' % (i+1, quoteslist[i][0].replace('```', ''))
             if ((len(msg) +
                  len('\n[0] Exit without deleting quotes```')) < 1996):
                 msg += '\n[0] Exit without deleting quotes```'
@@ -246,6 +180,27 @@ class Db():
                                      tablefmt="fancy_grid") +
                             '```', delete_after=30)
 
+    # @asyncio.coroutine
+    # def on_member_join(self, member):
+    #     conn = sqlite3.connect(DB_PATH)
+    #     c = conn.cursor()
+    #     c.execute("SELECT * FROM Welcome")
+    #     greetings = c.fetchall()
+    #     msg = random.choice(greetings)[0]
+    #     msg = msg.replace('$user$', member.mention)
+    #     general = self.bot.get_channel(236668784948019202)
+    #     yield from general.send(msg)
+    #
+    # @asyncio.coroutine
+    # def on_member_leave(self, member):
+    #     conn = sqlite3.connect(DB_PATH)
+    #     c = conn.cursor()
+    #     c.execute("SELECT * FROM Bye")
+    #     farewell = c.fetchall()
+    #     msg = random.choice(farewell)[0]
+    #     msg = msg.replace('$user$', member.mention)
+    #     general = self.bot.get_channel(236668784948019202)
+    #     yield from general.send(msg)
 
 def setup(bot):
     bot.add_cog(Db(bot))
