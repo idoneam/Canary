@@ -106,3 +106,4 @@ ENV/
 *.db
 *.sh
 Main_flymake.py
+marty_env
