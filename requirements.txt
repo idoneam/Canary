@@ -1,4 +1,4 @@
-discord-rewrite==1.0.0
+discord.py==0.16.12
 beautifulsoup4==4.6.0
 sympy==1.0.0
 requests==2.12.4
