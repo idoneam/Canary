@@ -141,14 +141,14 @@ class Db():
                 yield from ctx.send(msg, delete_after=30)
 
         def check(message):
-            if 0 <= int(message.content) <= (
-                    1 + len(
-                        quoteslist)) and message.author == ctx.message.author:
-                return True
-            else:
-                yield from ctx.send("Invalid input.")
+            try:
+                if message.author == ctx.message.author \
+                    and message.channel == ctx.message.channel \
+                    and (0 <= int(message.content) <= len(quoteslist)):
+                    return True
                 return False
-
+            except ValueError:
+                return False
         response = yield from self.bot.wait_for("message", check=check)
         choice = int(response.content)
         if choice == 0:
