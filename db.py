@@ -8,6 +8,7 @@ import asyncio
 # For DB Functionality
 import sqlite3
 from tabulate import tabulate
+import datetime
 
 # Other utilities
 import random
@@ -19,6 +20,112 @@ DB_PATH = './Martlet.db'
 class Db():
     def __init__(self, bot):
         self.bot = bot
+        self.frequencies = {
+            "daily": 1,
+            "weekly": 7,
+            "monthly": 30
+        }
+
+    @asyncio.coroutine
+    def check_reminders(self):
+        """
+        Co-routine that periodically checks if the bot must issue reminders to users.
+        :return: None
+        """
+        yield from self.bot.wait_until_ready()
+        while not self.bot.is_closed():
+            conn = sqlite3.connect(DB_PATH)
+            c = conn.cursor()
+            g = (guild for guild in self.bot.guilds if guild.name == 'McGill University')
+            guild = next(g)
+            try:
+                reminders = c.execute('SELECT * FROM Reminders').fetchall()
+            except sqlite3.OperationalError:
+                c.execute("CREATE TABLE 'Reminders' ('ID'INTEGER,'Name'TEXT,'Reminder'TEXT,'Frequency'TEXT,'Date'TEXT,"
+                          "'LastReminder'TEXT)")
+                reminders = c.execute('SELECT * FROM Reminders').fetchall()
+                conn.commit()
+            for i in range(len(reminders)):
+                member = discord.utils.get(guild.members, id=reminders[i][0])
+                last_date = datetime.datetime.strptime(reminders[i][5], "%Y-%m-%d %H:%M:%S.%f")
+                if datetime.datetime.now() - last_date > datetime.timedelta(days=self.frequencies[reminders[i][3]]):
+                    yield from member.send("Reminding you to {}! [{:d}]".format(reminders[i][2], i + 1))
+
+                    c.execute("UPDATE 'Reminders' SET LastReminder = ? WHERE Reminder = ?", (datetime.datetime.now(),
+                                                                                             reminders[i][2]))
+                    conn.commit()
+                    yield from asyncio.sleep(1)
+            conn.close()
+            yield from asyncio.sleep(60 * 10)
+
+    @commands.command(pass_context=True)
+    @asyncio.coroutine
+    def stop_reminder(self, ctx, reminder: str):
+        """
+        [DM Only] Delete the specified reminder
+        :param reminder: An integer choice for reminder based on Martlet's last set of DM's with reminders.
+        """
+        if isinstance(ctx.message.channel, discord.DMChannel):
+            conn = sqlite3.connect(DB_PATH)
+            c = conn.cursor()
+            try:
+                reminders = c.execute('SELECT * FROM Reminders WHERE ID = ?', (ctx.message.author.id,)).fetchall()
+            except sqlite3.OperationalError:
+                c.execute("CREATE TABLE 'Reminders' ('ID'INTEGER,'Name'TEXT,'Reminder'TEXT,'Frequency'TEXT,'Date'TEXT,"
+                          "'LastReminder'TEXT)")
+                yield from ctx.send("Database created.")
+                return
+            try:
+                choice = int(reminder)
+                if choice < 1 or choice > len(reminders):
+                    raise ValueError
+            except ValueError:
+                yield from ctx.send("Please specify a choice number between 1 and {:d}!"
+                                    .format(len(reminders)))
+                conn.close()
+                return
+            t = (reminders[choice - 1][2], ctx.message.author.id, reminders[choice - 1][3])
+            c.execute('DELETE FROM Reminders WHERE Reminder=? AND ID=? AND DATE=?', t)
+            conn.commit()
+            conn.close()
+            yield from ctx.send("Reminder successfully removed!")
+        else:
+            yield from ctx.send("Slide into my DM's ;) (Please respond to my DM messages to stop "
+                                "reminders!)")
+
+    @commands.command(pass_context=True)
+    @asyncio.coroutine
+    def remindme(self, ctx, freq: str, *, quote: str):
+        """
+        Add a reminder to the reminder database.
+        """
+        if freq not in self.frequencies.keys():
+            yield from ctx.send("Please ensure you specify a frequency from the following list: `daily`, `weekly`, "
+                                "`monthly`!")
+            return
+        conn = sqlite3.connect(DB_PATH)
+        c = conn.cursor()
+        t = (ctx.message.author.id, ctx.message.author.name, quote, freq, datetime.datetime.now(),
+             datetime.datetime.now())
+        reminders = c.execute('SELECT * FROM Reminders WHERE Reminder =? AND ID = ?',
+                              (quote, ctx.message.author.id)).fetchall()
+        if len(reminders) > 0:
+            yield from ctx.send("The reminder `{}` already exists in your database. Please specify a unique reminder "
+                                "message!".format(quote))
+            return
+        reminders = c.execute('SELECT * FROM Reminders WHERE ID =?', (ctx.message.author.id,)).fetchall()
+        try:
+            c.execute('INSERT INTO Reminders VALUES (?, ?, ?, ?, ?, ?)', t)
+        except sqlite3.OperationalError:
+            c.execute("CREATE TABLE 'Reminders' ('ID'INTEGER,'Name'TEXT,'Reminder'TEXT,'Frequency'TEXT,'Date'\
+                        TEXT,'LastReminder'TEXT)")
+            c.execute('INSERT INTO Reminders VALUES (?, ?, ?, ?, ?. ?)', t)
+        yield from ctx.author.send('Hi {}! \n I will remind you to {} {} until you send me a message to stop '
+                                   'reminding you about it! [{:d}]'
+                                   .format(ctx.author.name,  quote, freq, len(reminders)+1))
+        yield from ctx.send('Reminder added.')
+        conn.commit()
+        conn.close()
 
     @commands.command(pass_context=True)
     @asyncio.coroutine
@@ -37,7 +144,7 @@ class Db():
 
     @commands.command(pass_context=True)
     @asyncio.coroutine
-    def q(self, ctx, str1: str=None, *, str2: str=None):
+    def q(self, ctx, str1: str = None, *, str2: str = None):
         """
         Retrieve a quote with a specified keyword / mention.
         """
@@ -89,7 +196,7 @@ class Db():
         msg = "```Quotes: \n"
         for i in range(len(quoteslist)):
             if ((len(msg) + len('[%d] %s\n' %
-                                (i+1, quoteslist[i][0]))) > 1996):
+                                (i + 1, quoteslist[i][0]))) > 1996):
                 msg += '```'
                 yield from ctx.send(msg, delete_after=30)
                 msg = '```[%d] %s\n' % (i+1, quoteslist[i][0].replace('```', ''))
@@ -124,7 +231,7 @@ class Db():
             msg = "Please choose a quote you would like to delete.\n\n```"
             for i in range(len(quoteslist)):
                 if ((len(msg) + len('[%d] %s\n' %
-                                    (i+1, quoteslist[i][0]))) > 1996):
+                                    (i + 1, quoteslist[i][0]))) > 1996):
                     msg += '```'
                     yield from ctx.send(msg, delete_after=30)
                     msg = '```[%d] %s\n' % (i+1, quoteslist[i][0].replace('```', ''))
@@ -156,7 +263,7 @@ class Db():
             conn.close()
             return
         else:
-            t = (quoteslist[choice-1][0], ctx.message.author.id)
+            t = (quoteslist[choice - 1][0], ctx.message.author.id)
             c.execute('DELETE FROM Quotes WHERE Quote=? AND ID=?', t)
             yield from ctx.send("Quote successfully deleted.")
             conn.commit()
@@ -203,4 +310,6 @@ class Db():
     #     yield from general.send(msg)
 
 def setup(bot):
-    bot.add_cog(Db(bot))
+    database = Db(bot)
+    bot.add_cog(database)
+    bot.loop.create_task(database.check_reminders())
