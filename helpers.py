@@ -22,13 +22,11 @@ class Helpers():
         self.bot = bot
 
     @commands.command(pass_context=True)
-    @asyncio.coroutine
-    def exam(self, ctx):
-        yield from ctx.send('https://mcgill.ca/students/exams/files/students.exams/april_2018_final_exam_schedule_with_room_locations.pdf')
+    async def exam(self, ctx):
+        await ctx.send('https://mcgill.ca/students/exams/files/students.exams/april_2018_final_exam_schedule_with_room_locations.pdf')
 
     @commands.command(pass_context=True)
-    @asyncio.coroutine
-    def weather(self, ctx):
+    async def weather(self, ctx):
         """Retrieves current weather conditions.
         Data taken from http://weather.gc.ca/city/pages/qc-147_metric_e.html"""
         # Replace link with any city weather link from http://weather.gc.ca/
@@ -90,20 +88,18 @@ class Helpers():
         # TODO Finish final message. Test on no-alert condition.
 
         # Sending final message
-        yield from ctx.send(embed=weather_now)
-        yield from ctx.send(embed=weather_alert)
+        await ctx.send(embed=weather_now)
+        await ctx.send(embed=weather_alert)
 
 
     @commands.command(pass_context=True)
-    @asyncio.coroutine
-    def wttr(self, ctx):
+    async def wttr(self, ctx):
         em = discord.Embed(title="Weather in Montreal").set_image(url='http://wttr.in/Montreal_2mpq_lang=en.png?_=%d' % round(time.time()))
-        yield from ctx.send(embed=em)
+        await ctx.send(embed=em)
 
 
     @commands.command(pass_context=True)
-    @asyncio.coroutine
-    def course(self, ctx, *, query: str):
+    async def course(self, ctx, *, query: str):
         """Prints a summary of the queried course, taken from the course calendar.
         ie. ?course comp 206
         Note: Bullet points without colons (':') are not parsed because I have yet to see one that actually has useful information."""
@@ -111,7 +107,7 @@ class Helpers():
         num = r'(\d{3})'
         result = re.compile(fac+r'\s?'+num, re.IGNORECASE|re.DOTALL).search(query)
         if not result:
-            yield from ctx.send(':warning: Incorrect format. The correct format is `?course <course name>`.')
+            await ctx.send(':warning: Incorrect format. The correct format is `?course <course name>`.')
             return
         search_term = result.group(1) + '-' + result.group(2)
         url = "http://www.mcgill.ca/study/2018-2019/courses/%s" % search_term
@@ -122,7 +118,7 @@ class Helpers():
         # XXX: brute-force parsing at the moment
         title = soup.find_all("h1", {"id": "page-title"})[0].get_text().strip()
         if title == 'Page not found':
-            yield from ctx.send("No course found for %s." % query)
+            await ctx.send("No course found for %s." % query)
             return
         content = soup.find_all("div", {"class": "content"})[3]
         overview = content.p.get_text().strip()
@@ -143,12 +139,11 @@ class Helpers():
         em.add_field(name="Instructor(s)", value=instructors, inline=False)
         for (a, b) in tidbits:
             em.add_field(name=a, value=b, inline=False)
-        yield from ctx.send(embed=em)
+        await ctx.send(embed=em)
 
 
     @commands.command(pass_context=True)
-    @asyncio.coroutine
-    def urban(self, ctx, *, query: str):
+    async def urban(self, ctx, *, query: str):
         """Fetches the top definition from Urban Dictionary."""
         url = "http://www.urbandictionary.com/define.php?term=%s" % query.replace(' ', '+')
         r = requests.get(url)
@@ -156,41 +151,39 @@ class Helpers():
         r.close()
         word = soup.find('div', {'class': 'def-header'}).a
         if not word:
-            yield from ctx.send("No definition found for **%s**." % query)
+            await ctx.send("No definition found for **%s**." % query)
             return
         word = word.get_text()
         definition = soup.find('div', {'class': 'meaning'}).get_text()
         examples = soup.find('div', {'class': 'example'}).get_text().strip()
         em = discord.Embed(title=word, description=definition, colour=0x1D2439).set_footer(text="Fetched from the top definition on UrbanDictionary.", icon_url='http://d2gatte9o95jao.cloudfront.net/assets/apple-touch-icon-2f29e978facd8324960a335075aa9aa3.png')
         # em.add_field(name="Examples", value=examples)
-        yield from ctx.send(embed=em)
+        await ctx.send(embed=em)
 
 
     @commands.command(pass_context=True)
-    @asyncio.coroutine
-    def tex(self, ctx, *, query: str):
+    async def tex(self, ctx, *, query: str):
         """Parses and prints LaTeX equations."""
         if "$" in ctx.message.content:
             tex = ""
             sp = ctx.message.content.split('$')
             if(len(sp) < 3):
-                yield from ctx.send('PLEASE USE \'$\' AROUND YOUR LATEX EQUATIONS. CHIRP.')
+                await ctx.send('PLEASE USE \'$\' AROUND YOUR LATEX EQUATIONS. CHIRP.')
                 return
-            # yield from bot.send_message(ctx.message.channel, 'LATEX FOUND. CHIRP.')
+            # await bot.send_message(ctx.message.channel, 'LATEX FOUND. CHIRP.')
             up = int(len(sp) / 2)
             for i in range(up):
                 tex += "\["+sp[2*i+1]+"\]"
             fn = 'tmp.png'
             preview(tex, viewer='file', filename=fn, euler=False)
-            yield from ctx.send(file=discord.File(fp=fn))
+            await ctx.send(file=discord.File(fp=fn))
             os.remove(fn)
         else:
-            yield from ctx.send('PLEASE USE \'$\' AROUND YOUR LATEX EQUATIONS. CHIRP.')
+            await ctx.send('PLEASE USE \'$\' AROUND YOUR LATEX EQUATIONS. CHIRP.')
 
 
     @commands.command(pass_context=True)
-    @asyncio.coroutine
-    def search(self, ctx, *, query: str):
+    async def search(self, ctx, *, query: str):
         """Shows results for the queried keyword(s) in McGill courses"""
         keyword = query.replace(" ", "+")
         pagelimit = 5
@@ -209,7 +202,7 @@ class Helpers():
                 pagenum += 1
         if(len(courses) < 1):
             print("No course found error")
-            yield from ctx.send("No course found for: %s." % query)
+            await ctx.send("No course found for: %s." % query)
             return
 
         em = discord.Embed(title="Courses Found 1 / %d" % (len(courses)/24+1), colour=0xDA291C)
@@ -222,15 +215,14 @@ class Helpers():
                 em.add_field(name=' '.join(title[:2]), value=' '.join(title[2:]))
                 c += 1
                 if(c%24 == 0):
-                    yield from ctx.send(embed=em)
+                    await ctx.send(embed=em)
                     em = discord.Embed(title="Courses Found %d / %d" % (c/24+1,len(courses)/24+1), colour=0xDA291C)
-        yield from ctx.send(embed=em)
+        await ctx.send(embed=em)
         return
 
 
     @commands.command(pass_context=True)
-    @asyncio.coroutine
-    def xe(self, ctx, *, query: str):
+    async def xe(self, ctx, *, query: str):
         """Currency conversion.
         Uses real-time exchange rates taken from http://www.xe.com.
         Usage: ?xe <AMOUNT> <CURRENCY> to <CURRENCY>
@@ -254,26 +246,25 @@ class Helpers():
             r.close()
             convertedCOST = soup.find('span', {'class':'uccResultAmount'}).get_text()
             #FIXME: there has to be a more elegant way to print this
-            yield from ctx.send("%s %s = %s %s" % (m.group(1),m.group(3).upper(),convertedCOST,m.group(7).upper()))
+            await ctx.send("%s %s = %s %s" % (m.group(1),m.group(3).upper(),convertedCOST,m.group(7).upper()))
         else:
-            yield from ctx.send(""":warning: Wrong format.
+            await ctx.send(""":warning: Wrong format.
             The correct format is `?xe <AMOUNT> <CURRENCY> to <CURRENCY>`.
             ie. `?xe 60.00 CAD to EUR`""")
 
     @commands.command(pass_context=True)
-    @asyncio.coroutine
-    def mose(self, ctx, dollar: float):
+    async def mose(self, ctx, dollar: float):
         """Currency conversion. Converts $$$ to the equivalent number of samosas, based on holy prices.
         Usage: `?mose <AMOUNT>`
         i.e. ?mose 200
         """
         if dollar<0:
-            yield from ctx.send("Trying to owe samosas now, are we? :wink:")
+            await ctx.send("Trying to owe samosas now, are we? :wink:")
             return
         total = dollar//2*3
         if(math.floor(dollar)%2==1):
             total += 1
-        yield from ctx.send("$%.2f is worth %d samosas." % (dollar,total))
+        await ctx.send("$%.2f is worth %d samosas." % (dollar,total))
 
 def setup(bot):
     bot.add_cog(Helpers(bot))

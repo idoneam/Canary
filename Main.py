@@ -32,62 +32,56 @@ logger.addHandler(handler)
 
 
 @bot.event
-@asyncio.coroutine
-def on_ready():
+async def on_ready():
     print('Logged in as {0} ({1})'.format(bot.user.name, bot.user.id))
 
 
 @bot.command(pass_context=True)
 @commands.has_role("Discord Moderator")
-@asyncio.coroutine
-def load(ctx, extension_name: str):
+async def load(ctx, extension_name: str):
     '''
     Load a specific extension.
     '''
     try:
         bot.load_extension(extension_name)
     except (AttributeError, ImportError) as e:
-        yield from ctx.send("```{}: {}\n```".format(type(e).__name__, str(e)))
+        await ctx.send("```{}: {}\n```".format(type(e).__name__, str(e)))
 
         return
-    yield from ctx.send("{} loaded.".format(extension_name))
+    await ctx.send("{} loaded.".format(extension_name))
 
 
 @bot.command(pass_context=True)
 @commands.has_role("Discord Moderator")
-@asyncio.coroutine
-def unload(ctx, extension_name: str):
+async def unload(ctx, extension_name: str):
     '''
     Unload a specific extension.
     '''
     bot.unload_extension(extension_name)
-    yield from ctx.send("Unloaded {}.".format(extension_name))
+    await ctx.send("Unloaded {}.".format(extension_name))
 
 
 @bot.command(pass_context=True)
-@asyncio.coroutine
-def restart(ctx):
+async def restart(ctx):
     '''
     Restart the bot
     '''
-    yield from ctx.send('https://streamable.com/dli1')
+    await ctx.send('https://streamable.com/dli1')
     python = sys.executable
     os.execl(python, python, *sys.argv)
 
 
 @bot.command(pass_context=True)
-@asyncio.coroutine
-def update(ctx):
+async def update(ctx):
     '''
     Update the bot by pulling changes from the git repository
     '''
-    yield from ctx.send('https://streamable.com/c7s2o')
+    await ctx.send('https://streamable.com/c7s2o')
     os.system('git pull')
 
 
 @bot.event
-@asyncio.coroutine
-def on_reaction_add(reaction, user):
+async def on_reaction_add(reaction, user):
     # Check for Martlet emoji + upmartletting yourself
     if not reaction.custom_emoji:
         return
@@ -108,18 +102,17 @@ def on_reaction_add(reaction, user):
 
 
 @bot.event
-@asyncio.coroutine
-def on_message(message):
+async def on_message(message):
     if message.author == bot.user:
         return
     if message.content == "dammit marty":
-        yield from message.channel.send(":c")
+        await message.channel.send(":c")
     if message.content == "worm":
-        yield from message.channel.send(
+        await message.channel.send(
             "walk without rhythm, and it won't attract the worm.")
     if message.content == "hey":
-        yield from message.channel.send("whats going on?")
-    yield from bot.process_commands(message)
+        await message.channel.send("whats going on?")
+    await bot.process_commands(message)
 
 
 # Startup extensions

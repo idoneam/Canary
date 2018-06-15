@@ -26,13 +26,12 @@ class Db():
             "monthly": 30
         }
 
-    @asyncio.coroutine
-    def check_reminders(self):
+    async def check_reminders(self):
         """
         Co-routine that periodically checks if the bot must issue reminders to users.
         :return: None
         """
-        yield from self.bot.wait_until_ready()
+        await self.bot.wait_until_ready()
         while not self.bot.is_closed():
             conn = sqlite3.connect(DB_PATH)
             c = conn.cursor()
@@ -49,18 +48,17 @@ class Db():
                 member = discord.utils.get(guild.members, id=reminders[i][0])
                 last_date = datetime.datetime.strptime(reminders[i][5], "%Y-%m-%d %H:%M:%S.%f")
                 if datetime.datetime.now() - last_date > datetime.timedelta(days=self.frequencies[reminders[i][3]]):
-                    yield from member.send("Reminding you to {}! [{:d}]".format(reminders[i][2], i + 1))
+                    await member.send("Reminding you to {}! [{:d}]".format(reminders[i][2], i + 1))
 
                     c.execute("UPDATE 'Reminders' SET LastReminder = ? WHERE Reminder = ?", (datetime.datetime.now(),
                                                                                              reminders[i][2]))
                     conn.commit()
-                    yield from asyncio.sleep(1)
+                    await asyncio.sleep(1)
             conn.close()
-            yield from asyncio.sleep(60 * 10)
+            await asyncio.sleep(60 * 10)
 
     @commands.command(pass_context=True)
-    @asyncio.coroutine
-    def stop_reminder(self, ctx, reminder: str):
+    async def stop_reminder(self, ctx, reminder: str):
         """
         [DM Only] Delete the specified reminder
         :param reminder: An integer choice for reminder based on Martlet's last set of DM's with reminders.
@@ -73,14 +71,14 @@ class Db():
             except sqlite3.OperationalError:
                 c.execute("CREATE TABLE 'Reminders' ('ID'INTEGER,'Name'TEXT,'Reminder'TEXT,'Frequency'TEXT,'Date'TEXT,"
                           "'LastReminder'TEXT)")
-                yield from ctx.send("Database created.")
+                await ctx.send("Database created.")
                 return
             try:
                 choice = int(reminder)
                 if choice < 1 or choice > len(reminders):
                     raise ValueError
             except ValueError:
-                yield from ctx.send("Please specify a choice number between 1 and {:d}!"
+                await ctx.send("Please specify a choice number between 1 and {:d}!"
                                     .format(len(reminders)))
                 conn.close()
                 return
@@ -88,19 +86,18 @@ class Db():
             c.execute('DELETE FROM Reminders WHERE Reminder=? AND ID=? AND DATE=?', t)
             conn.commit()
             conn.close()
-            yield from ctx.send("Reminder successfully removed!")
+            await ctx.send("Reminder successfully removed!")
         else:
-            yield from ctx.send("Slide into my DM's ;) (Please respond to my DM messages to stop "
+            await ctx.send("Slide into my DM's ;) (Please respond to my DM messages to stop "
                                 "reminders!)")
 
     @commands.command(pass_context=True)
-    @asyncio.coroutine
-    def remindme(self, ctx, freq: str, *, quote: str):
+    async def remindme(self, ctx, freq: str, *, quote: str):
         """
         Add a reminder to the reminder database.
         """
         if freq not in self.frequencies.keys():
-            yield from ctx.send("Please ensure you specify a frequency from the following list: `daily`, `weekly`, "
+            await ctx.send("Please ensure you specify a frequency from the following list: `daily`, `weekly`, "
                                 "`monthly`!")
             return
         conn = sqlite3.connect(DB_PATH)
@@ -110,7 +107,7 @@ class Db():
         reminders = c.execute('SELECT * FROM Reminders WHERE Reminder =? AND ID = ?',
                               (quote, ctx.message.author.id)).fetchall()
         if len(reminders) > 0:
-            yield from ctx.send("The reminder `{}` already exists in your database. Please specify a unique reminder "
+            await ctx.send("The reminder `{}` already exists in your database. Please specify a unique reminder "
                                 "message!".format(quote))
             return
         reminders = c.execute('SELECT * FROM Reminders WHERE ID =?', (ctx.message.author.id,)).fetchall()
@@ -120,16 +117,15 @@ class Db():
             c.execute("CREATE TABLE 'Reminders' ('ID'INTEGER,'Name'TEXT,'Reminder'TEXT,'Frequency'TEXT,'Date'\
                         TEXT,'LastReminder'TEXT)")
             c.execute('INSERT INTO Reminders VALUES (?, ?, ?, ?, ?. ?)', t)
-        yield from ctx.author.send('Hi {}! \n I will remind you to {} {} until you send me a message to stop '
+        await ctx.author.send('Hi {}! \n I will remind you to {} {} until you send me a message to stop '
                                    'reminding you about it! [{:d}]'
                                    .format(ctx.author.name,  quote, freq, len(reminders)+1))
-        yield from ctx.send('Reminder added.')
+        await ctx.send('Reminder added.')
         conn.commit()
         conn.close()
 
     @commands.command(pass_context=True)
-    @asyncio.coroutine
-    def addq(self, ctx, member: discord.Member, *, quote: str):
+    async def addq(self, ctx, member: discord.Member, *, quote: str):
         """
         Add a quote to a user's quote database.
         """
@@ -138,13 +134,12 @@ class Db():
         t = (member.id, member.name, quote,
              str(ctx.message.created_at))
         c.execute('INSERT INTO Quotes VALUES (?,?,?,?)', t)
-        yield from ctx.send('`Quote added.`')
+        await ctx.send('`Quote added.`')
         conn.commit()
         conn.close()
 
     @commands.command(pass_context=True)
-    @asyncio.coroutine
-    def q(self, ctx, str1: str = None, *, str2: str = None):
+    async def q(self, ctx, str1: str = None, *, str2: str = None):
         """
         Retrieve a quote with a specified keyword / mention.
         """
@@ -169,7 +164,7 @@ class Db():
             quotes = c.fetchall()
         if not quotes:
             conn.close()
-            yield from ctx.send('Quote not found.')
+            await ctx.send('Quote not found.')
         else:
             conn.close()
             quote_tuple = random.choice(quotes)
@@ -179,11 +174,10 @@ class Db():
             author = discord.utils.get(ctx.guild.members, id = author_id)
             # get author name, if the user is still on the server, their current nick will be displayed, otherwise use the name stored in db
             author_name = author.display_name if author else name
-            yield from ctx.send('{} 📣 {}'.format(author_name, quote))
+            await ctx.send('{} 📣 {}'.format(author_name, quote))
 
     @commands.command(pass_context=True)
-    @asyncio.coroutine
-    def lq(self, ctx, author: discord.User=None):
+    async def lq(self, ctx, author: discord.User=None):
         """
         List your quotes or the quotes of a mentioned user.
         """
@@ -198,22 +192,21 @@ class Db():
             if ((len(msg) + len('[%d] %s\n' %
                                 (i + 1, quoteslist[i][0]))) > 1996):
                 msg += '```'
-                yield from ctx.send(msg, delete_after=30)
+                await ctx.send(msg, delete_after=30)
                 msg = '```[%d] %s\n' % (i+1, quoteslist[i][0].replace('```', ''))
             else:
                 msg += '[%d] %s\n' % (i+1, quoteslist[i][0].replace('```', ''))
         if ((len(msg) + len('\n ~ End of Quotes ~```')) < 1996):
             msg += '\n ~ End of Quotes ~```'
-            yield from ctx.send(msg, delete_after=30)
+            await ctx.send(msg, delete_after=30)
         else:
             msg += '```'
-            yield from ctx.send(msg, delete_after=30)
+            await ctx.send(msg, delete_after=30)
             msg = '```\n ~ End of Quotes ~```'
-            yield from ctx.send(msg, delete_after=30)
+            await ctx.send(msg, delete_after=30)
 
     @commands.command(pass_context=True)
-    @asyncio.coroutine
-    def delq(self, ctx):
+    async def delq(self, ctx):
         """
         Delete a specific quote from your quotes.
         """
@@ -223,7 +216,7 @@ class Db():
         quoteslist = c.execute('SELECT Quote FROM Quotes WHERE ID=?',
                                t).fetchall()
         if not quoteslist:
-            yield from ctx.send('No quotes found.')
+            await ctx.send('No quotes found.')
             conn.close()
             return
         else:
@@ -233,19 +226,19 @@ class Db():
                 if ((len(msg) + len('[%d] %s\n' %
                                     (i + 1, quoteslist[i][0]))) > 1996):
                     msg += '```'
-                    yield from ctx.send(msg, delete_after=30)
+                    await ctx.send(msg, delete_after=30)
                     msg = '```[%d] %s\n' % (i+1, quoteslist[i][0].replace('```', ''))
                 else:
                     msg += '[%d] %s\n' % (i+1, quoteslist[i][0].replace('```', ''))
             if ((len(msg) +
                  len('\n[0] Exit without deleting quotes```')) < 1996):
                 msg += '\n[0] Exit without deleting quotes```'
-                yield from ctx.send(msg, delete_after=30)
+                await ctx.send(msg, delete_after=30)
             else:
                 msg += '```'
-                yield from ctx.send(msg, delete_after=30)
+                await ctx.send(msg, delete_after=30)
                 msg = '```\n[0] Exit without deleting quotes```'
-                yield from ctx.send(msg, delete_after=30)
+                await ctx.send(msg, delete_after=30)
 
         def check(message):
             try:
@@ -256,22 +249,21 @@ class Db():
                 return False
             except ValueError:
                 return False
-        response = yield from self.bot.wait_for("message", check=check)
+        response = await self.bot.wait_for("message", check=check)
         choice = int(response.content)
         if choice == 0:
-            yield from ctx.send("Exited quote deletion menu.")
+            await ctx.send("Exited quote deletion menu.")
             conn.close()
             return
         else:
             t = (quoteslist[choice - 1][0], ctx.message.author.id)
             c.execute('DELETE FROM Quotes WHERE Quote=? AND ID=?', t)
-            yield from ctx.send("Quote successfully deleted.")
+            await ctx.send("Quote successfully deleted.")
             conn.commit()
             conn.close()
 
     @commands.command(pass_context=True)
-    @asyncio.coroutine
-    def ranking(self, ctx):
+    async def ranking(self, ctx):
         """
         Upmartlet Rankings! :^)
         """
@@ -282,7 +274,7 @@ class Db():
         table = []
         for (ID, DisplayName, Upmartlet) in members:
             table.append((DisplayName, Upmartlet))
-        yield from ctx.send('```Java\n' +
+        await ctx.send('```Java\n' +
                             tabulate(table, headers=["NAME", "#"],
                                      tablefmt="fancy_grid") +
                             '```', delete_after=30)
@@ -296,7 +288,7 @@ class Db():
     #     msg = random.choice(greetings)[0]
     #     msg = msg.replace('$user$', member.mention)
     #     general = self.bot.get_channel(236668784948019202)
-    #     yield from general.send(msg)
+    #     await general.send(msg)
     #
     # @asyncio.coroutine
     # def on_member_leave(self, member):
@@ -307,7 +299,7 @@ class Db():
     #     msg = random.choice(farewell)[0]
     #     msg = msg.replace('$user$', member.mention)
     #     general = self.bot.get_channel(236668784948019202)
-    #     yield from general.send(msg)
+    #     await general.send(msg)
 
 def setup(bot):
     database = Db(bot)
