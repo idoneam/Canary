@@ -12,6 +12,9 @@ class Mod():
     async def on_message(self, message):
         if message.author == self.bot.user:
             return
+        ctx = await self.bot.get_context(message)
+        if ctx.command:
+            return
         if isinstance(message.channel, discord.DMChannel):
             channelToSend = self.bot.get_channel(326524201987211267)
             msg = '{} 📣 {}'.format(str(message.author), message.content)
