@@ -16,7 +16,7 @@ class Mod():
         if ctx.command:
             return
         if isinstance(message.channel, discord.DMChannel):
-            channelToSend = self.bot.get_channel(326524201987211267)
+            channelToSend = self.bot.get_channel(454061583874785280)
             msg = '{} 📣 {}'.format(str(message.author), message.content)
             await channelToSend.send(msg)
 
@@ -28,13 +28,10 @@ class Mod():
         '''
         dest = user
         await dest.send(message)
-
-    # @commands.command(aliases=['cid'])
-    # @commands.has_role('Discord Moderator')
-    # @asyncio.coroutine
-    # def get_channel_id(self, ctx):
-    #     await ctx.send(ctx.channel.id)
-
+        channelToForward = self.bot.get_channel(454061583874785280)
+        msg = '🐦 ({}) to {}: {}'.format(ctx.author.name, dest, message)
+        await channelToForward.send(msg)
+        await ctx.message.delete()
 
 def setup(bot):
     bot.add_cog(Mod(bot))
