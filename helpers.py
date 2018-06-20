@@ -21,11 +21,11 @@ class Helpers():
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(pass_context=True)
+    @commands.command()
     async def exam(self, ctx):
         await ctx.send('https://mcgill.ca/students/exams/files/students.exams/april_2018_final_exam_schedule_with_room_locations.pdf')
 
-    @commands.command(pass_context=True)
+    @commands.command()
     async def weather(self, ctx):
         """Retrieves current weather conditions.
         Data taken from http://weather.gc.ca/city/pages/qc-147_metric_e.html"""
@@ -92,13 +92,13 @@ class Helpers():
         await ctx.send(embed=weather_alert)
 
 
-    @commands.command(pass_context=True)
+    @commands.command()
     async def wttr(self, ctx):
         em = discord.Embed(title="Weather in Montreal").set_image(url='http://wttr.in/Montreal_2mpq_lang=en.png?_=%d' % round(time.time()))
         await ctx.send(embed=em)
 
 
-    @commands.command(pass_context=True)
+    @commands.command()
     async def course(self, ctx, *, query: str):
         """Prints a summary of the queried course, taken from the course calendar.
         ie. ?course comp 206
@@ -142,7 +142,7 @@ class Helpers():
         await ctx.send(embed=em)
 
 
-    @commands.command(pass_context=True)
+    @commands.command()
     async def urban(self, ctx, *, query: str):
         """Fetches the top definition from Urban Dictionary."""
         url = "http://www.urbandictionary.com/define.php?term=%s" % query.replace(' ', '+')
@@ -161,7 +161,7 @@ class Helpers():
         await ctx.send(embed=em)
 
 
-    @commands.command(pass_context=True)
+    @commands.command()
     async def tex(self, ctx, *, query: str):
         """Parses and prints LaTeX equations."""
         if "$" in ctx.message.content:
@@ -182,7 +182,7 @@ class Helpers():
             await ctx.send('PLEASE USE \'$\' AROUND YOUR LATEX EQUATIONS. CHIRP.')
 
 
-    @commands.command(pass_context=True)
+    @commands.command()
     async def search(self, ctx, *, query: str):
         """Shows results for the queried keyword(s) in McGill courses"""
         keyword = query.replace(" ", "+")
@@ -221,7 +221,7 @@ class Helpers():
         return
 
 
-    @commands.command(pass_context=True)
+    @commands.command()
     async def xe(self, ctx, *, query: str):
         """Currency conversion.
         Uses real-time exchange rates taken from http://www.xe.com.
@@ -252,7 +252,7 @@ class Helpers():
             The correct format is `?xe <AMOUNT> <CURRENCY> to <CURRENCY>`.
             ie. `?xe 60.00 CAD to EUR`""")
 
-    @commands.command(pass_context=True)
+    @commands.command()
     async def mose(self, ctx, dollar: float):
         """Currency conversion. Converts $$$ to the equivalent number of samosas, based on holy prices.
         Usage: `?mose <AMOUNT>`
