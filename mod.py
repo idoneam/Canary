@@ -20,7 +20,7 @@ class Mod():
             msg = '{} 📣 {}'.format(str(message.author), message.content)
             await channelToSend.send(msg)
 
-    @commands.command(pass_context=True)
+    @commands.command()
     @commands.has_role('Discord Moderator')
     async def pm(self, ctx, user: discord.User, *, message):
         '''
@@ -29,7 +29,7 @@ class Mod():
         dest = user
         await dest.send(message)
 
-    # @commands.command(pass_context=True, aliases=['cid'])
+    # @commands.command(aliases=['cid'])
     # @commands.has_role('Discord Moderator')
     # @asyncio.coroutine
     # def get_channel_id(self, ctx):

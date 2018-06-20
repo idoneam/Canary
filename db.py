@@ -57,7 +57,7 @@ class Db():
             conn.close()
             await asyncio.sleep(60 * 10)
 
-    @commands.command(pass_context=True)
+    @commands.command()
     async def stop_reminder(self, ctx, reminder: str):
         """
         [DM Only] Delete the specified reminder
@@ -91,7 +91,7 @@ class Db():
             await ctx.send("Slide into my DM's ;) (Please respond to my DM messages to stop "
                                 "reminders!)")
 
-    @commands.command(pass_context=True)
+    @commands.command()
     async def remindme(self, ctx, freq: str, *, quote: str):
         """
         Add a reminder to the reminder database.
@@ -124,7 +124,7 @@ class Db():
         conn.commit()
         conn.close()
 
-    @commands.command(pass_context=True)
+    @commands.command()
     async def addq(self, ctx, member: discord.Member, *, quote: str):
         """
         Add a quote to a user's quote database.
@@ -138,7 +138,7 @@ class Db():
         conn.commit()
         conn.close()
 
-    @commands.command(pass_context=True)
+    @commands.command()
     async def q(self, ctx, str1: str = None, *, str2: str = None):
         """
         Retrieve a quote with a specified keyword / mention.
@@ -176,7 +176,7 @@ class Db():
             author_name = author.display_name if author else name
             await ctx.send('{} 📣 {}'.format(author_name, quote))
 
-    @commands.command(pass_context=True)
+    @commands.command()
     async def lq(self, ctx, author: discord.User=None):
         """
         List your quotes or the quotes of a mentioned user.
@@ -205,7 +205,7 @@ class Db():
             msg = '```\n ~ End of Quotes ~```'
             await ctx.send(msg, delete_after=30)
 
-    @commands.command(pass_context=True)
+    @commands.command()
     async def delq(self, ctx):
         """
         Delete a specific quote from your quotes.
@@ -262,7 +262,7 @@ class Db():
             conn.commit()
             conn.close()
 
-    @commands.command(pass_context=True)
+    @commands.command()
     async def ranking(self, ctx):
         """
         Upmartlet Rankings! :^)

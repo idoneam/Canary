@@ -12,7 +12,7 @@ class Memes():
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(pass_context=True)
+    @commands.command()
     async def lenny(self, ctx):
         """
         Lenny face
@@ -20,7 +20,7 @@ class Memes():
         await ctx.send("( ͡° ͜ʖ ͡°) ")
         await ctx.message.delete()
 
-    @commands.command(pass_context=True)
+    @commands.command()
     async def license(self, ctx):
         """
         License
@@ -44,7 +44,7 @@ class Memes():
                             "<http://www.gnu.org/licenses/>.")
         await ctx.message.delete()
 
-    @commands.command(pass_context=True)
+    @commands.command()
     async def gohere(self, ctx):
         """
         for future mcgillians
@@ -52,7 +52,7 @@ class Memes():
         await ctx.send("http://gph.is/1cN9wO1")
         await ctx.message.delete()
 
-    @commands.command(pass_context=True)
+    @commands.command()
     async def tunak(self, ctx):
         """
         bitch pls
@@ -60,7 +60,7 @@ class Memes():
         await ctx.send("http://i.imgur.com/rNNLyjK.gif")
         await ctx.message.delete()
 
-    @commands.command(pass_context=True)
+    @commands.command()
     async def bb8(self, ctx):
         """
         nice job bb8
@@ -68,7 +68,7 @@ class Memes():
         await ctx.send("http://i.imgur.com/SUvaUM2.gif")
         await ctx.message.delete()
 
-    @commands.command(pass_context=True)
+    @commands.command()
     async def longtime(self, ctx):
         """
         That's a name I've not heard in a long time
@@ -76,7 +76,7 @@ class Memes():
         await ctx.send("http://i.imgur.com/e1T1xcq.mp4")
         await ctx.message.delete()
 
-    @commands.command(pass_context=True)
+    @commands.command()
     async def thonk(self, ctx):
         """
         when thonking consumes you
@@ -84,7 +84,7 @@ class Memes():
         await ctx.send("https://i.imgur.com/VADGUwj.gifv")
         await ctx.message.delete()
 
-    @commands.command(pass_context=True)
+    @commands.command()
     async def dealwithit(self, ctx):
         """
         deal with it trump
@@ -92,7 +92,7 @@ class Memes():
         await ctx.send("http://i.imgur.com/5jzN8zV.mp4")
         await ctx.message.delete()
 
-    @commands.command(pass_context=True)
+    @commands.command()
     async def lmao(self, ctx):
         """
         that's hilarious
@@ -100,12 +100,12 @@ class Memes():
         await ctx.send("http://i.imgur.com/o5Cc3i2.mp4")
         await ctx.message.delete()
 
-    @commands.command(pass_context=True)
+    @commands.command()
     async def chirp(self, ctx):
         """:^)"""
         await ctx.send('CHIRP CHIRP')
 
-    @commands.command(pass_context=True)
+    @commands.command()
     async def mix(self, ctx, *, inputStr: str=None):
         if inputStr is None:
             await ctx.send()

@@ -36,7 +36,7 @@ async def on_ready():
     print('Logged in as {0} ({1})'.format(bot.user.name, bot.user.id))
 
 
-@bot.command(pass_context=True)
+@bot.command()
 @commands.has_role("Discord Moderator")
 async def load(ctx, extension_name: str):
     '''
@@ -51,7 +51,7 @@ async def load(ctx, extension_name: str):
     await ctx.send("{} loaded.".format(extension_name))
 
 
-@bot.command(pass_context=True)
+@bot.command()
 @commands.has_role("Discord Moderator")
 async def unload(ctx, extension_name: str):
     '''
@@ -61,7 +61,7 @@ async def unload(ctx, extension_name: str):
     await ctx.send("Unloaded {}.".format(extension_name))
 
 
-@bot.command(pass_context=True)
+@bot.command()
 async def restart(ctx):
     '''
     Restart the bot
@@ -71,7 +71,7 @@ async def restart(ctx):
     os.execl(python, python, *sys.argv)
 
 
-@bot.command(pass_context=True)
+@bot.command()
 async def update(ctx):
     '''
     Update the bot by pulling changes from the git repository
