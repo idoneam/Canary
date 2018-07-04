@@ -19,7 +19,7 @@ import sys
 startup = ["db", "memes", "helpers", "mod"]
 DB_PATH = './Martlet.db'
 
-bot = commands.Bot(command_prefix='-')
+bot = commands.Bot(command_prefix='?')
 
 # Logging configuration
 logger = logging.getLogger('discord')
@@ -111,9 +111,9 @@ async def on_raw_reaction_add(payload):
         conn.close()
     else:
         if score == 1:
-            c.execute('UPDATE Members SET Upmartlet=Upmartlet+1 WHERE ID=?', t)
+            c.execute('UPDATE Members SET Score=Score+1 WHERE ID=?', t)
         else:
-            c.execute('UPDATE Members SET Upmartlet=Upmartlet-1 WHERE ID=?', t)
+            c.execute('UPDATE Members SET Score=Score-1 WHERE ID=?', t)
         conn.commit()
         conn.close()
 
@@ -151,9 +151,9 @@ async def on_raw_reaction_remove(payload):
         conn.close()
     else:
         if score == 1:
-            c.execute('UPDATE Members SET Upmartlet=Upmartlet+1 WHERE ID=?', t)
+            c.execute('UPDATE Members SET Score=Score+1 WHERE ID=?', t)
         else:
-            c.execute('UPDATE Members SET Upmartlet=Upmartlet-1 WHERE ID=?', t)
+            c.execute('UPDATE Members SET Score=Score-1 WHERE ID=?', t)
         conn.commit()
         conn.close()
 
