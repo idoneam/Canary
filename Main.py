@@ -81,22 +81,79 @@ async def update(ctx):
 
 
 @bot.event
-async def on_reaction_add(reaction, user):
+async def on_raw_reaction_add(payload):
     # Check for Martlet emoji + upmartletting yourself
-    if not reaction.custom_emoji:
+    channel = bot.get_channel(payload.channel_id)
+    message = await channel.get_message(payload.message_id)
+    user = bot.get_user(payload.user_id)
+    emoji = payload.emoji
+
+    if user == message.author:
         return
-    if reaction.emoji.name != "upmartlet" or reaction.message.author == user:
+
+    if emoji.name == 'upmartlet':
+        score = 1
+    elif emoji.name == 'downmartlet':
+        score = -1
+    else:
         return
+
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
-    t = (int(reaction.message.author.id), )
+    # uncomment to enable sqlite3 debugging
+    # conn.set_trace_callback(print)
+
+    t = (message.author.id,)
     if not c.execute('SELECT * FROM Members WHERE ID=?', t).fetchall():
-        t = (reaction.message.author.id, reaction.message.author.name, 1)
+        t = (message.author.id, message.author.display_name, score)
         c.execute('INSERT INTO Members VALUES (?,?,?)', t)
         conn.commit()
         conn.close()
     else:
-        c.execute('UPDATE Members SET Upmartlet=Upmartlet+1 WHERE ID=?', t)
+        if score == 1:
+            c.execute('UPDATE Members SET Score=Score+1 WHERE ID=?', t)
+        else:
+            c.execute('UPDATE Members SET Score=Score-1 WHERE ID=?', t)
+        conn.commit()
+        conn.close()
+
+
+@bot.event
+async def on_raw_reaction_remove(payload):
+    # Check for Martlet emoji + upmartletting yourself
+    """Does the opposite thing when a user up/downmarlets a message
+    """
+    channel = bot.get_channel(payload.channel_id)
+    message = await channel.get_message(payload.message_id)
+    user = bot.get_user(payload.user_id)
+    emoji = payload.emoji
+
+    if user == message.author:
+        return
+
+    if emoji.name == 'upmartlet':
+        score = -1
+    elif emoji.name == 'downmartlet':
+        score = 1
+    else:
+        return
+
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    # uncomment to enable sqlite3 debugging
+    # conn.set_trace_callback(print)
+
+    t = (message.author.id,)
+    if not c.execute('SELECT * FROM Members WHERE ID=?', t).fetchall():
+        t = (message.author.id, message.author.display_name, score)
+        c.execute('INSERT INTO Members VALUES (?,?,?)', t)
+        conn.commit()
+        conn.close()
+    else:
+        if score == 1:
+            c.execute('UPDATE Members SET Score=Score+1 WHERE ID=?', t)
+        else:
+            c.execute('UPDATE Members SET Score=Score-1 WHERE ID=?', t)
         conn.commit()
         conn.close()
 
