@@ -36,7 +36,7 @@ class Pages():
         self.itemList = itemList
         self.title = title
         self.option = option
-        self.pagesToSend, self.lastPage = self.__organize()
+        self.__organize()
         self.actions = [('⏪', self.__firstPage),
                         ('◀', self.__prevPage),
                         ('▶', self.__nextPage),
@@ -72,7 +72,7 @@ class Pages():
             length = cache = 0
             for i in range(len(self.itemList)):
                 length += len(self.itemList[i])
-                if length > 1894 or i == len(self.itemList)-1:
+                if length > 1894:
                     pagesToSend.append('```'
                         + self.title
                         + ':\n\n'
@@ -80,10 +80,17 @@ class Pages():
                     cache = i
                     length = len(self.itemList[i])
                     pageCounter += 1
+                elif i == len(self.itemList)-1: # edge case
+                    pagesToSend.append('```'
+                        + self.title
+                        + ':\n\n'
+                        + '\n'.join(self.itemList[cache:i+1]).replace('```', ''))
+                    pageCounter += 1
             for i in range(len(pagesToSend)):
                 pagesToSend[i] += '\n\n~ Page {:02d} of {:02d} ~'.format(i, pageCounter) + '```'
 
-        return (pagesToSend, pageCounter)
+        self.pagesToSend = pagesToSend
+        self.lastPage = pageCounter
 
 
     async def __showPage(self, page):
@@ -134,7 +141,7 @@ class Pages():
 
     async def __del(self):
         self.delete = True
-        await self.__showPage(1)
+        await self.__showPage(self.currentPage)
 
 
     def __reactCheck(self, reaction, user):
@@ -151,7 +158,9 @@ class Pages():
 
 
     async def paginate(self):
-        self.delete = False
+        if self.delete:
+            self.delete = False
+            self.__organize()
         await self.__showPage(self.currentPage)
         while not self.delete and self.message:
             try:
