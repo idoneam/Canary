@@ -9,10 +9,4 @@ CREATE TABLE IF NOT EXISTS `Members` (
 	`DisplayName`	TEXT,
 	`Score`	INTEGER
 );
-CREATE TABLE IF NOT EXISTS "Welcome" (
-    "Message" TEXT PRIMARY KEY
-);
-CREATE TABLE IF NOT EXISTS "Bye" (
-    "Message" TEXT PRIMARY KEY
-);
 CREATE TABLE IF NOT EXISTS 'Reminders' ('ID'INTEGER,'Name'TEXT,'Reminder'TEXT,'Frequency'TEXT,'Date'TEXT,'LastReminder'TEXT);

@@ -152,8 +152,6 @@ async def on_raw_reaction_remove(payload):
 
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
-    # uncomment to enable sqlite3 debugging
-    # conn.set_trace_callback(print)
 
     t = (message.author.id,)
     if not c.execute('SELECT * FROM Members WHERE ID=?', t).fetchall():
