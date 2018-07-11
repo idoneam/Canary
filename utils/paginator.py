@@ -7,7 +7,27 @@ import asyncio
 import math
 
 class Pages():
-    def __init__(self, ctx, currentPage=1, msg=None, itemList=[], title='Paginator'):
+    def __init__(self, ctx, currentPage=1, msg=None, itemList=[], title='Paginator', option='CODE_BLOCKS', editableContent=True):
+        """Creates a paginator.
+
+        Parameters
+        -----------
+        ctx: discord.ext.commands.Context
+            The current context (guild, channel, etc for bot to send messages).
+        currentPage: int
+            Specify which page to display.
+        msg: discord.Message
+            This is helpful for delete function. Specify which message the bot needs to update if an element in the original message is modified.
+        itemList: list or dictionary
+            List of items to paginate. Using a dictionary is only useful for embeds option where there is a need for field names and values.
+        title: str
+            Summary of content of the items.
+        option: 'CODE_BLOCKS' or 'EMBEDS'
+            Specify if the pages sent will be in either format.
+        editableContent: bool
+            True if the items can be updated by the users (this is like an MVC).
+            False otherwise.
+        """
         self.bot = ctx.bot
         self.guild = ctx.guild
         self.channel = ctx.channel
@@ -15,26 +35,55 @@ class Pages():
         self.message = msg
         self.itemList = itemList
         self.title = title
-        length = 0
-        pageCounter = 0
-        cache = 0
-        self.pagesToSend = ['empty page']
-        for i in range(len(self.itemList)):
-            length += len(self.itemList[i])
-            if length > 1994 or i == len(self.itemList)-1:
-                self.pagesToSend.append('```' + '\n'.join(self.itemList[cache:i]).replace('```', '') + '```')
-                cache = i
-                length = len(self.itemList[i])
-                pageCounter += 1
-        self.lastPage = pageCounter
+        self.option = option
+        self.pagesToSend, self.lastPage = self.__organize()
         self.actions = [('⏪', self.__firstPage),
                         ('◀', self.__prevPage),
                         ('▶', self.__nextPage),
                         ('⏩', self.__lastPage),
                         ('⏹', self.__halt),
-                        ('🚮', self.__del)]
+                        ]
+        if editableContent:
+            self.actions.append(('🚮', self.__del))
         self.currentPage = currentPage
         self.delete = False
+
+
+    def __organize(self):
+        pagesToSend = ['empty page']
+        pageCounter = 0
+        if self.option == 'EMBEDS':
+            itemPerPage = 10
+            pageCounter = math.ceil(len(self.itemList['names']) / itemPerPage)
+            em = discord.Embed(title=self.title, colour=0xDA291C)
+            for i in range(pageCounter):
+                em.set_footer(text='Page {:02d} of {:02d}'.format(i+1, pageCounter))
+                indexStart = itemPerPage * i
+                indexEnd = itemPerPage * (i+1)
+                for name, val in zip( self.itemList['names'][indexStart:indexEnd], self.itemList['values'][indexStart:indexEnd]):
+                    em.add_field(
+                        name=name,
+                        value=val
+                    )
+                pagesToSend.append(em)
+                em = discord.Embed(title=self.title, colour=0xDA291C)
+
+        elif self.option == 'CODE_BLOCKS':
+            length = cache = 0
+            for i in range(len(self.itemList)):
+                length += len(self.itemList[i])
+                if length > 1894 or i == len(self.itemList)-1:
+                    pagesToSend.append('```'
+                        + self.title
+                        + ':\n\n'
+                        + '\n'.join(self.itemList[cache:i]).replace('```', ''))
+                    cache = i
+                    length = len(self.itemList[i])
+                    pageCounter += 1
+            for i in range(len(pagesToSend)):
+                pagesToSend[i] += '\n\n~ Page {:02d} of {:02d} ~'.format(i, pageCounter) + '```'
+
+        return (pagesToSend, pageCounter)
 
 
     async def __showPage(self, page):
@@ -48,10 +97,16 @@ class Pages():
                 except:
                     pass
             else:
-                await self.message.edit(content=self.pagesToSend[self.currentPage])
+                if self.option == 'CODE_BLOCKS':
+                    await self.message.edit(content=self.pagesToSend[self.currentPage])
+                elif self.option == 'EMBEDS':
+                    await self.message.edit(embed=self.pagesToSend[self.currentPage])
                 return
         else:
-            self.message = await self.channel.send(content=self.pagesToSend[self.currentPage], delete_after=300)
+            if self.option == 'CODE_BLOCKS':
+                self.message = await self.channel.send(content=self.pagesToSend[self.currentPage], delete_after=300)
+            elif self.option == 'EMBEDS':
+                self.message = await self.channel.send(embed=self.pagesToSend[self.currentPage], delete_after=300)
             for (emoji, _) in self.actions:
                 await self.message.add_reaction(emoji)
             return
