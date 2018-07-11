@@ -62,6 +62,7 @@ async def unload(ctx, extension_name: str):
 
 
 @bot.command()
+@commands.has_role("Discord Moderator")
 async def restart(ctx):
     '''
     Restart the bot
@@ -69,6 +70,17 @@ async def restart(ctx):
     await ctx.send('https://streamable.com/dli1')
     python = sys.executable
     os.execl(python, python, *sys.argv)
+
+
+@bot.command()
+@commands.has_role("Discord Moderator")
+async def sleep(ctx):
+    '''
+    Shut down the bot
+    '''
+    await ctx.send('Bye')
+    await bot.logout()
+    print('Bot shut down')
 
 
 @bot.command()

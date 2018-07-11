@@ -177,138 +177,55 @@ class Db():
             author_name = author.display_name if author else name
             await ctx.send('{} 📣 {}'.format(author_name, quote))
 
-    @commands.command()
-    async def lq(self, ctx, author: discord.User=None):
-        """
-        List your quotes or the quotes of a mentioned user.
-        """
-        quote_author = author if author else ctx.message.author
-        author_id = quote_author.id
+    @commands.command(aliases=['lq'])
+    async def listQuote(self, ctx, author: discord.User=None):
+        '''
+        List quotes
+        '''
         conn = sqlite3.connect(DB_PATH)
         c = conn.cursor()
-        quoteslist = c.execute('SELECT Quote FROM Quotes WHERE ID=?',
-                               (author_id,)).fetchall()
-        msg = "```Quotes: \n"
-        for i in range(len(quoteslist)):
-            if ((len(msg) + len('[%d] %s\n' %
-                                (i + 1, quoteslist[i][0]))) > 1996):
-                msg += '```'
-                await ctx.send(msg, delete_after=30)
-                msg = '```[%d] %s\n' % (i+1, quoteslist[i][0].replace('```', ''))
-            else:
-                msg += '[%d] %s\n' % (i+1, quoteslist[i][0].replace('```', ''))
-        if ((len(msg) + len('\n ~ End of Quotes ~```')) < 1996):
-            msg += '\n ~ End of Quotes ~```'
-            await ctx.send(msg, delete_after=30)
-        else:
-            msg += '```'
-            await ctx.send(msg, delete_after=30)
-            msg = '```\n ~ End of Quotes ~```'
-            await ctx.send(msg, delete_after=30)
-
-    # @commands.command(aliases=['lq'])
-    # async def listQuote(self, ctx, author: discord.User=None):
-    #     '''
-    #     List quotes
-    #     '''
-    #     conn = sqlite3.connect(DB_PATH)
-    #     c = conn.cursor()
-    #     quoteAuthor = author if author else ctx.message.author
-    #     author_id = quoteAuthor.id
-    #     t = (author_id,)
-    #     c.execute('SELECT * FROM Quotes WHERE ID = ?', t)
-    #     quoteList = c.fetchall()
-    #     if quoteList:
-    #         quoteListText = ['[{}] {}'.format(i+1, quote[2]) for i,quote in zip(range(len(quoteList)),quoteList)]
-    #         p = Pages(ctx, itemList=quoteListText, title='Quotes from {}'.format(quoteAuthor.display_name))
-    #         await p.paginate()
-    #         index = 0
-    #         def msgCheck(message):
-    #             try:
-    #                 if (1 <= int(message.content) <= len(quoteList)) and message.author.id == author_id:
-    #                     return True
-    #                 return False
-    #             except ValueError:
-    #                 return False
-    #         while p.delete:
-    #             await ctx.send('Delete option selected. Enter a number to specify which quote you want to delete', delete_after=60)
-    #             try:
-    #                 message = await self.bot.wait_for('message', check=msgCheck, timeout=60)
-    #             except asyncio.TimeoutError:
-    #                 await ctx.send('Command timeout. You may want to run the command again.', delete_after=60)
-    #                 break
-    #             else:
-    #                 index = int(message.content)-1
-    #                 t = (quoteList[index][0], quoteList[index][2],)
-    #                 c.execute('DELETE FROM Quotes WHERE ID = ? AND Quote = ?', t)
-    #                 conn.commit()
-    #                 del quoteList[index]
-    #                 ctx.send('Quote deleted', delete_after=60)
-    #                 await message.delete()
-    #                 p.itemList = ['[{}] {}'.format(i+1, quote[2]) for i,quote in zip(range(len(quoteList)),quoteList)]
-    #                 await p.paginate()
-    #         await ctx.message.delete()
-    #         conn.commit()
-    #         conn.close()
-    #     else:
-    #         await ctx.send('No quote found.', delete_after=60)
-
-    @commands.command()
-    async def delq(self, ctx):
-        """
-        Delete a specific quote from your quotes.
-        """
-        conn = sqlite3.connect(DB_PATH)
-        c = conn.cursor()
-        t = (ctx.message.author.id,)
-        quoteslist = c.execute('SELECT Quote FROM Quotes WHERE ID=?',
-                               t).fetchall()
-        if not quoteslist:
-            await ctx.send('No quotes found.')
-            conn.close()
-            return
-        else:
-            # print the quotes of the user in pages
-            msg = "Please choose a quote you would like to delete.\n\n```"
-            for i in range(len(quoteslist)):
-                if ((len(msg) + len('[%d] %s\n' %
-                                    (i + 1, quoteslist[i][0]))) > 1996):
-                    msg += '```'
-                    await ctx.send(msg, delete_after=30)
-                    msg = '```[%d] %s\n' % (i+1, quoteslist[i][0].replace('```', ''))
+        quoteAuthor = author if author else ctx.message.author
+        author_id = quoteAuthor.id
+        t = (author_id,)
+        c.execute('SELECT * FROM Quotes WHERE ID = ?', t)
+        quoteList = c.fetchall()
+        if quoteList:
+            quoteListText = ['[{}] {}'.format(i+1, quote[2]) for i,quote in zip(range(len(quoteList)),quoteList)]
+            p = Pages(ctx,
+                itemList=quoteListText,
+                title='Quotes from {}'.format(quoteAuthor.display_name)
+            )
+            await p.paginate()
+            index = 0
+            def msgCheck(message):
+                try:
+                    if (1 <= int(message.content) <= len(quoteList)) and message.author.id == author_id:
+                        return True
+                    return False
+                except ValueError:
+                    return False
+            while p.delete:
+                await ctx.send('Delete option selected. Enter a number to specify which quote you want to delete', delete_after=60)
+                try:
+                    message = await self.bot.wait_for('message', check=msgCheck, timeout=60)
+                except asyncio.TimeoutError:
+                    await ctx.send('Command timeout. You may want to run the command again.', delete_after=60)
+                    break
                 else:
-                    msg += '[%d] %s\n' % (i+1, quoteslist[i][0].replace('```', ''))
-            if ((len(msg) +
-                 len('\n[0] Exit without deleting quotes```')) < 1996):
-                msg += '\n[0] Exit without deleting quotes```'
-                await ctx.send(msg, delete_after=30)
-            else:
-                msg += '```'
-                await ctx.send(msg, delete_after=30)
-                msg = '```\n[0] Exit without deleting quotes```'
-                await ctx.send(msg, delete_after=30)
-
-        def check(message):
-            try:
-                if message.author == ctx.message.author \
-                    and message.channel == ctx.message.channel \
-                    and (0 <= int(message.content) <= len(quoteslist)):
-                    return True
-                return False
-            except ValueError:
-                return False
-        response = await self.bot.wait_for("message", check=check)
-        choice = int(response.content)
-        if choice == 0:
-            await ctx.send("Exited quote deletion menu.")
-            conn.close()
-            return
-        else:
-            t = (quoteslist[choice - 1][0], ctx.message.author.id)
-            c.execute('DELETE FROM Quotes WHERE Quote=? AND ID=?', t)
-            await ctx.send("Quote successfully deleted.")
+                    index = int(message.content)-1
+                    t = (quoteList[index][0], quoteList[index][2],)
+                    del quoteList[index]
+                    c.execute('DELETE FROM Quotes WHERE ID = ? AND Quote = ?', t)
+                    conn.commit()
+                    await ctx.send('Quote deleted', delete_after=60)
+                    await message.delete()
+                    p.itemList = ['[{}] {}'.format(i+1, quote[2]) for i,quote in zip(range(len(quoteList)),quoteList)]
+                    await p.paginate()
+            await ctx.message.delete()
             conn.commit()
             conn.close()
+        else:
+            await ctx.send('No quote found.', delete_after=60)
 
     @commands.command()
     async def ranking(self, ctx):
