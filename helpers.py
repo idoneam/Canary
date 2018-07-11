@@ -15,6 +15,7 @@ import re
 import math
 import time
 import os
+from utils.paginator import Pages
 
 
 class Helpers():
@@ -201,24 +202,25 @@ class Helpers():
                 courses = courses + found
                 pagenum += 1
         if(len(courses) < 1):
-            print("No course found error")
             await ctx.send("No course found for: %s." % query)
             return
 
-        em = discord.Embed(title="Courses Found 1 / %d" % (len(courses)/24+1), colour=0xDA291C)
-        c = 1
-        # create a new message every 24 results
+        courseList = {
+            'names': [],
+            'values': []
+        }
         for course in courses:
             # split results into titles + information
             title = course.find_all("h4")[0].get_text().split(" ")
-            if(len(title) > 2):
-                em.add_field(name=' '.join(title[:2]), value=' '.join(title[2:]))
-                c += 1
-                if(c%24 == 0):
-                    await ctx.send(embed=em)
-                    em = discord.Embed(title="Courses Found %d / %d" % (c/24+1,len(courses)/24+1), colour=0xDA291C)
-        await ctx.send(embed=em)
-        return
+            courseList['names'].append(' '.join(title[:2]))
+            courseList['values'].append(' '.join(title[2:]))
+        p = Pages(ctx,
+            itemList=courseList,
+            title='Courses found for {}'.format(query),
+            option='EMBEDS',
+            editableContent=False
+        )
+        await p.paginate()
 
 
     @commands.command()
