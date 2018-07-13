@@ -14,4 +14,4 @@ $ export DISCORD_TOKEN='your-token-here'
 You will have to do this each time you restart your shell. We recommend setting up a Bash script for bot startup.
 
 ## Running the bot
-Run `python3 Main.py` in your shell. Make sure `DB_PATH` in db.py is set correctly and that the `.db` file exists.
+Run `python3 Main.py` in your shell.

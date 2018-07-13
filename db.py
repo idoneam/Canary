@@ -14,9 +14,6 @@ import datetime
 import random
 from utils.paginator import Pages
 
-# Set path to your .db file here
-DB_PATH = './Martlet.db'
-
 
 class Db():
     def __init__(self, bot):
@@ -34,7 +31,7 @@ class Db():
         """
         await self.bot.wait_until_ready()
         while not self.bot.is_closed():
-            conn = sqlite3.connect(DB_PATH)
+            conn = sqlite3.connect(self.bot.config.db_path)
             c = conn.cursor()
             g = (guild for guild in self.bot.guilds if guild.name == 'McGill University')
             guild = next(g)
@@ -65,7 +62,7 @@ class Db():
         :param reminder: An integer choice for reminder based on Martlet's last set of DM's with reminders.
         """
         if isinstance(ctx.message.channel, discord.DMChannel):
-            conn = sqlite3.connect(DB_PATH)
+            conn = sqlite3.connect(self.bot.config.db_path)
             c = conn.cursor()
             try:
                 reminders = c.execute('SELECT * FROM Reminders WHERE ID = ?', (ctx.message.author.id,)).fetchall()
@@ -101,7 +98,7 @@ class Db():
             await ctx.send("Please ensure you specify a frequency from the following list: `daily`, `weekly`, "
                                 "`monthly`!")
             return
-        conn = sqlite3.connect(DB_PATH)
+        conn = sqlite3.connect(self.bot.config.db_path)
         c = conn.cursor()
         t = (ctx.message.author.id, ctx.message.author.name, quote, freq, datetime.datetime.now(),
              datetime.datetime.now())
@@ -130,7 +127,7 @@ class Db():
         """
         Add a quote to a user's quote database.
         """
-        conn = sqlite3.connect(DB_PATH)
+        conn = sqlite3.connect(self.bot.config.db_path)
         c = conn.cursor()
         t = (member.id, member.name, quote,
              str(ctx.message.created_at))
@@ -144,7 +141,7 @@ class Db():
         """
         Retrieve a quote with a specified keyword / mention.
         """
-        conn = sqlite3.connect(DB_PATH)
+        conn = sqlite3.connect(self.bot.config.db_path)
         c = conn.cursor()
         t = None
         mentions = ctx.message.mentions
@@ -182,7 +179,7 @@ class Db():
         '''
         List quotes
         '''
-        conn = sqlite3.connect(DB_PATH)
+        conn = sqlite3.connect(self.bot.config.db_path)
         c = conn.cursor()
         quoteAuthor = author if author else ctx.message.author
         author_id = quoteAuthor.id
@@ -232,7 +229,7 @@ class Db():
         """
         Upmartlet Rankings! :^)
         """
-        conn = sqlite3.connect(DB_PATH)
+        conn = sqlite3.connect(self.bot.config.db_path)
         c = conn.cursor()
         c.execute("SELECT * FROM Members ORDER BY Upmartlet DESC;")
         members = c.fetchall()[:7]
@@ -246,7 +243,7 @@ class Db():
 
     # @asyncio.coroutine
     # def on_member_join(self, member):
-    #     conn = sqlite3.connect(DB_PATH)
+    #     conn = sqlite3.connect(self.bot.config.db_path)
     #     c = conn.cursor()
     #     c.execute("SELECT * FROM Welcome")
     #     greetings = c.fetchall()
@@ -257,7 +254,7 @@ class Db():
     #
     # @asyncio.coroutine
     # def on_member_leave(self, member):
-    #     conn = sqlite3.connect(DB_PATH)
+    #     conn = sqlite3.connect(self.bot.config.db_path)
     #     c = conn.cursor()
     #     c.execute("SELECT * FROM Bye")
     #     farewell = c.fetchall()

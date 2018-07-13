@@ -14,10 +14,10 @@ import logging
 # Other utilities
 import os
 import sys
+from config import parser
 
 # List the extensions (modules) that should be loaded on startup.
 startup = ["db", "memes", "helpers", "mod"]
-DB_PATH = './Martlet.db'
 
 bot = commands.Bot(command_prefix='?')
 
@@ -110,7 +110,7 @@ async def on_raw_reaction_add(payload):
     else:
         return
 
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(self.bot.config.db_path)
     c = conn.cursor()
     # uncomment to enable sqlite3 debugging
     # conn.set_trace_callback(print)
@@ -150,7 +150,7 @@ async def on_raw_reaction_remove(payload):
     else:
         return
 
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(self.bot.config.db_path)
     c = conn.cursor()
 
     t = (message.author.id,)
@@ -186,6 +186,7 @@ async def on_message(message):
 # If statement will only execute if we are running this file (i.e. won't run
 # if it's imported)
 if __name__ == "__main__":
+    bot.config = parser.Parser()
     for extension in startup:
         try:
             bot.load_extension(extension)
@@ -193,4 +194,4 @@ if __name__ == "__main__":
             print('Failed to load extension {}\n{}: {}'.format(
                 extension,
                 type(e).__name__, e))
-    bot.run(os.environ.get("DISCORD_TOKEN"))
+    bot.run(bot.config.discord_key)

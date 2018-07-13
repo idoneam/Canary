@@ -103,6 +103,7 @@ ENV/
 # other
 *~
 .DS_Store
+*/*.db
 *.db
 *.sh
 Main_flymake.py
