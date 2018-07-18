@@ -108,3 +108,4 @@ ENV/
 *.sh
 Main_flymake.py
 marty_env
+.idea/
