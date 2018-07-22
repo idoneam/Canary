@@ -56,7 +56,7 @@ class Db():
             await asyncio.sleep(60 * 10)
 
     @commands.command()
-    async def stop_reminder(self, ctx, reminder: str):
+    async def stop_reminder(self, ctx, reminder: str = ""):
         """
         [DM Only] Delete the specified reminder
         :param reminder: An integer choice for reminder based on Martlet's last set of DM's with reminders.
@@ -90,13 +90,16 @@ class Db():
                                 "reminders!)")
 
     @commands.command()
-    async def remindme(self, ctx, freq: str, *, quote: str):
+    async def remindme(self, ctx, freq: str = "", *, quote: str = ""):
         """
         Add a reminder to the reminder database.
         """
         if freq not in self.frequencies.keys():
             await ctx.send("Please ensure you specify a frequency from the following list: `daily`, `weekly`, "
                                 "`monthly`!")
+            return
+        if quote == "":
+            await ctx.send("Please specify a reminder message!")
             return
         conn = sqlite3.connect(self.bot.config.db_path)
         c = conn.cursor()
