@@ -94,13 +94,21 @@ class Db():
         """
         Add a reminder to the reminder database.
         """
+
+        bad_input = False
         if freq not in self.frequencies.keys():
             await ctx.send("Please ensure you specify a frequency from the following list: `daily`, `weekly`, "
-                                "`monthly`!")
-            return
+                                "`monthly`, before your message!")
+            bad_input = True
         if quote == "":
-            await ctx.send("Please specify a reminder message!")
+            if bad_input and freq == "" or not bad_input:
+                await ctx.send("Please specify a reminder message!")
+            else:
+                pass
+            bad_input = True
+        if bad_input:
             return
+
         conn = sqlite3.connect(self.bot.config.db_path)
         c = conn.cursor()
         t = (ctx.message.author.id, ctx.message.author.name, quote, freq, datetime.datetime.now(),
