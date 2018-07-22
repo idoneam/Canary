@@ -14,10 +14,10 @@ import logging
 # Other utilities
 import os
 import sys
+from config import parser
 
 # List the extensions (modules) that should be loaded on startup.
 startup = ["db", "memes", "helpers", "mod"]
-DB_PATH = './Martlet.db'
 
 bot = commands.Bot(command_prefix='?')
 
@@ -62,6 +62,7 @@ async def unload(ctx, extension_name: str):
 
 
 @bot.command()
+@commands.has_role("Discord Moderator")
 async def restart(ctx):
     '''
     Restart the bot
@@ -69,6 +70,17 @@ async def restart(ctx):
     await ctx.send('https://streamable.com/dli1')
     python = sys.executable
     os.execl(python, python, *sys.argv)
+
+
+@bot.command()
+@commands.has_role("Discord Moderator")
+async def sleep(ctx):
+    '''
+    Shut down the bot
+    '''
+    await ctx.send('Bye')
+    await bot.logout()
+    print('Bot shut down')
 
 
 @bot.command()
@@ -81,22 +93,77 @@ async def update(ctx):
 
 
 @bot.event
-async def on_reaction_add(reaction, user):
+async def on_raw_reaction_add(payload):
     # Check for Martlet emoji + upmartletting yourself
-    if not reaction.custom_emoji:
+    channel = bot.get_channel(payload.channel_id)
+    message = await channel.get_message(payload.message_id)
+    user = bot.get_user(payload.user_id)
+    emoji = payload.emoji
+
+    if user == message.author:
         return
-    if reaction.emoji.name != "upmartlet" or reaction.message.author == user:
+
+    if emoji.name == 'upmartlet':
+        score = 1
+    elif emoji.name == 'downmartlet':
+        score = -1
+    else:
         return
-    conn = sqlite3.connect(DB_PATH)
+
+    conn = sqlite3.connect(self.bot.config.db_path)
     c = conn.cursor()
-    t = (int(reaction.message.author.id), )
+    # uncomment to enable sqlite3 debugging
+    # conn.set_trace_callback(print)
+
+    t = (message.author.id,)
     if not c.execute('SELECT * FROM Members WHERE ID=?', t).fetchall():
-        t = (reaction.message.author.id, reaction.message.author.name, 1)
+        t = (message.author.id, message.author.display_name, score)
         c.execute('INSERT INTO Members VALUES (?,?,?)', t)
         conn.commit()
         conn.close()
     else:
-        c.execute('UPDATE Members SET Upmartlet=Upmartlet+1 WHERE ID=?', t)
+        if score == 1:
+            c.execute('UPDATE Members SET Score=Score+1 WHERE ID=?', t)
+        else:
+            c.execute('UPDATE Members SET Score=Score-1 WHERE ID=?', t)
+        conn.commit()
+        conn.close()
+
+
+@bot.event
+async def on_raw_reaction_remove(payload):
+    # Check for Martlet emoji + upmartletting yourself
+    """Does the opposite thing when a user up/downmarlets a message
+    """
+    channel = bot.get_channel(payload.channel_id)
+    message = await channel.get_message(payload.message_id)
+    user = bot.get_user(payload.user_id)
+    emoji = payload.emoji
+
+    if user == message.author:
+        return
+
+    if emoji.name == 'upmartlet':
+        score = -1
+    elif emoji.name == 'downmartlet':
+        score = 1
+    else:
+        return
+
+    conn = sqlite3.connect(self.bot.config.db_path)
+    c = conn.cursor()
+
+    t = (message.author.id,)
+    if not c.execute('SELECT * FROM Members WHERE ID=?', t).fetchall():
+        t = (message.author.id, message.author.display_name, score)
+        c.execute('INSERT INTO Members VALUES (?,?,?)', t)
+        conn.commit()
+        conn.close()
+    else:
+        if score == 1:
+            c.execute('UPDATE Members SET Score=Score+1 WHERE ID=?', t)
+        else:
+            c.execute('UPDATE Members SET Score=Score-1 WHERE ID=?', t)
         conn.commit()
         conn.close()
 
@@ -119,6 +186,7 @@ async def on_message(message):
 # If statement will only execute if we are running this file (i.e. won't run
 # if it's imported)
 if __name__ == "__main__":
+    bot.config = parser.Parser()
     for extension in startup:
         try:
             bot.load_extension(extension)
@@ -126,4 +194,4 @@ if __name__ == "__main__":
             print('Failed to load extension {}\n{}: {}'.format(
                 extension,
                 type(e).__name__, e))
-    bot.run(os.environ.get("DISCORD_TOKEN"))
+    bot.run(bot.config.discord_key)

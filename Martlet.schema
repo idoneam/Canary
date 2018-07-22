@@ -1,0 +1,12 @@
+CREATE TABLE IF NOT EXISTS "Quotes" (
+	`ID`	INTEGER,
+	`Name`	TEXT,
+	`Quote`	TEXT,
+	`Date`	TEXT
+);
+CREATE TABLE IF NOT EXISTS `Members` (
+	`ID`	INTEGER UNIQUE,
+	`DisplayName`	TEXT,
+	`Score`	INTEGER
+);
+CREATE TABLE IF NOT EXISTS 'Reminders' ('ID'INTEGER,'Name'TEXT,'Reminder'TEXT,'Frequency'TEXT,'Date'TEXT,'LastReminder'TEXT);

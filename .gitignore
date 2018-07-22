@@ -100,10 +100,15 @@ ENV/
 # mypy
 .mypy_cache/
 
+# configuration files
+*.ini
+
 # other
 *~
 .DS_Store
+*/*.db
 *.db
 *.sh
 Main_flymake.py
 marty_env
+.idea/
