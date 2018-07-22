@@ -80,7 +80,7 @@ class Db():
                                     .format(len(reminders)))
                 conn.close()
                 return
-            t = (reminders[choice - 1][2], ctx.message.author.id, reminders[choice - 1][3])
+            t = (reminders[choice - 1][2], ctx.message.author.id, reminders[choice - 1][4])
             c.execute('DELETE FROM Reminders WHERE Reminder=? AND ID=? AND DATE=?', t)
             conn.commit()
             conn.close()
