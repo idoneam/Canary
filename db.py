@@ -35,13 +35,7 @@ class Db():
             c = conn.cursor()
             g = (guild for guild in self.bot.guilds if guild.name == 'McGill University')
             guild = next(g)
-            try:
-                reminders = c.execute('SELECT * FROM Reminders').fetchall()
-            except sqlite3.OperationalError:
-                c.execute("CREATE TABLE 'Reminders' ('ID'INTEGER,'Name'TEXT,'Reminder'TEXT,'Frequency'TEXT,'Date'TEXT,"
-                          "'LastReminder'TEXT)")
-                reminders = c.execute('SELECT * FROM Reminders').fetchall()
-                conn.commit()
+            reminders = c.execute('SELECT * FROM Reminders').fetchall()
             for i in range(len(reminders)):
                 member = discord.utils.get(guild.members, id=reminders[i][0])
                 last_date = datetime.datetime.strptime(reminders[i][5], "%Y-%m-%d %H:%M:%S.%f")
@@ -64,13 +58,8 @@ class Db():
         if isinstance(ctx.message.channel, discord.DMChannel):
             conn = sqlite3.connect(self.bot.config.db_path)
             c = conn.cursor()
-            try:
-                reminders = c.execute('SELECT * FROM Reminders WHERE ID = ?', (ctx.message.author.id,)).fetchall()
-            except sqlite3.OperationalError:
-                c.execute("CREATE TABLE 'Reminders' ('ID'INTEGER,'Name'TEXT,'Reminder'TEXT,'Frequency'TEXT,'Date'TEXT,"
-                          "'LastReminder'TEXT)")
-                await ctx.send("Database created.")
-                return
+            reminders = c.execute('SELECT * FROM Reminders WHERE ID = ?', (ctx.message.author.id,)).fetchall()
+
             try:
                 choice = int(reminder)
                 if choice < 1 or choice > len(reminders):
