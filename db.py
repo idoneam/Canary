@@ -35,13 +35,7 @@ class Db():
             c = conn.cursor()
             g = (guild for guild in self.bot.guilds if guild.name == 'McGill University')
             guild = next(g)
-            try:
-                reminders = c.execute('SELECT * FROM Reminders').fetchall()
-            except sqlite3.OperationalError:
-                c.execute("CREATE TABLE 'Reminders' ('ID'INTEGER,'Name'TEXT,'Reminder'TEXT,'Frequency'TEXT,'Date'TEXT,"
-                          "'LastReminder'TEXT)")
-                reminders = c.execute('SELECT * FROM Reminders').fetchall()
-                conn.commit()
+            reminders = c.execute('SELECT * FROM Reminders').fetchall()
             for i in range(len(reminders)):
                 member = discord.utils.get(guild.members, id=reminders[i][0])
                 last_date = datetime.datetime.strptime(reminders[i][5], "%Y-%m-%d %H:%M:%S.%f")
@@ -56,7 +50,7 @@ class Db():
             await asyncio.sleep(60 * 10)
 
     @commands.command()
-    async def stop_reminder(self, ctx, reminder: str):
+    async def stop_reminder(self, ctx, reminder: str = ""):
         """
         [DM Only] Delete the specified reminder
         :param reminder: An integer choice for reminder based on Martlet's last set of DM's with reminders.
@@ -64,13 +58,8 @@ class Db():
         if isinstance(ctx.message.channel, discord.DMChannel):
             conn = sqlite3.connect(self.bot.config.db_path)
             c = conn.cursor()
-            try:
-                reminders = c.execute('SELECT * FROM Reminders WHERE ID = ?', (ctx.message.author.id,)).fetchall()
-            except sqlite3.OperationalError:
-                c.execute("CREATE TABLE 'Reminders' ('ID'INTEGER,'Name'TEXT,'Reminder'TEXT,'Frequency'TEXT,'Date'TEXT,"
-                          "'LastReminder'TEXT)")
-                await ctx.send("Database created.")
-                return
+            reminders = c.execute('SELECT * FROM Reminders WHERE ID = ?', (ctx.message.author.id,)).fetchall()
+
             try:
                 choice = int(reminder)
                 if choice < 1 or choice > len(reminders):
@@ -80,7 +69,7 @@ class Db():
                                     .format(len(reminders)))
                 conn.close()
                 return
-            t = (reminders[choice - 1][2], ctx.message.author.id, reminders[choice - 1][3])
+            t = (reminders[choice - 1][2], ctx.message.author.id, reminders[choice - 1][4])
             c.execute('DELETE FROM Reminders WHERE Reminder=? AND ID=? AND DATE=?', t)
             conn.commit()
             conn.close()
@@ -90,14 +79,25 @@ class Db():
                                 "reminders!)")
 
     @commands.command()
-    async def remindme(self, ctx, freq: str, *, quote: str):
+    async def remindme(self, ctx, freq: str = "", *, quote: str = ""):
         """
         Add a reminder to the reminder database.
         """
+
+        bad_input = False
         if freq not in self.frequencies.keys():
             await ctx.send("Please ensure you specify a frequency from the following list: `daily`, `weekly`, "
-                                "`monthly`!")
+                                "`monthly`, before your message!")
+            bad_input = True
+        if quote == "":
+            if bad_input and freq == "" or not bad_input:
+                await ctx.send("Please specify a reminder message!")
+            else:
+                pass
+            bad_input = True
+        if bad_input:
             return
+
         conn = sqlite3.connect(self.bot.config.db_path)
         c = conn.cursor()
         t = (ctx.message.author.id, ctx.message.author.name, quote, freq, datetime.datetime.now(),

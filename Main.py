@@ -187,6 +187,12 @@ async def on_message(message):
 # if it's imported)
 if __name__ == "__main__":
     bot.config = parser.Parser()
+    conn = sqlite3.connect(bot.config.db_path)
+    c = conn.cursor()
+    with open('./Martlet.schema') as fp:
+        c.executescript(fp.read())
+        conn.commit()
+        conn.close()
     for extension in startup:
         try:
             bot.load_extension(extension)
