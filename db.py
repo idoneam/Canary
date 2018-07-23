@@ -79,6 +79,26 @@ class Db():
                                 "reminders!)")
 
     @commands.command()
+    async def remindme2(self, ctx, freq: str = "", *, quote: str = ""):
+        """
+        Add a reminder to the reminder database.
+        """
+
+
+        #remindme2 in || 2 hours to doob.
+        if freq == 'in':
+            split_quotes = quote.split()
+            await ctx.send(split_quotes[0]) # time value
+            await ctx.send(split_quotes[1]) # time units
+            a = datetime.datetime.now() # Current time
+            b = a + datetime.timedelta(0,0,0,0,0, int(split_quotes[0])) # current time + time value in the correct units not yet implemented.
+            await ctx.send("Now time: " + str(a)) # sends current time
+            await ctx.send("Computed new time using timedelta: " + str(b)) # sends current + delta
+            await ctx.send(split_quotes[2:]) # remaining message in array form. 
+        if freq = 'on':
+            
+
+    @commands.command()
     async def remindme(self, ctx, freq: str = "", *, quote: str = ""):
         """
         Add a reminder to the reminder database.
