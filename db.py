@@ -42,19 +42,30 @@ class Db():
             reminders = c.execute('SELECT * FROM Reminders').fetchall()
             for i in range(len(reminders)):
                 member = discord.utils.get(guild.members, id=reminders[i][0])
-                if reminders[i][3] == 'once':
-                    # TO be implemented
-                    pass
-                last_date = datetime.datetime.strptime(reminders[i][5], "%Y-%m-%d %H:%M:%S.%f")
-                if datetime.datetime.now() - last_date > datetime.timedelta(days=self.frequencies[reminders[i][3]]):
-                    await member.send("Reminding you to {}! [{:d}]".format(reminders[i][2], i + 1))
 
-                    c.execute("UPDATE 'Reminders' SET LastReminder = ? WHERE Reminder = ?", (datetime.datetime.now(),
-                                                                                             reminders[i][2]))
-                    conn.commit()
-                    await asyncio.sleep(1)
+                # If non-repeating reminder is found
+                if reminders[i][3] == 'once':
+                    # Check date to remind user
+                    reminder_activation_date = datetime.datetime.strptime(reminders[i][4], "%Y-%m-%d %H:%M:%S.%f")
+                    # Compute future_date-current_date and if <= 0:00:00, means time is due to remind user
+                    if reminder_activation_date - datetime.datetime.now() <= datetime.timedelta(0): 
+                        await member.send("Reminding you to {}!".format(reminders[i][2]))
+                        # Remove from from DB non-repeating reminder
+                        c.execute('DELETE FROM Reminders WHERE Reminder=? AND ID=? AND DATE=?', (reminders[i][2], reminders[i][0],
+                                                                                                    reminder_activation_date))
+                        conn.commit()
+                        await asyncio.sleep(1)
+                else:
+                    last_date = datetime.datetime.strptime(reminders[i][5], "%Y-%m-%d %H:%M:%S.%f")
+                    if datetime.datetime.now() - last_date > datetime.timedelta(days=self.frequencies[reminders[i][3]]):
+                        await member.send("Reminding you to {}! [{:d}]".format(reminders[i][2], i + 1))
+
+                        c.execute("UPDATE 'Reminders' SET LastReminder = ? WHERE Reminder = ?", (datetime.datetime.now(),
+                                                                                                 reminders[i][2]))
+                        conn.commit()
+                        await asyncio.sleep(1)
             conn.close()
-            await asyncio.sleep(60 * 10)
+            await asyncio.sleep(60 * 1)
 
     @commands.command()
     async def stop_reminder(self, ctx, reminder: str = ""):
