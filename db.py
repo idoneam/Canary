@@ -14,6 +14,9 @@ import datetime
 import random
 from utils.paginator import Pages
 
+# For remindme functionality
+import re
+
 
 class Db():
     def __init__(self, bot):
@@ -23,6 +26,7 @@ class Db():
             "weekly": 7,
             "monthly": 30
         }
+
 
     async def check_reminders(self):
         """
@@ -78,25 +82,190 @@ class Db():
             await ctx.send("Slide into my DM's ;) (Please respond to my DM messages to stop "
                                 "reminders!)")
 
+    
     @commands.command()
-    async def remindme2(self, ctx, freq: str = "", *, quote: str = ""):
+    async def remindme2(self, ctx, *, quote: str = ""):
         """
         Add a reminder to the reminder database.
         """
 
+        # Copies original reminder message
+        original_input_copy = quote
 
-        #remindme2 in || 2 hours to doob.
-        if freq == 'in':
-            split_quotes = quote.split()
-            await ctx.send(split_quotes[0]) # time value
-            await ctx.send(split_quotes[1]) # time units
-            a = datetime.datetime.now() # Current time
-            b = a + datetime.timedelta(0,0,0,0,0, int(split_quotes[0])) # current time + time value in the correct units not yet implemented.
-            await ctx.send("Now time: " + str(a)) # sends current time
-            await ctx.send("Computed new time using timedelta: " + str(b)) # sends current + delta
-            await ctx.send(split_quotes[2:]) # remaining message in array form. 
-        if freq = 'on':
-            
+        replacements = {
+            ("tomorrow", "1 day"),
+            ("next week", "1 week"),
+            ("later", "6 hours"),
+
+            ("a", "1"),
+            ("an", "1"),
+
+            ("zero", "0"),
+            ("no", "0"),
+            ("none", "0"),
+            ("one", "1"),
+            ("two", "2"),
+            ("three", "3"),
+            ("four", "4"),
+            ("five", "5"),
+            ("six", "6"),
+            ("seven", "7"),
+            ("eight", "8"),
+            ("nine", "9"),
+            ("ten", "10"),
+            ("eleven", "11"),
+            ("twelve", "12"),
+            ("thirteen", "13"),
+            ("fourteen", "14"),
+            ("fifteen", "15"),
+            ("sixteen", "16"),
+            ("seventeen", "17"),
+            ("eighteen", "18"),
+            ("nineteen", "19"),
+            ("twenty", "20"),
+            ("twenty-one", "21"),
+            ("twenty one", "21"),
+            ("twenty-two", "22"),
+            ("twenty two", "22"),
+            ("twenty-three", "23"),
+            ("twenty three", "23"),
+            ("twenty-four", "24"),
+            ("twenty four", "24"),
+            ("twenty-five", "25"),
+            ("twenty five", "25"),
+            ("twenty-six", "26"),
+            ("twenty six", "26"),
+            ("twenty-seven", "27"),
+            ("twenty seven", "27"),
+            ("twenty-eight", "28"),
+            ("twenty eight", "28"),
+            ("twenty-nine", "29"),
+            ("twenty nine", "29"),
+            ("thirty", "30"),
+            ("thirty-one", "31"),
+            ("thirty one", "31"),
+            ("thirty-two", "32"),
+            ("thirty two", "32"),
+            ("thirty-three", "33"),
+            ("thirty three", "33"),
+            ("thirty-four", "34"),
+            ("thirty four", "34"),
+            ("thirty-five", "35"),
+            ("thirty five", "35"),
+            ("thirty-six", "36"),
+            ("thirty six", "36"),
+            ("thirty-seven", "37"),
+            ("thirty seven", "37"),
+            ("thirty-eight", "38"),
+            ("thirty eight", "38"),
+            ("thirty-nine", "39"),
+            ("thirty nine", "39"),
+            ("forty", "40"),
+            ("forty-one", "41"),
+            ("forty one", "41"),
+            ("forty-two", "42"),
+            ("forty two", "42"),
+            ("forty-three", "43"),
+            ("forty three", "43"),
+            ("forty-four", "44"),
+            ("forty four", "44"),
+            ("forty-five", "45"),
+            ("forty five", "45"),
+            ("forty-six", "46"),
+            ("forty six", "46"),
+            ("forty-seven", "47"),
+            ("forty seven", "47"),
+            ("forty-eight", "48"),
+            ("forty eight", "48"),
+            ("forty-nine", "49"),
+            ("forty nine", "49"),
+            ("fifty", "50")
+        }
+
+        units = {
+            "years": "ye?a?r?s?",
+            "days": "da?y?s?",
+            "hours": "ho?u?r?s?",
+            "seconds": "se?c?o?n?d?s?",
+            "minutes": "mi?n?u?t?e?s?",
+            "weeks": "we?e?k?s?"
+        }
+
+        # Stores units + number for calculating timedelta
+        time_offset = {
+            "years": 0,
+            "days": 0,
+            "hours": 0,
+            "seconds": 0,
+            "minutes": 0,
+            "weeks": 0
+        }
+
+        punctuation_chars = ".,+&/ "
+        string_word_separator_regex = r"(\s|["+punctuation_chars+"])+"
+        time_separator_regex = r"(,|\+|&|and|plus|in)"
+        # Regex to match units below (Which accounts for spelling mistakes!) 
+        unit_regex = r"("+"|".join(list(units.values()))+")"
+        # Matches a natural number
+        number_regex = r"[1-9]+[0-9]*(|\.[0-9]+)"
+
+        # Replaces word representation of numbers into numerical representation
+        for k, v in replacements:
+            original_input_copy = re.sub(r"\b"+k+r"\b", v, original_input_copy)
+
+        # Split on spaces and other relevant punctuation
+        input_segments = re.split(string_word_separator_regex, original_input_copy)
+        input_segments = list(map(lambda x: x.strip(punctuation_chars), input_segments))
+
+        # Remove empty strings from list
+        input_segments = list(filter(lambda x: x != "", input_segments))
+
+        time_segments = []
+        last_number = "0"
+        last_item_was_number = False
+        first_reminder_segment = ""
+
+        """ Checks the following logic: 
+            1. If one of the keywords commonly used for listing times is there, continue
+            2. If a number is found, save the number, mark that a number has been found for next iteration
+            3. Elif: A "unit" (years, days ... etc.) has been found, append the last number + its unit
+            4. Lastly: save beginning of "reminder quote" and end loop
+        """        
+        for segment in input_segments:
+            if re.match("^"+time_separator_regex+"$", segment):
+                continue
+            if re.match("^"+number_regex+"$", segment):
+                last_number = segment
+                last_item_was_number = True
+            elif re.match("^"+unit_regex+"$", segment):
+                time_segments.append(last_number+" "+segment)
+            else:
+                first_reminder_segment = segment
+                break
+
+        # They probably dont want their reminder nuked of punctuation, spaces and formatting, so extract from original string
+        reminder = quote[quote.index(first_reminder_segment):]
+
+        # Regex for the number and time units and store in "match"
+        for segment in time_segments:
+            match = re.match("^("+number_regex+")"+r"\s+"+unit_regex+"$", segment)
+            number = float(match.group(1))
+            unit = "minutes" # default but should always be overridden
+
+            # Regex potentially misspelled time units and match to proper spelling
+            for regex in units:
+                if re.match("^"+regex+"$", match.group(3)):
+                    unit = match.group(3)
+            time_offset[unit] += number
+
+        time_now = datetime.datetime.now() # Current time
+        reminder_time = time_now + datetime.timedelta(days = time_offset["days"], hours = time_offset["hours"], 
+                                                        seconds = time_offset["seconds"], minutes = time_offset["minutes"],
+                                                        weeks = time_offset["weeks"])
+        
+
+        await ctx.send("tDELTA: " + str(reminder_time)) # Testing timedelta
+        await ctx.send("Reminder: " + reminder) # Testing reminder message
 
     @commands.command()
     async def remindme(self, ctx, freq: str = "", *, quote: str = ""):
