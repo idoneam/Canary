@@ -231,7 +231,7 @@ class Db():
         """
         conn = sqlite3.connect(self.bot.config.db_path)
         c = conn.cursor()
-        c.execute("SELECT * FROM Members ORDER BY Upmartlet DESC;")
+        c.execute("SELECT * FROM Members ORDER BY Score DESC;")
         members = c.fetchall()[:7]
         table = []
         for (ID, DisplayName, Upmartlet) in members:
