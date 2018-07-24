@@ -42,6 +42,9 @@ class Db():
             reminders = c.execute('SELECT * FROM Reminders').fetchall()
             for i in range(len(reminders)):
                 member = discord.utils.get(guild.members, id=reminders[i][0])
+                if reminders[i][3] == 'once':
+                    # TO be implemented
+                    pass
                 last_date = datetime.datetime.strptime(reminders[i][5], "%Y-%m-%d %H:%M:%S.%f")
                 if datetime.datetime.now() - last_date > datetime.timedelta(days=self.frequencies[reminders[i][3]]):
                     await member.send("Reminding you to {}! [{:d}]".format(reminders[i][2], i + 1))
@@ -251,6 +254,7 @@ class Db():
             match = re.match("^("+number_regex+")"+r"\s+"+unit_regex+"$", segment)
             number = float(match.group(1))
             unit = "minutes" # default but should always be overridden
+            # Might wanna add default numbers to this too, in case no time is specified.
 
             # Regex potentially misspelled time units and match to proper spelling
             for regex in units:
@@ -263,9 +267,34 @@ class Db():
                                                         seconds = time_offset["seconds"], minutes = time_offset["minutes"],
                                                         weeks = time_offset["weeks"])
         
+        # date will hold tDELTA, lastReminder will hold time.now()
+        conn = sqlite3.connect(self.bot.config.db_path)
+        c = conn.cursor()
+        t = (ctx.message.author.id, ctx.message.author.name, reminder, "once", reminder_time, time_now)
+        # Could strip word "to" from reminder message.
+        reminders = c.execute('SELECT * FROM Reminders WHERE ID =?', (ctx.message.author.id,)).fetchall()
+        
 
+        try:
+            c.execute('INSERT INTO Reminders VALUES (?, ?, ?, ?, ?, ?)', t)
+        except sqlite3.OperationalError:
+            c.execute("CREATE TABLE 'Reminders' ('ID'INTEGER,'Name'TEXT,'Reminder'TEXT,'Frequency'TEXT,'Date'\
+                        TEXT,'LastReminder'TEXT)")
+            c.execute('INSERT INTO Reminders VALUES (?, ?, ?, ?, ?. ?)', t)
+
+        # Format reminder_time properly so that it is user friendly.
+        await ctx.author.send('Hi {}! \n I will remind you to {} on {} unless you send me a message to stop '
+                                   'reminding you about it! [{:d}]'
+                                   .format(ctx.author.name,  reminder, reminder_time, len(reminders)+1))
+        await ctx.send('Reminder added.')
+        conn.commit()
+        conn.close()
+
+        # More test outputs
+        await ctx.send("NOW: " + str(datetime.datetime.now()))
         await ctx.send("tDELTA: " + str(reminder_time)) # Testing timedelta
         await ctx.send("Reminder: " + reminder) # Testing reminder message
+        await ctx.send("DIFF (NOW-tDELTA): " + str(datetime.datetime.now()-reminder_time))
 
     @commands.command()
     async def remindme(self, ctx, freq: str = "", *, quote: str = ""):
