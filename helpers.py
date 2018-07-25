@@ -218,6 +218,7 @@ class Helpers():
             itemList=courseList,
             title='Courses found for {}'.format(query),
             option='EMBEDS',
+            autosize=(False, 10),
             editableContent=False
         )
         await p.paginate()
