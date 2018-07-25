@@ -110,7 +110,7 @@ async def on_raw_reaction_add(payload):
     else:
         return
 
-    conn = sqlite3.connect(self.bot.config.db_path)
+    conn = sqlite3.connect(bot.config.db_path)
     c = conn.cursor()
     # uncomment to enable sqlite3 debugging
     # conn.set_trace_callback(print)
@@ -150,7 +150,7 @@ async def on_raw_reaction_remove(payload):
     else:
         return
 
-    conn = sqlite3.connect(self.bot.config.db_path)
+    conn = sqlite3.connect(bot.config.db_path)
     c = conn.cursor()
 
     t = (message.author.id,)
