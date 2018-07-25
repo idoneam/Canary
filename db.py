@@ -233,12 +233,15 @@ class Db():
         c = conn.cursor()
         c.execute("SELECT * FROM Members ORDER BY Score DESC;")
         members = c.fetchall()
+        if not members:
+            await ctx.send("Ranking is not yet available for this server, please upvote/downvote moar.")
+            return
         table = []
         table_list = []
         counter = 1
         for (ID, DisplayName, Upmartlet) in members:
             table.append((counter, DisplayName, Upmartlet))
-            if counter % 15 == 0 or counter == len(members):
+            if counter % 7 == 0 or counter == len(members):
                 table_list.append(tabulate(table[:counter],
                                             headers=["Rank", "Name", "Score"],
                                             tablefmt="fancy_grid"))
@@ -246,6 +249,7 @@ class Db():
             counter += 1
         p = Pages(ctx, itemList=table_list,
             title="Upmartlet ranking",
+            autosize=(False, 1),
             editableContent=False
         )
         await p.paginate()
