@@ -232,14 +232,23 @@ class Db():
         conn = sqlite3.connect(self.bot.config.db_path)
         c = conn.cursor()
         c.execute("SELECT * FROM Members ORDER BY Score DESC;")
-        members = c.fetchall()[:7]
+        members = c.fetchall()
         table = []
+        table_list = []
+        counter = 1
         for (ID, DisplayName, Upmartlet) in members:
-            table.append((DisplayName, Upmartlet))
-        await ctx.send('```Java\n' +
-                            tabulate(table, headers=["NAME", "#"],
-                                     tablefmt="fancy_grid") +
-                            '```', delete_after=30)
+            table.append((counter, DisplayName, Upmartlet))
+            if counter % 15 == 0 or counter == len(members):
+                table_list.append(tabulate(table[:counter],
+                                            headers=["Rank", "Name", "Score"],
+                                            tablefmt="fancy_grid"))
+                del table[:]
+            counter += 1
+        p = Pages(ctx, itemList=table_list,
+            title="Upmartlet ranking",
+            editableContent=False
+        )
+        await p.paginate()
 
     # @asyncio.coroutine
     # def on_member_join(self, member):
