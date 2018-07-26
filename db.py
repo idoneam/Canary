@@ -470,13 +470,13 @@ class Db():
             index = 0
             def msgCheck(message):
                 try:
-                    if (1 <= int(message.content) <= len(quoteList)) and message.author.id == author_id and message.channel == ctx.message.channel:
+                    if (0 <= int(message.content) <= len(quoteList)) and message.author.id == author_id and message.channel == ctx.message.channel:
                         return True
                     return False
                 except ValueError:
                     return False
             while p.delete:
-                await ctx.send('Delete option selected. Enter a number to specify which quote you want to delete', delete_after=60)
+                await ctx.send('Delete option selected. Enter a number to specify which quote you want to delete, or enter 0 to return.', delete_after=60)
                 try:
                     message = await self.bot.wait_for('message', check=msgCheck, timeout=60)
                 except asyncio.TimeoutError:
@@ -484,13 +484,16 @@ class Db():
                     break
                 else:
                     index = int(message.content)-1
-                    t = (quoteList[index][0], quoteList[index][2],)
-                    del quoteList[index]
-                    c.execute('DELETE FROM Quotes WHERE ID = ? AND Quote = ?', t)
-                    conn.commit()
-                    await ctx.send('Quote deleted', delete_after=60)
-                    await message.delete()
-                    p.itemList = ['[{}] {}'.format(i+1, quote[2]) for i,quote in zip(range(len(quoteList)),quoteList)]
+                    if index == -1:
+                        await ctx.send('Exit delq.', delete_after=60)
+                    else:
+                        t = (quoteList[index][0], quoteList[index][2],)
+                        del quoteList[index]
+                        c.execute('DELETE FROM Quotes WHERE ID = ? AND Quote = ?', t)
+                        conn.commit()
+                        await ctx.send('Quote deleted', delete_after=60)
+                        await message.delete()
+                        p.itemList = ['[{}] {}'.format(i+1, quote[2]) for i,quote in zip(range(len(quoteList)),quoteList)]
                     await p.paginate()
             await ctx.message.delete()
             conn.commit()
