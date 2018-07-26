@@ -98,6 +98,11 @@ class Helpers():
         em = discord.Embed(title="Weather in Montreal").set_image(url='http://wttr.in/Montreal_2mpq_lang=en.png?_=%d' % round(time.time()))
         await ctx.send(embed=em)
 
+    @commands.command()
+    async def wttrMoon(self, ctx):
+        em = discord.Embed(title="Current moon phase").set_image(url='http://wttr.in/moon.png')
+        await ctx.send(embed=em)
+
 
     @commands.command()
     async def course(self, ctx, *, query: str):
@@ -218,6 +223,7 @@ class Helpers():
             itemList=courseList,
             title='Courses found for {}'.format(query),
             option='EMBEDS',
+            autosize=(False, 10),
             editableContent=False
         )
         await p.paginate()

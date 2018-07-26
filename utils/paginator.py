@@ -7,7 +7,7 @@ import asyncio
 import math
 
 class Pages():
-    def __init__(self, ctx, currentPage=1, msg=None, itemList=[], title='Paginator', option='CODE_BLOCKS', editableContent=True):
+    def __init__(self, ctx, currentPage=1, msg=None, itemList=[], title='Paginator', option='CODE_BLOCKS', autosize=(True,0), editableContent=True):
         """Creates a paginator.
 
         Parameters
@@ -24,6 +24,8 @@ class Pages():
             Summary of content of the items.
         option: 'CODE_BLOCKS' or 'EMBEDS'
             Specify if the pages sent will be in either format.
+        autosize: tuple
+            If there should be a certain number of items per page, the first value should be set to False, and the second value of the tuple is the desired number of items.
         editableContent: bool
             True if the items can be updated by the users (this is like an MVC).
             False otherwise.
@@ -36,6 +38,7 @@ class Pages():
         self.itemList = itemList
         self.title = title
         self.option = option
+        self.autosize = autosize
         self.__organize()
         self.actions = [('⏪', self.__firstPage),
                         ('◀', self.__prevPage),
@@ -51,46 +54,93 @@ class Pages():
 
     def __organize(self):
         pagesToSend = ['empty page']
-        pageCounter = 0
-        if self.option == 'EMBEDS':
-            itemPerPage = 10
-            pageCounter = math.ceil(len(self.itemList['names']) / itemPerPage)
+        if self.option == "EMBEDS":
+            if self.autosize[0] == True:
+                result = self.__organize_embeds_autosize(pagesToSend)
+            else:
+                result = self.__organize_embeds(pagesToSend)
+        elif self.option == "CODE_BLOCKS":
+            if self.autosize[0] == True:
+                result = self.__organize_code_blocks_autosize(pagesToSend)
+            else:
+                result = self.__organize_code_blocks(pagesToSend)
+        self.pagesToSend, self.lastPage = result
+
+
+    def __organize_embeds(self, pagesToSend):
+        itemPerPage = self.autosize[1]
+        pageCounter = math.ceil(len(self.itemList['names']) / itemPerPage)
+        em = discord.Embed(title=self.title, colour=0xDA291C)
+        for i in range(pageCounter):
+            em.set_footer(text='Page {:02d} of {:02d}'.format(i+1, pageCounter))
+            indexStart = itemPerPage * i
+            indexEnd = itemPerPage * (i+1)
+            for name, val in zip( self.itemList['names'][indexStart:indexEnd], self.itemList['values'][indexStart:indexEnd]):
+                em.add_field(
+                    name=name,
+                    value=val
+                )
+            pagesToSend.append(em)
             em = discord.Embed(title=self.title, colour=0xDA291C)
-            for i in range(pageCounter):
-                em.set_footer(text='Page {:02d} of {:02d}'.format(i+1, pageCounter))
-                indexStart = itemPerPage * i
-                indexEnd = itemPerPage * (i+1)
-                for name, val in zip( self.itemList['names'][indexStart:indexEnd], self.itemList['values'][indexStart:indexEnd]):
-                    em.add_field(
-                        name=name,
-                        value=val
-                    )
-                pagesToSend.append(em)
-                em = discord.Embed(title=self.title, colour=0xDA291C)
+        return (pagesToSend, pageCounter)
 
-        elif self.option == 'CODE_BLOCKS':
-            length = cache = 0
-            for i in range(len(self.itemList)):
-                length += len(self.itemList[i])
-                if length > 1894:
-                    pagesToSend.append('```'
-                        + self.title
-                        + ':\n\n'
-                        + '\n'.join(self.itemList[cache:i]).replace('```', ''))
-                    cache = i
-                    length = len(self.itemList[i])
-                    pageCounter += 1
-                elif i == len(self.itemList)-1: # edge case
-                    pagesToSend.append('```'
-                        + self.title
-                        + ':\n\n'
-                        + '\n'.join(self.itemList[cache:i+1]).replace('```', ''))
-                    pageCounter += 1
-            for i in range(len(pagesToSend)):
-                pagesToSend[i] += '\n\n~ Page {:02d} of {:02d} ~'.format(i, pageCounter) + '```'
 
-        self.pagesToSend = pagesToSend
-        self.lastPage = pageCounter
+    def __organize_embeds_autosize(self, pagesToSend):
+        # TODO: implement real autosize™
+        # this method should not be called at the moment
+        itemPerPage = 10
+        pageCounter = math.ceil(len(self.itemList['names']) / itemPerPage)
+        em = discord.Embed(title=self.title, colour=0xDA291C)
+        for i in range(pageCounter):
+            em.set_footer(text='Page {:02d} of {:02d}'.format(i+1, pageCounter))
+            indexStart = itemPerPage * i
+            indexEnd = itemPerPage * (i+1)
+            for name, val in zip( self.itemList['names'][indexStart:indexEnd], self.itemList['values'][indexStart:indexEnd]):
+                em.add_field(
+                    name=name,
+                    value=val
+                )
+            pagesToSend.append(em)
+            em = discord.Embed(title=self.title, colour=0xDA291C)
+        return (pagesToSend, pageCounter)
+
+
+    def __organize_code_blocks(self, pagesToSend):
+        itemPerPage = self.autosize[1]
+        pageCounter = math.ceil(len(self.itemList) / itemPerPage)
+        for i in range(pageCounter):
+            indexStart = itemPerPage * i
+            indexEnd = itemPerPage * (i+1)
+            content = '\n'.join(self.itemList[indexStart:indexEnd]).replace('```', '')
+            pagesToSend.append('```markdown\n'
+                + content
+                + '\n\n~ Page {:02d} of {:02d} ~'.format(i+1, pageCounter)
+                + '```'
+            )
+        return (pagesToSend, pageCounter)
+
+
+    def __organize_code_blocks_autosize(self, pagesToSend):
+        pageCounter = length = cache = 0
+        for i in range(len(self.itemList)):
+            length += len(self.itemList[i])
+            if length > 1894:
+                pagesToSend.append('```'
+                    + self.title
+                    + ':\n\n'
+                    + '\n'.join(self.itemList[cache:i]).replace('```', ''))
+                cache = i
+                length = len(self.itemList[i])
+                pageCounter += 1
+            elif i == len(self.itemList)-1: # edge case
+                pagesToSend.append('```markdown\n'
+                    + self.title
+                    + ':\n\n'
+                    + '\n'.join(self.itemList[cache:i+1]).replace('```', ''))
+                pageCounter += 1
+        for i in range(len(pagesToSend)):
+            pagesToSend[i] += '\n\n~ Page {:02d} of {:02d} ~'.format(i, pageCounter) + '```'
+        return (pagesToSend, pageCounter)
 
 
     async def __showPage(self, page):
