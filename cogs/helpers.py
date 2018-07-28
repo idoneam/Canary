@@ -15,7 +15,7 @@ import re
 import math
 import time
 import os
-from utils.paginator import Pages
+from .utils.paginator import Pages
 
 
 class Helpers():

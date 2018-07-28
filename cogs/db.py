@@ -12,7 +12,7 @@ import datetime
 
 # Other utilities
 import random
-from utils.paginator import Pages
+from .utils.paginator import Pages
 
 # For remindme functionality
 import re
