@@ -17,7 +17,12 @@ import sys
 from config import parser
 
 # List the extensions (modules) that should be loaded on startup.
-startup = ["db", "memes", "helpers", "mod"]
+startup = [
+    "cogs.db",
+    "cogs.memes",
+    "cogs.helpers",
+    "cogs.mod"
+]
 
 bot = commands.Bot(command_prefix='?')
 
