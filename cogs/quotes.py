@@ -120,7 +120,6 @@ class Quotes():
                         await message.delete()
                         p.itemList = ['[{}] {}'.format(i+1, quote[2]) for i,quote in zip(range(len(quoteList)),quoteList)]
                     await p.paginate()
-            await ctx.message.delete()
             conn.commit()
             conn.close()
         else:

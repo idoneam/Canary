@@ -18,7 +18,10 @@ class Score():
     async def on_raw_reaction_add(self, payload):
         # Check for Martlet emoji + upmartletting yourself
         channel = self.bot.get_channel(payload.channel_id)
-        message = await channel.get_message(payload.message_id)
+        try:
+            message = await channel.get_message(payload.message_id)
+        except discord.errors.NotFound:
+            return
         user = self.bot.get_user(payload.user_id)
         emoji = payload.emoji
 
@@ -55,7 +58,10 @@ class Score():
         """Does the opposite thing when a user up/downmarlets a message
         """
         channel = self.bot.get_channel(payload.channel_id)
-        message = await channel.get_message(payload.message_id)
+        try:
+            message = await channel.get_message(payload.message_id)
+        except discord.errors.NotFound:
+            return
         user = self.bot.get_user(payload.user_id)
         emoji = payload.emoji
 
