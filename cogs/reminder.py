@@ -396,28 +396,6 @@ class Reminder():
         conn.close()
 
 
-    # @asyncio.coroutine
-    # def on_member_join(self, member):
-    #     conn = sqlite3.connect(self.bot.config.db_path)
-    #     c = conn.cursor()
-    #     c.execute("SELECT * FROM Welcome")
-    #     greetings = c.fetchall()
-    #     msg = random.choice(greetings)[0]
-    #     msg = msg.replace('$user$', member.mention)
-    #     general = self.bot.get_channel(236668784948019202)
-    #     await general.send(msg)
-    #
-    # @asyncio.coroutine
-    # def on_member_leave(self, member):
-    #     conn = sqlite3.connect(self.bot.config.db_path)
-    #     c = conn.cursor()
-    #     c.execute("SELECT * FROM Bye")
-    #     farewell = c.fetchall()
-    #     msg = random.choice(farewell)[0]
-    #     msg = msg.replace('$user$', member.mention)
-    #     general = self.bot.get_channel(236668784948019202)
-    #     await general.send(msg)
-
 def setup(bot):
     database = Reminder(bot)
     bot.add_cog(database)

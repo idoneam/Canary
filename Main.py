@@ -15,6 +15,7 @@ import logging
 import os
 import sys
 from config import parser
+import random
 
 # List the extensions (modules) that should be loaded on startup.
 startup = [
@@ -111,6 +112,22 @@ async def on_message(message):
     if message.content == "hey":
         await message.channel.send("whats going on?")
     await bot.process_commands(message)
+
+
+@bot.event
+async def on_member_join(member):
+    channel = bot.get_channel(236668784948019202)
+    welcome_message = random.choice(bot.config.welcome).format(ctx.message.author.mention)
+    message = await ctx.send(welcome_message)
+    await message.add_reaction(":suzeping:457285258682040329")
+
+
+@bot.event
+async def on_member_leave(member):
+    channel = bot.get_channel(236668784948019202)
+    goodbye_message = random.choice(bot.config.goodbye).format(ctx.message.author.mention)
+    message = await ctx.send(goodbye_message)
+    await message.add_reaction(":biblethump:243942559360090132")
 
 
 # Startup extensions
