@@ -107,6 +107,7 @@ class Score():
         """
         Upmartlet Rankings! :^)
         """
+        await ctx.trigger_typing()
         conn = sqlite3.connect(self.bot.config.db_path)
         c = conn.cursor()
         c.execute("SELECT * FROM Members ORDER BY Score DESC;")

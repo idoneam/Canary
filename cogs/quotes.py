@@ -77,6 +77,7 @@ class Quotes():
         """
         List quotes
         """
+        await ctx.trigger_typing()
         conn = sqlite3.connect(self.bot.config.db_path)
         c = conn.cursor()
         quoteAuthor = author if author else ctx.message.author

@@ -30,6 +30,7 @@ class Helpers():
     async def weather(self, ctx):
         """Retrieves current weather conditions.
         Data taken from http://weather.gc.ca/city/pages/qc-147_metric_e.html"""
+        await ctx.trigger_typing()
         # Replace link with any city weather link from http://weather.gc.ca/
         url = "http://weather.gc.ca/city/pages/qc-147_metric_e.html"
         r = requests.get(url)
@@ -111,6 +112,7 @@ class Helpers():
         Note: Bullet points without colons (':') are not parsed because I have yet to see one that actually has useful information."""
         fac = r'([a-zA-Z]{4})'
         num = r'(\d{3})'
+        await ctx.trigger_typing()
         result = re.compile(fac+r'\s?'+num, re.IGNORECASE|re.DOTALL).search(query)
         if not result:
             await ctx.send(':warning: Incorrect format. The correct format is `?course <course name>`.')
@@ -151,6 +153,7 @@ class Helpers():
     @commands.command()
     async def urban(self, ctx, *, query: str):
         """Fetches the top definition from Urban Dictionary."""
+        await ctx.trigger_typing()
         url = "http://www.urbandictionary.com/define.php?term=%s" % query.replace(' ', '+')
         r = requests.get(url)
         soup = BeautifulSoup(r.content, 'html.parser')
@@ -170,6 +173,7 @@ class Helpers():
     @commands.command()
     async def tex(self, ctx, *, query: str):
         """Parses and prints LaTeX equations."""
+        await ctx.trigger_typing()
         if "$" in ctx.message.content:
             tex = ""
             sp = ctx.message.content.split('$')
@@ -189,12 +193,14 @@ class Helpers():
 
 
     @commands.command()
+    @commands.cooldown(rate=1, per=120)
     async def search(self, ctx, *, query: str):
         """Shows results for the queried keyword(s) in McGill courses"""
         keyword = query.replace(" ", "+")
         pagelimit = 5
         pagenum = 0
         courses = []
+        await ctx.trigger_typing()
         while(True and pagenum < pagelimit):
             url = "http://www.mcgill.ca/study/2018-2019/courses/search\
             ?search_api_views_fulltext=%s&sort_by=field_subject_code&page=%d" % (keyword, pagenum)
@@ -229,6 +235,12 @@ class Helpers():
         await p.paginate()
 
 
+    @search.error
+    async def search_error(self, ctx, error):
+        if isinstance(error, discord.ext.commands.CommandOnCooldown):
+            await ctx.send("Command is on cooldown. Cooldown time: 2 minutes")
+
+
     @commands.command()
     async def xe(self, ctx, *, query: str):
         """Currency conversion.
@@ -237,6 +249,7 @@ class Helpers():
         ie. ?xe 60.00 CAD to EUR
         The currencies supported for conversion (and their abbreviations) can be found at http://www.xe.com/currency/.
         """
+        await ctx.trigger_typing()
         if '.' in query.split(' ')[0]:  # Distinguish regex between floats and ints
             re1 = '([+-]?\\d*\\.\\d+)(?![-+0-9\\.])'
         else:
