@@ -117,16 +117,16 @@ async def on_message(message):
 @bot.event
 async def on_member_join(member):
     channel = bot.get_channel(236668784948019202)
-    welcome_message = random.choice(bot.config.welcome).format(ctx.message.author.mention)
-    message = await ctx.send(welcome_message)
+    welcome_message = random.choice(bot.config.welcome).format(member.mention)
+    message = await channel.send(welcome_message)
     await message.add_reaction(":suzeping:457285258682040329")
 
 
 @bot.event
-async def on_member_leave(member):
+async def on_member_remove(member):
     channel = bot.get_channel(236668784948019202)
-    goodbye_message = random.choice(bot.config.goodbye).format(ctx.message.author.mention)
-    message = await ctx.send(goodbye_message)
+    goodbye_message = random.choice(bot.config.goodbye).format(member.mention)
+    message = await channel.send(goodbye_message)
     await message.add_reaction(":biblethump:243942559360090132")
 
 
