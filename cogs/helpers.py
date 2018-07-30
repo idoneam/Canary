@@ -158,7 +158,7 @@ class Helpers():
         r = requests.get(url)
         soup = BeautifulSoup(r.content, 'html.parser')
         r.close()
-        word = soup.find('div', {'class': 'def-header'}).a
+        word = soup.find('div', {'class': 'def-header'})
         if not word:
             await ctx.send("No definition found for **%s**." % query)
             return
