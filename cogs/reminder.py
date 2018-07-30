@@ -65,7 +65,7 @@ class Reminder():
             conn.close()
             await asyncio.sleep(60 * 1)
 
-    @commands.command()
+    @commands.command(aliases=['sr'])
     async def stop_reminder(self, ctx, reminder: str = ""):
         """
         [DM Only] Delete the specified reminder
@@ -95,7 +95,7 @@ class Reminder():
                                 "reminders!)")
 
 
-    @commands.command()
+    @commands.command(aliases=['rm','rem'])
     async def remindme(self, ctx, *, quote: str = ""):
         """
         Parses the reminder and adds a one-time reminder to the reminder database or
