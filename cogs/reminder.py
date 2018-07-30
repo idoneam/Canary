@@ -7,7 +7,6 @@ import asyncio
 
 # For DB Functionality
 import sqlite3
-from tabulate import tabulate
 import datetime
 
 # Other utilities
@@ -17,7 +16,7 @@ from .utils.paginator import Pages
 # For remindme functionality
 import re
 
-class Db():
+class Reminder():
     def __init__(self, bot):
         self.bot = bot
         self.frequencies = {
@@ -396,164 +395,8 @@ class Db():
         conn.commit()
         conn.close()
 
-    @commands.command()
-    async def addq(self, ctx, member: discord.Member, *, quote: str):
-        """
-        Add a quote to a user's quote database.
-        """
-        conn = sqlite3.connect(self.bot.config.db_path)
-        c = conn.cursor()
-        t = (member.id, member.name, quote,
-             str(ctx.message.created_at))
-        c.execute('INSERT INTO Quotes VALUES (?,?,?,?)', t)
-        await ctx.send('`Quote added.`')
-        conn.commit()
-        conn.close()
-
-    @commands.command()
-    async def q(self, ctx, str1: str = None, *, str2: str = None):
-        """
-        Retrieve a quote with a specified keyword / mention.
-        """
-        conn = sqlite3.connect(self.bot.config.db_path)
-        c = conn.cursor()
-        t = None
-        mentions = ctx.message.mentions
-        if str1 is None:        # No argument passed
-            quotes = c.execute('SELECT ID, Name, Quote FROM Quotes').fetchall()
-        elif mentions and mentions[0].mention == str1:  # Has args
-            id = mentions[0].id
-            if str2 is None:    # query for user only
-                t = (id, '%%',)
-            else:               # query for user and quote
-                t = (id, '%{}%'.format(str2))
-            c.execute('SELECT ID, Name, Quote FROM Quotes WHERE ID = ? AND Quote LIKE ?', t)
-            quotes = c.fetchall()
-        else:                   # query for quote only
-            query = str1 if str2 is None else str1 + ' ' + str2
-            t = ('%{}%'.format(query),)
-            c.execute('SELECT ID, Name, Quote FROM Quotes WHERE Quote LIKE ?', t)
-            quotes = c.fetchall()
-        if not quotes:
-            conn.close()
-            await ctx.send('Quote not found.')
-        else:
-            conn.close()
-            quote_tuple = random.choice(quotes)
-            author_id = int(quote_tuple[0])
-            name = quote_tuple[1]
-            quote = quote_tuple[2]
-            author = discord.utils.get(ctx.guild.members, id = author_id)
-            # get author name, if the user is still on the server, their current nick will be displayed, otherwise use the name stored in db
-            author_name = author.display_name if author else name
-            await ctx.send('{} 📣 {}'.format(author_name, quote))
-
-    @commands.command(aliases=['lq'])
-    async def listQuote(self, ctx, author: discord.User=None):
-        '''
-        List quotes
-        '''
-        conn = sqlite3.connect(self.bot.config.db_path)
-        c = conn.cursor()
-        quoteAuthor = author if author else ctx.message.author
-        author_id = quoteAuthor.id
-        t = (author_id,)
-        c.execute('SELECT * FROM Quotes WHERE ID = ?', t)
-        quoteList = c.fetchall()
-        if quoteList:
-            quoteListText = ['[{}] {}'.format(i+1, quote[2]) for i,quote in zip(range(len(quoteList)),quoteList)]
-            p = Pages(ctx,
-                itemList=quoteListText,
-                title='Quotes from {}'.format(quoteAuthor.display_name)
-            )
-            await p.paginate()
-            index = 0
-            def msgCheck(message):
-                try:
-                    if (0 <= int(message.content) <= len(quoteList)) and message.author.id == author_id and message.channel == ctx.message.channel:
-                        return True
-                    return False
-                except ValueError:
-                    return False
-            while p.delete:
-                await ctx.send('Delete option selected. Enter a number to specify which quote you want to delete, or enter 0 to return.', delete_after=60)
-                try:
-                    message = await self.bot.wait_for('message', check=msgCheck, timeout=60)
-                except asyncio.TimeoutError:
-                    await ctx.send('Command timeout. You may want to run the command again.', delete_after=60)
-                    break
-                else:
-                    index = int(message.content)-1
-                    if index == -1:
-                        await ctx.send('Exit delq.', delete_after=60)
-                    else:
-                        t = (quoteList[index][0], quoteList[index][2],)
-                        del quoteList[index]
-                        c.execute('DELETE FROM Quotes WHERE ID = ? AND Quote = ?', t)
-                        conn.commit()
-                        await ctx.send('Quote deleted', delete_after=60)
-                        await message.delete()
-                        p.itemList = ['[{}] {}'.format(i+1, quote[2]) for i,quote in zip(range(len(quoteList)),quoteList)]
-                    await p.paginate()
-            await ctx.message.delete()
-            conn.commit()
-            conn.close()
-        else:
-            await ctx.send('No quote found.', delete_after=60)
-
-    @commands.command()
-    async def ranking(self, ctx):
-        """
-        Upmartlet Rankings! :^)
-        """
-        conn = sqlite3.connect(self.bot.config.db_path)
-        c = conn.cursor()
-        c.execute("SELECT * FROM Members ORDER BY Score DESC;")
-        members = c.fetchall()
-        if not members:
-            await ctx.send("Ranking is not yet available for this server, please upvote/downvote moar.")
-            return
-        table = []
-        table_list = []
-        counter = 1
-        for (ID, DisplayName, Upmartlet) in members:
-            table.append((counter, DisplayName, Upmartlet))
-            if counter % 7 == 0 or counter == len(members):
-                table_list.append(tabulate(table[:counter],
-                                            headers=["Rank", "Name", "Score"],
-                                            tablefmt="fancy_grid"))
-                del table[:]
-            counter += 1
-        p = Pages(ctx, itemList=table_list,
-            title="Upmartlet ranking",
-            autosize=(False, 1),
-            editableContent=False
-        )
-        await p.paginate()
-
-    # @asyncio.coroutine
-    # def on_member_join(self, member):
-    #     conn = sqlite3.connect(self.bot.config.db_path)
-    #     c = conn.cursor()
-    #     c.execute("SELECT * FROM Welcome")
-    #     greetings = c.fetchall()
-    #     msg = random.choice(greetings)[0]
-    #     msg = msg.replace('$user$', member.mention)
-    #     general = self.bot.get_channel(236668784948019202)
-    #     await general.send(msg)
-    #
-    # @asyncio.coroutine
-    # def on_member_leave(self, member):
-    #     conn = sqlite3.connect(self.bot.config.db_path)
-    #     c = conn.cursor()
-    #     c.execute("SELECT * FROM Bye")
-    #     farewell = c.fetchall()
-    #     msg = random.choice(farewell)[0]
-    #     msg = msg.replace('$user$', member.mention)
-    #     general = self.bot.get_channel(236668784948019202)
-    #     await general.send(msg)
 
 def setup(bot):
-    database = Db(bot)
+    database = Reminder(bot)
     bot.add_cog(database)
     bot.loop.create_task(database.check_reminders())
