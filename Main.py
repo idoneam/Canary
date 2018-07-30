@@ -15,9 +15,17 @@ import logging
 import os
 import sys
 from config import parser
+import random
 
 # List the extensions (modules) that should be loaded on startup.
-startup = ["db", "memes", "helpers", "mod"]
+startup = [
+    "cogs.reminder",
+    "cogs.memes",
+    "cogs.helpers",
+    "cogs.mod",
+    "cogs.score",
+    "cogs.quotes"
+]
 
 bot = commands.Bot(command_prefix='?')
 
@@ -93,82 +101,6 @@ async def update(ctx):
 
 
 @bot.event
-async def on_raw_reaction_add(payload):
-    # Check for Martlet emoji + upmartletting yourself
-    channel = bot.get_channel(payload.channel_id)
-    message = await channel.get_message(payload.message_id)
-    user = bot.get_user(payload.user_id)
-    emoji = payload.emoji
-
-    if user == message.author:
-        return
-
-    if emoji.name == 'upmartlet':
-        score = 1
-    elif emoji.name == 'downmartlet':
-        score = -1
-    else:
-        return
-
-    conn = sqlite3.connect(bot.config.db_path)
-    c = conn.cursor()
-    # uncomment to enable sqlite3 debugging
-    # conn.set_trace_callback(print)
-
-    t = (message.author.id,)
-    if not c.execute('SELECT * FROM Members WHERE ID=?', t).fetchall():
-        t = (message.author.id, message.author.display_name, score)
-        c.execute('INSERT INTO Members VALUES (?,?,?)', t)
-        conn.commit()
-        conn.close()
-    else:
-        if score == 1:
-            c.execute('UPDATE Members SET Score=Score+1 WHERE ID=?', t)
-        else:
-            c.execute('UPDATE Members SET Score=Score-1 WHERE ID=?', t)
-        conn.commit()
-        conn.close()
-
-
-@bot.event
-async def on_raw_reaction_remove(payload):
-    # Check for Martlet emoji + upmartletting yourself
-    """Does the opposite thing when a user up/downmarlets a message
-    """
-    channel = bot.get_channel(payload.channel_id)
-    message = await channel.get_message(payload.message_id)
-    user = bot.get_user(payload.user_id)
-    emoji = payload.emoji
-
-    if user == message.author:
-        return
-
-    if emoji.name == 'upmartlet':
-        score = -1
-    elif emoji.name == 'downmartlet':
-        score = 1
-    else:
-        return
-
-    conn = sqlite3.connect(bot.config.db_path)
-    c = conn.cursor()
-
-    t = (message.author.id,)
-    if not c.execute('SELECT * FROM Members WHERE ID=?', t).fetchall():
-        t = (message.author.id, message.author.display_name, score)
-        c.execute('INSERT INTO Members VALUES (?,?,?)', t)
-        conn.commit()
-        conn.close()
-    else:
-        if score == 1:
-            c.execute('UPDATE Members SET Score=Score+1 WHERE ID=?', t)
-        else:
-            c.execute('UPDATE Members SET Score=Score-1 WHERE ID=?', t)
-        conn.commit()
-        conn.close()
-
-
-@bot.event
 async def on_message(message):
     if message.author == bot.user:
         return
@@ -180,6 +112,22 @@ async def on_message(message):
     if message.content == "hey":
         await message.channel.send("whats going on?")
     await bot.process_commands(message)
+
+
+@bot.event
+async def on_member_join(member):
+    channel = bot.get_channel(236668784948019202)
+    welcome_message = random.choice(bot.config.welcome).format(member.mention)
+    message = await channel.send(welcome_message)
+    await message.add_reaction(":suzeping:457285258682040329")
+
+
+@bot.event
+async def on_member_remove(member):
+    channel = bot.get_channel(236668784948019202)
+    goodbye_message = random.choice(bot.config.goodbye).format(member.mention)
+    message = await channel.send(goodbye_message)
+    await message.add_reaction(":biblethump:243942559360090132")
 
 
 # Startup extensions

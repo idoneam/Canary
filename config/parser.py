@@ -10,7 +10,7 @@ class Parser:
 
         self.discord_key = config['Discord']['Key']
 
-        self.welcome = config['Greetings']['Welcome']
-        self.goodbye = config['Greetings']['Goodbye']
+        self.welcome = config['Greetings']['Welcome'].split('\n')
+        self.goodbye = config['Greetings']['Goodbye'].split('\n')
 
         self.db_path = config['DB']['Path']

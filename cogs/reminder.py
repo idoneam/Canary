@@ -7,17 +7,16 @@ import asyncio
 
 # For DB Functionality
 import sqlite3
-from tabulate import tabulate
 import datetime
 
 # Other utilities
 import random
-from utils.paginator import Pages
+from .utils.paginator import Pages
 
 # For remindme functionality
 import re
 
-class Db():
+class Reminder():
     def __init__(self, bot):
         self.bot = bot
         self.frequencies = {
@@ -47,7 +46,7 @@ class Db():
                     # Check date to remind user
                     reminder_activation_date = datetime.datetime.strptime(reminders[i][4], "%Y-%m-%d %H:%M:%S.%f")
                     # Compute future_date-current_date and if <= 0:00:00, means time is due to remind user
-                    if reminder_activation_date - datetime.datetime.now() <= datetime.timedelta(0): 
+                    if reminder_activation_date - datetime.datetime.now() <= datetime.timedelta(0):
                         await member.send("Reminding you to {}!".format(reminders[i][2]))
                         # Remove from from DB non-repeating reminder
                         c.execute('DELETE FROM Reminders WHERE Reminder=? AND ID=? AND DATE=?', (reminders[i][2], reminders[i][0],
@@ -95,7 +94,7 @@ class Db():
             await ctx.send("Slide into my DM's ;) (Please respond to my DM messages to stop "
                                 "reminders!)")
 
-    
+
     @commands.command()
     async def remindme(self, ctx, *, quote: str = ""):
         """
@@ -118,7 +117,7 @@ class Db():
             (r"twenty[-\s]seven", "27"),
             (r"twenty[-\s]eight", "28"),
             (r"twenty[-\s]nine", "29"),
-            
+
             (r"thirty[-\s]one", "31"),
             (r"thirty[-\s]two", "32"),
             (r"thirty[-\s]three", "33"),
@@ -198,7 +197,7 @@ class Db():
         punctuation_chars = ".,+&/ "
         string_word_separator_regex = r"(\s|["+punctuation_chars+"])+"
         time_separator_regex = r"(,|\+|&|and|plus|in)"
-        # Regex to match units below (Which accounts for spelling mistakes!) 
+        # Regex to match units below (Which accounts for spelling mistakes!)
         unit_regex = r"("+"|".join(list(units.values()))+")"
         # Matches a natural number
         number_regex = r"[1-9]+[0-9]*(|\.[0-9]+)"
@@ -223,18 +222,18 @@ class Db():
         last_item_was_number = False
         first_reminder_segment = ""
 
-        """ Checks the following logic: 
+        """ Checks the following logic:
             1. If daily, weekly or monthly is specified, go to old reminder function for repetitive reminders
-        for all input segments:    
+        for all input segments:
             2. If one of the keywords commonly used for listing times is there, continue
             3. If a number is found, save the number, mark that a number has been found for next iteration
             4. Elif: A "unit" (years, days ... etc.) has been found, append the last number + its unit
             5. Lastly: save beginning of "reminder quote" and end loop
-        """   
+        """
 
         if len(input_segments) > 0 and (input_segments[0] == "daily" or input_segments[0] == "weekly" or
                                         input_segments[0] == "monthly"):
-            await remindme_repeating(self, ctx, input_segments[0], quote=quote[len(input_segments[0])+1:])  
+            await remindme_repeating(self, ctx, input_segments[0], quote=quote[len(input_segments[0])+1:])
             return
         for segment in input_segments:
             if re.match("^"+time_separator_regex+"$", segment):
@@ -258,7 +257,7 @@ class Db():
 
             # If both a date and a time is found, continue
             if date_result and time_result:
-                # Compute datetime.Object 
+                # Compute datetime.Object
                 absolute_duedate = datetime.datetime.strptime(date_result.group(1)+"-"+date_result.group(2)+"-"+
                         date_result.group(4)+"-"+time_result.group(1)+"-"+time_result.group(2)+"-"+str(0.1),
                             "%Y-%m-%d-%H-%M-%S.%f")
@@ -311,13 +310,13 @@ class Db():
             for regex in units:
                 if re.match("^"+units[regex]+"$", match.group(3)):
                     time_offset[regex] += number
-            
+
 
         # Convert years to a unit that datetime will understand
         time_offset["days"] = time_offset["days"] + time_offset["years"] * 365
 
         time_now = datetime.datetime.now() # Current time
-        reminder_time = time_now + datetime.timedelta(days = time_offset["days"], hours = time_offset["hours"], 
+        reminder_time = time_now + datetime.timedelta(days = time_offset["days"], hours = time_offset["hours"],
                                                         seconds = time_offset["seconds"], minutes = time_offset["minutes"],
                                                         weeks = time_offset["weeks"]) # Time to be reminded on
         if time_now == reminder_time: # No time in argument, or it's zero.
@@ -350,208 +349,54 @@ class Db():
         conn.close()
 
 
-
-async def remindme_repeating(self, ctx, freq: str = "", *, quote: str = ""):
-    """
-    Called by remindme to add a repeating reminder to the reminder database.
-    """
-
-    bad_input = False
-    if freq not in self.frequencies.keys():
-        await ctx.send("Please ensure you specify a frequency from the following list: `daily`, `weekly`, "
-                            "`monthly`, before your message!")
-        bad_input = True
-    if quote == "":
-        if bad_input and freq == "" or not bad_input:
-            await ctx.send("Please specify a reminder message!")
-        else:
-            pass
-        bad_input = True
-    if bad_input:
-        return
-
-    conn = sqlite3.connect(self.bot.config.db_path)
-    c = conn.cursor()
-    t = (ctx.message.author.id, ctx.message.author.name, quote, freq, datetime.datetime.now(),
-         datetime.datetime.now())
-    reminders = c.execute('SELECT * FROM Reminders WHERE Reminder =? AND ID = ?',
-                          (quote, ctx.message.author.id)).fetchall()
-    if len(reminders) > 0:
-        await ctx.send("The reminder `{}` already exists in your database. Please specify a unique reminder "
-                            "message!".format(quote))
-        return
-    reminders = c.execute('SELECT * FROM Reminders WHERE ID =?', (ctx.message.author.id,)).fetchall()
-    try:
-        c.execute('INSERT INTO Reminders VALUES (?, ?, ?, ?, ?, ?)', t)
-    except sqlite3.OperationalError:
-        c.execute("CREATE TABLE 'Reminders' ('ID'INTEGER,'Name'TEXT,'Reminder'TEXT,'Frequency'TEXT,'Date'\
-                    TEXT,'LastReminder'TEXT)")
-        c.execute('INSERT INTO Reminders VALUES (?, ?, ?, ?, ?. ?)', t)
-    # Strips the string "to " from reminder messages
-    if quote[:3].lower() == "to ":
-        quote = quote[3:]
-    await ctx.author.send('Hi {}! \nI will remind you to {} {} until you send me a message to stop '
-                               'reminding you about it! [{:d}]'
-                               .format(ctx.author.name,  quote, freq, len(reminders)+1))
-    await ctx.send('Reminder added.')
-    conn.commit()
-    conn.close()
-
-    @commands.command()
-    async def addq(self, ctx, member: discord.Member, *, quote: str):
+    async def remindme_repeating(self, ctx, freq: str = "", *, quote: str = ""):
         """
-        Add a quote to a user's quote database.
+        Called by remindme to add a repeating reminder to the reminder database.
         """
+
+        bad_input = False
+        if freq not in self.frequencies.keys():
+            await ctx.send("Please ensure you specify a frequency from the following list: `daily`, `weekly`, "
+                                "`monthly`, before your message!")
+            bad_input = True
+        if quote == "":
+            if bad_input and freq == "" or not bad_input:
+                await ctx.send("Please specify a reminder message!")
+            else:
+                pass
+            bad_input = True
+        if bad_input:
+            return
+
         conn = sqlite3.connect(self.bot.config.db_path)
         c = conn.cursor()
-        t = (member.id, member.name, quote,
-             str(ctx.message.created_at))
-        c.execute('INSERT INTO Quotes VALUES (?,?,?,?)', t)
-        await ctx.send('`Quote added.`')
+        t = (ctx.message.author.id, ctx.message.author.name, quote, freq, datetime.datetime.now(),
+             datetime.datetime.now())
+        reminders = c.execute('SELECT * FROM Reminders WHERE Reminder =? AND ID = ?',
+                              (quote, ctx.message.author.id)).fetchall()
+        if len(reminders) > 0:
+            await ctx.send("The reminder `{}` already exists in your database. Please specify a unique reminder "
+                                "message!".format(quote))
+            return
+        reminders = c.execute('SELECT * FROM Reminders WHERE ID =?', (ctx.message.author.id,)).fetchall()
+        try:
+            c.execute('INSERT INTO Reminders VALUES (?, ?, ?, ?, ?, ?)', t)
+        except sqlite3.OperationalError:
+            c.execute("CREATE TABLE 'Reminders' ('ID'INTEGER,'Name'TEXT,'Reminder'TEXT,'Frequency'TEXT,'Date'\
+                        TEXT,'LastReminder'TEXT)")
+            c.execute('INSERT INTO Reminders VALUES (?, ?, ?, ?, ?. ?)', t)
+        # Strips the string "to " from reminder messages
+        if quote[:3].lower() == "to ":
+            quote = quote[3:]
+        await ctx.author.send('Hi {}! \nI will remind you to {} {} until you send me a message to stop '
+                                   'reminding you about it! [{:d}]'
+                                   .format(ctx.author.name,  quote, freq, len(reminders)+1))
+        await ctx.send('Reminder added.')
         conn.commit()
         conn.close()
 
-    @commands.command()
-    async def q(self, ctx, str1: str = None, *, str2: str = None):
-        """
-        Retrieve a quote with a specified keyword / mention.
-        """
-        conn = sqlite3.connect(self.bot.config.db_path)
-        c = conn.cursor()
-        t = None
-        mentions = ctx.message.mentions
-        if str1 is None:        # No argument passed
-            quotes = c.execute('SELECT ID, Name, Quote FROM Quotes').fetchall()
-        elif mentions and mentions[0].mention == str1:  # Has args
-            id = mentions[0].id
-            if str2 is None:    # query for user only
-                t = (id, '%%',)
-            else:               # query for user and quote
-                t = (id, '%{}%'.format(str2))
-            c.execute('SELECT ID, Name, Quote FROM Quotes WHERE ID = ? AND Quote LIKE ?', t)
-            quotes = c.fetchall()
-        else:                   # query for quote only
-            query = str1 if str2 is None else str1 + ' ' + str2
-            t = ('%{}%'.format(query),)
-            c.execute('SELECT ID, Name, Quote FROM Quotes WHERE Quote LIKE ?', t)
-            quotes = c.fetchall()
-        if not quotes:
-            conn.close()
-            await ctx.send('Quote not found.')
-        else:
-            conn.close()
-            quote_tuple = random.choice(quotes)
-            author_id = int(quote_tuple[0])
-            name = quote_tuple[1]
-            quote = quote_tuple[2]
-            author = discord.utils.get(ctx.guild.members, id = author_id)
-            # get author name, if the user is still on the server, their current nick will be displayed, otherwise use the name stored in db
-            author_name = author.display_name if author else name
-            await ctx.send('{} 📣 {}'.format(author_name, quote))
-
-    @commands.command(aliases=['lq'])
-    async def listQuote(self, ctx, author: discord.User=None):
-        '''
-        List quotes
-        '''
-        conn = sqlite3.connect(self.bot.config.db_path)
-        c = conn.cursor()
-        quoteAuthor = author if author else ctx.message.author
-        author_id = quoteAuthor.id
-        t = (author_id,)
-        c.execute('SELECT * FROM Quotes WHERE ID = ?', t)
-        quoteList = c.fetchall()
-        if quoteList:
-            quoteListText = ['[{}] {}'.format(i+1, quote[2]) for i,quote in zip(range(len(quoteList)),quoteList)]
-            p = Pages(ctx,
-                itemList=quoteListText,
-                title='Quotes from {}'.format(quoteAuthor.display_name)
-            )
-            await p.paginate()
-            index = 0
-            def msgCheck(message):
-                try:
-                    if (1 <= int(message.content) <= len(quoteList)) and message.author.id == author_id:
-                        return True
-                    return False
-                except ValueError:
-                    return False
-            while p.delete:
-                await ctx.send('Delete option selected. Enter a number to specify which quote you want to delete', delete_after=60)
-                try:
-                    message = await self.bot.wait_for('message', check=msgCheck, timeout=60)
-                except asyncio.TimeoutError:
-                    await ctx.send('Command timeout. You may want to run the command again.', delete_after=60)
-                    break
-                else:
-                    index = int(message.content)-1
-                    t = (quoteList[index][0], quoteList[index][2],)
-                    del quoteList[index]
-                    c.execute('DELETE FROM Quotes WHERE ID = ? AND Quote = ?', t)
-                    conn.commit()
-                    await ctx.send('Quote deleted', delete_after=60)
-                    await message.delete()
-                    p.itemList = ['[{}] {}'.format(i+1, quote[2]) for i,quote in zip(range(len(quoteList)),quoteList)]
-                    await p.paginate()
-            await ctx.message.delete()
-            conn.commit()
-            conn.close()
-        else:
-            await ctx.send('No quote found.', delete_after=60)
-
-    @commands.command()
-    async def ranking(self, ctx):
-        """
-        Upmartlet Rankings! :^)
-        """
-        conn = sqlite3.connect(self.bot.config.db_path)
-        c = conn.cursor()
-        c.execute("SELECT * FROM Members ORDER BY Score DESC;")
-        members = c.fetchall()
-        if not members:
-            await ctx.send("Ranking is not yet available for this server, please upvote/downvote moar.")
-            return
-        table = []
-        table_list = []
-        counter = 1
-        for (ID, DisplayName, Upmartlet) in members:
-            table.append((counter, DisplayName, Upmartlet))
-            if counter % 7 == 0 or counter == len(members):
-                table_list.append(tabulate(table[:counter],
-                                            headers=["Rank", "Name", "Score"],
-                                            tablefmt="fancy_grid"))
-                del table[:]
-            counter += 1
-        p = Pages(ctx, itemList=table_list,
-            title="Upmartlet ranking",
-            autosize=(False, 1),
-            editableContent=False
-        )
-        await p.paginate()
-
-    # @asyncio.coroutine
-    # def on_member_join(self, member):
-    #     conn = sqlite3.connect(self.bot.config.db_path)
-    #     c = conn.cursor()
-    #     c.execute("SELECT * FROM Welcome")
-    #     greetings = c.fetchall()
-    #     msg = random.choice(greetings)[0]
-    #     msg = msg.replace('$user$', member.mention)
-    #     general = self.bot.get_channel(236668784948019202)
-    #     await general.send(msg)
-    #
-    # @asyncio.coroutine
-    # def on_member_leave(self, member):
-    #     conn = sqlite3.connect(self.bot.config.db_path)
-    #     c = conn.cursor()
-    #     c.execute("SELECT * FROM Bye")
-    #     farewell = c.fetchall()
-    #     msg = random.choice(farewell)[0]
-    #     msg = msg.replace('$user$', member.mention)
-    #     general = self.bot.get_channel(236668784948019202)
-    #     await general.send(msg)
 
 def setup(bot):
-    database = Db(bot)
+    database = Reminder(bot)
     bot.add_cog(database)
     bot.loop.create_task(database.check_reminders())
