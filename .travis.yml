@@ -3,6 +3,8 @@ language: python
 python:
  - "3.6"
 
+before_install: sed -i "s/KEY/$DISCORD_TOKEN/g" config/config.ini
+ 
 install: python3 -m pip install -r requirements.txt
 
 script: python3 Main.py
