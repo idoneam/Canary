@@ -36,7 +36,10 @@ class Reminder():
             conn = sqlite3.connect(self.bot.config.db_path)
             c = conn.cursor()
             g = (guild for guild in self.bot.guilds if guild.name == 'McGill University')
-            guild = next(g)
+            try:
+                guild = next(g)
+            except StopIteration:
+                return
             reminders = c.execute('SELECT * FROM Reminders').fetchall()
             for i in range(len(reminders)):
                 member = discord.utils.get(guild.members, id=reminders[i][0])
