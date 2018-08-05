@@ -132,7 +132,7 @@ class Pages():
                 cache = i
                 length = len(self.itemList[i])
                 pageCounter += 1
-            elif i == len(self.itemList) - 1:  # edge case
+            elif i == len(self.itemList) - 1:    # edge case
                 pagesToSend.append(
                     '```markdown\n' + self.title + ':\n\n' +
                     '\n'.join(self.itemList[cache:i + 1]).replace('```', ''))
