@@ -33,5 +33,6 @@ class Mod():
         await channelToForward.send(msg)
         await ctx.message.delete()
 
+
 def setup(bot):
     bot.add_cog(Mod(bot))

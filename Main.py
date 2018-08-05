@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 # discord-py requirements
+import asyncio
 import discord
 from discord.ext import commands
 import asyncio
@@ -19,11 +20,7 @@ import random
 
 # List the extensions (modules) that should be loaded on startup.
 startup = [
-    "cogs.reminder",
-    "cogs.memes",
-    "cogs.helpers",
-    "cogs.mod",
-    "cogs.score",
+    "cogs.reminder", "cogs.memes", "cogs.helpers", "cogs.mod", "cogs.score",
     "cogs.quotes"
 ]
 
