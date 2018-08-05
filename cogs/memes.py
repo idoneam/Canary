@@ -26,22 +26,22 @@ class Memes():
         License
         """
         await ctx.send("This bot is free software: you can redistribute"
-                            " it and/or modify it under the terms of the GNU"
-                            " General Public License as published by the "
-                            "Free Software Foundation, either version 3 of "
-                            "the License, or (at your option) any later "
-                            "version. **This bot is distributed in the hope "
-                            "that it will be useful**, but WITHOUT ANY "
-                            "WARRANTY; without even the implied warranty of "
-                            "MERCHANTABILITY or **FITNESS FOR A PARTICULAR "
-                            "PURPOSE**.  See the GNU General Public License "
-                            "for more details. This bot is developed "
-                            "primarily by student volunteers with better "
-                            "things to do. A copy of the GNU General Public "
-                            "License is provided in the LICENSE.txt file "
-                            "along with this bot. The GNU General Public "
-                            "License can also be found at "
-                            "<http://www.gnu.org/licenses/>.")
+                       " it and/or modify it under the terms of the GNU"
+                       " General Public License as published by the "
+                       "Free Software Foundation, either version 3 of "
+                       "the License, or (at your option) any later "
+                       "version. **This bot is distributed in the hope "
+                       "that it will be useful**, but WITHOUT ANY "
+                       "WARRANTY; without even the implied warranty of "
+                       "MERCHANTABILITY or **FITNESS FOR A PARTICULAR "
+                       "PURPOSE**.  See the GNU General Public License "
+                       "for more details. This bot is developed "
+                       "primarily by student volunteers with better "
+                       "things to do. A copy of the GNU General Public "
+                       "License is provided in the LICENSE.txt file "
+                       "along with this bot. The GNU General Public "
+                       "License can also be found at "
+                       "<http://www.gnu.org/licenses/>.")
         await ctx.message.delete()
 
     @commands.command()
@@ -106,12 +106,11 @@ class Memes():
         await ctx.send('CHIRP CHIRP')
 
     @commands.command()
-    async def mix(self, ctx, *, inputStr: str=None):
+    async def mix(self, ctx, *, inputStr: str = None):
         if inputStr is None:
             await ctx.send()
-        msg = "".join([(c.upper() if
-                        random.randint(0, 1) else
-                        c.lower()) for c in inputStr])
+        msg = "".join([(c.upper() if random.randint(0, 1) else c.lower())
+                       for c in inputStr])
         await ctx.send(msg)
         await ctx.message.delete()
 

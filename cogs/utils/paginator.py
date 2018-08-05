@@ -6,8 +6,17 @@ import asyncio
 
 import math
 
+
 class Pages():
-    def __init__(self, ctx, currentPage=1, msg=None, itemList=[], title='Paginator', option='CODE_BLOCKS', autosize=(True,0), editableContent=True):
+    def __init__(self,
+                 ctx,
+                 currentPage=1,
+                 msg=None,
+                 itemList=[],
+                 title='Paginator',
+                 option='CODE_BLOCKS',
+                 autosize=(True, 0),
+                 editableContent=True):
         """Creates a paginator.
 
         Parameters
@@ -40,17 +49,17 @@ class Pages():
         self.option = option
         self.autosize = autosize
         self.__organize()
-        self.actions = [('⏪', self.__firstPage),
-                        ('◀', self.__prevPage),
-                        ('▶', self.__nextPage),
-                        ('⏩', self.__lastPage),
-                        ('⏹', self.__halt),
-                        ]
+        self.actions = [
+            ('⏪', self.__firstPage),
+            ('◀', self.__prevPage),
+            ('▶', self.__nextPage),
+            ('⏩', self.__lastPage),
+            ('⏹', self.__halt),
+        ]
         if editableContent:
             self.actions.append(('🚮', self.__del))
         self.currentPage = currentPage
         self.delete = False
-
 
     def __organize(self):
         pagesToSend = ['empty page']
@@ -66,24 +75,21 @@ class Pages():
                 result = self.__organize_code_blocks(pagesToSend)
         self.pagesToSend, self.lastPage = result
 
-
     def __organize_embeds(self, pagesToSend):
         itemPerPage = self.autosize[1]
         pageCounter = math.ceil(len(self.itemList['names']) / itemPerPage)
         em = discord.Embed(title=self.title, colour=0xDA291C)
         for i in range(pageCounter):
-            em.set_footer(text='Page {:02d} of {:02d}'.format(i+1, pageCounter))
+            em.set_footer(
+                text='Page {:02d} of {:02d}'.format(i + 1, pageCounter))
             indexStart = itemPerPage * i
-            indexEnd = itemPerPage * (i+1)
-            for name, val in zip( self.itemList['names'][indexStart:indexEnd], self.itemList['values'][indexStart:indexEnd]):
-                em.add_field(
-                    name=name,
-                    value=val
-                )
+            indexEnd = itemPerPage * (i + 1)
+            for name, val in zip(self.itemList['names'][indexStart:indexEnd],
+                                 self.itemList['values'][indexStart:indexEnd]):
+                em.add_field(name=name, value=val)
             pagesToSend.append(em)
             em = discord.Embed(title=self.title, colour=0xDA291C)
         return (pagesToSend, pageCounter)
-
 
     def __organize_embeds_autosize(self, pagesToSend):
         # TODO: implement real autosize™
@@ -92,56 +98,49 @@ class Pages():
         pageCounter = math.ceil(len(self.itemList['names']) / itemPerPage)
         em = discord.Embed(title=self.title, colour=0xDA291C)
         for i in range(pageCounter):
-            em.set_footer(text='Page {:02d} of {:02d}'.format(i+1, pageCounter))
+            em.set_footer(
+                text='Page {:02d} of {:02d}'.format(i + 1, pageCounter))
             indexStart = itemPerPage * i
-            indexEnd = itemPerPage * (i+1)
-            for name, val in zip( self.itemList['names'][indexStart:indexEnd], self.itemList['values'][indexStart:indexEnd]):
-                em.add_field(
-                    name=name,
-                    value=val
-                )
+            indexEnd = itemPerPage * (i + 1)
+            for name, val in zip(self.itemList['names'][indexStart:indexEnd],
+                                 self.itemList['values'][indexStart:indexEnd]):
+                em.add_field(name=name, value=val)
             pagesToSend.append(em)
             em = discord.Embed(title=self.title, colour=0xDA291C)
         return (pagesToSend, pageCounter)
-
 
     def __organize_code_blocks(self, pagesToSend):
         itemPerPage = self.autosize[1]
         pageCounter = math.ceil(len(self.itemList) / itemPerPage)
         for i in range(pageCounter):
             indexStart = itemPerPage * i
-            indexEnd = itemPerPage * (i+1)
-            content = '\n'.join(self.itemList[indexStart:indexEnd]).replace('```', '')
-            pagesToSend.append('```markdown\n'
-                + content
-                + '\n\n~ Page {:02d} of {:02d} ~'.format(i+1, pageCounter)
-                + '```'
-            )
+            indexEnd = itemPerPage * (i + 1)
+            content = '\n'.join(self.itemList[indexStart:indexEnd]).replace(
+                '```', '')
+            pagesToSend.append('```markdown\n' + content +
+                               '\n\n~ Page {:02d} of {:02d} ~'.format(
+                                   i + 1, pageCounter) + '```')
         return (pagesToSend, pageCounter)
-
 
     def __organize_code_blocks_autosize(self, pagesToSend):
         pageCounter = length = cache = 0
         for i in range(len(self.itemList)):
             length += len(self.itemList[i])
             if length > 1894:
-                pagesToSend.append('```'
-                    + self.title
-                    + ':\n\n'
-                    + '\n'.join(self.itemList[cache:i]).replace('```', ''))
+                pagesToSend.append('```' + self.title + ':\n\n' + '\n'.join(
+                    self.itemList[cache:i]).replace('```', ''))
                 cache = i
                 length = len(self.itemList[i])
                 pageCounter += 1
-            elif i == len(self.itemList)-1: # edge case
-                pagesToSend.append('```markdown\n'
-                    + self.title
-                    + ':\n\n'
-                    + '\n'.join(self.itemList[cache:i+1]).replace('```', ''))
+            elif i == len(self.itemList) - 1:  # edge case
+                pagesToSend.append(
+                    '```markdown\n' + self.title + ':\n\n' +
+                    '\n'.join(self.itemList[cache:i + 1]).replace('```', ''))
                 pageCounter += 1
         for i in range(len(pagesToSend)):
-            pagesToSend[i] += '\n\n~ Page {:02d} of {:02d} ~'.format(i, pageCounter) + '```'
+            pagesToSend[i] += '\n\n~ Page {:02d} of {:02d} ~'.format(
+                i, pageCounter) + '```'
         return (pagesToSend, pageCounter)
-
 
     async def __showPage(self, page):
         self.currentPage = max(0, min(page, self.lastPage))
@@ -155,44 +154,42 @@ class Pages():
                     pass
             else:
                 if self.option == 'CODE_BLOCKS':
-                    await self.message.edit(content=self.pagesToSend[self.currentPage])
+                    await self.message.edit(
+                        content=self.pagesToSend[self.currentPage])
                 elif self.option == 'EMBEDS':
-                    await self.message.edit(embed=self.pagesToSend[self.currentPage])
+                    await self.message.edit(
+                        embed=self.pagesToSend[self.currentPage])
                 return
         else:
             if self.option == 'CODE_BLOCKS':
-                self.message = await self.channel.send(content=self.pagesToSend[self.currentPage], delete_after=300)
+                self.message = await self.channel.send(
+                    content=self.pagesToSend[self.currentPage],
+                    delete_after=300)
             elif self.option == 'EMBEDS':
-                self.message = await self.channel.send(embed=self.pagesToSend[self.currentPage], delete_after=300)
+                self.message = await self.channel.send(
+                    embed=self.pagesToSend[self.currentPage], delete_after=300)
             for (emoji, _) in self.actions:
                 await self.message.add_reaction(emoji)
             return
 
-
     async def __firstPage(self):
         await self.__showPage(1)
-
 
     async def __prevPage(self):
         await self.__showPage(max(1, self.currentPage - 1))
 
-
     async def __nextPage(self):
         await self.__showPage(min(self.lastPage, self.currentPage + 1))
-
 
     async def __lastPage(self):
         await self.__showPage(self.lastPage)
 
-
     async def __halt(self):
         await self.__showPage(0)
-
 
     async def __del(self):
         self.delete = True
         await self.__showPage(self.currentPage)
-
 
     def __reactCheck(self, reaction, user):
         if user == self.bot.user:
@@ -206,7 +203,6 @@ class Pages():
                 return True
         return False
 
-
     async def paginate(self):
         if self.delete:
             self.delete = False
@@ -214,7 +210,8 @@ class Pages():
         await self.__showPage(self.currentPage)
         while not self.delete and self.message:
             try:
-                reaction, user = await self.bot.wait_for('reaction_add', check=self.__reactCheck)
+                reaction, user = await self.bot.wait_for(
+                    'reaction_add', check=self.__reactCheck)
             except:
                 try:
                     self.message.delete()
