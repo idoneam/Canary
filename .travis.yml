@@ -14,9 +14,12 @@ install:
  - python3 -m pip install -r requirements.txt
  - pip install yapf
 
-script: 
- - bash ./test.sh
- - yapf --diff --recursive .
+jobs:
+  include:
+    - stage: System Test
+      script: bash ./test.sh
+    - stage: Code Linting
+      script: yapf --diff --recursive .
 
 notifications:
  email: false

@@ -262,8 +262,9 @@ class Reminder():
         # Date-based reminder triggered by "at" and "on" keywords
         if input_segments[0] == 'at' or input_segments[0] == 'on':
             date_result = re.search(YMDRegex,
-                                    original_input_copy)  # Gets YYYY-mm-dd
-            time_result = re.search(HMRegex, original_input_copy)  # Gets HH:MM
+                                    original_input_copy)    # Gets YYYY-mm-dd
+            time_result = re.search(HMRegex,
+                                    original_input_copy)    # Gets HH:MM
 
             # If both a date and a time is found, continue
             if date_result and time_result:
@@ -335,7 +336,7 @@ class Reminder():
             match = re.match(
                 "^(" + number_regex + ")" + r"\s+" + unit_regex + "$", segment)
             number = float(match.group(1))
-            unit = "minutes"  # default but should always be overridden
+            unit = "minutes"    # default but should always be overridden
 
             # Regex potentially misspelled time units and match to proper spelling
             for regex in units:
@@ -345,14 +346,14 @@ class Reminder():
         # Convert years to a unit that datetime will understand
         time_offset["days"] = time_offset["days"] + time_offset["years"] * 365
 
-        time_now = datetime.datetime.now()  # Current time
+        time_now = datetime.datetime.now()    # Current time
         reminder_time = time_now + datetime.timedelta(
             days=time_offset["days"],
             hours=time_offset["hours"],
             seconds=time_offset["seconds"],
             minutes=time_offset["minutes"],
-            weeks=time_offset["weeks"])  # Time to be reminded on
-        if time_now == reminder_time:  # No time in argument, or it's zero.
+            weeks=time_offset["weeks"])    # Time to be reminded on
+        if time_now == reminder_time:    # No time in argument, or it's zero.
             await ctx.send("Please specify a time! E.g.: `?remindme in 1 hour "
                            + reminder + "`")
             return

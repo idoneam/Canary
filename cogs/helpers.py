@@ -295,14 +295,14 @@ class Helpers():
         """
         await ctx.trigger_typing()
         if '.' in query.split(' ')[
-                0]:  # Distinguish regex between floats and ints
+                0]:    # Distinguish regex between floats and ints
             re1 = '([+-]?\\d*\\.\\d+)(?![-+0-9\\.])'
         else:
             re1 = '(\\d+)'
-        re2 = '((?:[a-z][a-z]+))'  # Currency FROM
+        re2 = '((?:[a-z][a-z]+))'    # Currency FROM
         re3 = '(to)'
-        re4 = '((?:[a-z][a-z]+))'  # Currency TO
-        ws = '(\\s+)'  # Whitespace
+        re4 = '((?:[a-z][a-z]+))'    # Currency TO
+        ws = '(\\s+)'    # Whitespace
         rg = re.compile(re1 + ws + re2 + ws + re3 + ws + re4,
                         re.IGNORECASE | re.DOTALL)
         m = rg.search(query)
