@@ -7,12 +7,16 @@ python:
  - "3.6"
 
 before_install:
-- sed -i "s/KEY/$DISCORD_TOKEN/g" config/config.ini
-- sed -i '1 s/^\xef\xbb\xbf//' config/config.ini
+ - sed -i "s/KEY/$DISCORD_TOKEN/g" config/config.ini
+ - sed -i '1 s/^\xef\xbb\xbf//' config/config.ini
  
-install: python3 -m pip install -r requirements.txt
+install: 
+ - python3 -m pip install -r requirements.txt
+ - pip install yapf
 
-script: bash ./test.sh
+script: 
+ - bash ./test.sh
+ - yapf --diff --recursive .
 
 notifications:
  email: false
