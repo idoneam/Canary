@@ -40,22 +40,22 @@ class Quotes():
         c = conn.cursor()
         t = None
         mentions = ctx.message.mentions
-        if str1 is None:  # No argument passed
+        if str1 is None:    # No argument passed
             quotes = c.execute('SELECT ID, Name, Quote FROM Quotes').fetchall()
-        elif mentions and mentions[0].mention == str1:  # Has args
+        elif mentions and mentions[0].mention == str1:    # Has args
             id = mentions[0].id
-            if str2 is None:  # query for user only
+            if str2 is None:    # query for user only
                 t = (
                     id,
                     '%%',
                 )
-            else:  # query for user and quote
+            else:    # query for user and quote
                 t = (id, '%{}%'.format(str2))
             c.execute(
                 'SELECT ID, Name, Quote FROM Quotes WHERE ID = ? AND Quote LIKE ?',
                 t)
             quotes = c.fetchall()
-        else:  # query for quote only
+        else:    # query for quote only
             query = str1 if str2 is None else str1 + ' ' + str2
             t = ('%{}%'.format(query), )
             c.execute('SELECT ID, Name, Quote FROM Quotes WHERE Quote LIKE ?',
