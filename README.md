@@ -21,7 +21,7 @@ Set your Discord bot token in the `config.ini` file within the `config` director
 Run `python3 Main.py` in your shell. Ensure that your Discord token is set in the `config.ini` file within the `config` directory.
 
 ## Code Linting
-We format our code using Google's [YAPF](https://github.com/google/yapf). Our builds will reject code that do not conform to YAPF's standards. You may format your code using :
+We format our code using Google's [YAPF](https://github.com/google/yapf). Our builds will reject code that do not conform to the standards defined in [`.style.yapf`](https://github.com/idoneam/Canary/blob/master/.style.yapf) . You may format your code using :
 
 ```
 yapf --recursive --in-place .
