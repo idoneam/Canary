@@ -1,6 +1,6 @@
 #!/bin/bash
 
-python Main.py &
+pipenv run python Main.py &
 
 sleep 10
 
