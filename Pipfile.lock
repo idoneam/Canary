@@ -1,0 +1,114 @@
+{
+    "_meta": {
+        "hash": {
+            "sha256": "f875bba6a3475e27f74e0f091aa9eb41be72282a93295c38e68b4a2cd6249046"
+        },
+        "pipfile-spec": 6,
+        "requires": {
+            "python_version": "3.6"
+        },
+        "sources": [
+            {
+                "name": "pypi",
+                "url": "https://pypi.org/simple",
+                "verify_ssl": true
+            }
+        ]
+    },
+    "default": {
+        "beautifulsoup4": {
+            "hashes": [
+                "sha256:11a9a27b7d3bddc6d86f59fb76afb70e921a25ac2d6cc55b40d072bd68435a76",
+                "sha256:7015e76bf32f1f574636c4288399a6de66ce08fb7b2457f628a8d70c0fbabb11",
+                "sha256:808b6ac932dccb0a4126558f7dfdcf41710dd44a4ef497a0bb59a77f9f078e89"
+            ],
+            "index": "pypi",
+            "version": "==4.6.0"
+        },
+        "certifi": {
+            "hashes": [
+                "sha256:13e698f54293db9f89122b0581843a782ad0934a4fe0172d2a980ba77fc61bb7",
+                "sha256:9fa520c1bacfb634fa7af20a76bcbd3d5fb390481724c597da32c719a7dca4b0"
+            ],
+            "version": "==2018.4.16"
+        },
+        "chardet": {
+            "hashes": [
+                "sha256:84ab92ed1c4d4f16916e05906b6b75a6c0fb5db821cc65e70cbd64a3e2a5eaae",
+                "sha256:fc323ffcaeaed0e0a02bf4d117757b98aed530d9ed4531e3e15460124c106691"
+            ],
+            "version": "==3.0.4"
+        },
+        "cleverbot": {
+            "hashes": [
+                "sha256:d57943a1a52d37b14b45ac5257c219818a819c3415a664cf51c329693e190cf7"
+            ],
+            "index": "pypi",
+            "version": "==1.1.1"
+        },
+        "future": {
+            "hashes": [
+                "sha256:e39ced1ab767b5936646cedba8bcce582398233d6a627067d4c6a454c90cfedb"
+            ],
+            "version": "==0.16.0"
+        },
+        "idna": {
+            "hashes": [
+                "sha256:156a6814fb5ac1fc6850fb002e0852d56c0c8d2531923a51032d1b70760e186e",
+                "sha256:684a38a6f903c1d71d6d5fac066b58d7768af4de2b832e426ec79c30daa94a16"
+            ],
+            "version": "==2.7"
+        },
+        "mpmath": {
+            "hashes": [
+                "sha256:04d14803b6875fe6d69e6dccea87d5ae5599802e4b1df7997bddd2024001050c"
+            ],
+            "version": "==1.0.0"
+        },
+        "requests": {
+            "hashes": [
+                "sha256:000748df49e087784441b2621c50fb81046c5c8e80e0d91674ffad65b9e13844",
+                "sha256:ed98431a0631e309bb4b63c81d561c1654822cb103de1ac7b47e45c26be7ae34"
+            ],
+            "index": "pypi",
+            "version": "==2.12.4"
+        },
+        "rewrite": {
+            "git": "https://github.com/Rapptz/discord.py",
+            "ref": "f06563cb3520058c900ba6d4921ce38f2407b729"
+        },
+        "sympy": {
+            "hashes": [
+                "sha256:3eacd210d839e4db911d216a9258a3ac6f936992f66db211e22767983297ffae"
+            ],
+            "index": "pypi",
+            "version": "==1.0.0"
+        },
+        "tabulate": {
+            "hashes": [
+                "sha256:1f07f6252b20cdc4ed744b598b5fa8362638988b50a62f3e2ad76c97fc02eef2",
+                "sha256:83a0b8e17c09f012090a50e1e97ae897300a72b35e0c86c0b53d3bd2ae86d8c6"
+            ],
+            "index": "pypi",
+            "version": "==0.7.7"
+        },
+        "urllib3": {
+            "hashes": [
+                "sha256:a68ac5e15e76e7e5dd2b8f94007233e01effe3e50e8daddf69acfd81cb686baf",
+                "sha256:b5725a0bd4ba422ab0e66e89e030c806576753ea3ee08554382c14e685d117b5"
+            ],
+            "markers": "python_version < '4' and python_version != '3.1.*' and python_version >= '2.6' and python_version != '3.2.*' and python_version != '3.0.*' and python_version != '3.3.*'",
+            "version": "==1.23"
+        }
+    },
+    "develop": {
+        "yapf": {
+            "hashes": [
+                "sha256:6567745f0b6656f9c33a73c56a393071c699e6284a70d793798ab6e3769d25ec",
+                "sha256:a98a6eacca64d2b920558f4a2f78150db9474de821227e60deaa29f186121c63"
+            ],
+            "index": "pypi",
+            "version": "==0.22.0"
+        }
+    }
+}

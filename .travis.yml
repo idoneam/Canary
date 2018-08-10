@@ -11,15 +11,15 @@ before_install:
  - sed -i '1 s/^\xef\xbb\xbf//' config/config.ini
  
 install: 
- - python3 -m pip install -r requirements.txt
- - pip install yapf
+ - pip install pipenv
+ - pipenv install --dev
 
 jobs:
   include:
     - stage: System Test
       script: bash ./test.sh
     - stage: Code Linting
-      script: yapf --diff --recursive .
+      script: pipenv run yapf --diff --recursive .
 
 notifications:
  email: false
