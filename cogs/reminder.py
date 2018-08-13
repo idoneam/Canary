@@ -117,6 +117,12 @@ class Reminder():
         "daily", "weekly" or "monthly" is found.
         """
 
+        if quote == "":
+            await ctx.send(
+                '**Usage:** \n `?remindme in 1 hour and 20 minutes and 20 seconds to eat` **or** \n '
+                '`?remindme at 2020-04-30 11:30 to graduate` **or** \n `?remindme daily to sleep`'
+            )
+
         # Copies original reminder message and sets lowercase for regex.
         original_input_copy = quote.lower()
 
@@ -224,7 +230,6 @@ class Reminder():
 
         time_segments = []
         last_number = "0"
-        last_item_was_number = False
         first_reminder_segment = ""
         """ Checks the following logic:
             1. If daily, weekly or monthly is specified, go to old reminder function for repetitive reminders
@@ -238,8 +243,7 @@ class Reminder():
         if len(input_segments) > 0 and (input_segments[0] == "daily"
                                         or input_segments[0] == "weekly"
                                         or input_segments[0] == "monthly"):
-            await remindme_repeating(
-                self,
+            await self.__remindme_repeating(
                 ctx,
                 input_segments[0],
                 quote=quote[len(input_segments[0]) + 1:])
@@ -249,7 +253,6 @@ class Reminder():
                 continue
             if re.match("^" + number_regex + "$", segment):
                 last_number = segment
-                last_item_was_number = True
             elif re.match("^" + unit_regex + "$", segment):
                 time_segments.append(last_number + " " + segment)
             else:
@@ -336,7 +339,6 @@ class Reminder():
             match = re.match(
                 "^(" + number_regex + ")" + r"\s+" + unit_regex + "$", segment)
             number = float(match.group(1))
-            unit = "minutes"    # default but should always be overridden
 
             # Regex potentially misspelled time units and match to proper spelling
             for regex in units:
@@ -391,8 +393,11 @@ class Reminder():
         conn.commit()
         conn.close()
 
-    async def remindme_repeating(self, ctx, freq: str = "", *,
-                                 quote: str = ""):
+    async def __remindme_repeating(self,
+                                   ctx,
+                                   freq: str = "",
+                                   *,
+                                   quote: str = ""):
         """
         Called by remindme to add a repeating reminder to the reminder database.
         """
