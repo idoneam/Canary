@@ -8,7 +8,6 @@ python:
 
 before_install:
  - sed -i "s/KEY/$DISCORD_TOKEN/g" config/config.ini
- - sed -i '1 s/^\xef\xbb\xbf//' config/config.ini
  
 install: 
  - pip install pipenv
