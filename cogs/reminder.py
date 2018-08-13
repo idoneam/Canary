@@ -230,9 +230,9 @@ class Reminder():
         # Date-based reminder triggered by "at" and "on" keywords
         if input_segments[0] == 'at' or input_segments[0] == 'on':
             date_result = re.search(YMDRegex,
-                                    original_input_copy)  # Gets YYYY-mm-dd
+                                    original_input_copy)    # Gets YYYY-mm-dd
             time_result = re.search(HMRegex,
-                                    original_input_copy)  # Gets HH:MM
+                                    original_input_copy)    # Gets HH:MM
 
             # If both a date and a time is found, continue
             if date_result and time_result:
@@ -270,7 +270,7 @@ class Reminder():
 
                 # Send user information and close database
                 reminders = c.execute('SELECT * FROM Reminders WHERE ID =?',
-                                      (ctx.message.author.id,)).fetchall()
+                                      (ctx.message.author.id, )).fetchall()
                 await ctx.author.send(
                     'Hi {}! \nI will remind you to {} on {} at {} unless you send me a message to stop '
                     'reminding you about it! [{:d}]'.format(
@@ -313,14 +313,14 @@ class Reminder():
         # Convert years to a unit that datetime will understand
         time_offset["days"] = time_offset["days"] + time_offset["years"] * 365
 
-        time_now = datetime.datetime.now()  # Current time
+        time_now = datetime.datetime.now()    # Current time
         reminder_time = time_now + datetime.timedelta(
             days=time_offset["days"],
             hours=time_offset["hours"],
             seconds=time_offset["seconds"],
             minutes=time_offset["minutes"],
-            weeks=time_offset["weeks"])  # Time to be reminded on
-        if time_now == reminder_time:  # No time in argument, or it's zero.
+            weeks=time_offset["weeks"])    # Time to be reminded on
+        if time_now == reminder_time:    # No time in argument, or it's zero.
             await ctx.send("Please specify a time! E.g.: `?remindme in 1 hour "
                            + reminder + "`")
             return
@@ -333,7 +333,7 @@ class Reminder():
         t = (ctx.message.author.id, ctx.message.author.name, reminder, "once",
              reminder_time, time_now)
         reminders = c.execute('SELECT * FROM Reminders WHERE ID =?',
-                              (ctx.message.author.id,)).fetchall()
+                              (ctx.message.author.id, )).fetchall()
         try:
             c.execute('INSERT INTO Reminders VALUES (?, ?, ?, ?, ?, ?)', t)
         except sqlite3.OperationalError:
@@ -365,7 +365,9 @@ class Reminder():
         """
         await ctx.trigger_typing()
         if not isinstance(ctx.message.channel, discord.DMChannel):
-            await ctx.send('Slide into my DMs ;). \n `List Reminder feature only available when DMing Marty.`')
+            await ctx.send(
+                'Slide into my DMs ;). \n `List Reminder feature only available when DMing Marty.`'
+            )
             return
         else:
             pass
@@ -373,13 +375,15 @@ class Reminder():
         c = conn.cursor()
         remAuthor = ctx.message.author
         author_id = remAuthor.id
-        t = (author_id,)
+        t = (author_id, )
         c.execute('SELECT * FROM Reminders WHERE ID = ?', t)
         remList = c.fetchall()
         if remList:
             quoteListText = [
-                ('[{}] (Frequency: {}' + (' at {}'.format(quote[4].split('.')[0]) if quote[3] == 'once' else '')
-                 + ') - {}').format(i + 1, quote[3].capitalize(), quote[2])
+                ('[{}] (Frequency: {}' +
+                 (' at {}'.format(quote[4].split('.')[0])
+                  if quote[3] == 'once' else '') + ') - {}').format(
+                      i + 1, quote[3].capitalize(), quote[2])
                 for i, quote in zip(range(len(remList)), remList)
             ]
             p = Pages(
@@ -419,16 +423,19 @@ class Reminder():
                             remList[index][0],
                             remList[index][2],
                         )
-                        del remList[index]  # Remove deleted reminder from list.
+                        del remList[
+                            index]    # Remove deleted reminder from list.
                         c.execute(
-                            'DELETE FROM Reminders WHERE ID = ? AND Reminder = ?', t)
+                            'DELETE FROM Reminders WHERE ID = ? AND Reminder = ?',
+                            t)
                         conn.commit()
                         await ctx.send('Reminder deleted', delete_after=60)
                         p.itemList = [
-                            ('[{}] (Frequency: {}' + (' at {}'.format(quote[4].split('.')[0]) if quote[3] == 'once' else
-                                                      '') + ') - {}').format(i + 1, quote[3].capitalize(), quote[2])
-                            for i, quote in zip(
-                                range(len(remList)), remList)
+                            ('[{}] (Frequency: {}' +
+                             (' at {}'.format(quote[4].split('.')[0]) if
+                              quote[3] == 'once' else '') + ') - {}').format(
+                                  i + 1, quote[3].capitalize(), quote[2])
+                            for i, quote in zip(range(len(remList)), remList)
                         ]
                     await p.paginate()
             conn.commit()
@@ -473,7 +480,7 @@ class Reminder():
                 "message!".format(quote))
             return
         reminders = c.execute('SELECT * FROM Reminders WHERE ID =?',
-                              (ctx.message.author.id,)).fetchall()
+                              (ctx.message.author.id, )).fetchall()
         try:
             c.execute('INSERT INTO Reminders VALUES (?, ?, ?, ?, ?, ?)', t)
         except sqlite3.OperationalError:
