@@ -74,41 +74,6 @@ class Reminder():
             conn.close()
             await asyncio.sleep(60 * 1)
 
-    @commands.command(aliases=['sr'])
-    async def stop_reminder(self, ctx, reminder: str = ""):
-        """
-        [DM Only] Delete the specified reminder
-        :param reminder: An integer choice for reminder based on Martlet's last set of DM's with reminders.
-        """
-        if isinstance(ctx.message.channel, discord.DMChannel):
-            conn = sqlite3.connect(self.bot.config.db_path)
-            c = conn.cursor()
-            reminders = c.execute('SELECT * FROM Reminders WHERE ID = ?',
-                                  (ctx.message.author.id, )).fetchall()
-
-            try:
-                choice = int(reminder)
-                if choice < 1 or choice > len(reminders):
-                    raise ValueError
-            except ValueError:
-                await ctx.send(
-                    "Please specify a choice number between 1 and {:d}!"
-                    .format(len(reminders)))
-                conn.close()
-                return
-            t = (reminders[choice - 1][2], ctx.message.author.id,
-                 reminders[choice - 1][4])
-            c.execute(
-                'DELETE FROM Reminders WHERE Reminder=? AND ID=? AND DATE=?',
-                t)
-            conn.commit()
-            conn.close()
-            await ctx.send("Reminder successfully removed!")
-        else:
-            await ctx.send(
-                "Slide into my DM's ;) (Please respond to my DM messages to stop "
-                "reminders!)")
-
     @commands.command(aliases=['rm', 'rem'])
     async def remindme(self, ctx, *, quote: str = ""):
         """
@@ -116,6 +81,12 @@ class Reminder():
         calls remindme_repeating to deal with repetitive reminders when keyword
         "daily", "weekly" or "monthly" is found.
         """
+
+        if quote == "":
+            await ctx.send(
+                '**Usage:** \n `?remindme in 1 hour and 20 minutes and 20 seconds to eat` **or** \n '
+                '`?remindme at 2020-04-30 11:30 to graduate` **or** \n `?remindme daily to sleep`'
+            )
 
         # Copies original reminder message and sets lowercase for regex.
         original_input_copy = quote.lower()
@@ -224,7 +195,6 @@ class Reminder():
 
         time_segments = []
         last_number = "0"
-        last_item_was_number = False
         first_reminder_segment = ""
         """ Checks the following logic:
             1. If daily, weekly or monthly is specified, go to old reminder function for repetitive reminders
@@ -238,8 +208,7 @@ class Reminder():
         if len(input_segments) > 0 and (input_segments[0] == "daily"
                                         or input_segments[0] == "weekly"
                                         or input_segments[0] == "monthly"):
-            await remindme_repeating(
-                self,
+            await self.__remindme_repeating(
                 ctx,
                 input_segments[0],
                 quote=quote[len(input_segments[0]) + 1:])
@@ -249,7 +218,6 @@ class Reminder():
                 continue
             if re.match("^" + number_regex + "$", segment):
                 last_number = segment
-                last_item_was_number = True
             elif re.match("^" + unit_regex + "$", segment):
                 time_segments.append(last_number + " " + segment)
             else:
@@ -336,7 +304,6 @@ class Reminder():
             match = re.match(
                 "^(" + number_regex + ")" + r"\s+" + unit_regex + "$", segment)
             number = float(match.group(1))
-            unit = "minutes"    # default but should always be overridden
 
             # Regex potentially misspelled time units and match to proper spelling
             for regex in units:
@@ -391,8 +358,96 @@ class Reminder():
         conn.commit()
         conn.close()
 
-    async def remindme_repeating(self, ctx, freq: str = "", *,
-                                 quote: str = ""):
+    @commands.command(aliases=['lr'])
+    async def list_reminders(self, ctx):
+        """
+        List reminders
+        """
+        await ctx.trigger_typing()
+        if not isinstance(ctx.message.channel, discord.DMChannel):
+            await ctx.send(
+                'Slide into my DMs ;). \n `List Reminder feature only available when DMing Marty.`'
+            )
+            return
+        else:
+            pass
+        conn = sqlite3.connect(self.bot.config.db_path)
+        c = conn.cursor()
+        remAuthor = ctx.message.author
+        author_id = remAuthor.id
+        t = (author_id, )
+        c.execute('SELECT * FROM Reminders WHERE ID = ?', t)
+        remList = c.fetchall()
+        if remList:
+            quoteListText = [
+                ('[{}] (Frequency: {}' +
+                 (' at {}'.format(quote[4].split('.')[0])
+                  if quote[3] == 'once' else '') + ') - {}').format(
+                      i + 1, quote[3].capitalize(), quote[2])
+                for i, quote in zip(range(len(remList)), remList)
+            ]
+            p = Pages(
+                ctx,
+                itemList=quoteListText,
+                title="{}'s reminders".format(remAuthor.display_name))
+            await p.paginate()
+
+            def msgCheck(message):
+                try:
+                    if (
+                            0 <= int(message.content) <= len(remList)
+                    ) and message.author.id == author_id and message.channel == ctx.message.channel:
+                        return True
+                    return False
+                except ValueError:
+                    return False
+
+            while p.delete:
+                await ctx.send(
+                    'Delete option selected. Enter a number to specify which reminder you want to delete, or enter 0 to return.',
+                    delete_after=60)
+                try:
+                    message = await self.bot.wait_for(
+                        'message', check=msgCheck, timeout=60)
+                except asyncio.TimeoutError:
+                    await ctx.send(
+                        'Command timeout. You may want to run the command again.',
+                        delete_after=60)
+                    break
+                else:
+                    index = int(message.content) - 1
+                    if index == -1:
+                        await ctx.send('Exit delq.', delete_after=60)
+                    else:
+                        t = (
+                            remList[index][0],
+                            remList[index][2],
+                        )
+                        del remList[
+                            index]    # Remove deleted reminder from list.
+                        c.execute(
+                            'DELETE FROM Reminders WHERE ID = ? AND Reminder = ?',
+                            t)
+                        conn.commit()
+                        await ctx.send('Reminder deleted', delete_after=60)
+                        p.itemList = [
+                            ('[{}] (Frequency: {}' +
+                             (' at {}'.format(quote[4].split('.')[0]) if
+                              quote[3] == 'once' else '') + ') - {}').format(
+                                  i + 1, quote[3].capitalize(), quote[2])
+                            for i, quote in zip(range(len(remList)), remList)
+                        ]
+                    await p.paginate()
+            conn.commit()
+            conn.close()
+        else:
+            await ctx.send('No reminder found.', delete_after=60)
+
+    async def __remindme_repeating(self,
+                                   ctx,
+                                   freq: str = "",
+                                   *,
+                                   quote: str = ""):
         """
         Called by remindme to add a repeating reminder to the reminder database.
         """

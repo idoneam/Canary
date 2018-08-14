@@ -1,3 +1,4 @@
+import codecs
 import configparser
 
 
@@ -6,7 +7,7 @@ class Parser:
         self.configfile = './config/config.ini'
 
         config = configparser.ConfigParser()
-        config.read(self.configfile)
+        config.read_file(codecs.open(self.configfile, "r", "utf-8-sig"))
 
         self.discord_key = config['Discord']['Key']
 
