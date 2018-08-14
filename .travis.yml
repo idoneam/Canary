@@ -15,9 +15,8 @@ install:
 
 jobs:
   include:
-    - stage: System Test
+    - stage: Build
       script: bash ./test.sh
-    - stage: Code Linting
       script: pipenv run yapf --diff --recursive .
 
 notifications:
