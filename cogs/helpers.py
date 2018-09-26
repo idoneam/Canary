@@ -145,10 +145,10 @@ class Helpers():
         """Prints a summary of the queried course, taken from the course calendar.
         ie. ?course comp 206
         Note: Bullet points without colons (':') are not parsed because I have yet to see one that actually has useful information."""
-        fac = r'([a-zA-Z]{4})'
-        num = r'(\d{3})'
+        fac = r'([A-Za-z]{4})'
+        num = r'(\d{3}\s*(\w\d)?)'
         await ctx.trigger_typing()
-        result = re.compile(fac + r'\s?' + num,
+        result = re.compile(fac + r'\s*' + num,
                             re.IGNORECASE | re.DOTALL).search(query)
         if not result:
             await ctx.send(
@@ -156,6 +156,7 @@ class Helpers():
             )
             return
         search_term = result.group(1) + '-' + result.group(2)
+        search_term = re.sub(r'\s+', r'', search_term)
         url = "http://www.mcgill.ca/study/2018-2019/courses/%s" % search_term
         r = requests.get(url)
         soup = BeautifulSoup(r.content, "html.parser")
