@@ -61,8 +61,7 @@ class Reminder():
                 else:
                     last_date = datetime.datetime.strptime(
                         reminders[i][5], "%Y-%m-%d %H:%M:%S.%f")
-                    if datetime.datetime.now(
-                    ) - last_date > datetime.timedelta(
+                    if datetime.datetime.now() - last_date > datetime.timedelta(
                             days=self.frequencies[reminders[i][3]]):
                         await member.send("Reminding you to {}! [{:d}]".format(
                             reminders[i][2], i + 1))
