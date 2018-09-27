@@ -111,6 +111,7 @@ async def on_message(message):
     await bot.process_commands(message)
 
 
+'''
 @bot.event
 async def on_member_join(member):
     channel = bot.get_channel(236668784948019202)
@@ -118,14 +119,13 @@ async def on_member_join(member):
     message = await channel.send(welcome_message)
     await message.add_reaction(":suzeping:457285258682040329")
 
-
 @bot.event
 async def on_member_remove(member):
     channel = bot.get_channel(236668784948019202)
     goodbye_message = random.choice(bot.config.goodbye).format(member.mention)
     message = await channel.send(goodbye_message)
     await message.add_reaction(":biblethump:243942559360090132")
-
+'''
 
 # Startup extensions
 # If statement will only execute if we are running this file (i.e. won't run
