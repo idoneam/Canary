@@ -108,6 +108,8 @@ async def on_message(message):
             "walk without rhythm, and it won't attract the worm.")
     if message.content == "hey":
         await message.channel.send("whats going on?")
+    if message.content == "this is so sad, marty play despacito":
+        await message.channel.send("`Now playing:` https://www.youtube.com/watch?v=kJQP7kiw5Fk")
     await bot.process_commands(message)
 
 
