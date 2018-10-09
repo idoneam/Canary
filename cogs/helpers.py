@@ -201,12 +201,13 @@ class Helpers():
         r = requests.get(url)
         soup = BeautifulSoup(r.content, 'html.parser')
         r.close()
-        word = soup.find('div', {'class': 'def-header'})
+        word = soup.find('a', {'class': 'word'})
         if not word:
             await ctx.send("No definition found for **%s**." % query)
             return
         word = word.get_text()
         definition = soup.find('div', {'class': 'meaning'}).get_text()
+        definition = definition.replace()
         examples = soup.find('div', {'class': 'example'}).get_text().strip()
         em = discord.Embed(
             title=word, description=definition, colour=0x1D2439
