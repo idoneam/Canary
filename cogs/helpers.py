@@ -25,7 +25,13 @@ class Helpers():
     @commands.command()
     async def exam(self, ctx):
         await ctx.send(
-            'https://mcgill.ca/students/exams/files/students.exams/april_2018_final_exam_schedule_with_room_locations.pdf'
+            'https://mcgill.ca/exams/files/exams/december_2018_final_exam_schedule_2_0.pdf'
+        )
+
+    @commands.command()
+    async def exams(self, ctx):
+        await ctx.send(
+            'https://mcgill.ca/exams/files/exams/december_2018_final_exam_schedule_2_0.pdf'
         )
 
     @commands.command()
@@ -295,8 +301,8 @@ class Helpers():
         The currencies supported for conversion (and their abbreviations) can be found at http://www.xe.com/currency/.
         """
         await ctx.trigger_typing()
-        if '.' in query.split(' ')[
-                0]:    # Distinguish regex between floats and ints
+        if '.' in query.split(
+                ' ')[0]:    # Distinguish regex between floats and ints
             re1 = '([+-]?\\d*\\.\\d+)(?![-+0-9\\.])'
         else:
             re1 = '(\\d+)'
