@@ -10,6 +10,7 @@ requests = "==2.12.4"
 cleverbot = "==1.1.1"
 tabulate = "==0.7.7"
 rewrite = {ref = "rewrite", git = "https://github.com/Rapptz/discord.py"}
+opencv-python = "*"
 
 [requires]
 python_version = "3.6"
