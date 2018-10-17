@@ -144,9 +144,8 @@ class Score():
             ctx,
             itemList=table_list,
             title="Upmartlet ranking",
-            displayOption=(0,1),
-            editableContent=False
-        )
+            displayOption=(0, 1),
+            editableContent=False)
         await p.paginate()
 
     @commands.command()

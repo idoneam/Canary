@@ -6,6 +6,7 @@ import asyncio
 
 import math
 
+
 class Pages():
     def __init__(self,
                  ctx,
@@ -69,12 +70,12 @@ class Pages():
 
     def _organize(self):
         organize_helper_map = {
-            0 : self._organize_code_blocks,
-            1 : self._organize_code_blocks_autosize,
-            2 : self._organize_embeds_dict,
-            3 : self._organize_embeds_list,
-            4 : self._organize_embeds_autosize_dict,
-            5 : self._organize_embeds_autosize_list,
+            0: self._organize_code_blocks,
+            1: self._organize_code_blocks_autosize,
+            2: self._organize_embeds_dict,
+            3: self._organize_embeds_list,
+            4: self._organize_embeds_autosize_dict,
+            5: self._organize_embeds_autosize_list,
         }
         pagesToSend = ['empty page']
         self.organize_helper = organize_helper_map[self.displayOption[0]]
@@ -100,8 +101,9 @@ class Pages():
         for i in range(len(self.itemList)):
             length += len(self.itemList[i])
             if length > 1894:
-                pagesToSend.append('```markdown' + self.title + ':\n\n' + '\n'.join(
-                    self.itemList[cache:i]).replace('```', ''))
+                pagesToSend.append(
+                    '```markdown' + self.title + ':\n\n' +
+                    '\n'.join(self.itemList[cache:i]).replace('```', ''))
                 cache = i
                 length = len(self.itemList[i])
                 pageCounter += 1
@@ -166,10 +168,10 @@ class Pages():
                 except:
                     pass
             else:
-                if self.displayOption[0] < 2:   # code blocks
+                if self.displayOption[0] < 2:    # code blocks
                     await self.message.edit(
                         content=self.pagesToSend[self.currentPage])
-                else:   # embeds
+                else:    # embeds
                     await self.message.edit(
                         embed=self.pagesToSend[self.currentPage])
                 return
