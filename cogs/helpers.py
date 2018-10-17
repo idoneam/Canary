@@ -209,9 +209,10 @@ class Helpers():
         if not definitions:
             await ctx.send("No definition found for **%s**." % query)
             return
+        markdown_url = "[{}](https://www.urbandictionary.com/define.php?term={})".format(definitions[0]["word"], query)
         definitions_list_text = [
-            "**{}**\n\n{}\n\n*{}*".format(
-                entry["word"],
+            "**\n{}**\n\n{}\n\n*{}*".format(
+                markdown_url,
                 bytes(entry["definition"], "utf-8").decode("unicode_escape"),
                 bytes(entry["example"], "utf-8").decode("unicode_escape")
             )
@@ -220,8 +221,8 @@ class Helpers():
         p = Pages(
             ctx,
             itemList=definitions_list_text,
-            title="UrbanDict definitions found for %s" % query,
-            autosize=(False, 1),
+            title="Definitions for '%s' from Urban Dictionary:" % query,
+            displayOption=(3,1),
             editableContent=False
         )
         await p.paginate()
@@ -283,9 +284,9 @@ class Helpers():
             ctx,
             itemList=courseList,
             title='Courses found for {}'.format(query),
-            option='EMBEDS',
-            autosize=(False, 10),
-            editableContent=False)
+            displayOption=(2,10),
+            editableContent=False
+        )
         await p.paginate()
 
     @commands.command()
