@@ -15,6 +15,7 @@ import logging
 # Other utilities
 import os
 import sys
+import subprocess
 from config import parser
 import random
 from datetime import datetime
@@ -91,12 +92,14 @@ async def sleep(ctx):
 
 
 @bot.command()
+@commands.has_role("idoneam")
 async def update(ctx):
     '''
     Update the bot by pulling changes from the git repository
     '''
-    await ctx.send('https://streamable.com/c7s2o')
-    os.system('git pull')
+    shell_output = subprocess.check_output("git pull", shell=True)
+    status_message = shell_output.decode("unicode_escape")
+    await ctx.send('`%s`' % status_message)
 
 
 @bot.event
