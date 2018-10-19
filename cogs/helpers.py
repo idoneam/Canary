@@ -25,7 +25,13 @@ class Helpers():
     @commands.command()
     async def exam(self, ctx):
         await ctx.send(
-            'https://mcgill.ca/students/exams/files/students.exams/april_2018_final_exam_schedule_with_room_locations.pdf'
+            'https://mcgill.ca/exams/files/exams/december_2018_final_exam_schedule_0.pdf'
+        )
+
+    @commands.command()
+    async def exams(self, ctx):
+        await ctx.send(
+            'https://mcgill.ca/exams/files/exams/december_2018_final_exam_schedule_0.pdf'
         )
 
     @commands.command()
@@ -193,30 +199,33 @@ class Helpers():
         await ctx.send(embed=em)
 
     @commands.command()
-    async def urban(self, ctx, *, query: str):
-        """Fetches the top definition from Urban Dictionary."""
+    async def urban(self, ctx, *, query):
+        """Fetches the top definitions from Urban Dictionary"""
         await ctx.trigger_typing()
-        url = "http://www.urbandictionary.com/define.php?term=%s" % query.replace(
+        url = "http://api.urbandictionary.com/v0/define?term=%s" % query.replace(
             ' ', '+')
         r = requests.get(url)
-        soup = BeautifulSoup(r.content, 'html.parser')
+        definitions = r.json()["list"][:5]
         r.close()
-        word = soup.find('div', {'class': 'def-header'})
-        if not word:
+        if not definitions:
             await ctx.send("No definition found for **%s**." % query)
             return
-        word = word.get_text()
-        definition = soup.find('div', {'class': 'meaning'}).get_text()
-        examples = soup.find('div', {'class': 'example'}).get_text().strip()
-        em = discord.Embed(
-            title=word, description=definition, colour=0x1D2439
-        ).set_footer(
-            text="Fetched from the top definition on UrbanDictionary.",
-            icon_url=
-            'http://d2gatte9o95jao.cloudfront.net/assets/apple-touch-icon-2f29e978facd8324960a335075aa9aa3.png'
-        )
-        # em.add_field(name="Examples", value=examples)
-        await ctx.send(embed=em)
+        markdown_url = "[{}](https://www.urbandictionary.com/define.php?term={})".format(
+            definitions[0]["word"], query)
+        definitions_list_text = [
+            "**\n{}**\n\n{}\n\n*{}*".format(
+                markdown_url,
+                bytes(entry["definition"], "utf-8").decode("unicode_escape"),
+                bytes(entry["example"], "utf-8").decode("unicode_escape"))
+            for entry in definitions
+        ]
+        p = Pages(
+            ctx,
+            itemList=definitions_list_text,
+            title="Definitions for '%s' from Urban Dictionary:" % query,
+            displayOption=(3, 1),
+            editableContent=False)
+        await p.paginate()
 
     @commands.command()
     async def tex(self, ctx, *, query: str):
@@ -242,7 +251,6 @@ class Helpers():
                 'PLEASE USE \'$\' AROUND YOUR LATEX EQUATIONS. CHIRP.')
 
     @commands.command()
-    @commands.cooldown(rate=1, per=120)
     async def search(self, ctx, *, query: str):
         """Shows results for the queried keyword(s) in McGill courses"""
         keyword = query.replace(" ", "+")
@@ -276,15 +284,9 @@ class Helpers():
             ctx,
             itemList=courseList,
             title='Courses found for {}'.format(query),
-            option='EMBEDS',
-            autosize=(False, 10),
+            displayOption=(2, 10),
             editableContent=False)
         await p.paginate()
-
-    @search.error
-    async def search_error(self, ctx, error):
-        if isinstance(error, discord.ext.commands.CommandOnCooldown):
-            await ctx.send("Command is on cooldown. Cooldown time: 2 minutes")
 
     @commands.command()
     async def xe(self, ctx, *, query: str):
