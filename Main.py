@@ -114,7 +114,8 @@ async def on_message(message):
     if message.content == "hey":
         await message.channel.send("whats going on?")
     if message.content == "this is so sad, marty play despacito":
-        await message.channel.send("`Now playing:` https://www.youtube.com/watch?v=kJQP7kiw5Fk")
+        await message.channel.send(
+            "`Now playing:` https://www.youtube.com/watch?v=kJQP7kiw5Fk")
     await bot.process_commands(message)
 
 
@@ -124,13 +125,13 @@ async def backup(ctx):
     '''
     Send the current database file to the owner
     '''
-    current_time = datetime.now(tz=timezone('America/New_York')).strftime('%Y%m%d-%H:%M')
+    current_time = datetime.now(
+        tz=timezone('America/New_York')).strftime('%Y%m%d-%H:%M')
     backup_filename = 'Martlet%s.db' % current_time
     await ctx.send(
         content='Here you go',
-        file=discord.File(
-            fp=bot.config.db_path,
-            filename=backup_filename))
+        file=discord.File(fp=bot.config.db_path, filename=backup_filename))
+        
 
 # Startup extensions
 # If statement will only execute if we are running this file (i.e. won't run
