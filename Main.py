@@ -17,6 +17,8 @@ import os
 import sys
 from config import parser
 import random
+from datetime import datetime
+from pytz import timezone
 
 # List the extensions (modules) that should be loaded on startup.
 startup = [
@@ -113,21 +115,19 @@ async def on_message(message):
     await bot.process_commands(message)
 
 
-'''
-@bot.event
-async def on_member_join(member):
-    channel = bot.get_channel(236668784948019202)
-    welcome_message = random.choice(bot.config.welcome).format(member.mention)
-    message = await channel.send(welcome_message)
-    await message.add_reaction(":suzeping:457285258682040329")
-
-@bot.event
-async def on_member_remove(member):
-    channel = bot.get_channel(236668784948019202)
-    goodbye_message = random.choice(bot.config.goodbye).format(member.mention)
-    message = await channel.send(goodbye_message)
-    await message.add_reaction(":biblethump:243942559360090132")
-'''
+@bot.command()
+@commands.has_role("Discord Moderator")
+async def backup(ctx):
+    '''
+    Send the current database file to the owner
+    '''
+    current_time = datetime.now(tz=timezone('America/New_York')).strftime('%Y%m%d-%H:%M')
+    backup_filename = 'Martlet%s.db' % current_time
+    await ctx.send(
+        content='Here you go',
+        file=discord.File(
+            fp=bot.config.db_path,
+            filename=backup_filename))
 
 # Startup extensions
 # If statement will only execute if we are running this file (i.e. won't run
