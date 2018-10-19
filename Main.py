@@ -131,7 +131,7 @@ async def backup(ctx):
     await ctx.send(
         content='Here you go',
         file=discord.File(fp=bot.config.db_path, filename=backup_filename))
-        
+
 
 # Startup extensions
 # If statement will only execute if we are running this file (i.e. won't run
