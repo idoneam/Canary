@@ -210,8 +210,7 @@ class Helpers():
         if not definitions:
             await ctx.send("No definition found for **%s**." % query)
             return
-        markdown_url = "[{}]({})".format(
-            definitions[0]["word"], url)
+        markdown_url = "[{}]({})".format(definitions[0]["word"], url)
         definitions_list_text = [
             "**\n{}**\n\n{}\n\n*{}*".format(
                 markdown_url,
