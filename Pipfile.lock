@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "f24da5fecfd4228dac3a191c8cddd5b76152071e9260865fd3938e1b09b7c453"
+            "sha256": "5fcfff7823ff748500e29eceb1a8563acdf4a428a05aec816d8eceb3261ce0f4"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -27,10 +27,10 @@
         },
         "certifi": {
             "hashes": [
-                "sha256:376690d6f16d32f9d1fe8932551d80b23e9d393a8578c5633a2ed39a64861638",
-                "sha256:456048c7e371c089d0a77a5212fb37a2c2dce1e24146e3b7e0261736aaeaa22a"
+                "sha256:339dc09518b07e2fa7eda5450740925974815557727d6bd35d319c1524a04a4c",
+                "sha256:6d58c986d22b038c8c0df30d639f23a3e6d172a05c3583e766f4c0b785c0986a"
             ],
-            "version": "==2018.8.24"
+            "version": "==2018.10.15"
         },
         "chardet": {
             "hashes": [
@@ -63,6 +63,7 @@
             "hashes": [
                 "sha256:04d14803b6875fe6d69e6dccea87d5ae5599802e4b1df7997bddd2024001050c"
             ],
+            "index": "pypi",
             "version": "==1.0.0"
         },
         "numpy": {
@@ -131,6 +132,14 @@
             ],
             "index": "pypi",
             "version": "==3.4.3.18"
+        },
+        "pytz": {
+            "hashes": [
+                "sha256:a061aa0a9e06881eb8b3b2b43f05b9439d6583c206d0a6c340ff72a7b6669053",
+                "sha256:ffb9ef1de172603304d9d2819af6f5ece76f2e85ec10692a524dd876e72bf277"
+            ],
+            "index": "pypi",
+            "version": "==2018.5"
         },
         "requests": {
             "hashes": [

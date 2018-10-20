@@ -11,6 +11,8 @@ cleverbot = "==1.1.1"
 tabulate = "==0.7.7"
 rewrite = {ref = "rewrite", git = "https://github.com/Rapptz/discord.py"}
 opencv-python = "*"
+pytz = "*"
+mpmath = "*"
 
 [requires]
 python_version = "3.6"
