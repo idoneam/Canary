@@ -99,10 +99,13 @@ class Pages():
     def _organize_code_blocks_autosize(self, pagesToSend):
         pageCounter = length = cache = 0
         for i in range(len(self.itemList)):
+            # truncate quotes that are too long
+            if len(self.itemList[i]) > 1500:
+                self.itemList[i] = self.itemList[i][:-500] + '...'
             length += len(self.itemList[i])
             if length > 1894:
                 pagesToSend.append(
-                    '```markdown' + self.title + ':\n\n' +
+                    '```markdown\n' + self.title + ':\n\n' +
                     '\n'.join(self.itemList[cache:i]).replace('```', ''))
                 cache = i
                 length = len(self.itemList[i])
