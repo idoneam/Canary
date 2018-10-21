@@ -81,8 +81,6 @@ class Pages():
         self.organize_helper = organize_helper_map[self.displayOption[0]]
         self.pagesToSend, self.lastPage = self.organize_helper(pagesToSend)
 
-    # TODO: disable autoformat in embeds, i.e interpret users' markdown syntax
-
     def _organize_code_blocks(self, pagesToSend):
         itemPerPage = self.displayOption[1]
         pageCounter = math.ceil(len(self.itemList) / itemPerPage)
@@ -100,8 +98,8 @@ class Pages():
         pageCounter = length = cache = 0
         for i in range(len(self.itemList)):
             # truncate quotes that are too long
-            if len(self.itemList[i]) > 1500:
-                self.itemList[i] = self.itemList[i][:-500] + '...'
+            if len(self.itemList[i]) > 1200:
+                self.itemList[i] = self.itemList[i][:1200] + '...'
             length += len(self.itemList[i])
             if length > 1894:
                 pagesToSend.append(
@@ -146,10 +144,11 @@ class Pages():
             indexStart = itemPerPage * i
             indexEnd = itemPerPage * (i + 1)
             em.description = ''.join(self.itemList[indexStart:indexEnd])
+            if len(em.description) > 1200:
+                em.description = em.description[:1200] + '...'
             pagesToSend.append(em)
             em = discord.Embed(title=self.title, colour=0xDA291C)
         return (pagesToSend, pageCounter)
-        # TODO: change method signature in calling functions
 
     def _organize_embeds_autosize_dict(self, pagesToSend):
         # TODO: implement real autosize™
