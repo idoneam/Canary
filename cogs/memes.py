@@ -101,9 +101,9 @@ class Memes():
         await ctx.message.delete()
 
     @commands.command()
-    async def chirp(self, ctx):
+    async def cheep(self, ctx):
         """:^)"""
-        await ctx.send('CHIRP CHIRP')
+        await ctx.send('CHEEP CHEEP')
 
     @commands.command()
     async def mix(self, ctx, *, inputStr: str = None):
