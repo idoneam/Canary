@@ -15,6 +15,7 @@ import re
 import math
 import time
 import os
+import urllib.request, json
 from .utils.paginator import Pages
 
 
@@ -340,6 +341,15 @@ class Helpers():
             total += 1
         await ctx.send("$%.2f is worth %d samosas." % (dollar, total))
 
+    @commands.command()
+    async def tepid(self, ctx):
+        with urllib.request.urlopen("https://tepid.science.mcgill.ca:8443/tepid/screensaver/queues/status") as url:
+            data = json.loads(url.read().decode())
+            for key, value in data.items():
+                if value == True:
+                    await ctx.send("A printer in" + key + " room is up!")
+                else:
+                    await ctx.send("A printer in" + key + " is down!")
 
 def setup(bot):
     bot.add_cog(Helpers(bot))
