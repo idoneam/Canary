@@ -351,5 +351,6 @@ class Helpers():
             else:
                 await ctx.send("A printer in " + key + " is down!")
 
+
 def setup(bot):
     bot.add_cog(Helpers(bot))
