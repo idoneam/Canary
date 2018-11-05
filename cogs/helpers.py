@@ -334,6 +334,17 @@ class Helpers():
             total += 1
         await ctx.send("$%.2f is worth %d samosas." % (dollar, total))
 
+    @commands.command()
+    async def tepid(self, ctx):
+        url = "https://tepid.science.mcgill.ca:8443/tepid/screensaver/queues/status"
+        r = requests.get(url)
+        data = r.json()
+        for key, value in data.items():
+            if value == True:
+                await ctx.send("A printer in " + key + " room is up!")
+            else:
+                await ctx.send("A printer in " + key + " is down!")
+
 
 def setup(bot):
     bot.add_cog(Helpers(bot))
