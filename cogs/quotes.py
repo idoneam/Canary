@@ -219,6 +219,8 @@ class Quotes():
         to seed the Markov Chain with.
         """
 
+        await ctx.trigger_typing()
+
         # Preprocess seed so that we can use it as a lookup
         if seed is not None:
             seed = re.sub('[,“”".?!]', ' ', seed.lower().replace('\'', ''))\
