@@ -234,8 +234,8 @@ class Quotes():
         if seed is None:
             await ctx.send('Markov chain table is empty.', delete_after=60)
         elif seed not in self.mc_table.keys():
-            await ctx.send('Could not generate anything with that seed.',
-                           delete_after=60)
+            await ctx.send(
+                'Could not generate anything with that seed.', delete_after=60)
         else:
             current_word = seed
             sentence = [current_word]
