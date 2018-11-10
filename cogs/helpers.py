@@ -130,8 +130,8 @@ class Helpers():
     @commands.command()
     async def wttr(self, ctx):
         em = discord.Embed(title="Weather in Montreal").set_image(
-            url='http://wttr.in/Montreal_2mpq_lang=en.png?_=%d' %
-            round(time.time()))
+            url='http://wttr.in/Montreal_2mpq_lang=en.png?_=%d' % round(
+                time.time()))
         await ctx.send(embed=em)
 
     @commands.command()
@@ -169,12 +169,12 @@ class Helpers():
             return
         content = soup.find_all("div", {"class": "content"})[3]
         overview = content.p.get_text().strip()
-        terms = soup.find_all(
-            "p",
-            {"class": "catalog-terms"})[0].get_text().split(':')[1].strip()
-        instructors = soup.find_all("p",
-                                    {"class": "catalog-instructors"
-                                     })[0].get_text().split(':')[1].strip()
+        terms = soup.find_all("p", {
+            "class": "catalog-terms"
+        })[0].get_text().split(':')[1].strip()
+        instructors = soup.find_all("p", {
+            "class": "catalog-instructors"
+        })[0].get_text().split(':')[1].strip()
         lists = content.find_all('li')
         tidbits = []
         for i in lists:
@@ -312,9 +312,9 @@ class Helpers():
                 'class': 'uccResultAmount'
             }).get_text()
             #FIXME: there has to be a more elegant way to print this
-            await ctx.send(
-                "%s %s = %s %s" % (m.group(1), m.group(3).upper(),
-                                   convertedCOST, m.group(7).upper()))
+            await ctx.send("%s %s = %s %s" %
+                           (m.group(1), m.group(3).upper(), convertedCOST,
+                            m.group(7).upper()))
         else:
             await ctx.send(""":warning: Wrong format.
             The correct format is `?xe <AMOUNT> <CURRENCY> to <CURRENCY>`.
