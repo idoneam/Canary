@@ -9,6 +9,10 @@ import asyncio
 import sqlite3
 import datetime
 
+# For Markov Chain
+import numpy as np
+import re
+
 # Other utils
 import random
 from .utils.paginator import Pages
@@ -17,6 +21,60 @@ from .utils.paginator import Pages
 class Quotes():
     def __init__(self, bot):
         self.bot = bot
+        self.mc_table = {}
+        self.rebuild_mc()
+
+    def rebuild_mc(self):
+        """
+        Rebuilds the Markov Chain lookup table for use with the ?generate command.
+        Blame David for this code.
+        """
+        conn = sqlite3.connect(self.bot.config.db_path)
+        c = conn.cursor()
+        c.execute("SELECT Quote FROM Quotes")
+
+        lookup = {}
+        cleaned_quotes = []
+
+        for quote in c.fetchall():
+            # Skip URL quotes
+            if 'http://' in quote[0] or 'https://' in quote[0]:
+                continue
+
+            # Preprocess the quote to improve chances of getting a nice dictionary going
+            cleaned_quotes.append(re.sub('[,“”".?!]', ' ', quote[0].lower().replace('\'', '')).strip())
+
+        for quote in cleaned_quotes:
+            words = re.split('\s+', quote)
+            for i in range(len(words)):
+                key = words[i]
+                if i == len(words) - 1:
+                    if key in lookup:
+                        lookup[key]["TOTAL"] += 1
+                        if "TERMINATE" in lookup[key]:
+                            lookup[key]["TERMINATE"] += 1.0
+                        else:
+                            lookup[key]["TERMINATE"] = 1.0
+                    else:
+                        lookup[key] = {"TERMINATE": 1.0, 'TOTAL': 1}
+                else:
+                    if key in lookup:
+                        lookup[key]['TOTAL'] += 1
+                        if words[i + 1] in lookup[key]:
+                            lookup[key][words[i + 1]] += 1.0
+                        else:
+                            lookup[key][words[i + 1]] = 1.0
+                    else:
+                        lookup[key] = {words[i + 1]: 1.0, 'TOTAL': 1}
+
+        for word in lookup:
+            total = lookup[word]["TOTAL"]
+            del lookup[word]['TOTAL']
+            for option in lookup[word]:
+                lookup[word][option] = lookup[word][option] / total
+
+        self.mc_table = lookup
+        conn.close()
 
     @commands.command()
     async def addq(self, ctx, member: discord.Member, *, quote: str):
@@ -30,6 +88,9 @@ class Quotes():
         await ctx.send('`Quote added.`')
         conn.commit()
         conn.close()
+
+        # Rebuild the Markov Chain lookup table to include new quote data.
+        self.rebuild_mc()
 
     @commands.command()
     async def q(self, ctx, str1: str = None, *, str2: str = None):
@@ -147,6 +208,43 @@ class Quotes():
             conn.close()
         else:
             await ctx.send('No quote found.', delete_after=60)
+
+    @commands.command(aliases=['gen'])
+    async def generate(self, ctx, seed: str = None):
+        """
+        Generates a random 'quote' using a Markov Chain. Optionally takes in a word
+        to seed the Markov Chain with.
+        """
+
+        # Preprocess seed so that we can use it as a lookup
+        if seed is not None:
+            seed = re.sub('[,“”".?!]', ' ', seed.lower().replace('\'', '')).strip()
+        else:
+            try:
+                seed = np.random.choice(list(self.mc_table.keys()))
+            except ValueError:
+                seed = None
+
+        if seed is None:
+            await ctx.send('Markov chain table is empty.', delete_after=60)
+        elif seed not in self.mc_table.keys():
+            await ctx.send('Could not generate anything with that seed.', delete_after=60)
+        else:
+            current_word = seed
+            sentence = [current_word]
+
+            while True:
+                choices = [(w, self.mc_table[current_word][w]) for w in self.mc_table[current_word]]
+                choice_words, probabilities = zip(*choices)
+
+                # Choose a random word and add it to the sentence.
+                current_word = np.random.choice(choice_words, p=probabilities)
+                # Cap sentence at 1000 words, just in case.
+                if current_word == "TERMINATE" or len(sentence) > 1000:
+                    break
+                sentence.append(current_word)
+
+            await ctx.send(' '.join(sentence))
 
 
 def setup(bot):
