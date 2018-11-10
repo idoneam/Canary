@@ -13,6 +13,7 @@ rewrite = {ref = "rewrite", git = "https://github.com/Rapptz/discord.py"}
 opencv-python = "*"
 pytz = "*"
 mpmath = "*"
+numpy = "*"
 
 [requires]
 python_version = "3.6"

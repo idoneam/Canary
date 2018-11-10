@@ -22,16 +22,10 @@ class Helpers():
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command()
+    @commands.command(aliases=['exams'])
     async def exam(self, ctx):
         await ctx.send(
-            'https://mcgill.ca/exams/files/exams/december_2018_final_exam_schedule_0.pdf'
-        )
-
-    @commands.command()
-    async def exams(self, ctx):
-        await ctx.send(
-            'https://mcgill.ca/exams/files/exams/december_2018_final_exam_schedule_0.pdf'
+            'https://mcgill.ca/exams/files/exams/december_2018_final_exam_scheduleo17.pdf'
         )
 
     @commands.command()
