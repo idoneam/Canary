@@ -42,7 +42,7 @@ class Quotes():
 
             # Preprocess the quote to improve chances of getting a nice
             # dictionary going
-            cq = re.sub('[,“”".?!]', ' ', re.sub('[\'()]', '', q[0].lower()))\
+            cq = re.sub('[,“”".?!]', ' ', re.sub('[\'()`]', '', q[0].lower()))\
                 .strip()
 
             # Split cleaned quote into words by any whitespace.
@@ -222,7 +222,7 @@ class Quotes():
         # Preprocess seed so that we can use it as a lookup
         if seed is not None:
             seed = re.sub(
-                '[,“”".?!]', ' ', re.sub('[\'()]', '', seed.lower()))\
+                '[,“”".?!]', ' ', re.sub('[\'()`]', '', seed.lower()))\
                 .strip()
         else:
             try:
