@@ -211,10 +211,11 @@ class Quotes():
             await ctx.send('No quote found.', delete_after=60)
 
     @commands.command(aliases=['gen'])
-    async def generate(self, ctx, seed: str = None):
+    async def generate(self, ctx, seed: str = None, min_length: int = 1):
         """
         Generates a random 'quote' using a Markov Chain. Optionally takes in a word
-        to seed the Markov Chain with.
+        to seed the Markov Chain with and (also optionally) a minimum length which
+        is NOT guaranteed to be met.
         """
 
         await ctx.trigger_typing()
@@ -237,25 +238,43 @@ class Quotes():
             await ctx.send(
                 'Could not generate anything with that seed.', delete_after=60)
         else:
-            current_word = seed
-            sentence = [current_word]
+            longest_sentence = []
+            retries = 0
 
-            # Add words to the sentence until a termination condition is
-            # encountered.
-            while True:
-                choices = [(w, self.mc_table[current_word][w])
-                           for w in self.mc_table[current_word]]
-                choice_words, probabilities = zip(*choices)
+            while len(longest_sentence) < min_length and retries < 200:
+                current_word = seed
+                sentence = [current_word]
 
-                # Choose a random word and add it to the sentence using the
-                # probability distribution stored in the word entry.
-                current_word = np.random.choice(choice_words, p=probabilities)
-                # Cap sentence at 1000 words, just in case.
-                if current_word == 'TERM' or len(sentence) > 1000:
-                    break
-                sentence.append(current_word)
+                # Add words to the sentence until a termination condition is
+                # encountered.
+                while True:
+                    choices = [(w, self.mc_table[current_word][w])
+                               for w in self.mc_table[current_word]]
+                    c_words, probabilities = zip(*choices)
 
-            await ctx.send(' '.join(sentence))
+                    # Choose a random word and add it to the sentence using the
+                    # probability distribution stored in the word entry.
+                    old_word = current_word
+                    current_word = np.random.choice(c_words, p=probabilities)
+
+                    # Don't allow termination until the minimum length is met or we
+                    # don't have any other option.
+                    while current_word == 'TERM' and len(sentence) < min_length \
+                            and len(self.mc_table[old_word].keys()) > 1:
+                        current_word = np.random.choice(c_words, p=probabilities)
+
+                    # Cap sentence at 1000 words, just in case, and terminate if
+                    # termination symbol is seen.
+                    if current_word == 'TERM' or len(sentence) > 1000:
+                        break
+                    sentence.append(current_word)
+
+                if len(sentence) > len(longest_sentence):
+                    longest_sentence = sentence[:]
+
+                retries += 1
+
+            await ctx.send(' '.join(longest_sentence))
 
 
 def setup(bot):
