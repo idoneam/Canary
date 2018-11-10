@@ -36,13 +36,16 @@ class Quotes():
         lookup = {}
         cleaned_quotes = []
 
-        for quote in c.fetchall():
+        for q in c.fetchall():
             # Skip URL quotes
-            if 'http://' in quote[0] or 'https://' in quote[0]:
+            if 'http://' in q[0] or 'https://' in q[0]:
                 continue
 
-            # Preprocess the quote to improve chances of getting a nice dictionary going
-            cleaned_quotes.append(re.sub('[,“”".?!]', ' ', quote[0].lower().replace('\'', '')).strip())
+            # Preprocess the quote to improve chances of getting a nice
+            # dictionary going
+            cq = re.sub('[,“”".?!]', ' ', q[0].lower().replace('\'', ''))\
+                .strip()
+            cleaned_quotes.append(cq)
 
         for quote in cleaned_quotes:
             words = re.split('\s+', quote)
@@ -218,7 +221,8 @@ class Quotes():
 
         # Preprocess seed so that we can use it as a lookup
         if seed is not None:
-            seed = re.sub('[,“”".?!]', ' ', seed.lower().replace('\'', '')).strip()
+            seed = re.sub('[,“”".?!]', ' ', seed.lower().replace('\'', ''))\
+                .strip()
         else:
             try:
                 seed = np.random.choice(list(self.mc_table.keys()))
@@ -228,13 +232,15 @@ class Quotes():
         if seed is None:
             await ctx.send('Markov chain table is empty.', delete_after=60)
         elif seed not in self.mc_table.keys():
-            await ctx.send('Could not generate anything with that seed.', delete_after=60)
+            await ctx.send('Could not generate anything with that seed.',
+                           delete_after=60)
         else:
             current_word = seed
             sentence = [current_word]
 
             while True:
-                choices = [(w, self.mc_table[current_word][w]) for w in self.mc_table[current_word]]
+                choices = [(w, self.mc_table[current_word][w])
+                           for w in self.mc_table[current_word]]
                 choice_words, probabilities = zip(*choices)
 
                 # Choose a random word and add it to the sentence.
