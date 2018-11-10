@@ -432,10 +432,9 @@ class Reminder():
                         await ctx.send('Reminder deleted', delete_after=60)
                         p.itemList = [
                             ('[{}] (Frequency: {}' +
-                             (' at {}'.format(quote[4].split('.')[0])
-                              if quote[3] == 'once' else '') +
-                             ') - {}').format(i + 1, quote[3].capitalize(),
-                                              quote[2])
+                             (' at {}'.format(quote[4].split('.')[0]) if
+                              quote[3] == 'once' else '') + ') - {}').format(
+                                  i + 1, quote[3].capitalize(), quote[2])
                             for i, quote in zip(range(len(remList)), remList)
                         ]
                     await p.paginate()

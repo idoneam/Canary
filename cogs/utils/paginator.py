@@ -89,9 +89,9 @@ class Pages():
             indexEnd = itemPerPage * (i + 1)
             content = '\n'.join(self.itemList[indexStart:indexEnd]).replace(
                 '```', '')
-            pagesToSend.append(
-                '```markdown\n' + content + '\n\n~ Page {:02d} of {:02d} ~'.
-                format(i + 1, pageCounter) + '```')
+            pagesToSend.append('```markdown\n' + content +
+                               '\n\n~ Page {:02d} of {:02d} ~'.format(
+                                   i + 1, pageCounter) + '```')
         return (pagesToSend, pageCounter)
 
     def _organize_code_blocks_autosize(self, pagesToSend):
