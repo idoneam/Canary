@@ -250,18 +250,18 @@ class Quotes():
                 while True:
                     choices = [(w, self.mc_table[current_word][w])
                                for w in self.mc_table[current_word]]
-                    c_words, probabilities = zip(*choices)
+                    c_words, p_dist = zip(*choices)
 
                     # Choose a random word and add it to the sentence using the
                     # probability distribution stored in the word entry.
                     old_word = current_word
-                    current_word = np.random.choice(c_words, p=probabilities)
+                    current_word = np.random.choice(c_words, p=p_dist)
 
                     # Don't allow termination until the minimum length is met or we
                     # don't have any other option.
                     while current_word == 'TERM' and len(sentence) < min_length \
                             and len(self.mc_table[old_word].keys()) > 1:
-                        current_word = np.random.choice(c_words, p=probabilities)
+                        current_word = np.random.choice(c_words, p=p_dist)
 
                     # Cap sentence at 1000 words, just in case, and terminate if
                     # termination symbol is seen.
