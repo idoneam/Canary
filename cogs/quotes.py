@@ -213,9 +213,9 @@ class Quotes():
     @commands.command(aliases=['gen'])
     async def generate(self, ctx, seed: str = None, min_length: int = 1):
         """
-        Generates a random 'quote' using a Markov Chain. Optionally takes in a word
-        to seed the Markov Chain with and (also optionally) a minimum length which
-        is NOT guaranteed to be met.
+        Generates a random 'quote' using a Markov Chain. Optionally takes in a
+        word to seed the Markov Chain with and (also optionally) a desired
+        minimum length which is NOT guaranteed to be met.
         """
 
         await ctx.trigger_typing()
