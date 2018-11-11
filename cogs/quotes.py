@@ -34,7 +34,6 @@ class Quotes():
         c.execute("SELECT Quote FROM Quotes")
 
         lookup = {}
-        cleaned_quotes = []
 
         for q in c.fetchall():
             # Skip URL quotes
@@ -43,35 +42,34 @@ class Quotes():
 
             # Preprocess the quote to improve chances of getting a nice
             # dictionary going
-            cq = re.sub('[,“”".?!]', ' ', q[0].lower().replace('\'', ''))\
+            cq = re.sub('[,“”".?!]', ' ', re.sub('[\'()`]', '', q[0].lower()))\
                 .strip()
-            cleaned_quotes.append(cq)
 
-        for quote in cleaned_quotes:
-            words = re.split('\s+', quote)
+            # Split cleaned quote into words by any whitespace.
+            words = re.split('\s+', cq)
+
+            # Count up word occurrences in the lookup table in order to
+            # eventually build the probability distribution for the key.
             for i in range(len(words)):
                 key = words[i]
                 if i == len(words) - 1:
-                    if key in lookup:
-                        lookup[key]["TOTAL"] += 1
-                        if "TERMINATE" in lookup[key]:
-                            lookup[key]["TERMINATE"] += 1.0
-                        else:
-                            lookup[key]["TERMINATE"] = 1.0
-                    else:
-                        lookup[key] = {"TERMINATE": 1.0, 'TOTAL': 1}
-                else:
+                    # Last word of a quote, so give the word a chance of
+                    # terminating the generated 'quote'.
                     if key in lookup:
                         lookup[key]['TOTAL'] += 1
-                        if words[i + 1] in lookup[key]:
-                            lookup[key][words[i + 1]] += 1.0
-                        else:
-                            lookup[key][words[i + 1]] = 1.0
+                        lookup[key]['TERM'] = lookup[key].get('TERM', 0) + 1.0
                     else:
-                        lookup[key] = {words[i + 1]: 1.0, 'TOTAL': 1}
+                        lookup[key] = {'TERM': 1.0, 'TOTAL': 1}
+                else:
+                    nxt = words[i + 1]
+                    if key in lookup:
+                        lookup[key]['TOTAL'] += 1
+                        lookup[key][nxt] = lookup[key].get(nxt, 0) + 1.0
+                    else:
+                        lookup[key] = {nxt: 1.0, 'TOTAL': 1}
 
         for word in lookup:
-            total = lookup[word]["TOTAL"]
+            total = lookup[word]['TOTAL']
             del lookup[word]['TOTAL']
             for option in lookup[word]:
                 lookup[word][option] = lookup[word][option] / total
@@ -213,22 +211,25 @@ class Quotes():
             await ctx.send('No quote found.', delete_after=60)
 
     @commands.command(aliases=['gen'])
-    async def generate(self, ctx, seed: str = None):
+    async def generate(self, ctx, seed: str = None, min_length: int = 1):
         """
-        Generates a random 'quote' using a Markov Chain. Optionally takes in a word
-        to seed the Markov Chain with.
+        Generates a random 'quote' using a Markov Chain. Optionally takes in a
+        word to seed the Markov Chain with and (also optionally) a desired
+        minimum length which is NOT guaranteed to be met.
         """
 
         await ctx.trigger_typing()
 
         # Preprocess seed so that we can use it as a lookup
         if seed is not None:
-            seed = re.sub('[,“”".?!]', ' ', seed.lower().replace('\'', ''))\
+            seed = re.sub(
+                '[,“”".?!]', ' ', re.sub('[\'()`]', '', seed.lower()))\
                 .strip()
         else:
             try:
                 seed = np.random.choice(list(self.mc_table.keys()))
             except ValueError:
+                # Value errors are encountered when the keys list is empty.
                 seed = None
 
         if seed is None:
@@ -237,22 +238,43 @@ class Quotes():
             await ctx.send(
                 'Could not generate anything with that seed.', delete_after=60)
         else:
-            current_word = seed
-            sentence = [current_word]
+            longest_sentence = []
+            retries = 0
 
-            while True:
-                choices = [(w, self.mc_table[current_word][w])
-                           for w in self.mc_table[current_word]]
-                choice_words, probabilities = zip(*choices)
+            while len(longest_sentence) < min_length and retries < 200:
+                current_word = seed
+                sentence = [current_word]
 
-                # Choose a random word and add it to the sentence.
-                current_word = np.random.choice(choice_words, p=probabilities)
-                # Cap sentence at 1000 words, just in case.
-                if current_word == "TERMINATE" or len(sentence) > 1000:
-                    break
-                sentence.append(current_word)
+                # Add words to the sentence until a termination condition is
+                # encountered.
+                while True:
+                    choices = [(w, self.mc_table[current_word][w])
+                               for w in self.mc_table[current_word]]
+                    c_words, p_dist = zip(*choices)
 
-            await ctx.send(' '.join(sentence))
+                    # Choose a random word and add it to the sentence using the
+                    # probability distribution stored in the word entry.
+                    old_word = current_word
+                    current_word = np.random.choice(c_words, p=p_dist)
+
+                    # Don't allow termination until the minimum length is met or we
+                    # don't have any other option.
+                    while current_word == 'TERM' and len(sentence) < min_length \
+                            and len(self.mc_table[old_word].keys()) > 1:
+                        current_word = np.random.choice(c_words, p=p_dist)
+
+                    # Cap sentence at 1000 words, just in case, and terminate if
+                    # termination symbol is seen.
+                    if current_word == 'TERM' or len(sentence) > 1000:
+                        break
+                    sentence.append(current_word)
+
+                if len(sentence) > len(longest_sentence):
+                    longest_sentence = sentence[:]
+
+                retries += 1
+
+            await ctx.send(' '.join(longest_sentence))
 
 
 def setup(bot):
