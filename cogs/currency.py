@@ -63,7 +63,7 @@ class Currency:
             await ctx.send("{} claimed ${}!".format(author_name, 20))
         else:
             time_left = last_claimed - threshold
-            await ctx.send("Please wait {}h {}s to claim again!".format(
+            await ctx.send("Please wait {}h {}m to claim again!".format(
                 time_left.seconds // 3600, time_left.seconds // 60 % 60))
 
         conn.commit()
