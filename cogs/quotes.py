@@ -263,6 +263,12 @@ class Quotes():
                             and len(self.mc_table[old_word].keys()) > 1:
                         current_word = np.random.choice(c_words, p=p_dist)
 
+                    # Don't allow repeat words too much
+                    while len(sentence) >= 3 and \
+                            (current_word == sentence[-1]
+                             == sentence[-2] == sentence[-3]):
+                        current_word = np.random.choice(c_words, p=p_dist)
+
                     # Cap sentence at 1000 words, just in case, and terminate if
                     # termination symbol is seen.
                     if current_word == 'TERM' or len(sentence) > 1000:
