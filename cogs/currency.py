@@ -56,10 +56,11 @@ class Currency:
             author = discord.utils.get(
                 ctx.guild.members, id=ctx.message.author.id)
             author_name = author.display_name if author else ":b:roken bot"
-            updates = (20, int(datetime.datetime.now().timestamp()))
+            updates = (20, int(datetime.datetime.now().timestamp()),
+                       ctx.message.author.id)
             c.execute(
                 "UPDATE BankAccounts SET Balance = Balance + ?, "
-                "LastClaimed = ?", updates)
+                "LastClaimed = ? WHERE ID = ?", updates)
             await ctx.send("{} claimed ${}!".format(author_name, 20))
         else:
             time_left = last_claimed - threshold
