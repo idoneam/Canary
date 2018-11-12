@@ -17,3 +17,10 @@ CREATE TABLE IF NOT EXISTS 'Reminders' (
 	'Date'TEXT,
 	'LastReminder'TEXT
 );
+
+CREATE TABLE IF NOT EXISTS `BankAccounts` (
+	`ID` INTEGER UNIQUE,
+	`Balance` INTEGER,
+	`LastClaimed` INTEGER DEFAULT 0,
+	FOREIGN KEY(`ID`) REFERENCES `Members`(`ID`)
+);
