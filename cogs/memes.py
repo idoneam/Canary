@@ -107,6 +107,8 @@ class Memes():
 
     @commands.command()
     async def mix(self, ctx, *, inputStr: str = None):
+        """mOcKiNG SpOngEboB
+        """
         if inputStr is None:
             await ctx.send()
         msg = "".join([(c.upper() if random.randint(0, 1) else c.lower())
