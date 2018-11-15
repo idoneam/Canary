@@ -21,6 +21,14 @@ class Currency:
         conn = sqlite3.connect(self.bot.config.db_path)
         c = conn.cursor()
 
+        c.execute("SELECT ID FROM Members WHERE ID = ?",
+                  (ctx.message.author.id, ))
+
+        # TODO: This should be a shared function...
+        if len(c.fetchall()) == 0:
+            t = (ctx.message.author.id, ctx.message.author.display_name, 0)
+            c.execute("INSERT INTO Members VALUES(?, ?, ?)", t)
+
         c.execute("SELECT ID FROM BankAccounts WHERE ID = ?",
                   (ctx.message.author.id, ))
 
