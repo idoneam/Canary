@@ -25,7 +25,7 @@ class Helpers():
     @commands.command(aliases=['exams'])
     async def exam(self, ctx):
         await ctx.send(
-            'https://mcgill.ca/exams/files/exams/december_2018_final_exam_scheduleo17.pdf'
+            'https://www.mcgill.ca/exams/files/exams/december_2018_final_exam_schedulen13.pdf'
         )
 
     @commands.command()
