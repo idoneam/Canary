@@ -11,6 +11,12 @@ Canary is a Python3 bot designed for the McGill University Community Discord Ser
 
 ## Installation
 
+If you wish to use the `update` command to update to the latest version of the bot, configure your github account in 
+your environment of choice and clone into the repository with:
+```bash
+git clone https://github.com/idoneam/Canary
+```
+
 Dependencies are managed with pipenv which can be installed via pip with:
 ```bash
 python3 -m pip install pipenv
