@@ -47,7 +47,8 @@ class Reminder():
                     reminder_activation_date = datetime.datetime.strptime(
                         reminders[i][4], "%Y-%m-%d %H:%M:%S.%f")
                     # Compute future_date-current_date and if <= 0:00:00, means time is due to remind user
-                    if reminder_activation_date - datetime.datetime.now() <= datetime.timedelta(0):
+                    if reminder_activation_date - datetime.datetime.now(
+                    ) <= datetime.timedelta(0):
                         await member.send("Reminding you to {}!".format(
                             reminders[i][2]))
                         # Remove from from DB non-repeating reminder
@@ -60,8 +61,7 @@ class Reminder():
                 else:
                     last_date = datetime.datetime.strptime(
                         reminders[i][5], "%Y-%m-%d %H:%M:%S.%f")
-                    if datetime.datetime.now(
-                    ) - last_date > datetime.timedelta(
+                    if datetime.datetime.now() - last_date > datetime.timedelta(
                             days=self.frequencies[reminders[i][3]]):
                         await member.send("Reminding you to {}! [{:d}]".format(
                             reminders[i][2], i + 1))
