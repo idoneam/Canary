@@ -24,6 +24,7 @@ class Helpers():
 
     @commands.command(aliases=['exams'])
     async def exam(self, ctx):
+        """Retrieves the exam schedule link from McGill's Exam website."""
         await ctx.send(
             'https://www.mcgill.ca/exams/files/exams/december_2018_final_exam_schedulen13.pdf'
         )
@@ -129,6 +130,7 @@ class Helpers():
 
     @commands.command()
     async def wttr(self, ctx):
+        """Retrieves Montreal's weather forecast from wttr.in"""
         em = discord.Embed(title="Weather in Montreal").set_image(
             url='http://wttr.in/Montreal_2mpq_lang=en.png?_=%d' %
             round(time.time()))
@@ -136,6 +138,7 @@ class Helpers():
 
     @commands.command()
     async def wttrMoon(self, ctx):
+        """Retrieves the current moon phase from wttr.in/moon"""
         em = discord.Embed(title="Current moon phase").set_image(
             url='http://wttr.in/moon.png')
         await ctx.send(embed=em)
@@ -336,6 +339,7 @@ class Helpers():
 
     @commands.command()
     async def tepid(self, ctx):
+        """Retrieves the CTF printers' statuses from tepid.science.mcgill.ca"""
         url = "https://tepid.science.mcgill.ca:8443/tepid/screensaver/queues/status"
         r = requests.get(url)
         data = r.json()
