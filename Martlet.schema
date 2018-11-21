@@ -20,7 +20,6 @@ CREATE TABLE IF NOT EXISTS 'Reminders' (
 
 CREATE TABLE IF NOT EXISTS `BankAccounts` (
 	`ID` INTEGER UNIQUE,
-	`Balance` INTEGER,
 	`LastClaimed` INTEGER DEFAULT 0,
 	FOREIGN KEY(`ID`) REFERENCES `Members`(`ID`)
 );
@@ -31,7 +30,7 @@ CREATE TABLE IF NOT EXISTS `BankTransactions` (
     `Amount` INTEGER,
     `Action` TEXT, -- actions are separated from other metadata since they're mandatory
     `Metadata` TEXT,
-    `Date` TEXT,
+    `Date` INTEGER,
 
     FOREIGN KEY(`UserID`) REFERENCES `Members`(`ID`)
 );

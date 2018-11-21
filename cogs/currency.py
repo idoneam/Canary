@@ -5,12 +5,31 @@ import discord
 from discord.ext import commands
 import asyncio
 
+# For type hinting
+from typing import Dict
+
 # For DB functionality
 import sqlite3
 import datetime
 
 # For betting
 import random
+
+# For other stuff
+import json
+
+
+ACTION_CLAIM = "claim"
+ACTION_COIN_FLIP = "coin_flip"
+ACTION_GIFTER = "gifter"
+ACTION_GIFTEE = "giftee"
+
+TRANSACTION_ACTIONS = (
+    ACTION_CLAIM,
+    ACTION_COIN_FLIP,
+    ACTION_GIFTER,
+    ACTION_GIFTEE
+)
 
 
 class Currency:
@@ -36,8 +55,33 @@ class Currency:
             c.execute("INSERT INTO BankAccounts VALUES (?, ?, ?)",
                       (ctx.message.author.id, 0, 0))
 
-            conn.commit()
-            conn.close()
+        conn.commit()
+        conn.close()
+
+    async def fetch_bank_balance(self, user: discord.Member):
+        conn = sqlite3.connect(self.bot.config.db_path)
+        c = conn.cursor()
+        c.execute("SELECT SUM(Amount) FROM BankTransactions WHERE UserID = ?",
+                  (user.id, ))
+
+        balance = c.fetchone()[0]
+        if balance is None:
+            balance = 0
+
+        conn.close()
+
+        return balance
+
+    async def create_bank_transaction(self, c, user: discord.Member, amount: int,
+                                      action: str, metadata: Dict):
+        if action not in TRANSACTION_ACTIONS:
+            print("Error: Invalid bank transaction '{}'".format(action))
+            return
+
+        now = int(datetime.datetime.now().timestamp())
+        t = (user.id, amount, action, json.dumps(metadata), now)
+        c.execute("INSERT INTO BankTransactions(UserID, Amount, Action, "
+                  "Metadata, Date) VALUES(?, ?, ?, ?, ?)", t)
 
     @commands.command()
     async def claim(self, ctx):
@@ -64,22 +108,31 @@ class Currency:
             author = discord.utils.get(
                 ctx.guild.members, id=ctx.message.author.id)
             author_name = author.display_name if author else ":b:roken bot"
-            updates = (20, int(datetime.datetime.now().timestamp()),
-                       ctx.message.author.id)
+
+            lc = (int(datetime.datetime.now().timestamp()),
+                  ctx.message.author.id)
+
+            metadata = {"channel": ctx.message.channel.id}
+
+            # TODO: THIS CAN BE REPLACED BY SELECTING FROM BANK TRANSACTIONS
             c.execute(
-                "UPDATE BankAccounts SET Balance = Balance + ?, "
-                "LastClaimed = ? WHERE ID = ?", updates)
+                "UPDATE BankAccounts SET LastClaimed = ? WHERE ID = ?", lc)
+
+            await self.create_bank_transaction(c, ctx.message.author, 20,
+                                               ACTION_CLAIM, metadata)
+
+            conn.commit()
+
             await ctx.send("{} claimed ${}!".format(author_name, 20))
         else:
             time_left = last_claimed - threshold
             await ctx.send("Please wait {}h {}m to claim again!".format(
                 time_left.seconds // 3600, time_left.seconds // 60 % 60))
 
-        conn.commit()
         conn.close()
 
-    @commands.command()
-    async def balance(self, ctx):
+    @commands.command(aliases=["$"])
+    async def balance(self, ctx, user: discord.Member = None):
         """
         Return the user's account balance.
         """
@@ -90,19 +143,12 @@ class Currency:
         # Create the user's bank account if it doesn't exist already
         await self.create_account_if_not_exists(ctx)
 
-        conn = sqlite3.connect(self.bot.config.db_path)
-        c = conn.cursor()
-        c.execute("SELECT Balance FROM BankAccounts WHERE ID = ?",
-                  (ctx.message.author.id, ))
-
-        author = discord.utils.get(ctx.guild.members, id=ctx.message.author.id)
+        author = user if user else ctx.message.author
         author_name = author.display_name if author else ":b:roken bot"
-        balance = c.fetchone()[0]
+        balance = await self.fetch_bank_balance(author)
 
         await ctx.send("{} has ${} in their account.".format(
             author_name, balance))
-
-        conn.close()
 
     @commands.command()
     async def flip(self, ctx, face: str = None, bet: int = None):
@@ -128,34 +174,34 @@ class Currency:
         conn = sqlite3.connect(self.bot.config.db_path)
         c = conn.cursor()
 
-        c.execute("SELECT Balance FROM BankAccounts WHERE ID = ?",
-                  (ctx.message.author.id, ))
+        balance = await self.fetch_bank_balance(ctx.message.author)
 
-        if c.fetchone()[0] < bet:
+        if balance < bet:
             await ctx.send("You're too broke to bet that much!")
-
-            conn.commit()
             conn.close()
-
             return
 
-        author = discord.utils.get(ctx.guild.members, id=ctx.message.author.id)
-        author_name = author.display_name if author else ":b:roken bot"
+        author_name = author.display_name if ctx.message.author \
+            else ":b:roken bot"
 
         result = random.choice(("h", "t"))
 
+        metadata = {
+            "result": result,
+            "channel": ctx.message.channel.id
+        }
+
+        amount = bet if choice == result else -bet
+        await self.create_bank_transaction(c, author, amount, ACTION_COIN_FLIP,
+                                           metadata)
+        conn.commit()
+
         if choice == result:
-            await ctx.send("Congratulations! {} won {} on **{}**".format(
+            await ctx.send("Congratulations! {} won ${} on **{}**".format(
                 author_name, bet, result))
-            c.execute(
-                "UPDATE BankAccounts SET Balance = Balance + ? "
-                "WHERE ID = ?", (bet, ctx.message.author.id))
         else:
-            await ctx.send("Sorry! {} lost {} (result was **{}**).".format(
+            await ctx.send("Sorry! {} lost ${} (result was **{}**).".format(
                 author_name, bet, result))
-            c.execute(
-                "UPDATE BankAccounts SET Balance = Balance - ? "
-                "WHERE ID = ?", (bet, ctx.message.author.id))
 
         conn.commit()
         conn.close()
