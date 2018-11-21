@@ -203,7 +203,52 @@ class Currency:
             await ctx.send("Sorry! {} lost ${} (result was **{}**).".format(
                 author_name, bet, result))
 
+        conn.close()
+
+    @commands.command()
+    async def give(self, ctx, user: discord.Member = None, amount: int = None):
+        """
+        Gives some amount of currency to another user.
+        """
+
+        if not user or amount is None:
+            await ctx.send("Usage: ?give [user] [amount]")
+            return
+
+        if amount <= 0:
+            await ctx.send("You cannot give ${}!".format(amount))
+            return
+
+        if user.id == ctx.message.author.id:
+            await ctx.send(":thinking:")
+            return
+
+        grn = ctx.message.author.display_name
+        gen = user.display_name
+
+        gifter_metadata = {
+            "giftee": user.id,
+            "channel": ctx.message.channel.id
+        }
+
+        giftee_metadata = {
+            "gifter": ctx.message.author.id,
+            "channel": ctx.message.channel.id
+        }
+
+        conn = sqlite3.connect(self.bot.config.db_path)
+        c = conn.cursor()
+
+        await self.create_bank_transaction(c, ctx.message.author, -amount,
+                                           ACTION_GIFTER, gifter_metadata)
+
+        await self.create_bank_transaction(c, user, amount, ACTION_GIFTEE,
+                                           giftee_metadata)
+
         conn.commit()
+
+        await ctx.send("{} gave ${} to {}!".format(grn, amount, gen))
+
         conn.close()
 
 
