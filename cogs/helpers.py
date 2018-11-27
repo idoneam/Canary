@@ -136,8 +136,8 @@ class Helpers():
             round(time.time()))
         await ctx.send(embed=em)
 
-    @commands.command()
-    async def wttrMoon(self, ctx):
+    @commands.command(aliases=['wttrMoon'])
+    async def wttrmoon(self, ctx):
         """Retrieves the current moon phase from wttr.in/moon"""
         em = discord.Embed(title="Current moon phase").set_image(
             url='http://wttr.in/moon.png')
