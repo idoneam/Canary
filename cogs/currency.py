@@ -36,28 +36,6 @@ class Currency:
     def __init__(self, bot):
         self.bot = bot
 
-    async def create_account_if_not_exists(self, ctx):
-        conn = sqlite3.connect(self.bot.config.db_path)
-        c = conn.cursor()
-
-        c.execute("SELECT ID FROM Members WHERE ID = ?",
-                  (ctx.message.author.id, ))
-
-        # TODO: This should be a shared function...
-        if len(c.fetchall()) == 0:
-            t = (ctx.message.author.id, ctx.message.author.display_name, 0)
-            c.execute("INSERT INTO Members VALUES(?, ?, ?)", t)
-
-        c.execute("SELECT ID FROM BankAccounts WHERE ID = ?",
-                  (ctx.message.author.id, ))
-
-        if len(c.fetchall()) == 0:
-            c.execute("INSERT INTO BankAccounts VALUES (?, ?, ?)",
-                      (ctx.message.author.id, 0, 0))
-
-        conn.commit()
-        conn.close()
-
     async def fetch_bank_balance(self, user: discord.Member):
         conn = sqlite3.connect(self.bot.config.db_path)
         c = conn.cursor()
@@ -92,14 +70,12 @@ class Currency:
         # Start bot typing
         await ctx.trigger_typing()
 
-        # Create the user's bank account if it doesn't exist already
-        await self.create_account_if_not_exists(ctx)
-
         conn = sqlite3.connect(self.bot.config.db_path)
         c = conn.cursor()
 
-        c.execute("SELECT LastClaimed FROM BankAccounts WHERE ID = ?",
-                  (ctx.message.author.id, ))
+        c.execute("SELECT IFNULL(MAX(Date), 0) FROM BankTransactions "
+                  "WHERE UserID = ? AND Action = ?",
+                  (ctx.message.author.id, ACTION_CLAIM))
 
         last_claimed = datetime.datetime.fromtimestamp(c.fetchone()[0])
         threshold = datetime.datetime.now() - datetime.timedelta(hours=1)
