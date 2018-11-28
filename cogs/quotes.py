@@ -236,7 +236,7 @@ class Quotes():
         await ctx.trigger_typing()
         conn = sqlite3.connect(self.bot.config.db_path)
         c = conn.cursor()
-        t = ('%{}%'.format(query),)
+        t = ('%{}%'.format(query), )
         c.execute('SELECT * FROM Quotes WHERE Quote LIKE ?', t)
         quote_list = c.fetchall()
         if quote_list:
@@ -246,11 +246,10 @@ class Quotes():
             ]
             p = Pages(
                 ctx,
-                itemList = quote_list_text,
-                title = 'Quotes that contain "{}"'.format(query),
-                editableContent = False,
-                currentPage = pagenum
-            )
+                itemList=quote_list_text,
+                title='Quotes that contain "{}"'.format(query),
+                editableContent=False,
+                currentPage=pagenum)
             await p.paginate()
         else:
             await ctx.send('No quote found.', delete_after=60)
