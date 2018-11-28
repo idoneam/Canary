@@ -150,6 +150,7 @@ class Score():
 
     @commands.command()
     async def score(self, ctx, member: discord.Member = None):
+        """Displays member's score in upmartlet rankings."""
         member = member if member else ctx.message.author
         id = member.id
         nick = member.display_name

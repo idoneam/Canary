@@ -20,7 +20,7 @@ class Mod():
             msg = '{} 📣 {}'.format(str(message.author), message.content)
             await channelToSend.send(msg)
 
-    @commands.command()
+    @commands.command(aliases=['dm'])
     @commands.has_role('Discord Moderator')
     async def pm(self, ctx, user: discord.User, *, message):
         '''
