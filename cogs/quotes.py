@@ -223,11 +223,15 @@ class Quotes():
             ctx.send('You must provide a query')
             return
         query_splitted = query.split()
+        pagenum = 1
         if '-p' in query_splitted:
             idx = query_splitted.index('-p')
-            pagenum = int(query_splitted[idx+1])
             query_splitted.pop(idx)
-            query_splitted.pop(idx)
+            try:
+                pagenum = int(query_splitted[idx])
+                query_splitted.pop(idx)
+            except Exception:
+                pass
         query = " ".join(query_splitted)
         await ctx.trigger_typing()
         conn = sqlite3.connect(self.bot.config.db_path)
@@ -243,7 +247,7 @@ class Quotes():
             p = Pages(
                 ctx,
                 itemList = quote_list_text,
-                title = 'Quotes that contain {}'.format(query),
+                title = 'Quotes that contain "{}"'.format(query),
                 editableContent = False,
                 currentPage = pagenum
             )
