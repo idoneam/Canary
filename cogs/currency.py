@@ -24,12 +24,8 @@ ACTION_COIN_FLIP = "coin_flip"
 ACTION_GIFTER = "gifter"
 ACTION_GIFTEE = "giftee"
 
-TRANSACTION_ACTIONS = (
-    ACTION_CLAIM,
-    ACTION_COIN_FLIP,
-    ACTION_GIFTER,
-    ACTION_GIFTEE
-)
+TRANSACTION_ACTIONS = (ACTION_CLAIM, ACTION_COIN_FLIP, ACTION_GIFTER,
+                       ACTION_GIFTEE)
 
 
 class Currency:
@@ -50,8 +46,9 @@ class Currency:
 
         return balance
 
-    async def create_bank_transaction(self, c, user: discord.Member, amount: int,
-                                      action: str, metadata: Dict):
+    async def create_bank_transaction(self, c, user: discord.Member,
+                                      amount: int, action: str,
+                                      metadata: Dict):
         if action not in TRANSACTION_ACTIONS:
             print("Error: Invalid bank transaction '{}'".format(action))
             return
@@ -73,9 +70,10 @@ class Currency:
         conn = sqlite3.connect(self.bot.config.db_path)
         c = conn.cursor()
 
-        c.execute("SELECT IFNULL(MAX(Date), 0) FROM BankTransactions "
-                  "WHERE UserID = ? AND Action = ?",
-                  (ctx.message.author.id, ACTION_CLAIM))
+        c.execute(
+            "SELECT IFNULL(MAX(Date), 0) FROM BankTransactions "
+            "WHERE UserID = ? AND Action = ?",
+            (ctx.message.author.id, ACTION_CLAIM))
 
         last_claimed = datetime.datetime.fromtimestamp(c.fetchone()[0])
         threshold = datetime.datetime.now() - datetime.timedelta(hours=1)
@@ -89,10 +87,6 @@ class Currency:
                   ctx.message.author.id)
 
             metadata = {"channel": ctx.message.channel.id}
-
-            # TODO: THIS CAN BE REPLACED BY SELECTING FROM BANK TRANSACTIONS
-            c.execute(
-                "UPDATE BankAccounts SET LastClaimed = ? WHERE ID = ?", lc)
 
             await self.create_bank_transaction(c, ctx.message.author, 20,
                                                ACTION_CLAIM, metadata)
@@ -162,10 +156,7 @@ class Currency:
 
         result = random.choice(("h", "t"))
 
-        metadata = {
-            "result": result,
-            "channel": ctx.message.channel.id
-        }
+        metadata = {"result": result, "channel": ctx.message.channel.id}
 
         amount = bet if choice == result else -bet
         await self.create_bank_transaction(c, author, amount, ACTION_COIN_FLIP,
