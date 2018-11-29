@@ -55,8 +55,9 @@ class Currency:
 
         now = int(datetime.datetime.now().timestamp())
         t = (user.id, amount, action, json.dumps(metadata), now)
-        c.execute("INSERT INTO BankTransactions(UserID, Amount, Action, "
-                  "Metadata, Date) VALUES(?, ?, ?, ?, ?)", t)
+        c.execute(
+            "INSERT INTO BankTransactions(UserID, Amount, Action, "
+            "Metadata, Date) VALUES(?, ?, ?, ?, ?)", t)
 
     @commands.command()
     async def claim(self, ctx):
