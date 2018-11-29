@@ -9,8 +9,13 @@ import asyncio
 import requests
 from bs4 import BeautifulSoup
 
-# Other utilities
+# TeX rendering
+from io import BytesIO
 from sympy import preview
+import cv2
+import numpy as np
+
+# Other utilities
 import re
 import math
 import time
@@ -24,8 +29,9 @@ class Helpers():
 
     @commands.command(aliases=['exams'])
     async def exam(self, ctx):
+        """Retrieves the exam schedule link from McGill's Exam website."""
         await ctx.send(
-            'https://mcgill.ca/exams/files/exams/december_2018_final_exam_scheduleo17.pdf'
+            'https://www.mcgill.ca/exams/files/exams/december_2018_final_exam_schedulen13.pdf'
         )
 
     @commands.command()
@@ -129,13 +135,15 @@ class Helpers():
 
     @commands.command()
     async def wttr(self, ctx):
+        """Retrieves Montreal's weather forecast from wttr.in"""
         em = discord.Embed(title="Weather in Montreal").set_image(
             url='http://wttr.in/Montreal_2mpq_lang=en.png?_=%d' %
             round(time.time()))
         await ctx.send(embed=em)
 
-    @commands.command()
-    async def wttrMoon(self, ctx):
+    @commands.command(aliases=['wttrMoon'])
+    async def wttrmoon(self, ctx):
+        """Retrieves the current moon phase from wttr.in/moon"""
         em = discord.Embed(title="Current moon phase").set_image(
             url='http://wttr.in/moon.png')
         await ctx.send(embed=em)
@@ -224,20 +232,36 @@ class Helpers():
     async def tex(self, ctx, *, query: str):
         """Parses and prints LaTeX equations."""
         await ctx.trigger_typing()
-        if "$" in ctx.message.content:
+        if "$" in query:
             tex = ""
-            sp = ctx.message.content.split('$')
-            if (len(sp) < 3):
+            sp = query.split('$')
+            if len(sp) < 3:
                 await ctx.send(
                     'PLEASE USE \'$\' AROUND YOUR LATEX EQUATIONS. CHIRP.')
                 return
-            # await bot.send_message(ctx.message.channel, 'LATEX FOUND. CHIRP.')
+
             up = int(len(sp) / 2)
             for i in range(up):
                 tex += "\[" + sp[2 * i + 1] + "\]"
+
+            buf = BytesIO()
+            preview(tex, viewer='BytesIO', outputbuffer=buf, euler=False)
+            buf.seek(0)
+            img_bytes = np.asarray(bytearray(buf.read()), dtype=np.uint8)
+            img = cv2.imdecode(img_bytes, cv2.IMREAD_UNCHANGED)
+            img2 = cv2.copyMakeBorder(
+                img,
+                10,
+                10,
+                10,
+                10,
+                cv2.BORDER_CONSTANT,
+                value=(255, 255, 255))
             fn = 'tmp.png'
-            preview(tex, viewer='file', filename=fn, euler=False)
+            cv2.imwrite(fn, img2)
+
             await ctx.send(file=discord.File(fp=fn))
+
             os.remove(fn)
         else:
             await ctx.send(
@@ -336,6 +360,7 @@ class Helpers():
 
     @commands.command()
     async def tepid(self, ctx):
+        """Retrieves the CTF printers' statuses from tepid.science.mcgill.ca"""
         url = "https://tepid.science.mcgill.ca:8443/tepid/screensaver/queues/status"
         r = requests.get(url)
         data = r.json()

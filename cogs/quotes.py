@@ -77,8 +77,8 @@ class Quotes():
         self.mc_table = lookup
         conn.close()
 
-    @commands.command()
-    async def addq(self, ctx, member: discord.Member, *, quote: str):
+    @commands.command(aliases=['addq'])
+    async def add_quotes(self, ctx, member: discord.Member, *, quote: str):
         """
         Add a quote to a user's quote database.
         """
@@ -93,8 +93,8 @@ class Quotes():
         # Rebuild the Markov Chain lookup table to include new quote data.
         self.rebuild_mc()
 
-    @commands.command()
-    async def q(self, ctx, str1: str = None, *, str2: str = None):
+    @commands.command(aliases=['q'])
+    async def quotes(self, ctx, str1: str = None, *, str2: str = None):
         """
         Retrieve a quote with a specified keyword / mention.
         """
@@ -207,6 +207,50 @@ class Quotes():
                     await p.paginate()
             conn.commit()
             conn.close()
+        else:
+            await ctx.send('No quote found.', delete_after=60)
+
+    @commands.command(aliases=['allq', 'aq'])
+    async def all_quotes(self, ctx, *, query):
+        '''
+        List all quotes that contain the query string.
+        Usage: ?all_quotes [-p pagenum] query
+
+        Optional arguments:
+        -p pagenum      Choose a page to display
+        '''
+        if not query:
+            ctx.send('You must provide a query')
+            return
+        query_splitted = query.split()
+        pagenum = 1
+        if '-p' in query_splitted:
+            idx = query_splitted.index('-p')
+            query_splitted.pop(idx)
+            try:
+                pagenum = int(query_splitted[idx])
+                query_splitted.pop(idx)
+            except Exception:
+                pass
+        query = " ".join(query_splitted)
+        await ctx.trigger_typing()
+        conn = sqlite3.connect(self.bot.config.db_path)
+        c = conn.cursor()
+        t = ('%{}%'.format(query), )
+        c.execute('SELECT * FROM Quotes WHERE Quote LIKE ?', t)
+        quote_list = c.fetchall()
+        if quote_list:
+            quote_list_text = [
+                '[{}] {}'.format(i + 1, quote[2])
+                for i, quote in zip(range(len(quote_list)), quote_list)
+            ]
+            p = Pages(
+                ctx,
+                itemList=quote_list_text,
+                title='Quotes that contain "{}"'.format(query),
+                editableContent=False,
+                currentPage=pagenum)
+            await p.paginate()
         else:
             await ctx.send('No quote found.', delete_after=60)
 

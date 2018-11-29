@@ -107,6 +107,7 @@ class Memes():
 
     @commands.command()
     async def mix(self, ctx, *, inputStr: str = None):
+        """Alternates upper/lower case for input string, input message disappears after"""
         if inputStr is None:
             await ctx.send()
         msg = "".join([(c.upper() if random.randint(0, 1) else c.lower())
