@@ -18,7 +18,6 @@ import random
 # For other stuff
 import json
 
-
 ACTION_CLAIM = "claim"
 ACTION_COIN_FLIP = "coin_flip"
 ACTION_GIFTER = "gifter"
