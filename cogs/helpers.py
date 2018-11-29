@@ -249,8 +249,14 @@ class Helpers():
             buf.seek(0)
             img_bytes = np.asarray(bytearray(buf.read()), dtype=np.uint8)
             img = cv2.imdecode(img_bytes, cv2.IMREAD_UNCHANGED)
-            img2 = cv2.copyMakeBorder(img, 10, 10, 10, 10, cv2.BORDER_CONSTANT,
-                                      value=(255, 255, 255))
+            img2 = cv2.copyMakeBorder(
+                img,
+                10,
+                10,
+                10,
+                10,
+                cv2.BORDER_CONSTANT,
+                value=(255, 255, 255))
             fn = 'tmp.png'
             cv2.imwrite(fn, img2)
 
