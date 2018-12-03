@@ -58,6 +58,16 @@ class Currency:
             "INSERT INTO BankTransactions(UserID, Amount, Action, "
             "Metadata, Date) VALUES(?, ?, ?, ?, ?)", t)
 
+    def parse_currency(self, amount: str, balance: int):
+        if amount.lower().strip() == "all":
+            amount_int = balance
+        else:
+            try:
+                amount_int = int(amount)
+            except ValueError:
+                return None
+        return amount_int
+
     @commands.command()
     async def claim(self, ctx):
         """
@@ -126,17 +136,13 @@ class Currency:
         balance = await self.fetch_bank_balance(ctx.message.author)
 
         if balance <= 0:
-            await ctx.send("You're too broke to bet!".format(bet))
+            await ctx.send("You're too broke to bet!")
             return
 
-        if bet.lower().strip() == "all":
-            bet_int = balance
-        else:
-            try:
-                bet_int = int(bet)
-            except ValueError:
-                await ctx.send("Invalid betting quantity: '{}'.".format(bet))
-                return
+        bet_int = self.parse_currency(bet, balance)
+        if bet_int is None:
+            await ctx.send("Invalid betting quantity: '{}'.".format(bet))
+            return
 
         choice = face.strip().lower()
 
@@ -179,7 +185,7 @@ class Currency:
         conn.close()
 
     @commands.command()
-    async def give(self, ctx, user: discord.Member = None, amount: int = None):
+    async def give(self, ctx, user: discord.Member = None, amount: str = None):
         """
         Gives some amount of currency to another user.
         """
@@ -188,8 +194,23 @@ class Currency:
             await ctx.send("Usage: ?give [user] [amount]")
             return
 
-        if amount <= 0:
-            await ctx.send("You cannot give ${}!".format(amount))
+        balance = await self.fetch_bank_balance(ctx.message.author)
+
+        if balance <= 0:
+            await ctx.send("You're too broke to give anyone anything!")
+            return
+
+        amount_int = self.parse_currency(amount, balance)
+        if amount_int is None:
+            await ctx.send("Invalid quantity: '{}'.".format(amount))
+            return
+
+        if amount_int <= 0:
+            await ctx.send("You cannot give ${}!".format(amount_int))
+            return
+
+        if amount_int > balance:
+            await ctx.send("You do not have that much money!")
             return
 
         if user.id == ctx.message.author.id:
@@ -212,15 +233,15 @@ class Currency:
         conn = sqlite3.connect(self.bot.config.db_path)
         c = conn.cursor()
 
-        await self.create_bank_transaction(c, ctx.message.author, -amount,
+        await self.create_bank_transaction(c, ctx.message.author, -amount_int,
                                            ACTION_GIFTER, gifter_metadata)
 
-        await self.create_bank_transaction(c, user, amount, ACTION_GIFTEE,
+        await self.create_bank_transaction(c, user, amount_int, ACTION_GIFTEE,
                                            giftee_metadata)
 
         conn.commit()
 
-        await ctx.send("{} gave ${} to {}!".format(grn, amount, gen))
+        await ctx.send("{} gave ${} to {}!".format(grn, amount_int, gen))
 
         conn.close()
 
