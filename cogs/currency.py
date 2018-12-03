@@ -113,8 +113,8 @@ class Currency:
         await ctx.send("{} has ${} in their account.".format(
             author_name, balance))
 
-    @commands.command()
-    async def flip(self, ctx, face: str = None, bet: int = None):
+    @commands.command(aliases=["bf"])
+    async def flip(self, ctx, bet: str = None, face: str = None):
         """
         Bets an amount of money on a coin flip.
         Usage: ?flip h 10 or ?flip t 5
@@ -123,10 +123,21 @@ class Currency:
         if face is None or bet is None:
             return
 
+        balance = await self.fetch_bank_balance(ctx.message.author)
+
+        if bet.lower().strip() == "all":
+            bet_int = balance
+        else:
+            try:
+                bet_int = int(bet)
+            except ValueError:
+                await ctx.send("Invalid betting quantity: '{}'.".format(bet))
+                return
+
         choice = face.strip().lower()
 
-        if bet <= 0 or choice not in ("h", "t"):
-            if bet <= 0:
+        if bet_int <= 0 or choice not in ("h", "t"):
+            if bet_int <= 0:
                 await ctx.send("Please bet a positive amount.")
 
             if choice not in ("h", "t"):
@@ -137,9 +148,7 @@ class Currency:
         conn = sqlite3.connect(self.bot.config.db_path)
         c = conn.cursor()
 
-        balance = await self.fetch_bank_balance(ctx.message.author)
-
-        if balance < bet:
+        if balance < bet_int:
             await ctx.send("You're too broke to bet that much!")
             conn.close()
             return
@@ -151,17 +160,17 @@ class Currency:
 
         metadata = {"result": result, "channel": ctx.message.channel.id}
 
-        amount = bet if choice == result else -bet
-        await self.create_bank_transaction(c, author, amount, ACTION_COIN_FLIP,
-                                           metadata)
+        amount = bet_int if choice == result else -bet_int
+        await self.create_bank_transaction(c, ctx.message.author, amount,
+                                           ACTION_COIN_FLIP, metadata)
         conn.commit()
 
         if choice == result:
             await ctx.send("Congratulations! {} won ${} on **{}**".format(
-                author_name, bet, result))
+                author_name, bet_int, result))
         else:
             await ctx.send("Sorry! {} lost ${} (result was **{}**).".format(
-                author_name, bet, result))
+                author_name, bet_int, result))
 
         conn.close()
 
