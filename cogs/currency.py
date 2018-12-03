@@ -79,12 +79,8 @@ class Currency:
         threshold = datetime.datetime.now() - datetime.timedelta(hours=1)
 
         if last_claimed < threshold:
-            author = discord.utils.get(
-                ctx.guild.members, id=ctx.message.author.id)
-            author_name = author.display_name if author else ":b:roken bot"
-
-            lc = (int(datetime.datetime.now().timestamp()),
-                  ctx.message.author.id)
+            author_name = (ctx.message.author.display_name
+                           if ctx.message.author else ":b:roken bot")
 
             metadata = {"channel": ctx.message.channel.id}
 
@@ -109,9 +105,6 @@ class Currency:
 
         # Start bot typing
         await ctx.trigger_typing()
-
-        # Create the user's bank account if it doesn't exist already
-        await self.create_account_if_not_exists(ctx)
 
         author = user if user else ctx.message.author
         author_name = author.display_name if author else ":b:roken bot"
@@ -151,8 +144,8 @@ class Currency:
             conn.close()
             return
 
-        author_name = author.display_name if ctx.message.author \
-            else ":b:roken bot"
+        author_name = (ctx.message.author.display_name
+                       if ctx.message.author else ":b:roken bot")
 
         result = random.choice(("h", "t"))
 
