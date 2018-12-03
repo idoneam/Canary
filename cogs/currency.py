@@ -125,6 +125,10 @@ class Currency:
 
         balance = await self.fetch_bank_balance(ctx.message.author)
 
+        if balance <= 0:
+            await ctx.send("You're too broke to bet!".format(bet))
+            return
+
         if bet.lower().strip() == "all":
             bet_int = balance
         else:
