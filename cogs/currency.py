@@ -53,6 +53,9 @@ class Currency:
     async def create_bank_transaction(self, c, user: discord.Member,
                                       amount: int, action: str,
                                       metadata: Dict):
+        # Don't create another connection in this function in order to properly
+        # transaction-ify a series of bank "transactions".
+
         if action not in TRANSACTION_ACTIONS:
             print("Error: Invalid bank transaction '{}'".format(action))
             return
