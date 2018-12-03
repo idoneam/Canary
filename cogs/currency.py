@@ -18,6 +18,11 @@ import random
 # For other stuff
 import json
 
+CLAIM_AMOUNT = 20
+CLAIM_WAIT_TIME = datetime.timedelta(hours=1)
+
+COIN_FLIP_CHOICES = ("h", "t")
+
 ACTION_CLAIM = "claim"
 ACTION_COIN_FLIP = "coin_flip"
 ACTION_GIFTER = "gifter"
@@ -86,7 +91,7 @@ class Currency:
             (ctx.message.author.id, ACTION_CLAIM))
 
         last_claimed = datetime.datetime.fromtimestamp(c.fetchone()[0])
-        threshold = datetime.datetime.now() - datetime.timedelta(hours=1)
+        threshold = datetime.datetime.now() - CLAIM_WAIT_TIME
 
         if last_claimed < threshold:
             author_name = (ctx.message.author.display_name
@@ -94,12 +99,13 @@ class Currency:
 
             metadata = {"channel": ctx.message.channel.id}
 
-            await self.create_bank_transaction(c, ctx.message.author, 20,
-                                               ACTION_CLAIM, metadata)
+            await self.create_bank_transaction(
+                c, ctx.message.author, CLAIM_AMOUNT, ACTION_CLAIM, metadata)
 
             conn.commit()
 
-            await ctx.send("{} claimed ${}!".format(author_name, 20))
+            await ctx.send("{} claimed ${}!".format(author_name, CLAIM_AMOUNT))
+
         else:
             time_left = last_claimed - threshold
             await ctx.send("Please wait {}h {}m to claim again!".format(
@@ -107,7 +113,7 @@ class Currency:
 
         conn.close()
 
-    @commands.command(aliases=["$"])
+    @commands.command(aliases=["$", "bal"])
     async def balance(self, ctx, user: discord.Member = None):
         """
         Return the user's account balance.
@@ -118,10 +124,9 @@ class Currency:
 
         author = user if user else ctx.message.author
         author_name = author.display_name if author else ":b:roken bot"
-        balance = await self.fetch_bank_balance(author)
 
         await ctx.send("{} has ${} in their account.".format(
-            author_name, balance))
+            author_name, await self.fetch_bank_balance(author)))
 
     @commands.command(aliases=["bf"])
     async def flip(self, ctx, bet: str = None, face: str = None):
@@ -134,39 +139,46 @@ class Currency:
             return
 
         balance = await self.fetch_bank_balance(ctx.message.author)
+        bet_int = self.parse_currency(bet, balance)
+        choice = face.strip().lower()
+
+        # Handle invalid cases
+
+        # - Balance-related subcase
 
         if balance <= 0:
             await ctx.send("You're too broke to bet!")
             return
 
-        bet_int = self.parse_currency(bet, balance)
+        # - Bet-related subcases
+
         if bet_int is None:
             await ctx.send("Invalid betting quantity: '{}'.".format(bet))
             return
 
-        choice = face.strip().lower()
-
-        if bet_int <= 0 or choice not in ("h", "t"):
-            if bet_int <= 0:
-                await ctx.send("Please bet a positive amount.")
-
-            if choice not in ("h", "t"):
-                await ctx.send("Please choose either h or t.")
-
+        if bet_int <= 0:
+            await ctx.send("Please bet a positive amount.")
             return
+
+        if bet_int > balance:
+            await ctx.send("You're too broke to bet that much!")
+            return
+
+        # - Choice-related subcase
+
+        if choice not in COIN_FLIP_CHOICES:
+            await ctx.send("Please choose either h or t.")
+            return
+
+        # If all cases pass, perform the gamble
 
         conn = sqlite3.connect(self.bot.config.db_path)
         c = conn.cursor()
 
-        if balance < bet_int:
-            await ctx.send("You're too broke to bet that much!")
-            conn.close()
-            return
-
         author_name = (ctx.message.author.display_name
                        if ctx.message.author else ":b:roken bot")
 
-        result = random.choice(("h", "t"))
+        result = random.choice(COIN_FLIP_CHOICES)
 
         metadata = {"result": result, "channel": ctx.message.channel.id}
 
@@ -175,12 +187,11 @@ class Currency:
                                            ACTION_COIN_FLIP, metadata)
         conn.commit()
 
+        message = "Sorry! {} lost ${} (result was **{}**)."
         if choice == result:
-            await ctx.send("Congratulations! {} won ${} on **{}**".format(
-                author_name, bet_int, result))
-        else:
-            await ctx.send("Sorry! {} lost ${} (result was **{}**).".format(
-                author_name, bet_int, result))
+            message = "Congratulations! {} won ${} on **{}**"
+
+        await ctx.send(message.format(author_name, bet_int, result))
 
         conn.close()
 
@@ -201,6 +212,9 @@ class Currency:
             return
 
         amount_int = self.parse_currency(amount, balance)
+
+        # Handle invalid cases
+
         if amount_int is None:
             await ctx.send("Invalid quantity: '{}'.".format(amount))
             return
@@ -216,6 +230,8 @@ class Currency:
         if user.id == ctx.message.author.id:
             await ctx.send(":thinking:")
             return
+
+        # If all cases pass, gift the money
 
         grn = ctx.message.author.display_name
         gen = user.display_name
