@@ -26,7 +26,7 @@ class Helpers():
     async def exam(self, ctx):
         """Retrieves the exam schedule link from McGill's Exam website."""
         await ctx.send(
-            'https://www.mcgill.ca/exams/files/exams/december_2018_final_exam_schedulen13.pdf'
+            'https://www.mcgill.ca/exams/files/exams/final_alpha_dec_2018_6.pdf'
         )
 
     @commands.command()
