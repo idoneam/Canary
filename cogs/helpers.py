@@ -131,17 +131,13 @@ class Helpers():
     @commands.command()
     async def wttr(self, ctx):
         """Retrieves Montreal's weather forecast from wttr.in"""
-        em = discord.Embed(title="Weather in Montreal").set_image(
-            url='http://wttr.in/Montreal_2mpq_lang=en.png?_=%d' %
-            round(time.time()))
-        await ctx.send(embed=em)
+        await ctx.send('http://wttr.in/Montreal_2mpq_lang=en.png?_=%d' % round(
+            time.time()))
 
     @commands.command(aliases=['wttrMoon'])
     async def wttrmoon(self, ctx):
         """Retrieves the current moon phase from wttr.in/moon"""
-        em = discord.Embed(title="Current moon phase").set_image(
-            url='http://wttr.in/moon.png')
-        await ctx.send(embed=em)
+        await ctx.send('http://wttr.in/moon.png')
 
     @commands.command()
     async def course(self, ctx, *, query: str):
