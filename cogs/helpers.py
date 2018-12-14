@@ -131,7 +131,8 @@ class Helpers():
     @commands.command()
     async def wttr(self, ctx):
         """Retrieves Montreal's weather forecast from wttr.in"""
-        await ctx.send('http://wttr.in/Montreal_2mpq_lang=en.png?_=%d' % round(time.time()))
+        await ctx.send('http://wttr.in/Montreal_2mpq_lang=en.png?_=%d' % round(
+            time.time()))
 
     @commands.command(aliases=['wttrMoon'])
     async def wttrmoon(self, ctx):
