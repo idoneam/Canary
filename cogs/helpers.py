@@ -196,20 +196,20 @@ class Helpers():
     async def keydates(self, ctx):
         """Retrieves the important dates for the current term (Winter from January-April, Fall from May-December)."""
         await ctx.trigger_typing()
-        url = "https://www.mcgill.ca/importantdates/key-dates"
+        url = 'https://www.mcgill.ca/importantdates/key-dates'
         r = requests.get(url)
-        soup = BeautifulSoup(r.content, "html.parser")
+        soup = BeautifulSoup(r.content, 'html.parser')
         r.close()
 
         now = datetime.datetime.now()
         current_year = now.year
         current_month = now.month
         if current_month > 4:
-            term = "Fall"
+            term = 'Fall'
         else:
-            term = "Winter"
+            term = 'Winter'
 
-        text = soup.find_all("div", {"class": "field-item even"})
+        text = soup.find_all('div', {'class': 'field-item even'})
 
         # The layout is trash and the divs don't follow a pattern so disintegrate all div tags
         for div in text[0].find_all('div'):
@@ -219,16 +219,17 @@ class Helpers():
         sections = []
         subsection = []
 
-        if term == "Fall":
+        if term == 'Fall':
             node = text[0].find_all('h2')[0].next_sibling
         else:
             node = text[0].find_all('h2')[1].next_sibling
 
+        # Iterate through the tags and gather h3 headings in one list and the text between them in another
         while node:
             if hasattr(node, 'name'):
-                if node.name == "h2" and term == "Fall":
+                if node.name == 'h2' and term == 'Fall':
                     break
-                elif node.name == "h3":
+                elif node.name == 'h3':
                     nodestr = str(node)
                     headers.append(node.get_text())
                     if subsection: sections.append(subsection)
@@ -241,7 +242,7 @@ class Helpers():
         if subsection: sections.append(subsection)
 
         em = discord.Embed(
-            title="McGill Important Dates " + term + " " + str(current_year),
+            title='McGill Important Dates {0} {1}'.format(term, str(current_year)),
             description=url,
             colour=0xDA291C)
         for i in range(len(headers)):
