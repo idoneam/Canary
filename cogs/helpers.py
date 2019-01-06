@@ -242,7 +242,8 @@ class Helpers():
         if subsection: sections.append(subsection)
 
         em = discord.Embed(
-            title='McGill Important Dates {0} {1}'.format(term, str(current_year)),
+            title='McGill Important Dates {0} {1}'.format(
+                term, str(current_year)),
             description=url,
             colour=0xDA291C)
         for i in range(len(headers)):
