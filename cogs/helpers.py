@@ -361,8 +361,8 @@ class Helpers():
         The currencies supported for conversion (and their abbreviations) can be found at http://www.xe.com/currency/.
         """
         await ctx.trigger_typing()
-        if '.' in query.split(
-                ' ')[0]:    # Distinguish regex between floats and ints
+        if '.' in query.split(' ')[
+                0]:    # Distinguish regex between floats and ints
             re1 = '([+-]?\\d*\\.\\d+)(?![-+0-9\\.])'
         else:
             re1 = '(\\d+)'
