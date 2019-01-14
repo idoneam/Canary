@@ -48,8 +48,9 @@ class Currency:
     async def fetch_bank_balance(self, user: discord.Member) -> Decimal:
         conn = sqlite3.connect(self.bot.config.db_path)
         c = conn.cursor()
-        c.execute("SELECT IFNULL(SUM(Amount), 0) FROM BankTransactions WHERE "
-                  "UserID = ?", (user.id, ))
+        c.execute(
+            "SELECT IFNULL(SUM(Amount), 0) FROM BankTransactions WHERE "
+            "UserID = ?", (user.id, ))
 
         balance = self.db_to_currency(c.fetchone()[0])
         if balance is None:
@@ -87,10 +88,10 @@ class Currency:
                 return None
 
     def currency_to_db(self, amount: Decimal):
-        return int(amount * Decimal(10 ** self.currency["precision"]))
+        return int(amount * Decimal(10**self.currency["precision"]))
 
     def db_to_currency(self, amount: int):
-        return Decimal(amount) / Decimal(10 ** self.currency["precision"])
+        return Decimal(amount) / Decimal(10**self.currency["precision"])
 
     def format_currency(self, amount: Decimal):
         return ("{:." + str(self.prec) + "f}").format(amount)
@@ -150,9 +151,9 @@ class Currency:
 
         metadata = {"channel": ctx.message.channel.id}
 
-        await self.create_bank_transaction(
-            c, ctx.message.author, self.currency["initial_amount"],
-            ACTION_INITIAL_CLAIM, metadata)
+        await self.create_bank_transaction(c, ctx.message.author,
+                                           self.currency["initial_amount"],
+                                           ACTION_INITIAL_CLAIM, metadata)
 
         conn.commit()
 
@@ -189,8 +190,7 @@ class Currency:
             metadata = {"channel": ctx.message.channel.id}
 
             await self.create_bank_transaction(
-                c, ctx.message.author, decimal.Decimal(CLAIM_AMOUNT),
-                ACTION_CLAIM, metadata)
+                c, ctx.message.author, CLAIM_AMOUNT, ACTION_CLAIM, metadata)
 
             conn.commit()
 
@@ -216,8 +216,8 @@ class Currency:
         # TODO: TEST ACCOUNTS NOT IN THE SERVER?
 
         author = user if user else ctx.message.author
-        amount = self.format_symbol_currency(
-            await self.fetch_bank_balance(author))
+        amount = self.format_symbol_currency(await
+                                             self.fetch_bank_balance(author))
 
         await ctx.send("{} has {} in their account.".format(
             author.display_name, amount))
@@ -271,8 +271,9 @@ class Currency:
 
         author_name = ctx.message.author.display_name
 
-        await ctx.send(message.format(
-            author_name, self.format_symbol_currency(bet_dec), result))
+        await ctx.send(
+            message.format(author_name, self.format_symbol_currency(bet_dec),
+                           result))
 
         conn.close()
 
@@ -318,7 +319,8 @@ class Currency:
             "channel": ctx.message.channel.id
         }
 
-        await self.create_bank_transaction(c, ctx.message.author, amount_returned - bet_dec,
+        await self.create_bank_transaction(c, ctx.message.author,
+                                           amount_returned - bet_dec,
                                            ACTION_BET_ROLL, metadata)
 
         conn.commit()

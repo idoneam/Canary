@@ -133,7 +133,9 @@ class Quotes():
             name = quote_tuple[1]
             quote = quote_tuple[2]
             author = discord.utils.get(ctx.guild.members, id=author_id)
-            # get author name, if the user is still on the server, their current nick will be displayed, otherwise use the name stored in db
+            # get author name, if the user is still on the server, their
+            # current nick will be displayed, otherwise use the name stored
+            # in db
             author_name = author.display_name if author else name
             await ctx.send('{} 📣 {}'.format(author_name, quote))
 
@@ -174,7 +176,8 @@ class Quotes():
 
             while p.delete:
                 await ctx.send(
-                    'Delete option selected. Enter a number to specify which quote you want to delete, or enter 0 to return.',
+                    'Delete option selected. Enter a number to specify which '
+                    'quote you want to delete, or enter 0 to return.',
                     delete_after=60)
                 try:
                     message = await self.bot.wait_for(
@@ -271,11 +274,12 @@ class Quotes():
 
                     # Cap sentence at 1000 words, just in case, and terminate if
                     # termination symbol is seen.
-                    if current_word == 'TERM' or len(sentence) > 1000:
+                    if current_word == 'TERM' or len(sentence) >= 1000:
                         break
                     sentence.append(current_word)
 
-                if len(sentence) > len(longest_sentence):
+                if len(longest_sentence) < len(sentence) \
+                        and len(' '.join(sentence)) <= 2000:
                     longest_sentence = sentence[:]
 
                 retries += 1
