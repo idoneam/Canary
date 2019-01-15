@@ -297,24 +297,25 @@ class Helpers():
     async def tex(self, ctx, *, query: str):
         """Parses and prints LaTeX equations."""
         await ctx.trigger_typing()
-        if "$" in ctx.message.content:
-            tex = ""
+        tex = ""
+        sp = ""
+        if "$$" in ctx.message.content:
+            sp = ctx.message.content.split('$$')
+        elif "$" in ctx.message.content:
             sp = ctx.message.content.split('$')
-            if (len(sp) < 3):
-                await ctx.send(
-                    'PLEASE USE \'$\' AROUND YOUR LATEX EQUATIONS. CHIRP.')
-                return
-            # await bot.send_message(ctx.message.channel, 'LATEX FOUND. CHIRP.')
-            up = int(len(sp) / 2)
-            for i in range(up):
-                tex += "\[" + sp[2 * i + 1] + "\]"
-            fn = 'tmp.png'
-            preview(tex, viewer='file', filename=fn, euler=False)
-            await ctx.send(file=discord.File(fp=fn))
-            os.remove(fn)
-        else:
+
+        if (len(sp) < 3):
             await ctx.send(
                 'PLEASE USE \'$\' AROUND YOUR LATEX EQUATIONS. CHIRP.')
+            return
+
+        up = int(len(sp) / 2)
+        for i in range(up):
+            tex += "\[" + sp[2 * i + 1] + "\]"
+        fn = 'tmp.png'
+        preview(tex, viewer='file', filename=fn, euler=False)
+        await ctx.send(file=discord.File(fp=fn))
+        os.remove(fn)
 
     @commands.command()
     async def search(self, ctx, *, query: str):
