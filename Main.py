@@ -27,7 +27,7 @@ startup = [
     "cogs.quotes", "cogs.images"
 ]
 
-bot = commands.Bot(command_prefix='?')
+bot = commands.Bot(command_prefix='?', case_insensitive=True)
 
 # Logging configuration
 logger = logging.getLogger('discord')

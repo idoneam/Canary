@@ -135,7 +135,7 @@ class Helpers():
         await ctx.send('http://wttr.in/Montreal_2mpq_lang=en.png?_=%d' % round(
             time.time()))
 
-    @commands.command(aliases=['wttrMoon'])
+    @commands.command()
     async def wttrmoon(self, ctx):
         """Retrieves the current moon phase from wttr.in/moon"""
         await ctx.send('http://wttr.in/moon.png')
