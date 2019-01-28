@@ -17,3 +17,14 @@ CREATE TABLE IF NOT EXISTS 'Reminders' (
 	'Date'TEXT,
 	'LastReminder'TEXT
 );
+
+CREATE TABLE IF NOT EXISTS `BankTransactions` (
+    `TransactionID` INTEGER PRIMARY KEY,
+    `UserID` INTEGER,
+    `Amount` INTEGER,
+    `Action` TEXT, -- actions are separated from other metadata since they're mandatory
+    `Metadata` TEXT,
+    `Date` INTEGER,
+
+    FOREIGN KEY(`UserID`) REFERENCES `Members`(`ID`)
+);
