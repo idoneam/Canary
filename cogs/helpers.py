@@ -20,6 +20,7 @@ import re
 import math
 import time
 import os
+import datetime
 from .utils.paginator import Pages
 
 
@@ -31,7 +32,7 @@ class Helpers():
     async def exam(self, ctx):
         """Retrieves the exam schedule link from McGill's Exam website."""
         await ctx.send(
-            'https://www.mcgill.ca/exams/files/exams/december_2018_final_exam_schedulen13.pdf'
+            'https://www.mcgill.ca/exams/files/exams/final_alpha_dec_2018_12.pdf'
         )
 
     @commands.command()
@@ -136,17 +137,13 @@ class Helpers():
     @commands.command()
     async def wttr(self, ctx):
         """Retrieves Montreal's weather forecast from wttr.in"""
-        em = discord.Embed(title="Weather in Montreal").set_image(
-            url='http://wttr.in/Montreal_2mpq_lang=en.png?_=%d' %
-            round(time.time()))
-        await ctx.send(embed=em)
+        await ctx.send('http://wttr.in/Montreal_2mpq_lang=en.png?_=%d' % round(
+            time.time()))
 
-    @commands.command(aliases=['wttrMoon'])
+    @commands.command()
     async def wttrmoon(self, ctx):
         """Retrieves the current moon phase from wttr.in/moon"""
-        em = discord.Embed(title="Current moon phase").set_image(
-            url='http://wttr.in/moon.png')
-        await ctx.send(embed=em)
+        await ctx.send('http://wttr.in/moon.png')
 
     @commands.command()
     async def course(self, ctx, *, query: str):
@@ -201,6 +198,79 @@ class Helpers():
         await ctx.send(embed=em)
 
     @commands.command()
+    async def keydates(self, ctx):
+        """Retrieves the important dates for the current term (Winter from January-April, Fall from May-December)."""
+        await ctx.trigger_typing()
+        url = 'https://www.mcgill.ca/importantdates/key-dates'
+        r = requests.get(url)
+        soup = BeautifulSoup(r.content, 'html.parser')
+        r.close()
+
+        now = datetime.datetime.now()
+        current_year = now.year
+        current_month = now.month
+        if current_month > 4:
+            term = 'Fall'
+        else:
+            term = 'Winter'
+
+        text = soup.find_all('div', {'class': 'field-item even'})
+
+        # The layout is trash and the divs don't follow a pattern so disintegrate all div tags
+        for div in text[0].find_all('div'):
+            div.replaceWithChildren()
+
+        headers = []
+        sections = []
+        subsection = []
+
+        if term == 'Fall':
+            node = text[0].find_all('h2')[0].next_sibling
+        else:
+            node = text[0].find_all('h2')[1].next_sibling
+
+        # Iterate through the tags and gather h3 headings in one list and the text between them in another
+        while node:
+            if hasattr(node, 'name'):
+                if node.name == 'h2' and term == 'Fall':
+                    break
+                elif node.name == 'h3':
+                    nodestr = str(node)
+                    headers.append(node.get_text())
+                    if subsection: sections.append(subsection)
+                    subsection = []
+                else:
+                    nodestr = str(node)
+                    if nodestr[0] != '\n' and nodestr and nodestr != ' ':
+                        subsection.append(node.get_text().replace('\xa0', ' '))
+            node = node.next_sibling
+        if subsection: sections.append(subsection)
+
+        em = discord.Embed(
+            title='McGill Important Dates {0} {1}'.format(
+                term, str(current_year)),
+            description=url,
+            colour=0xDA291C)
+        for i in range(len(headers)):
+            if i == 2: continue
+            elif i == 1:
+                em.add_field(
+                    name=headers[i],
+                    value=' '.join(sections[i][1:-1]),
+                    inline=False)
+            elif i == 3:
+                em.add_field(
+                    name=headers[i],
+                    value=' '.join(sections[i][1:-2]),
+                    inline=False)
+            else:
+                em.add_field(
+                    name=headers[i],
+                    value=' '.join(sections[i][1:]),
+                    inline=False)
+        await ctx.send(embed=em)
+
+    @commands.command()
     async def urban(self, ctx, *, query):
         """Fetches the top definitions from Urban Dictionary"""
         await ctx.trigger_typing()
@@ -232,40 +302,42 @@ class Helpers():
     async def tex(self, ctx, *, query: str):
         """Parses and prints LaTeX equations."""
         await ctx.trigger_typing()
-        if "$" in query:
-            tex = ""
-            sp = query.split('$')
-            if len(sp) < 3:
-                await ctx.send(
-                    'PLEASE USE \'$\' AROUND YOUR LATEX EQUATIONS. CHIRP.')
-                return
-
-            up = int(len(sp) / 2)
-            for i in range(up):
-                tex += "\[" + sp[2 * i + 1] + "\]"
-
-            buf = BytesIO()
-            preview(tex, viewer='BytesIO', outputbuffer=buf, euler=False)
-            buf.seek(0)
-            img_bytes = np.asarray(bytearray(buf.read()), dtype=np.uint8)
-            img = cv2.imdecode(img_bytes, cv2.IMREAD_UNCHANGED)
-            img2 = cv2.copyMakeBorder(
-                img,
-                10,
-                10,
-                10,
-                10,
-                cv2.BORDER_CONSTANT,
-                value=(255, 255, 255))
-            fn = 'tmp.png'
-            cv2.imwrite(fn, img2)
-
-            await ctx.send(file=discord.File(fp=fn))
-
-            os.remove(fn)
-        else:
+        
+        tex = ""
+        sp = ""
+        if "$$" in ctx.message.content:
+            sp = ctx.message.content.split('$$')
+        elif "$" in ctx.message.content:
+            sp = ctx.message.content.split('$')
+            
+        if (len(sp) < 3):
             await ctx.send(
                 'PLEASE USE \'$\' AROUND YOUR LATEX EQUATIONS. CHIRP.')
+            return
+
+        up = int(len(sp) / 2)
+        for i in range(up):
+            tex += "\[" + sp[2 * i + 1] + "\]"
+
+        buf = BytesIO()
+        preview(tex, viewer='BytesIO', outputbuffer=buf, euler=False)
+        buf.seek(0)
+        img_bytes = np.asarray(bytearray(buf.read()), dtype=np.uint8)
+        img = cv2.imdecode(img_bytes, cv2.IMREAD_UNCHANGED)
+        img2 = cv2.copyMakeBorder(
+            img,
+            10,
+            10,
+            10,
+            10,
+            cv2.BORDER_CONSTANT,
+            value=(255, 255, 255))
+        fn = 'tmp.png'
+        cv2.imwrite(fn, img2)
+
+        await ctx.send(file=discord.File(fp=fn))
+
+        os.remove(fn)
 
     @commands.command()
     async def search(self, ctx, *, query: str):
