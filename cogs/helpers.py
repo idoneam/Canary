@@ -302,22 +302,22 @@ class Helpers():
     async def tex(self, ctx, *, query: str):
         """Parses and prints LaTeX equations."""
         await ctx.trigger_typing()
-        
+
         tex = ""
         sp = ""
         if "$$" in ctx.message.content:
             sp = ctx.message.content.split('$$')
         elif "$" in ctx.message.content:
             sp = ctx.message.content.split('$')
-            
-        if (len(sp) < 3):
+
+        if len(sp) < 3:
             await ctx.send(
                 'PLEASE USE \'$\' AROUND YOUR LATEX EQUATIONS. CHIRP.')
             return
 
         up = int(len(sp) / 2)
         for i in range(up):
-            tex += "\[" + sp[2 * i + 1] + "\]"
+            tex += "\\[" + sp[2 * i + 1] + "\\]"
 
         buf = BytesIO()
         preview(tex, viewer='BytesIO', outputbuffer=buf, euler=False)
@@ -325,13 +325,7 @@ class Helpers():
         img_bytes = np.asarray(bytearray(buf.read()), dtype=np.uint8)
         img = cv2.imdecode(img_bytes, cv2.IMREAD_UNCHANGED)
         img2 = cv2.copyMakeBorder(
-            img,
-            10,
-            10,
-            10,
-            10,
-            cv2.BORDER_CONSTANT,
-            value=(255, 255, 255))
+            img, 10, 10, 10, 10, cv2.BORDER_CONSTANT, value=(255, 255, 255))
         fn = 'tmp.png'
         cv2.imwrite(fn, img2)
 
