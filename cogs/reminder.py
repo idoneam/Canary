@@ -392,7 +392,7 @@ class Reminder:
             ]
             p = Pages(
                 ctx,
-                itemList=quote_list_text,
+                item_list=quote_list_text,
                 title="{}'s reminders".format(rem_author.display_name))
             await p.paginate()
 

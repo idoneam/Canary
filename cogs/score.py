@@ -148,10 +148,10 @@ class Score():
 
         p = Pages(
             ctx,
-            itemList=table_list,
+            item_list=table_list,
             title="Upmartlet ranking",
-            displayOption=(0, 1),
-            editableContent=False)
+            display_option=(0, 1),
+            editable_content=False)
 
         await p.paginate()
 

@@ -321,10 +321,10 @@ class Helpers:
 
         p = Pages(
             ctx,
-            itemList=definitions_list_text,
+            item_list=definitions_list_text,
             title="Definitions for '%s' from Urban Dictionary:" % query,
-            displayOption=(3, 1),
-            editableContent=False)
+            display_option=(3, 1),
+            editable_content=False)
 
         await p.paginate()
 
@@ -401,10 +401,10 @@ class Helpers:
 
         p = Pages(
             ctx,
-            itemList=course_list,
+            item_list=course_list,
             title='Courses found for {}'.format(query),
-            displayOption=(2, 10),
-            editableContent=False)
+            display_option=(2, 10),
+            editable_content=False)
         await p.paginate()
 
     @commands.command()

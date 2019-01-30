@@ -165,7 +165,7 @@ class Quotes:
 
         p = Pages(
             ctx,
-            itemList=quote_list_text,
+            item_list=quote_list_text,
             title='Quotes from {}'.format(quote_author.display_name))
 
         await p.paginate()
@@ -263,14 +263,14 @@ class Quotes:
             '[{}] {}'.format(i + 1, quote[2])
             for i, quote in zip(range(len(quote_list)), quote_list)
         ]
-        
+
         p = Pages(
             ctx,
-            itemList=quote_list_text,
+            item_list=quote_list_text,
             title='Quotes that contain "{}"'.format(query),
-            editableContent=False,
-            currentPage=pagenum)
-        
+            editable_content=False,
+            current_page=pagenum)
+
         await p.paginate()
 
     @commands.command(aliases=['gen'])
