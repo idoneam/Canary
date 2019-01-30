@@ -36,7 +36,7 @@ def filterImage(func):
                 args = (result, )
             result = await func(self, ctx, *args)
             retval, buffer = cv2.imencode(f'.{ext}', result,
-                                            [cv2.IMWRITE_JPEG_QUALITY, 100])
+                                          [cv2.IMWRITE_JPEG_QUALITY, 100])
             await ctx.message.delete()
 
             buffer = BytesIO(buffer)
@@ -44,7 +44,7 @@ def filterImage(func):
         except Exception:
             # traceback.print_exc()
             await ctx.send('Error occurred.', delete_after=60)
-            
+
     return wrapper
 
 
