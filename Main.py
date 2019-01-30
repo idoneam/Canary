@@ -47,9 +47,9 @@ async def on_ready():
 @bot.command()
 @commands.has_role("Discord Moderator")
 async def load(ctx, extension_name: str):
-    '''
+    """
     Load a specific extension.
-    '''
+    """
     try:
         bot.load_extension(extension_name)
     except (AttributeError, ImportError) as e:
@@ -62,9 +62,9 @@ async def load(ctx, extension_name: str):
 @bot.command()
 @commands.has_role("Discord Moderator")
 async def unload(ctx, extension_name: str):
-    '''
+    """
     Unload a specific extension.
-    '''
+    """
     bot.unload_extension(extension_name)
     await ctx.send("Unloaded {}.".format(extension_name))
 
@@ -72,9 +72,9 @@ async def unload(ctx, extension_name: str):
 @bot.command()
 @commands.has_role("Discord Moderator")
 async def restart(ctx):
-    '''
+    """
     Restart the bot
-    '''
+    """
     await ctx.send('https://streamable.com/dli1')
     python = sys.executable
     os.execl(python, python, *sys.argv)
@@ -83,9 +83,9 @@ async def restart(ctx):
 @bot.command()
 @commands.has_role("Discord Moderator")
 async def sleep(ctx):
-    '''
+    """
     Shut down the bot
-    '''
+    """
     await ctx.send('Bye')
     await bot.logout()
     print('Bot shut down')
@@ -94,9 +94,9 @@ async def sleep(ctx):
 @bot.command()
 @commands.has_role("idoneam")
 async def update(ctx):
-    '''
+    """
     Update the bot by pulling changes from the git repository
-    '''
+    """
     shell_output = subprocess.check_output("git pull", shell=True)
     status_message = shell_output.decode("unicode_escape")
     await ctx.send('`%s`' % status_message)
@@ -126,9 +126,9 @@ async def on_message(message):
 @bot.command()
 @commands.has_role("Discord Moderator")
 async def backup(ctx):
-    '''
+    """
     Send the current database file to the owner
-    '''
+    """
     current_time = datetime.now(
         tz=timezone('America/New_York')).strftime('%Y%m%d-%H:%M')
     backup_filename = 'Martlet%s.db' % current_time
