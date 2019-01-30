@@ -218,7 +218,7 @@ class Pages:
             if reaction.emoji != emoji:
                 continue
             self.user = user
-            self._turnPage = action
+            self._turn_page = action
             return True
         return False
 
@@ -238,7 +238,7 @@ class Pages:
                     pass
                 finally:
                     break
-            await self._turnPage()
+            await self._turn_page()
             try:
                 await self.message.remove_reaction(reaction, user)
             except:
