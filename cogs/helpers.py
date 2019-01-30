@@ -24,16 +24,31 @@ import datetime
 from .utils.paginator import Pages
 
 
-class Helpers():
+MCGILL_EXAM_URL = "https://www.mcgill.ca/exams/dates"
+
+
+class Helpers:
     def __init__(self, bot):
         self.bot = bot
 
     @commands.command(aliases=['exams'])
     async def exam(self, ctx):
         """Retrieves the exam schedule link from McGill's Exam website."""
-        await ctx.send(
-            'https://www.mcgill.ca/exams/files/exams/final_alpha_dec_2018_12.pdf'
+        await ctx.trigger_typing()
+
+        r = requests.get(MCGILL_EXAM_URL)
+        soup = BeautifulSoup(r.content, "html.parser")
+        link = soup.find("a", href=re.compile("exams/files/exams"))["href"]
+
+        if link[:2] == "//":
+            link = "https:" + link
+
+        exam_schedule = discord.Embed(
+            title="Latest Exam Schedule",
+            description="{}".format(link)
         )
+
+        await ctx.send(embed=exam_schedule)
 
     @commands.command()
     async def weather(self, ctx):
