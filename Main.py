@@ -104,18 +104,22 @@ async def update(ctx):
 
 @bot.event
 async def on_message(message):
+    # TODO: SHOULD BE DB
+    responses = {
+        "dammit marty": ":c",
+        "worm": "walk without rhythm, and it won't attract the worm.",
+        "hey": "whats going on?",
+        "this is so sad, marty play despacito":
+            "`Now playing:` https://www.youtube.com/watch?v=kJQP7kiw5Fk"
+    }
+
     if message.author == bot.user:
         return
-    if message.content == "dammit marty":
-        await message.channel.send(":c")
-    if message.content == "worm":
-        await message.channel.send(
-            "walk without rhythm, and it won't attract the worm.")
-    if message.content == "hey":
-        await message.channel.send("whats going on?")
-    if message.content == "this is so sad, marty play despacito":
-        await message.channel.send(
-            "`Now playing:` https://www.youtube.com/watch?v=kJQP7kiw5Fk")
+
+    if message.content.lower() in responses:
+        await message.channel.send(responses[message.content.lower()])
+        return
+
     await bot.process_commands(message)
 
 
