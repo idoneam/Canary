@@ -38,6 +38,7 @@ class Helpers:
 
         r = requests.get(MCGILL_EXAM_URL)
         soup = BeautifulSoup(r.content, "html.parser")
+        r.close()
         link = soup.find("a", href=re.compile("exams/files/exams"))["href"]
 
         if link[:2] == "//":
@@ -73,6 +74,7 @@ class Helpers:
         # Get wind
         wind_label = soup.find("dt", string="Wind:")
         # Get windchill, only if it can be found.
+
         try:
             windchill_label = soup.find("a", string="Wind Chill")
             windchill = windchill_label.find_next().get_text().strip(
