@@ -127,8 +127,9 @@ class Pages:
                 text='Page {:02d} of {:02d}'.format(i + 1, page_counter))
             index_start = item_per_page * i
             index_end = item_per_page * (i + 1)
-            for name, val in zip(self.itemList['names'][index_start:index_end],
-                                 self.itemList['values'][index_start:index_end]):
+            for name, val in zip(
+                    self.itemList['names'][index_start:index_end],
+                    self.itemList['values'][index_start:index_end]):
                 em.add_field(name=name, value=val)
             pages_to_send.append(em)
             em = discord.Embed(title=self.title, colour=0xDA291C)

@@ -23,7 +23,6 @@ import os
 import datetime
 from .utils.paginator import Pages
 
-
 MCGILL_EXAM_URL = "https://www.mcgill.ca/exams/dates"
 
 
@@ -45,9 +44,7 @@ class Helpers:
             link = "https:" + link
 
         exam_schedule = discord.Embed(
-            title="Latest Exam Schedule",
-            description="{}".format(link)
-        )
+            title="Latest Exam Schedule", description="{}".format(link))
 
         await ctx.send(embed=exam_schedule)
 
@@ -287,10 +284,7 @@ class Helpers:
             else:
                 value = ' '.join(sections[i][1:])
 
-            em.add_field(
-                name=headers[i],
-                value=value,
-                inline=False)
+            em.add_field(name=headers[i], value=value, inline=False)
 
         await ctx.send(embed=em)
 

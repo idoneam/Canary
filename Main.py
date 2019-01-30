@@ -39,6 +39,19 @@ handler.setFormatter(
 logger.addHandler(handler)
 
 
+# TODO: SHOULD BE DB
+MARTY_RESPONSES = {
+    "dammit marty":
+    ":c",
+    "worm":
+    "walk without rhythm, and it won't attract the worm.",
+    "hey":
+    "whats going on?",
+    "this is so sad, marty play despacito":
+    "`Now playing:` https://www.youtube.com/watch?v=kJQP7kiw5Fk"
+}
+
+
 @bot.event
 async def on_ready():
     print('Logged in as {0} ({1})'.format(bot.user.name, bot.user.id))
@@ -104,20 +117,11 @@ async def update(ctx):
 
 @bot.event
 async def on_message(message):
-    # TODO: SHOULD BE DB
-    responses = {
-        "dammit marty": ":c",
-        "worm": "walk without rhythm, and it won't attract the worm.",
-        "hey": "whats going on?",
-        "this is so sad, marty play despacito":
-            "`Now playing:` https://www.youtube.com/watch?v=kJQP7kiw5Fk"
-    }
-
     if message.author == bot.user:
         return
 
-    if message.content.lower() in responses:
-        await message.channel.send(responses[message.content.lower()])
+    if message.content.lower() in MARTY_RESPONSES:
+        await message.channel.send(MARTY_RESPONSES[message.content.lower()])
         return
 
     await bot.process_commands(message)

@@ -17,6 +17,9 @@ import re
 import random
 from .utils.paginator import Pages
 
+GEN_SPACE_SYMBOLS = re.compile(r"[,“”\".?!]")
+GEN_BLANK_SYMBOLS = re.compile(r"['()`]")
+
 
 class Quotes:
     def __init__(self, bot):
@@ -42,11 +45,11 @@ class Quotes:
 
             # Preprocess the quote to improve chances of getting a nice
             # dictionary going
-            cq = re.sub('[,“”".?!]', ' ', re.sub('[\'()`]', '', q[0].lower()))\
-                .strip()
+            cq = re.sub(GEN_SPACE_SYMBOLS, ' ',
+                        re.sub(GEN_BLANK_SYMBOLS, '', q[0].lower())).strip()
 
             # Split cleaned quote into words by any whitespace.
-            words = re.split('\s+', cq)
+            words = re.split(r'\s+', cq)
 
             # Count up word occurrences in the lookup table in order to
             # eventually build the probability distribution for the key.
@@ -82,11 +85,13 @@ class Quotes:
         """
         Add a quote to a user's quote database.
         """
+
         conn = sqlite3.connect(self.bot.config.db_path)
         c = conn.cursor()
         t = (member.id, member.name, quote, str(ctx.message.created_at))
         c.execute('INSERT INTO Quotes VALUES (?,?,?,?)', t)
         await ctx.send('`Quote added.`')
+
         conn.commit()
         conn.close()
 
@@ -98,52 +103,54 @@ class Quotes:
         """
         Retrieve a quote with a specified keyword / mention.
         """
+
         conn = sqlite3.connect(self.bot.config.db_path)
         c = conn.cursor()
-        t = None
         mentions = ctx.message.mentions
+
         if str1 is None:    # No argument passed
             quotes = c.execute('SELECT ID, Name, Quote FROM Quotes').fetchall()
+
         elif mentions and mentions[0].mention == str1:    # Has args
-            id = mentions[0].id
-            if str2 is None:    # query for user only
-                t = (
-                    id,
-                    '%%',
-                )
-            else:    # query for user and quote
-                t = (id, '%{}%'.format(str2))
+            u_id = mentions[0].id
+            # Query for either user and quote or user only (None)
             c.execute(
-                'SELECT ID, Name, Quote FROM Quotes WHERE ID = ? AND Quote LIKE ?',
-                t)
+                'SELECT ID, Name, Quote FROM Quotes WHERE ID = ? AND Quote '
+                'LIKE ?',
+                (u_id, "%{}%".format(str2 if str2 is not None else "")))
             quotes = c.fetchall()
+
         else:    # query for quote only
             query = str1 if str2 is None else str1 + ' ' + str2
-            t = ('%{}%'.format(query), )
             c.execute('SELECT ID, Name, Quote FROM Quotes WHERE Quote LIKE ?',
-                      t)
+                      ('%{}%'.format(query), ))
             quotes = c.fetchall()
+
         if not quotes:
             conn.close()
             await ctx.send('Quote not found.')
-        else:
-            conn.close()
-            quote_tuple = random.choice(quotes)
-            author_id = int(quote_tuple[0])
-            name = quote_tuple[1]
-            quote = quote_tuple[2]
-            author = discord.utils.get(ctx.guild.members, id=author_id)
-            # get author name, if the user is still on the server, their
-            # current nick will be displayed, otherwise use the name stored
-            # in db
-            author_name = author.display_name if author else name
-            await ctx.send('{} 📣 {}'.format(author_name, quote))
+            return
+
+        conn.close()
+        quote_tuple = random.choice(quotes)
+        author_id = int(quote_tuple[0])
+        name = quote_tuple[1]
+        quote = quote_tuple[2]
+        author = discord.utils.get(ctx.guild.members, id=author_id)
+
+        # get author name, if the user is still on the server, their
+        # current nick will be displayed, otherwise use the name stored
+        # in db
+
+        author_name = author.display_name if author else name
+        await ctx.send('{} 📣 {}'.format(author_name, quote))
 
     @commands.command(aliases=['lq'])
     async def list_quotes(self, ctx, author: discord.Member = None):
         """
         List quotes
         """
+
         await ctx.trigger_typing()
 
         conn = sqlite3.connect(self.bot.config.db_path)
@@ -151,7 +158,7 @@ class Quotes:
 
         quote_author = author if author else ctx.message.author
         author_id = quote_author.id
-        c.execute('SELECT * FROM Quotes WHERE ID = ?', (author_id,))
+        c.execute('SELECT * FROM Quotes WHERE ID = ?', (author_id, ))
         quote_list = c.fetchall()
 
         if not quote_list:
@@ -201,16 +208,15 @@ class Quotes:
                 else:
                     t = (quote_list[index][0], quote_list[index][2])
                     del quote_list[index]
-                    c.execute(
-                        'DELETE FROM Quotes WHERE ID = ? AND Quote = ?', t)
+                    c.execute('DELETE FROM Quotes WHERE ID = ? AND Quote = ?',
+                              t)
                     conn.commit()
 
                     await ctx.send('Quote deleted', delete_after=60)
                     await message.delete()
 
                     p.itemList = [
-                        '[{}] {}'.format(i + 1, quote[2])
-                        for i, quote in zip(
+                        '[{}] {}'.format(i + 1, quote[2]) for i, quote in zip(
                             range(len(quote_list)), quote_list)
                     ]
 
@@ -285,9 +291,8 @@ class Quotes:
 
         # Preprocess seed so that we can use it as a lookup
         if seed is not None:
-            seed = re.sub(
-                '[,“”".?!]', ' ', re.sub('[\'()`]', '', seed.lower()))\
-                .strip()
+            seed = re.sub(GEN_SPACE_SYMBOLS, ' ',
+                          re.sub(GEN_SPACE_SYMBOLS, '', seed.lower())).strip()
         else:
             try:
                 seed = np.random.choice(list(self.mc_table.keys()))

@@ -127,8 +127,7 @@ class Score():
         if not members:
             await ctx.send(
                 "Ranking is not yet available for this server, please "
-                "upvote/downvote moar."
-            )
+                "upvote/downvote moar.")
             return
 
         table = []
