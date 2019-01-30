@@ -17,7 +17,7 @@ from .utils.paginator import Pages
 import re
 
 
-class Reminder():
+class Reminder:
     def __init__(self, bot):
         self.bot = bot
         self.frequencies = {"daily": 1, "weekly": 7, "monthly": 30}
@@ -176,9 +176,9 @@ class Reminder():
         # Matches a natural number
         number_regex = r"[1-9]+[0-9]*(|\.[0-9]+)"
         # Regex for format YYYY-MM-DD
-        YMDRegex = r"(2[0-1][0-9][0-9])[\s./-]((1[0-2]|0?[1-9]))[\s./-](([1-2][0-9]|3[0-1]|0?[1-9]))"
+        ymd_regex = r"(2[0-1][0-9][0-9])[\s./-]((1[0-2]|0?[1-9]))[\s./-](([1-2][0-9]|3[0-1]|0?[1-9]))"
         # Regex for time HH:MM
-        HMRegex = r"\b([0-1]?[0-9]|2[0-4]):([0-5][0-9])"
+        hm_regex = r"\b([0-1]?[0-9]|2[0-4]):([0-5][0-9])"
 
         # Replaces word representation of numbers into numerical representation
         for k, v in replacements:
@@ -224,14 +224,15 @@ class Reminder():
                 first_reminder_segment = segment
                 break
 
-        # They probably dont want their reminder nuked of punctuation, spaces and formatting, so extract from original string
+        # They probably dont want their reminder nuked of punctuation, spaces
+        # and formatting, so extract from original string.
         reminder = quote[quote.index(first_reminder_segment):]
 
         # Date-based reminder triggered by "at" and "on" keywords
         if input_segments[0] == 'at' or input_segments[0] == 'on':
-            date_result = re.search(YMDRegex,
+            date_result = re.search(ymd_regex,
                                     original_input_copy)    # Gets YYYY-mm-dd
-            time_result = re.search(HMRegex,
+            time_result = re.search(hm_regex,
                                     original_input_copy)    # Gets HH:MM
 
             # If both a date and a time is found, continue
@@ -277,9 +278,12 @@ class Reminder():
                         ctx.author.name, reminder, date_result.group(0),
                         time_result.group(0),
                         len(reminders) + 1))
+
                 await ctx.send('Reminder added.')
+
                 conn.commit()
                 conn.close()
+
                 return
 
             # Wrong input feedback depending on what is missing.
@@ -373,42 +377,41 @@ class Reminder():
             pass
         conn = sqlite3.connect(self.bot.config.db_path)
         c = conn.cursor()
-        remAuthor = ctx.message.author
-        author_id = remAuthor.id
+        rem_author = ctx.message.author
+        author_id = rem_author.id
         t = (author_id, )
         c.execute('SELECT * FROM Reminders WHERE ID = ?', t)
-        remList = c.fetchall()
-        if remList:
-            quoteListText = [
+        rem_list = c.fetchall()
+        if rem_list:
+            quote_list_text = [
                 ('[{}] (Frequency: {}' +
                  (' at {}'.format(quote[4].split('.')[0])
                   if quote[3] == 'once' else '') + ') - {}').format(
                       i + 1, quote[3].capitalize(), quote[2])
-                for i, quote in zip(range(len(remList)), remList)
+                for i, quote in zip(range(len(rem_list)), rem_list)
             ]
             p = Pages(
                 ctx,
-                itemList=quoteListText,
-                title="{}'s reminders".format(remAuthor.display_name))
+                itemList=quote_list_text,
+                title="{}'s reminders".format(rem_author.display_name))
             await p.paginate()
 
-            def msgCheck(message):
+            def msg_check(msg):
                 try:
-                    if (
-                            0 <= int(message.content) <= len(remList)
-                    ) and message.author.id == author_id and message.channel == ctx.message.channel:
-                        return True
-                    return False
+                    return (0 <= int(msg.content) <= len(rem_list)
+                            and msg.author.id == author_id
+                            and msg.channel == ctx.message.channel)
                 except ValueError:
                     return False
 
             while p.delete:
                 await ctx.send(
-                    'Delete option selected. Enter a number to specify which reminder you want to delete, or enter 0 to return.',
+                    'Delete option selected. Enter a number to specify which '
+                    'reminder you want to delete, or enter 0 to return.',
                     delete_after=60)
                 try:
                     message = await self.bot.wait_for(
-                        'message', check=msgCheck, timeout=60)
+                        'message', check=msg_check, timeout=60)
                 except asyncio.TimeoutError:
                     await ctx.send(
                         'Command timeout. You may want to run the command again.',
@@ -419,14 +422,12 @@ class Reminder():
                     if index == -1:
                         await ctx.send('Exit delq.', delete_after=60)
                     else:
-                        t = (
-                            remList[index][0],
-                            remList[index][2],
-                        )
-                        del remList[
+                        t = (rem_list[index][0], rem_list[index][2])
+                        del rem_list[
                             index]    # Remove deleted reminder from list.
                         c.execute(
-                            'DELETE FROM Reminders WHERE ID = ? AND Reminder = ?',
+                            'DELETE FROM Reminders WHERE ID = ? AND '
+                            'Reminder = ?',
                             t)
                         conn.commit()
                         await ctx.send('Reminder deleted', delete_after=60)
@@ -435,7 +436,7 @@ class Reminder():
                              (' at {}'.format(quote[4].split('.')[0]) if
                               quote[3] == 'once' else '') + ') - {}').format(
                                   i + 1, quote[3].capitalize(), quote[2])
-                            for i, quote in zip(range(len(remList)), remList)
+                            for i, quote in zip(range(len(rem_list)), rem_list)
                         ]
                     await p.paginate()
             conn.commit()
