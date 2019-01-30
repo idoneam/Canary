@@ -326,12 +326,11 @@ class Helpers():
         img = cv2.imdecode(img_bytes, cv2.IMREAD_UNCHANGED)
         img2 = cv2.copyMakeBorder(
             img, 10, 10, 10, 10, cv2.BORDER_CONSTANT, value=(255, 255, 255))
-        fn = 'tmp.png'
-        cv2.imwrite(fn, img2)
+        fn = 'latexed.png'
+        retval, buf = cv2.imencode('.png', img2)
+        img_bytes = BytesIO(buf)
 
-        await ctx.send(file=discord.File(fp=fn))
-
-        os.remove(fn)
+        await ctx.send(file=discord.File(fp=img_bytes, filename=fn))
 
     @commands.command()
     async def search(self, ctx, *, query: str):
