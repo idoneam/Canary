@@ -11,6 +11,8 @@ import numpy as np
 import cv2
 import math
 from functools import wraps
+from io import BytesIO
+import traceback
 
 
 def filterImage(func):
@@ -20,25 +22,28 @@ def filterImage(func):
         if att is None:
             await ctx.send('Image not found :c', delete_after=15)
         else:
-            src = './tmp/%s' % (att.filename)
-            fn = att.filename.split('.')
-            dst = './tmp/%s-%s.' % (fn[0], func.__name__) + fn[1]
-            await att.save(src)
+            buffer = BytesIO()
+            await att.save(fp=buffer)
+            original_name, ext = att.filename.rsplit('.', 1)
+            fn = f'{original_name}-{func.__name__}.{ext}'
         try:
             await ctx.trigger_typing()
-            result = cv2.imread(src, cv2.IMREAD_UNCHANGED)
+            img_bytes = np.asarray(bytearray(buffer.read()), dtype=np.uint8)
+            result = cv2.imdecode(img_bytes, cv2.IMREAD_UNCHANGED)
             if len(args) == 2:
                 args = (args[0], result)
             else:
                 args = (result, )
             result = await func(self, ctx, *args)
-            cv2.imwrite(dst, result, [cv2.IMWRITE_JPEG_QUALITY, 100])
+            retval, buffer = cv2.imencode(f'.{ext}', result,
+                                          [cv2.IMWRITE_JPEG_QUALITY, 100])
             await ctx.message.delete()
-            await ctx.send(file=discord.File(fp=dst))
-            os.remove(dst)
+
+            buffer = BytesIO(buffer)
+            await ctx.send(file=discord.File(fp=buffer, filename=fn))
         except Exception:
+            # traceback.print_exc()
             await ctx.send('Error occurred.', delete_after=60)
-        os.remove(src)
 
     return wrapper
 

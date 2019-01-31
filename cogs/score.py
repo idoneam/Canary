@@ -118,18 +118,22 @@ class Score():
         Upmartlet Rankings! :^)
         """
         await ctx.trigger_typing()
+
         conn = sqlite3.connect(self.bot.config.db_path)
         c = conn.cursor()
         c.execute("SELECT * FROM Members ORDER BY Score DESC;")
         members = c.fetchall()
+
         if not members:
             await ctx.send(
-                "Ranking is not yet available for this server, please upvote/downvote moar."
-            )
+                "Ranking is not yet available for this server, please "
+                "upvote/downvote moar.")
             return
+
         table = []
         table_list = []
         counter = 1
+
         for (ID, DisplayName, Upmartlet) in members:
             table.append((counter, DisplayName, Upmartlet))
             if counter % 7 == 0 or counter == len(members):
@@ -140,12 +144,14 @@ class Score():
                         tablefmt="fancy_grid"))
                 del table[:]
             counter += 1
+
         p = Pages(
             ctx,
-            itemList=table_list,
+            item_list=table_list,
             title="Upmartlet ranking",
-            displayOption=(0, 1),
-            editableContent=False)
+            display_option=(0, 1),
+            editable_content=False)
+
         await p.paginate()
 
     @commands.command()

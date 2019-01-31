@@ -38,6 +38,18 @@ handler.setFormatter(
     logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
 logger.addHandler(handler)
 
+# TODO: SHOULD BE DB
+MARTY_RESPONSES = {
+    "dammit marty":
+    ":c",
+    "worm":
+    "walk without rhythm, and it won't attract the worm.",
+    "hey":
+    "whats going on?",
+    "this is so sad, marty play despacito":
+    "`Now playing:` https://www.youtube.com/watch?v=kJQP7kiw5Fk"
+}
+
 
 @bot.event
 async def on_ready():
@@ -47,9 +59,9 @@ async def on_ready():
 @bot.command()
 @commands.has_role("Discord Moderator")
 async def load(ctx, extension_name: str):
-    '''
+    """
     Load a specific extension.
-    '''
+    """
     try:
         bot.load_extension(extension_name)
     except (AttributeError, ImportError) as e:
@@ -62,9 +74,9 @@ async def load(ctx, extension_name: str):
 @bot.command()
 @commands.has_role("Discord Moderator")
 async def unload(ctx, extension_name: str):
-    '''
+    """
     Unload a specific extension.
-    '''
+    """
     bot.unload_extension(extension_name)
     await ctx.send("Unloaded {}.".format(extension_name))
 
@@ -72,9 +84,9 @@ async def unload(ctx, extension_name: str):
 @bot.command()
 @commands.has_role("Discord Moderator")
 async def restart(ctx):
-    '''
+    """
     Restart the bot
-    '''
+    """
     await ctx.send('https://streamable.com/dli1')
     python = sys.executable
     os.execl(python, python, *sys.argv)
@@ -83,9 +95,9 @@ async def restart(ctx):
 @bot.command()
 @commands.has_role("Discord Moderator")
 async def sleep(ctx):
-    '''
+    """
     Shut down the bot
-    '''
+    """
     await ctx.send('Bye')
     await bot.logout()
     print('Bot shut down')
@@ -94,9 +106,9 @@ async def sleep(ctx):
 @bot.command()
 @commands.has_role("idoneam")
 async def update(ctx):
-    '''
+    """
     Update the bot by pulling changes from the git repository
-    '''
+    """
     shell_output = subprocess.check_output("git pull", shell=True)
     status_message = shell_output.decode("unicode_escape")
     await ctx.send('`%s`' % status_message)
@@ -106,25 +118,20 @@ async def update(ctx):
 async def on_message(message):
     if message.author == bot.user:
         return
-    if message.content == "dammit marty":
-        await message.channel.send(":c")
-    if message.content == "worm":
-        await message.channel.send(
-            "walk without rhythm, and it won't attract the worm.")
-    if message.content == "hey":
-        await message.channel.send("whats going on?")
-    if message.content == "this is so sad, marty play despacito":
-        await message.channel.send(
-            "`Now playing:` https://www.youtube.com/watch?v=kJQP7kiw5Fk")
+
+    if message.content.lower() in MARTY_RESPONSES:
+        await message.channel.send(MARTY_RESPONSES[message.content.lower()])
+        return
+
     await bot.process_commands(message)
 
 
 @bot.command()
 @commands.has_role("Discord Moderator")
 async def backup(ctx):
-    '''
+    """
     Send the current database file to the owner
-    '''
+    """
     current_time = datetime.now(
         tz=timezone('America/New_York')).strftime('%Y%m%d-%H:%M')
     backup_filename = 'Martlet%s.db' % current_time

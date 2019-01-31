@@ -8,7 +8,7 @@ import asyncio
 import random
 
 
-class Memes():
+class Memes:
     def __init__(self, bot):
         self.bot = bot
 
@@ -106,12 +106,13 @@ class Memes():
         await ctx.send('CHEEP CHEEP')
 
     @commands.command()
-    async def mix(self, ctx, *, inputStr: str = None):
-        """Alternates upper/lower case for input string, input message disappears after"""
-        if inputStr is None:
+    async def mix(self, ctx, *, input_str: str = None):
+        """Alternates upper/lower case for input string. Input message
+        disappears after."""
+        if input_str is None:
             await ctx.send()
         msg = "".join([(c.upper() if random.randint(0, 1) else c.lower())
-                       for c in inputStr])
+                       for c in input_str])
         await ctx.send(msg)
         await ctx.message.delete()
 
