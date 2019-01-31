@@ -17,8 +17,11 @@ import re
 import random
 from .utils.paginator import Pages
 
+GEN_SPACE_SYMBOLS = re.compile(r"[,“”\".?!]")
+GEN_BLANK_SYMBOLS = re.compile(r"['()`]")
 
-class Quotes():
+
+class Quotes:
     def __init__(self, bot):
         self.bot = bot
         self.mc_table = {}
@@ -42,11 +45,11 @@ class Quotes():
 
             # Preprocess the quote to improve chances of getting a nice
             # dictionary going
-            cq = re.sub('[,“”".?!]', ' ', re.sub('[\'()`]', '', q[0].lower()))\
-                .strip()
+            cq = re.sub(GEN_SPACE_SYMBOLS, ' ',
+                        re.sub(GEN_BLANK_SYMBOLS, '', q[0].lower())).strip()
 
             # Split cleaned quote into words by any whitespace.
-            words = re.split('\s+', cq)
+            words = re.split(r'\s+', cq)
 
             # Count up word occurrences in the lookup table in order to
             # eventually build the probability distribution for the key.
@@ -82,11 +85,13 @@ class Quotes():
         """
         Add a quote to a user's quote database.
         """
+
         conn = sqlite3.connect(self.bot.config.db_path)
         c = conn.cursor()
         t = (member.id, member.name, quote, str(ctx.message.created_at))
         c.execute('INSERT INTO Quotes VALUES (?,?,?,?)', t)
         await ctx.send('`Quote added.`')
+
         conn.commit()
         conn.close()
 
@@ -98,164 +103,181 @@ class Quotes():
         """
         Retrieve a quote with a specified keyword / mention.
         """
+
         conn = sqlite3.connect(self.bot.config.db_path)
         c = conn.cursor()
-        t = None
         mentions = ctx.message.mentions
+
         if str1 is None:    # No argument passed
             quotes = c.execute('SELECT ID, Name, Quote FROM Quotes').fetchall()
+
         elif mentions and mentions[0].mention == str1:    # Has args
-            id = mentions[0].id
-            if str2 is None:    # query for user only
-                t = (
-                    id,
-                    '%%',
-                )
-            else:    # query for user and quote
-                t = (id, '%{}%'.format(str2))
+            u_id = mentions[0].id
+            # Query for either user and quote or user only (None)
             c.execute(
-                'SELECT ID, Name, Quote FROM Quotes WHERE ID = ? AND Quote LIKE ?',
-                t)
+                'SELECT ID, Name, Quote FROM Quotes WHERE ID = ? AND Quote '
+                'LIKE ?',
+                (u_id, "%{}%".format(str2 if str2 is not None else "")))
             quotes = c.fetchall()
+
         else:    # query for quote only
             query = str1 if str2 is None else str1 + ' ' + str2
-            t = ('%{}%'.format(query), )
             c.execute('SELECT ID, Name, Quote FROM Quotes WHERE Quote LIKE ?',
-                      t)
+                      ('%{}%'.format(query), ))
             quotes = c.fetchall()
+
         if not quotes:
             conn.close()
             await ctx.send('Quote not found.')
-        else:
-            conn.close()
-            quote_tuple = random.choice(quotes)
-            author_id = int(quote_tuple[0])
-            name = quote_tuple[1]
-            quote = quote_tuple[2]
-            author = discord.utils.get(ctx.guild.members, id=author_id)
-            # get author name, if the user is still on the server, their
-            # current nick will be displayed, otherwise use the name stored
-            # in db
-            author_name = author.display_name if author else name
-            await ctx.send('{} 📣 {}'.format(author_name, quote))
+            return
+
+        conn.close()
+        quote_tuple = random.choice(quotes)
+        author_id = int(quote_tuple[0])
+        name = quote_tuple[1]
+        quote = quote_tuple[2]
+        author = discord.utils.get(ctx.guild.members, id=author_id)
+
+        # get author name, if the user is still on the server, their
+        # current nick will be displayed, otherwise use the name stored
+        # in db
+
+        author_name = author.display_name if author else name
+        await ctx.send('{} 📣 {}'.format(author_name, quote))
 
     @commands.command(aliases=['lq'])
     async def list_quotes(self, ctx, author: discord.Member = None):
         """
         List quotes
         """
+
         await ctx.trigger_typing()
+
         conn = sqlite3.connect(self.bot.config.db_path)
         c = conn.cursor()
-        quoteAuthor = author if author else ctx.message.author
-        author_id = quoteAuthor.id
-        t = (author_id, )
-        c.execute('SELECT * FROM Quotes WHERE ID = ?', t)
-        quoteList = c.fetchall()
-        if quoteList:
-            quoteListText = [
-                '[{}] {}'.format(i + 1, quote[2])
-                for i, quote in zip(range(len(quoteList)), quoteList)
-            ]
-            p = Pages(
-                ctx,
-                itemList=quoteListText,
-                title='Quotes from {}'.format(quoteAuthor.display_name))
-            await p.paginate()
-            index = 0
 
-            def msgCheck(message):
-                try:
-                    if (
-                            0 <= int(message.content) <= len(quoteList)
-                    ) and message.author.id == author_id and message.channel == ctx.message.channel:
-                        return True
-                    return False
-                except ValueError:
-                    return False
+        quote_author = author if author else ctx.message.author
+        author_id = quote_author.id
+        c.execute('SELECT * FROM Quotes WHERE ID = ?', (author_id, ))
+        quote_list = c.fetchall()
 
-            while p.delete:
-                await ctx.send(
-                    'Delete option selected. Enter a number to specify which '
-                    'quote you want to delete, or enter 0 to return.',
-                    delete_after=60)
-                try:
-                    message = await self.bot.wait_for(
-                        'message', check=msgCheck, timeout=60)
-                except asyncio.TimeoutError:
-                    await ctx.send(
-                        'Command timeout. You may want to run the command again.',
-                        delete_after=60)
-                    break
-                else:
-                    index = int(message.content) - 1
-                    if index == -1:
-                        await ctx.send('Exit delq.', delete_after=60)
-                    else:
-                        t = (
-                            quoteList[index][0],
-                            quoteList[index][2],
-                        )
-                        del quoteList[index]
-                        c.execute(
-                            'DELETE FROM Quotes WHERE ID = ? AND Quote = ?', t)
-                        conn.commit()
-                        await ctx.send('Quote deleted', delete_after=60)
-                        await message.delete()
-                        p.itemList = [
-                            '[{}] {}'.format(i + 1, quote[2])
-                            for i, quote in zip(
-                                range(len(quoteList)), quoteList)
-                        ]
-                    await p.paginate()
-            conn.commit()
-            conn.close()
-        else:
+        if not quote_list:
             await ctx.send('No quote found.', delete_after=60)
+            return
+
+        quote_list_text = [
+            '[{}] {}'.format(i + 1, quote[2])
+            for i, quote in zip(range(len(quote_list)), quote_list)
+        ]
+
+        p = Pages(
+            ctx,
+            item_list=quote_list_text,
+            title='Quotes from {}'.format(quote_author.display_name))
+
+        await p.paginate()
+
+        def msg_check(msg):
+            try:
+                return (0 <= int(msg.content) <= len(quote_list)
+                        and msg.author.id == author_id
+                        and msg.channel == ctx.message.channel)
+            except ValueError:
+                return False
+
+        while p.delete:
+            await ctx.send(
+                'Delete option selected. Enter a number to specify which '
+                'quote you want to delete, or enter 0 to return.',
+                delete_after=60)
+
+            try:
+                message = await self.bot.wait_for(
+                    'message', check=msg_check, timeout=60)
+
+            except asyncio.TimeoutError:
+                await ctx.send(
+                    'Command timeout. You may want to run the command again.',
+                    delete_after=60)
+                break
+
+            else:
+                index = int(message.content) - 1
+                if index == -1:
+                    await ctx.send('Exit delq.', delete_after=60)
+                else:
+                    t = (quote_list[index][0], quote_list[index][2])
+                    del quote_list[index]
+                    c.execute('DELETE FROM Quotes WHERE ID = ? AND Quote = ?',
+                              t)
+                    conn.commit()
+
+                    await ctx.send('Quote deleted', delete_after=60)
+                    await message.delete()
+
+                    p.itemList = [
+                        '[{}] {}'.format(i + 1, quote[2]) for i, quote in zip(
+                            range(len(quote_list)), quote_list)
+                    ]
+
+                await p.paginate()
+
+        conn.commit()
+        conn.close()
 
     @commands.command(aliases=['allq', 'aq'])
     async def all_quotes(self, ctx, *, query):
-        '''
+        """
         List all quotes that contain the query string.
         Usage: ?all_quotes [-p pagenum] query
 
         Optional arguments:
         -p pagenum      Choose a page to display
-        '''
+        """
+
         if not query:
             ctx.send('You must provide a query')
             return
+
         query_splitted = query.split()
         pagenum = 1
+
         if '-p' in query_splitted:
             idx = query_splitted.index('-p')
             query_splitted.pop(idx)
+
             try:
                 pagenum = int(query_splitted[idx])
                 query_splitted.pop(idx)
             except Exception:
                 pass
+
         query = " ".join(query_splitted)
         await ctx.trigger_typing()
+
         conn = sqlite3.connect(self.bot.config.db_path)
         c = conn.cursor()
         t = ('%{}%'.format(query), )
         c.execute('SELECT * FROM Quotes WHERE Quote LIKE ?', t)
         quote_list = c.fetchall()
-        if quote_list:
-            quote_list_text = [
-                '[{}] {}'.format(i + 1, quote[2])
-                for i, quote in zip(range(len(quote_list)), quote_list)
-            ]
-            p = Pages(
-                ctx,
-                itemList=quote_list_text,
-                title='Quotes that contain "{}"'.format(query),
-                editableContent=False,
-                currentPage=pagenum)
-            await p.paginate()
-        else:
+
+        if not quote_list:
             await ctx.send('No quote found.', delete_after=60)
+            return
+
+        quote_list_text = [
+            '[{}] {}'.format(i + 1, quote[2])
+            for i, quote in zip(range(len(quote_list)), quote_list)
+        ]
+
+        p = Pages(
+            ctx,
+            item_list=quote_list_text,
+            title='Quotes that contain "{}"'.format(query),
+            editable_content=False,
+            current_page=pagenum)
+
+        await p.paginate()
 
     @commands.command(aliases=['gen'])
     async def generate(self, ctx, seed: str = None, min_length: int = 1):
@@ -269,9 +291,8 @@ class Quotes():
 
         # Preprocess seed so that we can use it as a lookup
         if seed is not None:
-            seed = re.sub(
-                '[,“”".?!]', ' ', re.sub('[\'()`]', '', seed.lower()))\
-                .strip()
+            seed = re.sub(GEN_SPACE_SYMBOLS, ' ',
+                          re.sub(GEN_SPACE_SYMBOLS, '', seed.lower())).strip()
         else:
             try:
                 seed = np.random.choice(list(self.mc_table.keys()))
