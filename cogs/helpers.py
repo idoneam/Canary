@@ -467,6 +467,15 @@ class Helpers:
             status = "up" if value else "down"
             await ctx.send("A printer in {} is {}!".format(key, status))
 
+    @commands.command()
+    async def modpow(self, ctx, a, b, m):
+        """Calculates a^b mod m, where a, b, c are big integers"""
+        try:
+            a, b, m = map(int, (a, b, m))
+            await ctx.send(pow(a, b, m))
+        except ValueError:
+            ctx.send("Input must be integers")
+
 
 def setup(bot):
     bot.add_cog(Helpers(bot))
