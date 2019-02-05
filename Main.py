@@ -120,11 +120,12 @@ async def on_message(message):
         return
 
     if 'open.spotify' in message.content.lower():
-        new_message = message.content.translate({ord('`') : None})
+        new_message = message.content.translate({ord('`'): None})
         author = message.author
 
         await message.delete()
-        await message.channel.send('Spotify link from %s : `%s`' % (author.name, new_message))
+        await message.channel.send(
+            'Spotify link from %s : `%s`' % (author.name, new_message))
 
     if message.content.lower() in MARTY_RESPONSES:
         await message.channel.send(MARTY_RESPONSES[message.content.lower()])
