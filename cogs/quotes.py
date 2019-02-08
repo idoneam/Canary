@@ -146,7 +146,7 @@ class Quotes:
 
         author_name = author.display_name if author else name
         if SNOWFLAKES_ID_PATTERN.search(author_name):
-            author_name = "|| 1337 h4x0r ||"
+            author_name = author_name.replace("<", "\<")
         await ctx.send('{} 📣 {}'.format(author_name, quote))
 
     @commands.command(aliases=['lq'])
