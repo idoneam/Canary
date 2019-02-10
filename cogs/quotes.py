@@ -1,5 +1,4 @@
 #!/usr/bin/python3
-# coding=utf-8
 
 # discord.py requirements
 import discord
@@ -20,7 +19,6 @@ from .utils.paginator import Pages
 
 GEN_SPACE_SYMBOLS = re.compile(r"[,“”\".?!]")
 GEN_BLANK_SYMBOLS = re.compile(r"['()`]")
-SNOWFLAKES_ID_PATTERN = re.compile(r"<(@!|@|#|@&)\d+>")
 
 
 class Quotes:
@@ -144,9 +142,8 @@ class Quotes:
         # current nick will be displayed, otherwise use the name stored
         # in db
 
-        author_name = author.display_name if author else name
-        if SNOWFLAKES_ID_PATTERN.search(author_name):
-            author_name = author_name.replace("<", "\<")
+        author_name_unesc = author.display_name if author else name
+        author_name = " ".join(author_name_unesc)
         await ctx.send('{} 📣 {}'.format(author_name, quote))
 
     @commands.command(aliases=['lq'])
