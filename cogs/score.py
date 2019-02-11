@@ -18,7 +18,8 @@ class Score():
     async def on_ready(self):
         self.guild = self.bot.get_guild(236668784948019202)
         self.UPMARTLET = discord.utils.get(self.guild.emojis, name='upmartlet')
-        self.DOWNMARTLET = discord.utils.get(self.guild.emojis, name='downmartlet')
+        self.DOWNMARTLET = discord.utils.get(
+            self.guild.emojis, name='downmartlet')
 
     async def on_raw_reaction_add(self, payload):
         # Check for Martlet emoji + upmartletting yourself
