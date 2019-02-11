@@ -15,6 +15,12 @@ class Score():
     def __init__(self, bot):
         self.bot = bot
 
+    async def on_ready(self):
+        self.guild = self.bot.get_guild(236668784948019202)
+        self.UPMARTLET = discord.utils.get(self.guild.emojis, name='upmartlet')
+        self.DOWNMARTLET = discord.utils.get(
+            self.guild.emojis, name='downmartlet')
+
     async def on_raw_reaction_add(self, payload):
         # Check for Martlet emoji + upmartletting yourself
         channel = self.bot.get_channel(payload.channel_id)
@@ -27,9 +33,9 @@ class Score():
 
         if user == message.author:
             return
-        if emoji.name == 'upmartlet':
+        if emoji.id == self.UPMARTLET.id:
             score = 1
-        elif emoji.name == 'downmartlet':
+        elif emoji.id == self.DOWNMARTLET.id:
             score = -1
         else:
             return
@@ -66,9 +72,9 @@ class Score():
 
         if user == message.author:
             return
-        if emoji.name == 'upmartlet':
+        if emoji.id == self.UPMARTLET.id:
             score = -1
-        elif emoji.name == 'downmartlet':
+        elif emoji.id == self.DOWNMARTLET.id:
             score = 1
         else:
             return

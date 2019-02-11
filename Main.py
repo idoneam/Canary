@@ -87,7 +87,7 @@ async def unload(ctx, extension_name: str):
 
 
 @bot.command()
-@commands.has_role("Discord Moderator")
+@commands.has_role("idoneam")
 async def restart(ctx):
     """
     Restart the bot
