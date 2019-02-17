@@ -70,24 +70,19 @@ class Images:
                 return msg.attachments[0]
         return None
 
+    def _cv_linear_polar(self, image, flags):
+        h, w = image.shape[:2]
+        r = math.sqrt(width ** 2 + height ** 2) / 2
+        return cv2.linearPolar(image, (w / 2), (h / 2), r, flags)
+
     def _polar(self, image):
-        height, width = image.shape[:2]
-        radius = math.sqrt(width**2 + height**2) / 2
-
-        result = cv2.linearPolar(image, (width / 2, height / 2), radius,
-                                 cv2.INTER_LINEAR + cv2.WARP_FILL_OUTLIERS)
-
-        return result
+        return self._cv_linear_polar(
+            image, cv2.INTER_LINEAR + cv2.WARP_FILL_OUTLIERS)
 
     def _cart(self, image):
-        height, width = image.shape[:2]
-        radius = math.sqrt(width**2 + height**2) / 2
-
-        result = cv2.linearPolar(
-            image, (width / 2, height / 2), radius,
-            cv2.INTER_LINEAR + cv2.WARP_FILL_OUTLIERS + cv2.WARP_INVERSE_MAP)
-
-        return result
+        return self._cv_linear_polar(
+            image, cv2.INTER_LINEAR + cv2.WARP_FILL_OUTLIERS
+            + cv2.WARP_INVERSE_MAP)
 
     @commands.command()
     @filter_image
