@@ -52,7 +52,10 @@ class Score:
         c = conn.cursor()
         # uncomment to enable sqlite3 debugging
         # conn.set_trace_callback(print)
-        t = (score, message.author.id,)
+        t = (
+            score,
+            message.author.id,
+        )
         if not c.execute('SELECT * FROM Members WHERE ID=?', t[1:]).fetchall():
             t = (message.author.id, message.author.display_name, score)
             c.execute('INSERT INTO Members VALUES (?, ?, ?)', t)
@@ -89,7 +92,10 @@ class Score:
 
         conn = sqlite3.connect(self.bot.config.db_path)
         c = conn.cursor()
-        t = (score, message.author.id, )
+        t = (
+            score,
+            message.author.id,
+        )
 
         if not c.execute('SELECT * FROM Members WHERE ID=?', t[1:]).fetchall():
             # No record exists for the user yet
@@ -182,7 +188,11 @@ class Score:
         c.execute("SELECT Score FROM Members WHERE ID = ?", (id, ))
         score = c.fetchone()
         if not score:
-            t = (id, nick, 0, )
+            t = (
+                id,
+                nick,
+                0,
+            )
             c.execute("INSERT INTO Members VALUES (?,?,?)", t)
             conn.commit()
             await ctx.send("{} score is 0.".format(nick))

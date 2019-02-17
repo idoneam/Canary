@@ -72,17 +72,17 @@ class Images:
 
     def _cv_linear_polar(self, image, flags):
         h, w = image.shape[:2]
-        r = math.sqrt(width ** 2 + height ** 2) / 2
+        r = math.sqrt(width**2 + height**2) / 2
         return cv2.linearPolar(image, (w / 2), (h / 2), r, flags)
 
     def _polar(self, image):
-        return self._cv_linear_polar(
-            image, cv2.INTER_LINEAR + cv2.WARP_FILL_OUTLIERS)
+        return self._cv_linear_polar(image,
+                                     cv2.INTER_LINEAR + cv2.WARP_FILL_OUTLIERS)
 
     def _cart(self, image):
         return self._cv_linear_polar(
-            image, cv2.INTER_LINEAR + cv2.WARP_FILL_OUTLIERS
-            + cv2.WARP_INVERSE_MAP)
+            image,
+            cv2.INTER_LINEAR + cv2.WARP_FILL_OUTLIERS + cv2.WARP_INVERSE_MAP)
 
     @commands.command()
     @filter_image
