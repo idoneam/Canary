@@ -10,8 +10,11 @@ import sqlite3
 from tabulate import tabulate
 from .utils.paginator import Pages
 
+UPVOTE_EMOJI = 'upmartlet'
+DOWNVOTE_EMOJI = 'downmartlet'
 
-class Score():
+
+class Score:
     def __init__(self, bot):
         self.bot = bot
 
@@ -27,9 +30,10 @@ class Score():
 
         if user == message.author:
             return
-        if emoji.name == 'upmartlet':
+
+        if emoji.name == UPVOTE_EMOJI:
             score = 1
-        elif emoji.name == 'downmartlet':
+        elif emoji.name == DOWNVOTE_EMOJI:
             score = -1
         else:
             return
@@ -38,19 +42,18 @@ class Score():
         c = conn.cursor()
         # uncomment to enable sqlite3 debugging
         # conn.set_trace_callback(print)
-        t = (message.author.id, )
-        if not c.execute('SELECT * FROM Members WHERE ID=?', t).fetchall():
+        t = (score, message.author.id,)
+        if not c.execute('SELECT * FROM Members WHERE ID=?', t[1:]).fetchall():
             t = (message.author.id, message.author.display_name, score)
-            c.execute('INSERT INTO Members VALUES (?,?,?)', t)
+            c.execute('INSERT INTO Members VALUES (?, ?, ?)', t)
             conn.commit()
             conn.close()
-        else:
-            if score == 1:
-                c.execute('UPDATE Members SET Score=Score+1 WHERE ID=?', t)
-            else:
-                c.execute('UPDATE Members SET Score=Score-1 WHERE ID=?', t)
-            conn.commit()
-            conn.close()
+            return
+
+        # Member record already exists
+        c.execute('UPDATE Members SET Score=Score+? WHERE ID=?', t)
+        conn.commit()
+        conn.close()
 
     async def on_raw_reaction_remove(self, payload):
         # Check for Martlet emoji + upmartletting yourself
@@ -66,51 +69,54 @@ class Score():
 
         if user == message.author:
             return
-        if emoji.name == 'upmartlet':
+        if emoji.name == UPVOTE_EMOJI:
             score = -1
-        elif emoji.name == 'downmartlet':
+        elif emoji.name == DOWNVOTE_EMOJI:
             score = 1
         else:
             return
 
         conn = sqlite3.connect(self.bot.config.db_path)
         c = conn.cursor()
-        t = (message.author.id, )
-        if not c.execute('SELECT * FROM Members WHERE ID=?', t).fetchall():
+        t = (score, message.author.id, )
+
+        if not c.execute('SELECT * FROM Members WHERE ID=?', t[1:]).fetchall():
+            # No record exists for the user yet
             t = (message.author.id, message.author.display_name, score)
-            c.execute('INSERT INTO Members VALUES (?,?,?)', t)
+            c.execute('INSERT INTO Members VALUES (?, ?, ?)', t)
             conn.commit()
             conn.close()
-        else:
-            if score == 1:
-                c.execute('UPDATE Members SET Score=Score+1 WHERE ID=?', t)
-            else:
-                c.execute('UPDATE Members SET Score=Score-1 WHERE ID=?', t)
-            conn.commit()
-            conn.close()
+            return
+
+        # Record exists
+        c.execute('UPDATE Members SET Score=Score+? WHERE ID=?', t)
+        conn.commit()
+        conn.close()
 
     async def on_member_update(self, before, after):
         if before.display_name == after.display_name:
             return
+
+        m_id = after.id
+        new_nick = after.display_name
+        conn = sqlite3.connect(self.bot.config.db_path)
+        c = conn.cursor()
+
+        if not c.execute("SELECT * FROM Members WHERE ID = ?", (m_id, )):
+            c.execute("INSERT INTO Members VALUES (?, ?, ?)", (
+                m_id,
+                new_nick,
+                0,
+            ))
+            conn.commit()
         else:
-            id = after.id
-            new_nick = after.display_name
-            conn = sqlite3.connect(self.bot.config.db_path)
-            c = conn.cursor()
-            if not c.execute("SELECT * FROM Members WHERE ID = ?", (id, )):
-                c.execute("INSERT INTO Members VALUES (?,?,?)", (
-                    id,
-                    new_nick,
-                    0,
-                ))
-                conn.commit()
-            else:
-                c.execute("UPDATE Members SET DisplayName = ? WHERE ID = ?", (
-                    new_nick,
-                    id,
-                ))
-                conn.commit()
-            conn.close()
+            c.execute("UPDATE Members SET DisplayName = ? WHERE ID = ?", (
+                new_nick,
+                m_id,
+            ))
+            conn.commit()
+
+        conn.close()
 
     @commands.command()
     async def ranking(self, ctx):
@@ -165,11 +171,7 @@ class Score():
         c.execute("SELECT Score FROM Members WHERE ID = ?", (id, ))
         score = c.fetchone()
         if not score:
-            t = (
-                id,
-                nick,
-                0,
-            )
+            t = (id, nick, 0, )
             c.execute("INSERT INTO Members VALUES (?,?,?)", t)
             conn.commit()
             await ctx.send("{} score is 0.".format(nick))
