@@ -79,15 +79,10 @@ class Score:
 
         if user == message.author:
             return
-<<<<<<< HEAD
-        if emoji.name == UPVOTE_EMOJI:
-            score = -1
-        elif emoji.name == DOWNVOTE_EMOJI:
-=======
+
         if emoji.id == self.UPMARTLET.id:
             score = -1
         elif emoji.id == self.DOWNMARTLET.id:
->>>>>>> c42032e0d45001c9763e1450e537376bf6c7c757
             score = 1
         else:
             return
