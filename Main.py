@@ -111,7 +111,7 @@ async def update(ctx):
     """
     shell_output = subprocess.check_output("git pull", shell=True)
     status_message = shell_output.decode("unicode_escape")
-    await ctx.send('`%s`' % status_message)
+    await ctx.send('`{}`'.format(status_message))
 
 
 @bot.event
@@ -134,7 +134,7 @@ async def backup(ctx):
     """
     current_time = datetime.now(
         tz=timezone('America/New_York')).strftime('%Y%m%d-%H:%M')
-    backup_filename = 'Martlet%s.db' % current_time
+    backup_filename = 'Martlet{}.db'.format(current_time)
     await ctx.send(
         content='Here you go',
         file=discord.File(fp=bot.config.db_path, filename=backup_filename))
