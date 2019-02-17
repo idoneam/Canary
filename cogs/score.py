@@ -17,6 +17,16 @@ DOWNVOTE_EMOJI = 'downmartlet'
 class Score:
     def __init__(self, bot):
         self.bot = bot
+        self.guild = None
+        self.UPMARTLET = None
+        self.DOWNMARTLET = None
+
+    async def on_ready(self):
+        self.guild = self.bot.get_guild(236668784948019202)
+        self.UPMARTLET = discord.utils.get(
+            self.guild.emojis, name=UPVOTE_EMOJI)
+        self.DOWNMARTLET = discord.utils.get(
+            self.guild.emojis, name=DOWNVOTE_EMOJI)
 
     async def on_raw_reaction_add(self, payload):
         # Check for Martlet emoji + upmartletting yourself
@@ -31,9 +41,9 @@ class Score:
         if user == message.author:
             return
 
-        if emoji.name == UPVOTE_EMOJI:
+        if emoji.id == self.UPMARTLET.id:
             score = 1
-        elif emoji.name == DOWNVOTE_EMOJI:
+        elif emoji.id == self.DOWNMARTLET.id:
             score = -1
         else:
             return
@@ -69,9 +79,15 @@ class Score:
 
         if user == message.author:
             return
+<<<<<<< HEAD
         if emoji.name == UPVOTE_EMOJI:
             score = -1
         elif emoji.name == DOWNVOTE_EMOJI:
+=======
+        if emoji.id == self.UPMARTLET.id:
+            score = -1
+        elif emoji.id == self.DOWNMARTLET.id:
+>>>>>>> c42032e0d45001c9763e1450e537376bf6c7c757
             score = 1
         else:
             return

@@ -142,7 +142,8 @@ class Quotes:
         # current nick will be displayed, otherwise use the name stored
         # in db
 
-        author_name = author.display_name if author else name
+        author_name_unesc = author.display_name if author else name
+        author_name = " ".join(author_name_unesc)
         await ctx.send('{} 📣 {}'.format(author_name, quote))
 
     @commands.command(aliases=['lq'])

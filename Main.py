@@ -60,7 +60,7 @@ async def on_ready():
 @commands.has_role("Discord Moderator")
 async def load(ctx, extension_name: str):
     """
-    Load a specific extension.
+    Load a specific extension. Specify as cogs.<name>
     """
     try:
         bot.load_extension(extension_name)
@@ -75,14 +75,19 @@ async def load(ctx, extension_name: str):
 @commands.has_role("Discord Moderator")
 async def unload(ctx, extension_name: str):
     """
-    Unload a specific extension.
+    Unload a specific extension. Specify as cogs.<name>
     """
-    bot.unload_extension(extension_name)
-    await ctx.send("Unloaded {}.".format(extension_name))
+    try:
+        bot.unload_extension(extension_name)
+    except Exception as e:
+        await ctx.send("```{}: {}\n```".format(type(e).__name__, str(e)))
+        return
+
+    await ctx.send("{} unloaded.".format(extension_name))
 
 
 @bot.command()
-@commands.has_role("Discord Moderator")
+@commands.has_role("idoneam")
 async def restart(ctx):
     """
     Restart the bot
