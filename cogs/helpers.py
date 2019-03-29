@@ -178,7 +178,7 @@ class Helpers:
             return
         search_term = result.group(1) + '-' + result.group(2)
         search_term = re.sub(r'\s+', r'', search_term)
-        url = "http://www.mcgill.ca/study/2018-2019/courses/%s" % search_term
+        url = "http://www.mcgill.ca/study/2019-2020/courses/%s" % search_term
         r = requests.get(url)
         soup = BeautifulSoup(r.content, "html.parser")
         r.close()
@@ -188,7 +188,9 @@ class Helpers:
         if title == 'Page not found':
             await ctx.send("No course found for %s." % query)
             return
-        content = soup.find_all("div", {"class": "content"})[3]
+        content = soup.find(
+            "div", id="block-system-main").find_all("div",
+                                                    {"class": "content"})[1]
         overview = content.p.get_text().strip()
         terms = soup.find_all(
             "p",
