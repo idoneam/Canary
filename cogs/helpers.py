@@ -178,7 +178,7 @@ class Helpers:
             return
         search_term = result.group(1) + '-' + result.group(2)
         search_term = re.sub(r'\s+', r'', search_term)
-        url = "http://www.mcgill.ca/study/2018-2019/courses/%s" % search_term
+        url = "http://www.mcgill.ca/study/2019-2020/courses/%s" % search_term
         r = requests.get(url)
         soup = BeautifulSoup(r.content, "html.parser")
         r.close()
