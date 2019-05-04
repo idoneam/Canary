@@ -17,7 +17,7 @@ from .utils.paginator import Pages
 import re
 
 
-class Reminder:
+class Reminder(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.frequencies = {"daily": 1, "weekly": 7, "monthly": 30}

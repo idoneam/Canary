@@ -8,7 +8,7 @@ import asyncio
 import random
 
 
-class Memes:
+class Memes(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
