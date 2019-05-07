@@ -10,6 +10,7 @@ EMOJI_ALPHABET = [
     u"\U0001F1F5", u"\U0001F1F6", u"\U0001F1F7", u"\U0001F1F8", u"\U0001F1F9"
 ]
 
+
 @commands.command()
 async def poll(ctx, question, *args):
     if len(args) > 20:
