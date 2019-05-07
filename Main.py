@@ -24,7 +24,7 @@ from pytz import timezone
 # List the extensions (modules) that should be loaded on startup.
 startup = [
     "cogs.reminder", "cogs.memes", "cogs.helpers", "cogs.mod", "cogs.score",
-    "cogs.quotes", "cogs.images", "cogs.currency"
+    "cogs.quotes", "cogs.images", "cogs.currency", "cogs.poll"
 ]
 
 bot = commands.Bot(command_prefix='?', case_insensitive=True)
