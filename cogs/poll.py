@@ -1,6 +1,9 @@
+#!/usr/bin/python3
+
 import discord
 import string
 from discord.ext import commands
+import asyncio
 
 ALPHABET = list(string.ascii_uppercase)
 EMOJI_ALPHABET = [
@@ -11,7 +14,7 @@ EMOJI_ALPHABET = [
 ]
 
 
-class Mod:
+class Poll:
     def __init__(self, bot):
         self.bot = bot
 
@@ -46,3 +49,7 @@ class Mod:
         #need to also eventually add options for anonymous voting in DMs
         #restricting to only one choice only and
         #add a duration for polls.
+
+
+def setup(bot):
+    bot.add_cog(Poll(bot))
