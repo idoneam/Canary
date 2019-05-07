@@ -9,8 +9,6 @@ EMOJI_ALPHABET = [
     u"\U0001F1F0", u"\U0001F1F1", u"\U0001F1F2", u"\U0001F1F3", u"\U0001F1F4",
     u"\U0001F1F5", u"\U0001F1F6", u"\U0001F1F7", u"\U0001F1F8", u"\U0001F1F9"
 ]
-client = Bot(command_prefix=BOT_PREFIX)
-
 
 @client.command()
 async def poll(ctx, question, *args):
