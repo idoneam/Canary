@@ -6,10 +6,13 @@ dist: trusty
 python:
  - "3.6"
 
+env:
+    PIPENV_IGNORE_VIRTUALENVS=1
+
 before_install:
  - sed -i "s/KEY/$DISCORD_TOKEN/g" config/config.ini
- 
-install: 
+
+install:
  - pip install pipenv
  - pipenv install --dev
 
