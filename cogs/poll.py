@@ -1,6 +1,6 @@
 import discord
 import string
-from discord.ext.commands import Bot
+from discord.ext.commands import commands
 
 ALPHABET = list(string.ascii_uppercase)
 EMOJI_ALPHABET = [
@@ -9,10 +9,8 @@ EMOJI_ALPHABET = [
     u"\U0001F1F0", u"\U0001F1F1", u"\U0001F1F2", u"\U0001F1F3", u"\U0001F1F4",
     u"\U0001F1F5", u"\U0001F1F6", u"\U0001F1F7", u"\U0001F1F8", u"\U0001F1F9"
 ]
-client = Bot(command_prefix=BOT_PREFIX)
 
-
-@client.command()
+@commands.command()
 async def poll(ctx, question, *args):
     if len(args) > 20:
         await ctx.send("Please use 20 options or less")
