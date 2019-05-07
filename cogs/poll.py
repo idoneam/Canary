@@ -19,7 +19,7 @@ class Poll:
         self.bot = bot
 
     @commands.command()
-    async def poll(ctx, question, *args):
+    async def poll(self, ctx, question, *args):
         if len(args) > 20:
             await ctx.send("Please use 20 options or less")
             return
