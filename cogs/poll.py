@@ -19,8 +19,8 @@ async def poll(ctx, question, *args):
     username = ctx.message.author.name
     pfp = ctx.message.author.avatar_url
     embed = discord.Embed(
-      colour=discord.Colour(0x972b67),
-      description="```{}```**To vote, click on one or many emojis**".format(
+        colour=discord.Colour(0x972b67),
+        description="```{}```**To vote, click on one or many emojis**".format(
             question))    #if single choice is implemented, correct this
     embed.set_author(
         name="{} created a poll with {} choices!".format(username, len(args)),
@@ -40,5 +40,5 @@ async def poll(ctx, question, *args):
         pos += 1
     return
     #need to also eventually add options for anonymous voting in DMs
-    #restricting to only one choice only and 
+    #restricting to only one choice only and
     #add a duration for polls.
