@@ -6,18 +6,23 @@ dist: trusty
 python:
  - "3.6"
 
+env:
+ global:
+  - PIPENV_IGNORE_VIRTUALENVS=1
+  - PIPENV_VERBOSITY=-1
+
 before_install:
  - sed -i "s/KEY/$DISCORD_TOKEN/g" config/config.ini
- 
-install: 
+
+install:
  - pip install pipenv
  - pipenv install --dev
 
 jobs:
   include:
-    - stage: Build
-      script: bash ./test.sh
-      script: pipenv run yapf --diff --recursive .
+   - stage: Build
+     script: bash ./test.sh
+     script: pipenv run yapf --diff --recursive .
 
 notifications:
  email: false
