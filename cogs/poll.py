@@ -11,6 +11,7 @@ EMOJI_ALPHABET = [
 ]
 client = Bot(command_prefix=BOT_PREFIX)
 
+
 @client.command()
 async def poll(ctx, question, *args):
     if len(args) > 20:
@@ -28,12 +29,12 @@ async def poll(ctx, question, *args):
     #eventually add this: embed.set_footer(text="5 users voted • Current winner: D (or top n if specificed) • Options: Non-anonymous, Multiple choice")
 
     pos = 0
-    for arg in args:    
+    for arg in args:
         embed.add_field(name="Option {}".format(ALPHABET[pos]), value=arg)
         pos += 1
 
     bot_message = await ctx.send(embed=embed)
-    
+
     pos = 0
     for arg in args:
         await bot_message.add_reaction(EMOJI_ALPHABET[pos])
