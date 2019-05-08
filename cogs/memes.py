@@ -117,10 +117,8 @@ class Memes:
             await ctx.send()
         msg = "".join([(c.upper() if random.randint(0, 1) else c.lower())
                        for c in input_str])
-        self.mix_command_logger.write(
-            '[{}] AUTHOR: {}, MESSAGE: {}\n'.format(ctx.message.created_at,
-                                                    ctx.message.author,
-                                                    ctx.message.content))
+        self.mix_command_logger.write('[{}] AUTHOR: {}, MESSAGE: {}\n'.format(
+            ctx.message.created_at, ctx.message.author, ctx.message.content))
         await ctx.send(msg)
         await ctx.message.delete()
 
