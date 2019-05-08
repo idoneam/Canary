@@ -11,6 +11,10 @@ import random
 class Memes:
     def __init__(self, bot):
         self.bot = bot
+        self.mix_command_logger = open('mix.log', 'a')
+
+    async def on_disconnect(self):
+        self.mix_command_logger.close()
 
     @commands.command()
     async def lenny(self, ctx):
@@ -113,11 +117,10 @@ class Memes:
             await ctx.send()
         msg = "".join([(c.upper() if random.randint(0, 1) else c.lower())
                        for c in input_str])
-        with open('mix.log', 'a') as f:
-            f.write(
-                str(ctx.message.created_at) + ', AUTHOR: ' +
-                str(ctx.message.author) + ', MSG: \"' + ctx.message.content +
-                '\"\n')
+        self.mix_command_logger.write(
+            '[{}] AUTHOR: {}, MESSAGE: {}\n'.format(ctx.message.created_at,
+                                                    ctx.message.author,
+                                                    ctx.message.content))
         await ctx.send(msg)
         await ctx.message.delete()
 
