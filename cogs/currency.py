@@ -39,7 +39,7 @@ TRANSACTION_ACTIONS = (ACTION_INITIAL_CLAIM, ACTION_CLAIM, ACTION_BET_FLIP,
                        ACTION_BET_ROLL, ACTION_GIFTER, ACTION_GIFTEE)
 
 
-class Currency(commands.Cog):
+class Currency():
     def __init__(self, bot):
         self.bot = bot
         self.currency = self.bot.config.currency
@@ -189,8 +189,9 @@ class Currency(commands.Cog):
 
             metadata = {"channel": ctx.message.channel.id}
 
-            await self.create_bank_transaction(
-                c, ctx.message.author, CLAIM_AMOUNT, ACTION_CLAIM, metadata)
+            await self.create_bank_transaction(c, ctx.message.author,
+                                               CLAIM_AMOUNT, ACTION_CLAIM,
+                                               metadata)
 
             conn.commit()
 
@@ -335,8 +336,8 @@ class Currency(commands.Cog):
         author_name = ctx.message.author.display_name
 
         amount_msg_multiplier = -1 if amount_returned < bet_dec else 1
-        bet_str = self.format_symbol_currency(
-            amount_msg_multiplier * (amount_returned - bet_dec))
+        bet_str = self.format_symbol_currency(amount_msg_multiplier *
+                                              (amount_returned - bet_dec))
 
         await ctx.send(message.format(un=author_name, am=bet_str, re=result))
 

@@ -48,7 +48,7 @@ def filterImage(func):
     return wrapper
 
 
-class Images(commands.Cog):
+class Images():
     def __init__(self, bot):
         self.bot = bot
 

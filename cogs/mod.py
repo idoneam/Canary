@@ -5,7 +5,7 @@ from discord.ext import commands
 import asyncio
 
 
-class Mod(commands.Cog):
+class Mod():
     def __init__(self, bot):
         self.bot = bot
 

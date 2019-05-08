@@ -21,7 +21,7 @@ GEN_SPACE_SYMBOLS = re.compile(r"[,“”\".?!]")
 GEN_BLANK_SYMBOLS = re.compile(r"['()`]")
 
 
-class Quotes(commands.Cog):
+class Quotes():
     def __init__(self, bot):
         self.bot = bot
         self.mc_table = {}
@@ -171,10 +171,9 @@ class Quotes(commands.Cog):
             for i, quote in zip(range(len(quote_list)), quote_list)
         ]
 
-        p = Pages(
-            ctx,
-            item_list=quote_list_text,
-            title='Quotes from {}'.format(quote_author.display_name))
+        p = Pages(ctx,
+                  item_list=quote_list_text,
+                  title='Quotes from {}'.format(quote_author.display_name))
 
         await p.paginate()
 
@@ -193,8 +192,9 @@ class Quotes(commands.Cog):
                 delete_after=60)
 
             try:
-                message = await self.bot.wait_for(
-                    'message', check=msg_check, timeout=60)
+                message = await self.bot.wait_for('message',
+                                                  check=msg_check,
+                                                  timeout=60)
 
             except asyncio.TimeoutError:
                 await ctx.send(
@@ -217,8 +217,8 @@ class Quotes(commands.Cog):
                     await message.delete()
 
                     p.itemList = [
-                        '[{}] {}'.format(i + 1, quote[2]) for i, quote in zip(
-                            range(len(quote_list)), quote_list)
+                        '[{}] {}'.format(i + 1, quote[2])
+                        for i, quote in zip(range(len(quote_list)), quote_list)
                     ]
 
                 await p.paginate()
@@ -271,12 +271,11 @@ class Quotes(commands.Cog):
             for i, quote in zip(range(len(quote_list)), quote_list)
         ]
 
-        p = Pages(
-            ctx,
-            item_list=quote_list_text,
-            title='Quotes that contain "{}"'.format(query),
-            editable_content=False,
-            current_page=pagenum)
+        p = Pages(ctx,
+                  item_list=quote_list_text,
+                  title='Quotes that contain "{}"'.format(query),
+                  editable_content=False,
+                  current_page=pagenum)
 
         await p.paginate()
 
@@ -304,8 +303,8 @@ class Quotes(commands.Cog):
         if seed is None:
             await ctx.send('Markov chain table is empty.', delete_after=60)
         elif seed not in self.mc_table.keys():
-            await ctx.send(
-                'Could not generate anything with that seed.', delete_after=60)
+            await ctx.send('Could not generate anything with that seed.',
+                           delete_after=60)
         else:
             longest_sentence = []
             retries = 0

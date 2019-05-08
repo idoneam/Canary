@@ -29,7 +29,7 @@ from .utils.requests import fetch
 MCGILL_EXAM_URL = "https://www.mcgill.ca/exams/dates"
 
 
-class Helpers(commands.Cog):
+class Helpers():
     def __init__(self, bot):
         self.bot = bot
 
@@ -46,8 +46,8 @@ class Helpers(commands.Cog):
         if link[:2] == "//":
             link = "https:" + link
 
-        exam_schedule = discord.Embed(
-            title="Latest Exam Schedule", description="{}".format(link))
+        exam_schedule = discord.Embed(title="Latest Exam Schedule",
+                                      description="{}".format(link))
 
         await ctx.send(embed=exam_schedule)
 
@@ -129,22 +129,20 @@ class Helpers(commands.Cog):
             alert_content = alert_location.find_next("p").get_text().strip()
             alert_content = ". ".join(alert_content.split(".")).strip()
 
-            weather_alert = discord.Embed(
-                title=alert_title.get_text().strip(),
-                description="**%s** at %s" %
-                (alert_category.get_text().strip(),
-                 alert_date.get_text().strip()),
-                colour=0xFF0000)
-            weather_alert.add_field(
-                name=alert_heading.get_text().strip(),
-                value="**%s**\n%s" % (alert_location.strip(), alert_content),
-                inline=True)
+            weather_alert = discord.Embed(title=alert_title.get_text().strip(),
+                                          description="**%s** at %s" %
+                                          (alert_category.get_text().strip(),
+                                           alert_date.get_text().strip()),
+                                          colour=0xFF0000)
+            weather_alert.add_field(name=alert_heading.get_text().strip(),
+                                    value="**%s**\n%s" %
+                                    (alert_location.strip(), alert_content),
+                                    inline=True)
 
         except:
-            weather_alert = discord.Embed(
-                title=alert_title.get_text().strip(),
-                description="No alerts in effect.",
-                colour=0xFF0000)
+            weather_alert = discord.Embed(title=alert_title.get_text().strip(),
+                                          description="No alerts in effect.",
+                                          colour=0xFF0000)
 
         # TODO Finish final message. Test on no-alert condition.
 
@@ -155,8 +153,8 @@ class Helpers(commands.Cog):
     @commands.command()
     async def wttr(self, ctx):
         """Retrieves Montreal's weather forecast from wttr.in"""
-        await ctx.send('http://wttr.in/Montreal_2mpq_lang=en.png?_=%d' % round(
-            time.time()))
+        await ctx.send('http://wttr.in/Montreal_2mpq_lang=en.png?_=%d' %
+                       round(time.time()))
 
     @commands.command(aliases=["wttrmoon"])
     async def wttr_moon(self, ctx):
@@ -191,9 +189,8 @@ class Helpers(commands.Cog):
         if title == 'Page not found':
             await ctx.send("No course found for %s." % query)
             return
-        content = soup.find(
-            "div", id="block-system-main").find_all("div",
-                                                    {"class": "content"})[1]
+        content = soup.find("div", id="block-system-main").find_all(
+            "div", {"class": "content"})[1]
         overview = content.p.get_text().strip()
         terms = soup.find_all(
             "p",
@@ -271,11 +268,10 @@ class Helpers(commands.Cog):
         if subsection:
             sections.append(subsection)
 
-        em = discord.Embed(
-            title='McGill Important Dates {0} {1}'.format(
-                term, str(current_year)),
-            description=url,
-            colour=0xDA291C)
+        em = discord.Embed(title='McGill Important Dates {0} {1}'.format(
+            term, str(current_year)),
+                           description=url,
+                           colour=0xDA291C)
 
         for i in range(len(headers)):
             if i == 2:
@@ -300,9 +296,9 @@ class Helpers(commands.Cog):
 
         url = "http://api.urbandictionary.com/v0/define?term=%s" % query.replace(
             ' ', '+')
-        r = requests.get(url)
-        definitions = r.json()["list"][:5]
-        r.close()
+
+        definitions = await fetch(url, "json")
+        definitions = definitions["list"][:5]
 
         if not definitions:
             await ctx.send("No definition found for **%s**." % query)
@@ -317,12 +313,11 @@ class Helpers(commands.Cog):
             for entry in definitions
         ]
 
-        p = Pages(
-            ctx,
-            item_list=definitions_list_text,
-            title="Definitions for '%s' from Urban Dictionary:" % query,
-            display_option=(3, 1),
-            editable_content=False)
+        p = Pages(ctx,
+                  item_list=definitions_list_text,
+                  title="Definitions for '%s' from Urban Dictionary:" % query,
+                  display_option=(3, 1),
+                  editable_content=False)
 
         await p.paginate()
 
@@ -352,8 +347,13 @@ class Helpers(commands.Cog):
         buf.seek(0)
         img_bytes = np.asarray(bytearray(buf.read()), dtype=np.uint8)
         img = cv2.imdecode(img_bytes, cv2.IMREAD_UNCHANGED)
-        img2 = cv2.copyMakeBorder(
-            img, 10, 10, 10, 10, cv2.BORDER_CONSTANT, value=(255, 255, 255))
+        img2 = cv2.copyMakeBorder(img,
+                                  10,
+                                  10,
+                                  10,
+                                  10,
+                                  cv2.BORDER_CONSTANT,
+                                  value=(255, 255, 255))
         fn = 'latexed.png'
         retval, buf = cv2.imencode('.png', img2)
         img_bytes = BytesIO(buf)
@@ -375,8 +375,8 @@ class Helpers(commands.Cog):
             url = "http://www.mcgill.ca/study/2018-2019/courses/search\
             ?search_api_views_fulltext=%s&sort_by=field_subject_code&page=%d" % (
                 keyword, pagenum)
-            r = requests.get(url)
-            soup = BeautifulSoup(r.content, "html.parser")
+            r = await fetch(url, "content")
+            soup = BeautifulSoup(r, "html.parser")
             found = soup.find_all("div", {"class": "views-row"})
 
             if len(found) < 1:
@@ -396,12 +396,11 @@ class Helpers(commands.Cog):
             course_list['names'].append(' '.join(title[:2]))
             course_list['values'].append(' '.join(title[2:]))
 
-        p = Pages(
-            ctx,
-            item_list=course_list,
-            title='Courses found for {}'.format(query),
-            display_option=(2, 10),
-            editable_content=False)
+        p = Pages(ctx,
+                  item_list=course_list,
+                  title='Courses found for {}'.format(query),
+                  display_option=(2, 10),
+                  editable_content=False)
         await p.paginate()
 
     @commands.command()
@@ -431,18 +430,17 @@ class Helpers(commands.Cog):
         if m:
             url = 'http://www.xe.com/currencyconverter/convert/?Amount=%s&From=%s&To=%s' % (
                 m.group(1), m.group(3), m.group(7))
-            r = requests.get(url)
-            soup = BeautifulSoup(r.content, "html.parser")
-            r.close()
+            r = await fetch(url, "content")
+            soup = BeautifulSoup(r, "html.parser")
 
             converted_cost = soup.find('span', {
                 'class': 'uccResultAmount'
             }).get_text()
 
             # FIXME: there has to be a more elegant way to print this
-            await ctx.send(
-                "%s %s = %s %s" % (m.group(1), m.group(3).upper(),
-                                   converted_cost, m.group(7).upper()))
+            await ctx.send("%s %s = %s %s" %
+                           (m.group(1), m.group(3).upper(), converted_cost,
+                            m.group(7).upper()))
         else:
             await ctx.send(""":warning: Wrong format.
             The correct format is `?xe <AMOUNT> <CURRENCY> to <CURRENCY>`.
@@ -465,8 +463,7 @@ class Helpers(commands.Cog):
     async def tepid(self, ctx):
         """Retrieves the CTF printers' statuses from tepid.science.mcgill.ca"""
         url = "https://tepid.science.mcgill.ca:8443/tepid/screensaver/queues/status"
-        r = requests.get(url)
-        data = r.json()
+        data = await fetch(url, "json")
         for key, value in data.items():
             status = "up" if value else "down"
             await ctx.send("A printer in {} is {}!".format(key, status))
