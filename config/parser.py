@@ -55,6 +55,7 @@ class Parser:
             "transaction_tax":
             float(config["OtherTax"]["TransactionTax"]),
             "bet_roll_cases":
-            sorted([(int(c), decimal.Decimal(a)) for c, a in br_cases],
-                   key=lambda c: c[0])
+            sorted(
+                [(int(c), decimal.Decimal(a)) for c, a in br_cases],
+                key=lambda c: c[0])
         }

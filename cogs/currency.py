@@ -189,9 +189,8 @@ class Currency():
 
             metadata = {"channel": ctx.message.channel.id}
 
-            await self.create_bank_transaction(c, ctx.message.author,
-                                               CLAIM_AMOUNT, ACTION_CLAIM,
-                                               metadata)
+            await self.create_bank_transaction(
+                c, ctx.message.author, CLAIM_AMOUNT, ACTION_CLAIM, metadata)
 
             conn.commit()
 
@@ -336,8 +335,8 @@ class Currency():
         author_name = ctx.message.author.display_name
 
         amount_msg_multiplier = -1 if amount_returned < bet_dec else 1
-        bet_str = self.format_symbol_currency(amount_msg_multiplier *
-                                              (amount_returned - bet_dec))
+        bet_str = self.format_symbol_currency(
+            amount_msg_multiplier * (amount_returned - bet_dec))
 
         await ctx.send(message.format(un=author_name, am=bet_str, re=result))
 

@@ -62,8 +62,7 @@ class Reminder():
                 else:
                     last_date = datetime.datetime.strptime(
                         reminders[i][5], "%Y-%m-%d %H:%M:%S.%f")
-                    if datetime.datetime.now(
-                    ) - last_date > datetime.timedelta(
+                    if datetime.datetime.now() - last_date > datetime.timedelta(
                             days=self.frequencies[reminders[i][3]]):
                         await member.send("Reminding you to {}! [{:d}]".format(
                             reminders[i][2], i + 1))
@@ -95,30 +94,59 @@ class Reminder():
 
         # Letter numbers to number numbers
         replacements = [
-            (r"twenty[-\s]one", "21"), (r"twenty[-\s]two", "22"),
-            (r"twenty[-\s]three", "23"), (r"twenty[-\s]four", "24"),
-            (r"twenty[-\s]five", "25"), (r"twenty[-\s]six", "26"),
-            (r"twenty[-\s]seven", "27"), (r"twenty[-\s]eight", "28"),
-            (r"twenty[-\s]nine", "29"), (r"thirty[-\s]one", "31"),
-            (r"thirty[-\s]two", "32"), (r"thirty[-\s]three", "33"),
-            (r"thirty[-\s]-four", "34"), (r"thirty[-\s]four", "34"),
-            (r"thirty[-\s]five", "35"), (r"thirty[-\s]six", "36"),
-            (r"thirty[-\s]seven", "37"), (r"thirty[-\s]eight", "38"),
-            (r"thirty[-\s]nine", "39"), (r"forty[-\s]one", "41"),
-            (r"forty[-\s]two", "42"), (r"forty[-\s]three", "43"),
-            (r"forty[-\s]four", "44"), (r"forty[-\s]five", "45"),
-            (r"forty[-\s]six", "46"), (r"forty[-\s]seven", "47"),
-            (r"forty[-\s]eight", "48"), (r"forty[-\s]nine", "49"),
-            ("tomorrow", "1 day"), ("next week", "1 week"), ("later",
-                                                             "6 hours"),
-            ("a", "1"), ("an", "1"), ("zero", "0"), ("no", "0"), ("none", "0"),
-            ("one", "1"), ("two", "2"), ("three", "3"), ("four", "4"),
-            ("five", "5"), ("six", "6"), ("seven", "7"), ("eight", "8"),
-            ("nine", "9"), ("ten", "10"), ("eleven", "11"), ("twelve", "12"),
-            ("thirteen", "13"), ("fourteen", "14"), ("fifteen", "15"),
-            ("sixteen", "16"), ("seventeen", "17"), ("eighteen", "18"),
-            ("nineteen", "19"), ("twenty", "20"), ("thirty", "30"),
-            ("forty", "40"), ("fifty", "50")
+            (r"twenty[-\s]one", "21"), (r"twenty[-\s]two",
+                                        "22"), (r"twenty[-\s]three", "23"),
+            (r"twenty[-\s]four",
+             "24"), (r"twenty[-\s]five",
+                     "25"), (r"twenty[-\s]six",
+                             "26"), (r"twenty[-\s]seven",
+                                     "27"), (r"twenty[-\s]eight",
+                                             "28"), (r"twenty[-\s]nine", "29"),
+            (r"thirty[-\s]one",
+             "31"), (r"thirty[-\s]two",
+                     "32"), (r"thirty[-\s]three",
+                             "33"), (r"thirty[-\s]-four",
+                                     "34"), (r"thirty[-\s]four",
+                                             "34"), (r"thirty[-\s]five", "35"),
+            (r"thirty[-\s]six",
+             "36"), (r"thirty[-\s]seven",
+                     "37"), (r"thirty[-\s]eight",
+                             "38"), (r"thirty[-\s]nine",
+                                     "39"), (r"forty[-\s]one",
+                                             "41"), (r"forty[-\s]two", "42"),
+            (r"forty[-\s]three",
+             "43"), (r"forty[-\s]four",
+                     "44"), (r"forty[-\s]five",
+                             "45"), (r"forty[-\s]six",
+                                     "46"), (r"forty[-\s]seven",
+                                             "47"), (r"forty[-\s]eight", "48"),
+            (r"forty[-\s]nine",
+             "49"), ("tomorrow", "1 day"), ("next week",
+                                            "1 week"), ("later",
+                                                        "6 hours"), ("a", "1"),
+            ("an", "1"), ("zero",
+                          "0"), ("no", "0"), ("none",
+                                              "0"), ("one", "1"), ("two", "2"),
+            ("three", "3"), ("four", "4"), ("five",
+                                            "5"), ("six", "6"), ("seven", "7"),
+            ("eight",
+             "8"), ("nine",
+                    "9"), ("ten",
+                           "10"), ("eleven",
+                                   "11"), ("twelve",
+                                           "12"), ("thirteen",
+                                                   "13"), ("fourteen",
+                                                           "14"), ("fifteen",
+                                                                   "15"),
+            ("sixteen",
+             "16"), ("seventeen",
+                     "17"), ("eighteen",
+                             "18"), ("nineteen",
+                                     "19"), ("twenty",
+                                             "20"), ("thirty",
+                                                     "30"), ("forty",
+                                                             "40"), ("fifty",
+                                                                     "50")
         ]
 
         # Regex for misspellings of time units
@@ -298,9 +326,8 @@ class Reminder():
             minutes=time_offset["minutes"],
             weeks=time_offset["weeks"])    # Time to be reminded on
         if time_now == reminder_time:    # No time in argument, or it's zero.
-            await ctx.send(
-                "Please specify a time! E.g.: `?remindme in 1 hour " +
-                reminder + "`")
+            await ctx.send("Please specify a time! E.g.: `?remindme in 1 hour "
+                           + reminder + "`")
             return
         # Strips the string "to " from reminder messages
         if reminder[:3].lower() == 'to ':
@@ -358,14 +385,16 @@ class Reminder():
         rem_list = c.fetchall()
         if rem_list:
             quote_list_text = [
-                ('[{}] (Frequency: {}' + (' at {}'.format(
-                    quote[4].split('.')[0]) if quote[3] == 'once' else '') +
-                 ') - {}').format(i + 1, quote[3].capitalize(), quote[2])
+                ('[{}] (Frequency: {}' +
+                 (' at {}'.format(quote[4].split('.')[0])
+                  if quote[3] == 'once' else '') + ') - {}').format(
+                      i + 1, quote[3].capitalize(), quote[2])
                 for i, quote in zip(range(len(rem_list)), rem_list)
             ]
-            p = Pages(ctx,
-                      item_list=quote_list_text,
-                      title="{}'s reminders".format(rem_author.display_name))
+            p = Pages(
+                ctx,
+                item_list=quote_list_text,
+                title="{}'s reminders".format(rem_author.display_name))
             await p.paginate()
 
             def msg_check(msg):
@@ -382,9 +411,8 @@ class Reminder():
                     'reminder you want to delete, or enter 0 to return.',
                     delete_after=60)
                 try:
-                    message = await self.bot.wait_for('message',
-                                                      check=msg_check,
-                                                      timeout=60)
+                    message = await self.bot.wait_for(
+                        'message', check=msg_check, timeout=60)
                 except asyncio.TimeoutError:
                     await ctx.send(
                         'Command timeout. You may want to run the command again.',
@@ -403,13 +431,12 @@ class Reminder():
                             'Reminder = ?', t)
                         conn.commit()
                         await ctx.send('Reminder deleted', delete_after=60)
-                        p.itemList = [
-                            ('[{}] (Frequency: {}' +
-                             (' at {}'.format(quote[4].split('.')[0]) if
-                              quote[3] == 'once' else '') + ') - {}').format(
-                                  i + 1, quote[3].capitalize(), quote[2])
-                            for i, quote in zip(range(len(rem_list)), rem_list)
-                        ]
+                        p.itemList = [('[{}] (Frequency: {}' + (
+                            ' at {}'.format(quote[4].split('.')[0])
+                            if quote[3] == 'once' else '') + ') - {}').format(
+                                i + 1, quote[3].capitalize(), quote[2])
+                                      for i, quote in zip(
+                                          range(len(rem_list)), rem_list)]
                     await p.paginate()
             conn.commit()
             conn.close()

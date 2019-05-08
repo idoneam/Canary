@@ -18,8 +18,8 @@ class Score():
     async def on_ready(self):
         self.guild = self.bot.get_guild(236668784948019202)
         self.UPMARTLET = discord.utils.get(self.guild.emojis, name='upmartlet')
-        self.DOWNMARTLET = discord.utils.get(self.guild.emojis,
-                                             name='downmartlet')
+        self.DOWNMARTLET = discord.utils.get(
+            self.guild.emojis, name='downmartlet')
 
     async def on_raw_reaction_add(self, payload):
         # Check for Martlet emoji + upmartletting yourself
@@ -144,17 +144,19 @@ class Score():
             table.append((counter, DisplayName, Upmartlet))
             if counter % 7 == 0 or counter == len(members):
                 table_list.append(
-                    tabulate(table[:counter],
-                             headers=["Rank", "Name", "Score"],
-                             tablefmt="fancy_grid"))
+                    tabulate(
+                        table[:counter],
+                        headers=["Rank", "Name", "Score"],
+                        tablefmt="fancy_grid"))
                 del table[:]
             counter += 1
 
-        p = Pages(ctx,
-                  item_list=table_list,
-                  title="Upmartlet ranking",
-                  display_option=(0, 1),
-                  editable_content=False)
+        p = Pages(
+            ctx,
+            item_list=table_list,
+            title="Upmartlet ranking",
+            display_option=(0, 1),
+            editable_content=False)
 
         await p.paginate()
 

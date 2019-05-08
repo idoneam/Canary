@@ -32,9 +32,8 @@ bot = commands.Bot(command_prefix='?', case_insensitive=True)
 # Logging configuration
 logger = logging.getLogger('discord')
 logger.setLevel(logging.ERROR)
-handler = logging.FileHandler(filename='discord.log',
-                              encoding='utf-8',
-                              mode='w')
+handler = logging.FileHandler(
+    filename='discord.log', encoding='utf-8', mode='w')
 handler.setFormatter(
     logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
 logger.addHandler(handler)
@@ -141,9 +140,9 @@ async def backup(ctx):
     current_time = datetime.now(
         tz=timezone('America/New_York')).strftime('%Y%m%d-%H:%M')
     backup_filename = 'Martlet%s.db' % current_time
-    await ctx.send(content='Here you go',
-                   file=discord.File(fp=bot.config.db_path,
-                                     filename=backup_filename))
+    await ctx.send(
+        content='Here you go',
+        file=discord.File(fp=bot.config.db_path, filename=backup_filename))
 
 
 # Startup extensions
