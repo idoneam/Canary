@@ -60,4 +60,4 @@ and ensure your code conforms to our linting with :
 $ yapf --diff --recursive .
 ```
 ## Contributions
-Contributions are welcome, feel free to fork our repository and Open a Pull Request or Open an Issue.
+Contributions are welcome, feel free to fork our repository and Open a Pull Request or Open an Issue. Please [review our contribution Guidelines](https://github.com/idoneam/Canary/blob/master/.github/contributing.md) before contributing.
