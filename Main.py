@@ -18,7 +18,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Canary. If not, see <https://www.gnu.org/licenses/>.
 
-
 # discord-py requirements
 import discord
 from discord.ext import commands
