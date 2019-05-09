@@ -14,6 +14,7 @@ opencv-python = "*"
 pytz = "*"
 mpmath = "*"
 numpy = "*"
+aiohttp = "*"
 urllib3 = ">=1.24.2"
 
 [requires]

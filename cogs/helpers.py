@@ -7,6 +7,8 @@ import asyncio
 
 # URL access and parsing
 import requests
+import aiohttp
+import async_timeout
 from bs4 import BeautifulSoup
 
 # TeX rendering
@@ -22,11 +24,12 @@ import time
 import os
 import datetime
 from .utils.paginator import Pages
+from .utils.requests import fetch
 
 MCGILL_EXAM_URL = "https://www.mcgill.ca/exams/dates"
 
 
-class Helpers:
+class Helpers():
     def __init__(self, bot):
         self.bot = bot
 
@@ -35,9 +38,9 @@ class Helpers:
         """Retrieves the exam schedule link from McGill's Exam website."""
         await ctx.trigger_typing()
 
-        r = requests.get(MCGILL_EXAM_URL)
-        soup = BeautifulSoup(r.content, "html.parser")
-        r.close()
+        r = await fetch(MCGILL_EXAM_URL, "content")
+
+        soup = BeautifulSoup(r, "html.parser")
         link = soup.find("a", href=re.compile("exams/files/exams"))["href"]
 
         if link[:2] == "//":
@@ -55,9 +58,10 @@ class Helpers:
         await ctx.trigger_typing()
         # Replace link with any city weather link from http://weather.gc.ca/
         url = "http://weather.gc.ca/city/pages/qc-147_metric_e.html"
-        r = requests.get(url)
-        soup = BeautifulSoup(r.content, "html.parser")
-        r.close()
+
+        r = await fetch(url, "content")
+
+        soup = BeautifulSoup(r, "html.parser")
         # Get date
         observed_label = soup.find("dt", string="Date: ")
         # Get temperature
@@ -109,8 +113,8 @@ class Helpers:
         # Weather alerts
 
         alert_url = "https://weather.gc.ca/warnings/report_e.html?qc67"
-        r_alert = requests.get(alert_url)
-        alert_soup = BeautifulSoup(r_alert.content, "html.parser")
+        r_alert = await fetch(alert_url, "content")
+        alert_soup = BeautifulSoup(r_alert, "html.parser")
         # Exists
         alert_title = alert_soup.find("h1", string=re.compile("Alerts.*"))
         # Only gets first <p> of warning. Subsequent paragraphs are ignored.
@@ -179,9 +183,8 @@ class Helpers:
         search_term = result.group(1) + '-' + result.group(2)
         search_term = re.sub(r'\s+', r'', search_term)
         url = "http://www.mcgill.ca/study/2019-2020/courses/%s" % search_term
-        r = requests.get(url)
-        soup = BeautifulSoup(r.content, "html.parser")
-        r.close()
+        r = await fetch(url, "content")
+        soup = BeautifulSoup(r, "html.parser")
 
         # XXX: brute-force parsing at the moment
         title = soup.find_all("h1", {"id": "page-title"})[0].get_text().strip()
@@ -223,9 +226,8 @@ class Helpers:
         await ctx.trigger_typing()
 
         url = 'https://www.mcgill.ca/importantdates/key-dates'
-        r = requests.get(url)
-        soup = BeautifulSoup(r.content, 'html.parser')
-        r.close()
+        r = await fetch(url, "content")
+        soup = BeautifulSoup(r, 'html.parser')
 
         now = datetime.datetime.now()
         current_year = now.year
@@ -299,9 +301,9 @@ class Helpers:
 
         url = "http://api.urbandictionary.com/v0/define?term=%s" % query.replace(
             ' ', '+')
-        r = requests.get(url)
-        definitions = r.json()["list"][:5]
-        r.close()
+
+        definitions = await fetch(url, "json")
+        definitions = definitions["list"][:5]
 
         if not definitions:
             await ctx.send("No definition found for **%s**." % query)
@@ -374,8 +376,8 @@ class Helpers:
             url = "http://www.mcgill.ca/study/2018-2019/courses/search\
             ?search_api_views_fulltext=%s&sort_by=field_subject_code&page=%d" % (
                 keyword, pagenum)
-            r = requests.get(url)
-            soup = BeautifulSoup(r.content, "html.parser")
+            r = await fetch(url, "content")
+            soup = BeautifulSoup(r, "html.parser")
             found = soup.find_all("div", {"class": "views-row"})
 
             if len(found) < 1:
@@ -430,9 +432,8 @@ class Helpers:
         if m:
             url = 'http://www.xe.com/currencyconverter/convert/?Amount=%s&From=%s&To=%s' % (
                 m.group(1), m.group(3), m.group(7))
-            r = requests.get(url)
-            soup = BeautifulSoup(r.content, "html.parser")
-            r.close()
+            r = await fetch(url, "content")
+            soup = BeautifulSoup(r, "html.parser")
 
             converted_cost = soup.find('span', {
                 'class': 'uccResultAmount'
@@ -464,8 +465,7 @@ class Helpers:
     async def tepid(self, ctx):
         """Retrieves the CTF printers' statuses from tepid.science.mcgill.ca"""
         url = "https://tepid.science.mcgill.ca:8443/tepid/screensaver/queues/status"
-        r = requests.get(url)
-        data = r.json()
+        data = await fetch(url, "json")
         for key, value in data.items():
             status = "up" if value else "down"
             await ctx.send("A printer in {} is {}!".format(key, status))

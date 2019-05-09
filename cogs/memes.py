@@ -8,7 +8,7 @@ import asyncio
 import random
 
 
-class Memes:
+class Memes():
     def __init__(self, bot):
         self.bot = bot
         self.mix_command_logger = open('mix.log', 'a')
