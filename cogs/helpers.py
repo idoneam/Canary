@@ -259,7 +259,8 @@ class Helpers():
                     break
                 elif node.name == 'h3':
                     headers.append(node.get_text())
-                    if subsection: sections.append(subsection)
+                    if subsection:
+                        sections.append(subsection)
                     subsection = []
                 else:
                     nodestr = str(node)

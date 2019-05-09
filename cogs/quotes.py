@@ -250,7 +250,7 @@ class Quotes():
             try:
                 pagenum = int(query_splitted[idx])
                 query_splitted.pop(idx)
-            except Exception:
+            except (IndexError, ValueError):
                 pass
 
         query = " ".join(query_splitted)

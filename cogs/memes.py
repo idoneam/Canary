@@ -113,6 +113,11 @@ class Memes():
             await ctx.send()
         msg = "".join([(c.upper() if random.randint(0, 1) else c.lower())
                        for c in input_str])
+        with open('mix.log', 'a') as f:
+            f.write(
+                str(ctx.message.created_at) + ', AUTHOR: ' +
+                str(ctx.message.author) + ', MSG: \"' + ctx.message.content +
+                '\"\n')
         await ctx.send(msg)
         await ctx.message.delete()
 
