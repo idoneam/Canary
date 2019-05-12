@@ -17,7 +17,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Canary. If not, see <https://www.gnu.org/licenses/>.
 
-
 # discord.py requirements
 import discord
 from discord.ext import commands
@@ -31,15 +30,20 @@ import time
 
 ALPHABET = list(string.ascii_uppercase)
 EMOJI_ALPHABET = [
-    u"\U0001F1E6", u"\U0001F1E7", u"\U0001F1E8", u"\U0001F1E9", u"\U0001F1EA", u"\U0001F1EB",
-    u"\U0001F1EC", u"\U0001F1ED", u"\U0001F1EE", u"\U0001F1EF", u"\U0001F1F0", u"\U0001F1F1",
-    u"\U0001F1F2", u"\U0001F1F3", u"\U0001F1F4", u"\U0001F1F5", u"\U0001F1F6", u"\U0001F1F7"
-]  # :regional_indicator_a: to :regional_indicator_r:
+    u"\U0001F1E6", u"\U0001F1E7", u"\U0001F1E8", u"\U0001F1E9", u"\U0001F1EA",
+    u"\U0001F1EB", u"\U0001F1EC", u"\U0001F1ED", u"\U0001F1EE", u"\U0001F1EF",
+    u"\U0001F1F0", u"\U0001F1F1", u"\U0001F1F2", u"\U0001F1F3", u"\U0001F1F4",
+    u"\U0001F1F5", u"\U0001F1F6", u"\U0001F1F7"
+]    # :regional_indicator_a: to :regional_indicator_r:
 TIME_UNITS = {
-    "second": 1, "seconds": 1,
-    "minute": 60, "minutes": 60,
-    "hour": 60 * 60, "hours": 60 * 60,
-    "day": 24 * 60 * 60, "days": 24 * 60 * 60
+    "second": 1,
+    "seconds": 1,
+    "minute": 60,
+    "minutes": 60,
+    "hour": 60 * 60,
+    "hours": 60 * 60,
+    "day": 24 * 60 * 60,
+    "days": 24 * 60 * 60
 }
 
 
@@ -74,27 +78,35 @@ class Poll:
                 try:
                     if args[arg][1] == 't':
                         try:
-                            timeout = float(args[arg+1])
-                            timeout_unit = args[arg+2]
+                            timeout = float(args[arg + 1])
+                            timeout_unit = args[arg + 2]
                             if timeout_unit not in TIME_UNITS:
                                 raise ValueError
                         except (ValueError, IndexError):
-                            await ctx.send(content='Invalid input: Please write a time and a unit of time after -t\n'
-                                                   'Available units: `second(s), minute(s), hour(s), day(s)`\n'
-                                                   'Examples: `-t 5 minutes` `-t 1 hour`')
+                            await ctx.send(
+                                content=
+                                'Invalid input: Please write a time and a unit of time after -t\n'
+                                'Available units: `second(s), minute(s), hour(s), day(s)`\n'
+                                'Examples: `-t 5 minutes` `-t 1 hour`')
                             return
                         skip = 2
                     else:
                         raise ValueError
                 except (ValueError, IndexError):
-                    await ctx.send(content='Invalid input: Could not recognize switch `{}`\nNote: Any argument '
-                                           'beginning with a dash is interpreted to be a switch.'.format(args[arg]))
+                    await ctx.send(
+                        content=
+                        'Invalid input: Could not recognize switch `{}`\nNote: Any argument '
+                        'beginning with a dash is interpreted to be a switch.'.
+                        format(args[arg]))
                     return
             elif question:
                 if len(args[arg]) <= 1024:
                     choices.append(args[arg])
                 else:
-                    await ctx.send(content='Invalid input: Options must be 1024 characters or less')
+                    await ctx.send(
+                        content=
+                        'Invalid input: Options must be 1024 characters or less'
+                    )
                     return
             else:
                 question = args[arg]
@@ -109,7 +121,8 @@ class Poll:
         embed = discord.Embed(
             colour=discord.Colour(0x972b67),
             description="```{}```**To vote, click on one or many emojis**".
-                        format(question))  # if single choice is implemented, don't forget to correct this
+            format(question)
+        )    # if single choice is implemented, don't forget to correct this
         embed.set_author(
             name="{} created a poll with {} choices!".format(
                 username, len(choices)),
@@ -125,7 +138,8 @@ class Poll:
         options_on_page = 0
         char_on_page = len(question)
         for arg in choices:
-            if options_on_page == 0 or (char_on_page + len(arg) < 550 and options_on_page < 7):
+            if options_on_page == 0 or (char_on_page + len(arg) < 550
+                                        and options_on_page < 7):
                 options_list[page_number - 1].append(arg)
                 options_on_page += 1
                 char_on_page += len(arg)
@@ -136,8 +150,10 @@ class Poll:
                 options_on_page = 1
                 char_on_page = len(question) + len(arg)
 
-        embed.set_footer(text="Initializing... Please wait, options will soon appear (Try 1/3)"
-                         .format(len(options_list)))
+        embed.set_footer(
+            text=
+            "Initializing... Please wait, options will soon appear (Try 1/3)"
+            .format(len(options_list)))
         msg = await ctx.send(embed=embed)
 
         # add the emojis to the message
@@ -159,8 +175,11 @@ class Poll:
                     failed = True
                     break
                 else:
-                    embed.set_footer(text="Was unable to put all reactions on message. Please don't add any emoji "
-                                          "until this text disappears. (Try {}/3)".format(tries+1))
+                    embed.set_footer(
+                        text=
+                        "Was unable to put all reactions on message. Please don't add any emoji "
+                        "until this text disappears. (Try {}/3)".format(tries +
+                                                                        1))
                     await msg.edit(embed=embed)
                     await msg.clear_reactions()
 
@@ -175,17 +194,21 @@ class Poll:
 
 
 class Pages:
-    def __init__(self, ctx, msg, options_list, embed, timeout, timeout_unit, failed=False):
+    def __init__(self,
+                 ctx,
+                 msg,
+                 options_list,
+                 embed,
+                 timeout,
+                 timeout_unit,
+                 failed=False):
         self.bot = ctx.bot
         self.user = ctx.author
         self.message = msg
         self.options_list = options_list
         self.embed = embed
         self.failed = failed
-        self.actions = [
-            ('◀', self._prev_page),
-            ('▶', self._next_page)
-        ]
+        self.actions = [('◀', self._prev_page), ('▶', self._next_page)]
         self.currentPage = 0
         self.lastPage = len(options_list) - 1
         self.timeout = timeout
@@ -198,17 +221,21 @@ class Pages:
         # edit the message with the options
         for pages in range(len(self.options_list)):
             for options in self.options_list[pages]:
-                self.embed.add_field(name="Option {}".format(ALPHABET[pos]), value=options)
+                self.embed.add_field(
+                    name="Option {}".format(ALPHABET[pos]), value=options)
                 pos += 1
         if self.failed:
-            self. embed.set_footer(text="Was unable to put all reactions on message and create pages. All 3 tries "
-                                        "failed. Next time, please don't add any emoji before the poll has been "
-                                        "completely initialized")
+            self.embed.set_footer(
+                text=
+                "Was unable to put all reactions on message and create pages. All 3 tries "
+                "failed. Next time, please don't add any emoji before the poll has been "
+                "completely initialized")
         elif self.no_pages:
             self.embed.set_footer()
         else:
-            self.embed.set_footer(text="Timeout reached after {} {}. Showing all pages."
-                                  .format(self.timeout, self.timeout_unit))
+            self.embed.set_footer(
+                text="Timeout reached after {} {}. Showing all pages."
+                .format(self.timeout, self.timeout_unit))
         await self.message.edit(embed=self.embed)
         self.embed.clear_fields()
         return
@@ -223,11 +250,13 @@ class Pages:
             pos += len(self.options_list[pages])
         # edit the message with the options
         for options in self.options_list[self.currentPage]:
-            self.embed.add_field(name="Option {}".format(ALPHABET[pos]), value=options)
+            self.embed.add_field(
+                name="Option {}".format(ALPHABET[pos]), value=options)
             pos += 1
-        self.embed.set_footer(text="Page {} of {} • Will timeout on {}"
-                              .format(self.currentPage+1, len(self.options_list),
-                                      time.asctime(time.localtime(self.timeout_end))))
+        self.embed.set_footer(
+            text="Page {} of {} • Will timeout on {}"
+            .format(self.currentPage + 1, len(self.options_list),
+                    time.asctime(time.localtime(self.timeout_end))))
         await self.message.edit(embed=self.embed)
         self.embed.clear_fields()
         return
@@ -255,8 +284,9 @@ class Pages:
         if self.failed:
             await self._print_fully()
             return
-        if self.timeout * TIME_UNITS[self.timeout_unit] > 60*60*24:
-            await self.message.edit(content="Invalid input: The maximum duration is a day")
+        if self.timeout * TIME_UNITS[self.timeout_unit] > 60 * 60 * 24:
+            await self.message.edit(
+                content="Invalid input: The maximum duration is a day")
             return
         if len(self.options_list) == 1:
             self.no_pages = True
@@ -268,7 +298,9 @@ class Pages:
                 # wait for a user to put a reaction on a message and
                 # call _react_check to check if we must change the page
                 reaction, user = await self.bot.wait_for(
-                        'reaction_add', check=self._react_check, timeout=(self.timeout * TIME_UNITS[self.timeout_unit]))
+                    'reaction_add',
+                    check=self._react_check,
+                    timeout=(self.timeout * TIME_UNITS[self.timeout_unit]))
             except:
                 break
             await self._turn_page()
