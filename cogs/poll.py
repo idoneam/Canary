@@ -149,8 +149,9 @@ class Poll:
                 for arg in choices:
                     await msg.add_reaction(EMOJI_ALPHABET[pos])
                     pos += 1
-                await msg.add_reaction('◀')
-                await msg.add_reaction('▶')
+                if len(options_list) > 1:
+                    await msg.add_reaction('◀')
+                    await msg.add_reaction('▶')
                 break
             except discord.errors.Forbidden:
                 tries += 1
@@ -190,6 +191,7 @@ class Pages:
         self.timeout = timeout
         self.timeout_unit = timeout_unit
         self.timeout_end = time.time() + timeout * TIME_UNITS[timeout_unit]
+        self.no_pages = False
 
     async def _print_fully(self):
         pos = 0
@@ -202,6 +204,8 @@ class Pages:
             self. embed.set_footer(text="Was unable to put all reactions on message and create pages. All 3 tries "
                                         "failed. Next time, please don't add any emoji before the poll has been "
                                         "completely initialized")
+        elif self.no_pages:
+            self.embed.set_footer()
         else:
             self.embed.set_footer(text="Timeout reached after {} {}. Showing all pages."
                                   .format(self.timeout, self.timeout_unit))
@@ -253,6 +257,10 @@ class Pages:
             return
         if self.timeout * TIME_UNITS[self.timeout_unit] > 60*60*24:
             await self.message.edit(content="Invalid input: The maximum duration is a day")
+            return
+        if len(self.options_list) == 1:
+            self.no_pages = True
+            await self._print_fully()
             return
         await self._show_page(0)
         while self.message and time.time() < self.timeout_end:
