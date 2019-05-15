@@ -23,6 +23,7 @@ import asyncio
 
 # Other utilities
 import random
+from .utils.auto_incorrect import auto_incorrect
 
 
 class Memes():
@@ -32,6 +33,19 @@ class Memes():
 
     async def on_disconnect(self):
         self.mix_command_logger.close()
+
+    @commands.command()
+    async def bac(self, ctx, *, input_str: str = None):
+        """
+        Purposefully auto-incorrects inputted sentences
+        """
+        if input_str is None:
+            await ctx.send()
+        msg = auto_incorrect(input_str)
+        self.mix_command_logger.write('[{}] AUTHOR: {}, MESSAGE: {}\n'.format(
+            ctx.message.created_at, ctx.message.author, ctx.message.content))
+        await ctx.send(msg)
+        await ctx.message.delete()
 
     @commands.command()
     async def lenny(self, ctx):
