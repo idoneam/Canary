@@ -30,8 +30,10 @@ class Memes():
     def __init__(self, bot):
         self.bot = bot
         self.mix_command_logger = open('mix.log', 'a')
+        self.bac_command_logger = open('bac.log', 'a')
 
     async def on_disconnect(self):
+        self.bac_command_logger.close()
         self.mix_command_logger.close()
 
     @commands.command()
@@ -42,7 +44,7 @@ class Memes():
         if input_str is None:
             await ctx.send()
         msg = auto_incorrect(input_str)
-        self.mix_command_logger.write('[{}] AUTHOR: {}, MESSAGE: {}\n'.format(
+        self.bac_command_logger.write('[{}] AUTHOR: {}, MESSAGE: {}\n'.format(
             ctx.message.created_at, ctx.message.author, ctx.message.content))
         await ctx.send(msg)
         await ctx.message.delete()
