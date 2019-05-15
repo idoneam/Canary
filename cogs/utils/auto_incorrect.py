@@ -36,6 +36,9 @@ def auto_incorrect(input_str):
         s = s[:i] + sj + si + s[i + 2:]
         return s
 
+    def repeat(s, i):
+        return s[:i] + s[i] + s[i:]
+
     # Given string s and index i, it omits the i-th character.
     def omit(s, i):
         return s[:i] + s[i + 1:]
@@ -53,10 +56,13 @@ def auto_incorrect(input_str):
                 # Decide a random index
                 i = random.randrange(len(w) - 1)
                 # 50/50 chance between omission and swap
-                if random.randrange(2) == 1:
+                choice = random.randrange(3)
+                if choice == 0:
                     outputStr = outputStr + swap(w, i)
-                else:
+                elif choice == 1:
                     outputStr = outputStr + omit(w, i)
+                elif choice == 2:
+                    outputStr = outputStr + repeat(w, i)
             # Leave short words be
             else:
                 outputStr = outputStr + w
