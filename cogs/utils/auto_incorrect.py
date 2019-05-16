@@ -60,6 +60,11 @@ def auto_incorrect(input_str):
                 output_str = output_str + special_cases[w]
             # Words less than 3 letters can't stand omit or swap
             elif len(w) >= 3:
+                # Look for occurence of "ie" and flip it if present
+                i = w.find("ie")
+                if i != -1:
+                    w = w[:i] + "ei" + w[i + 2:]
+
                 # Decide a random index
                 i = random.randrange(len(w) - 1)
                 # 50/50 chance between omission and swap
