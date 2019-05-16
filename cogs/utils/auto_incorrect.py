@@ -6,28 +6,35 @@ def auto_incorrect(input_str):
     chance = 99
     input_str = input_str.split()
 
-    specialCases = {
+    special_cases = {
         "your": "you're",
         "you're": "your",
         "its": "it's",
         "it's": "its",
-        "their": "they're",
+        "their": "theyre",
         "they're": "there",
         "there": "their",
         "lose": "loose",
         "loose": "lose",
+        "chose": "choose",
+        "choose": "chose",
         "effect": "affect",
         "affect": "effect",
         "definitely": "definately",
         "weather": "whether",
         "whether": "weather",
         "then": "than",
+        "than": "then",
+        "until": "untill",
         "an": "a",
         "the": "teh",
-        "like": "liek"
+        "like": "liek",
+        "fucking": "ducking",
+        "sick": "dick",
+        "gum": "cum"
     }
 
-    outputStr = ""
+    output_str = ""
 
     # Given string s and index i, it swaps s[i] and s[i+1] and returns
     def swap(s, i):
@@ -49,8 +56,8 @@ def auto_incorrect(input_str):
         # If jackpot
         if random.randrange(100) < chance:
             # Special cases get priority
-            if w in specialCases:
-                outputStr = outputStr + specialCases[w]
+            if w in special_cases:
+                output_str = output_str + special_cases[w]
             # Words less than 3 letters can't stand omit or swap
             elif len(w) >= 3:
                 # Decide a random index
@@ -58,16 +65,16 @@ def auto_incorrect(input_str):
                 # 50/50 chance between omission and swap
                 choice = random.randrange(3)
                 if choice == 0:
-                    outputStr = outputStr + swap(w, i)
+                    output_str = output_str + swap(w, i)
                 elif choice == 1:
-                    outputStr = outputStr + omit(w, i)
+                    output_str = output_str + omit(w, i)
                 elif choice == 2:
-                    outputStr = outputStr + repeat(w, i)
+                    output_str = output_str + repeat(w, i)
             # Leave short words be
             else:
-                outputStr = outputStr + w
+                output_str = output_str + w
         else:
-            outputStr = outputStr + w
-        outputStr = outputStr + " "
+            output_str = output_str + w
+        output_str = output_str + " "
 
-    return outputStr
+    return output_str
