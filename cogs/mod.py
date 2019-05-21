@@ -29,8 +29,11 @@ class Mod():
     @commands.command()
     async def answer(self, ctx, *args):
         if isinstance(ctx.message.channel, discord.DMChannel):
-            message = "{}".format(" ".join(args))  # to work regardless of whether the person uses apostrophes
-            channel_to_send = self.bot.get_channel(self.bot.config.reception_channel_id)
+            message = "{}".format(
+                " ".join(args)
+            )    # to work regardless of whether the person uses apostrophes
+            channel_to_send = self.bot.get_channel(
+                self.bot.config.reception_channel_id)
             msg = '{} 📣 {}'.format(str(ctx.author.name), message)
             await channel_to_send.send(content=msg)
             await ctx.send("`Message sent`")
@@ -42,9 +45,11 @@ class Mod():
         PM a user on the server using the bot
         """
         dest = user
-        await dest.send(content='{}\n*To answer write* `{}answer "your message here"`'
-                        .format(message, self.bot.config.command_prefix))
-        channel_to_forward = self.bot.get_channel(self.bot.config.reception_channel_id)
+        await dest.send(
+            content='{}\n*To answer write* `{}answer "your message here"`'
+            .format(message, self.bot.config.command_prefix))
+        channel_to_forward = self.bot.get_channel(
+            self.bot.config.reception_channel_id)
         msg = '🐦 ({}) to {}: {}'.format(ctx.author.name, dest.name, message)
         await channel_to_forward.send(msg)
         await ctx.message.delete()
