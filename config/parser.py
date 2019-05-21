@@ -32,6 +32,15 @@ class Parser:
         config.read_file(codecs.open(self.configfile, "r", "utf-8-sig"))
 
         self.discord_key = config['Discord']['Key']
+        
+        self.server_id = int(config['Server']['ServerID'])
+        self.command_prefix = config['Server']['CommandPrefix']
+        self.bot_name = config['Server']['BotName']
+        self.upvote_emoji = config['Server']['UpvoteEmoji']
+        self.downvote_emoji = config['Server']['DownvoteEmoji']
+        self.moderator_role = config['Server']['ModeratorRole']
+        self.developer_role = config['Server']['DeveloperRole']
+        self.reception_channel_id = int(config['Server']['ReceptionChannelID'])
 
         self.welcome = config['Greetings']['Welcome'].split('\n')
         self.goodbye = config['Greetings']['Goodbye'].split('\n')
