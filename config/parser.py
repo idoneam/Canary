@@ -32,7 +32,7 @@ class Parser:
         config.read_file(codecs.open(self.configfile, "r", "utf-8-sig"))
 
         self.discord_key = config['Discord']['Key']
-        
+
         self.server_id = int(config['Server']['ServerID'])
         self.command_prefix = config['Server']['CommandPrefix']
         self.bot_name = config['Server']['BotName']
