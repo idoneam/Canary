@@ -393,8 +393,7 @@ class Reminder():
         if not isinstance(ctx.message.channel, discord.DMChannel):
             await ctx.send(
                 'Slide into my DMs ;). \n `List Reminder feature only available when DMing {}.`'
-                .format(self.bot.config.bot_name)
-            )
+                .format(self.bot.config.bot_name))
             return
         else:
             pass
