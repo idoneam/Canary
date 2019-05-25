@@ -21,8 +21,7 @@ import codecs
 import configparser
 
 import logging
-import decimal      # Currency
-
+import decimal    # Currency
 
 LOG_LEVELS = {
     'critical': logging.CRITICAL,
