@@ -26,11 +26,11 @@ import decimal      # Currency
 
 LOG_LEVELS = {
     'critical': logging.CRITICAL,
-    'error':    logging.ERROR,
-    'warning':  logging.WARNING,
-    'info':     logging.INFO,
-    'debug':    logging.DEBUG,
-    'notset':   logging.NOTSET
+    'error': logging.ERROR,
+    'warning': logging.WARNING,
+    'info': logging.INFO,
+    'debug': logging.DEBUG,
+    'notset': logging.NOTSET
 }
 
 
@@ -47,7 +47,8 @@ class Parser:
         # Server configs
         self.server_id = int(config['Server']['ServerID'])
         self.command_prefix = [
-            s for s in config['Server']['CommandPrefix'].strip().split(',')]
+            s for s in config['Server']['CommandPrefix'].strip().split(',')
+        ]
         self.bot_name = config['Server']['BotName']
         self.upvote_emoji = config['Server']['UpvoteEmoji']
         self.downvote_emoji = config['Server']['DownvoteEmoji']

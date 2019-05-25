@@ -36,9 +36,8 @@ from bot import Canary
 
 # List the extensions (modules) that should be loaded on startup.
 startup = [
-    "cogs.reminder", "cogs.memes", "cogs.helpers",
-    "cogs.mod", "cogs.score", "cogs.quotes",
-    "cogs.images", "cogs.currency"
+    "cogs.reminder", "cogs.memes", "cogs.helpers", "cogs.mod", "cogs.score",
+    "cogs.quotes", "cogs.images", "cogs.currency"
 ]
 
 bot = Canary(case_insensitive=True)
