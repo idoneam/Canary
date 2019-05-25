@@ -29,10 +29,6 @@ from .utils.auto_incorrect import auto_incorrect
 class Memes():
     def __init__(self, bot):
         self.bot = bot
-        self.logger = open('memes.log', 'a')
-
-    async def on_disconnect(self):
-        self.logger.close()
 
     @commands.command()
     async def bac(self, ctx, *, input_str: str = None):
@@ -42,8 +38,8 @@ class Memes():
         if input_str is None:
             await ctx.send()
         msg = auto_incorrect(input_str)
-        self.logger.write('[{}] AUTHOR: {}, MESSAGE: {}\n'.format(
-            ctx.message.created_at, ctx.message.author, ctx.message.content))
+        self.bot.logger.info('?bac invoked: Author: {}, Message: {}\n'.format(
+            ctx.message.author, ctx.message.content))
         await ctx.send(msg)
         await ctx.message.delete()
 
@@ -148,8 +144,8 @@ class Memes():
             await ctx.send()
         msg = "".join([(c.upper() if random.randint(0, 1) else c.lower())
                        for c in input_str])
-        self.logger.write('[{}] AUTHOR: {}, MESSAGE: {}\n'.format(
-            ctx.message.created_at, ctx.message.author, ctx.message.content))
+        self.bot.logger.info('?mix invoked: Author: {}, Message: {}\n'.format(
+            ctx.message.author, ctx.message.content))
         await ctx.send(msg)
         await ctx.message.delete()
 

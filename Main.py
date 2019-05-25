@@ -26,34 +26,22 @@ import asyncio
 # for database
 import sqlite3
 
-# logger
-import logging
-
 # Other utilities
 import os
 import sys
 import subprocess
-from config import parser
-import random
 from datetime import datetime
 from pytz import timezone
+from bot import Canary
 
 # List the extensions (modules) that should be loaded on startup.
 startup = [
-    "cogs.reminder", "cogs.memes", "cogs.helpers", "cogs.mod", "cogs.score",
-    "cogs.quotes", "cogs.images", "cogs.currency"
+    "cogs.reminder", "cogs.memes", "cogs.helpers",
+    "cogs.mod", "cogs.score", "cogs.quotes",
+    "cogs.images", "cogs.currency"
 ]
 
-bot = commands.Bot(command_prefix='?', case_insensitive=True)
-
-# Logging configuration
-logger = logging.getLogger('discord')
-logger.setLevel(logging.ERROR)
-handler = logging.FileHandler(
-    filename='discord.log', encoding='utf-8', mode='a')
-handler.setFormatter(
-    logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
-logger.addHandler(handler)
+bot = Canary(case_insensitive=True)
 
 # TODO: SHOULD BE DB
 MARTY_RESPONSES = {
@@ -70,7 +58,7 @@ MARTY_RESPONSES = {
 
 @bot.event
 async def on_ready():
-    print('Logged in as {0} ({1})'.format(bot.user.name, bot.user.id))
+    bot.logger.info('Logged in as {} ({})'.format(bot.user.name, bot.user.id))
 
 
 @bot.command()
@@ -109,6 +97,7 @@ async def restart(ctx):
     """
     Restart the bot
     """
+    bot.logger.info('Bot restart')
     await ctx.send('https://streamable.com/dli1')
     python = sys.executable
     os.execl(python, python, *sys.argv)
@@ -120,9 +109,9 @@ async def sleep(ctx):
     """
     Shut down the bot
     """
+    bot.logger.info('Received sleep command. Shutting down bot')
     await ctx.send('Bye')
     await bot.logout()
-    print('Bot shut down')
 
 
 @bot.command()
@@ -131,6 +120,7 @@ async def update(ctx):
     """
     Update the bot by pulling changes from the git repository
     """
+    bot.logger.info('Update Git repository')
     shell_output = subprocess.check_output("git pull", shell=True)
     status_message = shell_output.decode("unicode_escape")
     await ctx.send('`{}`'.format(status_message))
@@ -141,8 +131,9 @@ async def on_message(message):
     if message.author == bot.user:
         return
 
-    if message.content.lower() in MARTY_RESPONSES:
-        await message.channel.send(MARTY_RESPONSES[message.content.lower()])
+    key = message.content.lower()
+    if key in MARTY_RESPONSES:
+        await message.channel.send(MARTY_RESPONSES[key])
         return
 
     await bot.process_commands(message)
@@ -160,19 +151,10 @@ async def backup(ctx):
     await ctx.send(
         content='Here you go',
         file=discord.File(fp=bot.config.db_path, filename=backup_filename))
+    bot.logger.info('Database backup')
 
 
-# Startup extensions
-# If statement will only execute if we are running this file (i.e. won't run
-# if it's imported)
 if __name__ == "__main__":
-    bot.config = parser.Parser()
-    conn = sqlite3.connect(bot.config.db_path)
-    c = conn.cursor()
-    with open('./Martlet.schema') as fp:
-        c.executescript(fp.read())
-        conn.commit()
-        conn.close()
     for extension in startup:
         try:
             bot.load_extension(extension)
