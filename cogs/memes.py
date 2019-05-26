@@ -38,7 +38,7 @@ class Memes():
         if input_str is None:
             await ctx.send()
         msg = auto_incorrect(input_str)
-        self.bot.logger.info('?bac invoked: Author: {}, Message: {}\n'.format(
+        self.bot.logger.info('?bac invoked: Author: {}, Message: {}'.format(
             ctx.message.author, ctx.message.content))
         await ctx.send(msg)
         await ctx.message.delete()
@@ -144,7 +144,7 @@ class Memes():
             await ctx.send()
         msg = "".join([(c.upper() if random.randint(0, 1) else c.lower())
                        for c in input_str])
-        self.bot.logger.info('?mix invoked: Author: {}, Message: {}\n'.format(
+        self.bot.logger.info('?mix invoked: Author: {}, Message: {}'.format(
             ctx.message.author, ctx.message.content))
         await ctx.send(msg)
         await ctx.message.delete()
