@@ -41,6 +41,8 @@ startup = [
 ]
 
 bot = Canary(case_insensitive=True)
+moderator_role = bot.config.moderator_role
+developer_role = bot.config.developer_role
 
 # TODO: SHOULD BE DB
 MARTY_RESPONSES = {
@@ -61,7 +63,7 @@ async def on_ready():
 
 
 @bot.command()
-@commands.has_role("Discord Moderator")
+@commands.has_role(moderator_role)
 async def load(ctx, extension_name: str):
     """
     Load a specific extension. Specify as cogs.<name>
@@ -76,7 +78,7 @@ async def load(ctx, extension_name: str):
 
 
 @bot.command()
-@commands.has_role("Discord Moderator")
+@commands.has_role(moderator_role)
 async def unload(ctx, extension_name: str):
     """
     Unload a specific extension. Specify as cogs.<name>
@@ -91,7 +93,7 @@ async def unload(ctx, extension_name: str):
 
 
 @bot.command()
-@commands.has_role("idoneam")
+@commands.has_role(developer_role)
 async def restart(ctx):
     """
     Restart the bot
@@ -103,7 +105,7 @@ async def restart(ctx):
 
 
 @bot.command()
-@commands.has_role("Discord Moderator")
+@commands.has_role(moderator_role)
 async def sleep(ctx):
     """
     Shut down the bot
@@ -114,7 +116,7 @@ async def sleep(ctx):
 
 
 @bot.command()
-@commands.has_role("idoneam")
+@commands.has_role(developer_role)
 async def update(ctx):
     """
     Update the bot by pulling changes from the git repository
@@ -139,7 +141,7 @@ async def on_message(message):
 
 
 @bot.command()
-@commands.has_role("Discord Moderator")
+@commands.has_role(moderator_role)
 async def backup(ctx):
     """
     Send the current database file to the owner
