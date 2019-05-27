@@ -84,7 +84,8 @@ class Currency():
         # transaction-ify a series of bank "transactions".
 
         if action not in TRANSACTION_ACTIONS:
-            self.bot.logger.info("Error: Invalid bank transaction '{}'".format(action))
+            self.bot.logger.info(
+                "Error: Invalid bank transaction '{}'".format(action))
             return
 
         now = int(datetime.datetime.now().timestamp())
