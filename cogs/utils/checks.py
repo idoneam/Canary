@@ -30,7 +30,7 @@ def is_mod():
     def predicate(ctx):
         role = discord.utils.get(ctx.author.roles, name=_mod_role)
         if role is None:
-            raise MissingRole(_mod_role)
+            raise commands.MissingRole(_mod_role)
         return True
     return commands.check(predicate)
 
