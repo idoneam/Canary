@@ -27,9 +27,6 @@ import sqlite3
 from tabulate import tabulate
 from .utils.paginator import Pages
 
-UPVOTE_EMOJI = 'upmartlet'
-DOWNVOTE_EMOJI = 'downmartlet'
-
 
 class Score:
     def __init__(self, bot):
@@ -39,11 +36,11 @@ class Score:
         self.DOWNMARTLET = None
 
     async def on_ready(self):
-        self.guild = self.bot.get_guild(236668784948019202)
+        self.guild = self.bot.get_guild(self.bot.config.server_id)
         self.UPMARTLET = discord.utils.get(
-            self.guild.emojis, name=UPVOTE_EMOJI)
+            self.guild.emojis, name=self.bot.config.upvote_emoji)
         self.DOWNMARTLET = discord.utils.get(
-            self.guild.emojis, name=DOWNVOTE_EMOJI)
+            self.guild.emojis, name=self.bot.config.downvote_emoji)
 
     async def on_raw_reaction_add(self, payload):
         # Check for Martlet emoji + upmartletting yourself

@@ -49,11 +49,8 @@ class Reminder():
         while not self.bot.is_closed():
             conn = sqlite3.connect(self.bot.config.db_path)
             c = conn.cursor()
-            g = (guild for guild in self.bot.guilds
-                 if guild.name == 'McGill University')
-            try:
-                guild = next(g)
-            except StopIteration:
+            guild = self.bot.get_guild(self.bot.config.server_id)
+            if not guild:
                 return
             reminders = c.execute('SELECT * FROM Reminders').fetchall()
             for i in range(len(reminders)):
@@ -105,6 +102,7 @@ class Reminder():
                 '**Usage:** \n `?remindme in 1 hour and 20 minutes and 20 seconds to eat` **or** \n '
                 '`?remindme at 2020-04-30 11:30 to graduate` **or** \n `?remindme daily to sleep`'
             )
+            return
 
         # Copies original reminder message and sets lowercase for regex.
         original_input_copy = quote.lower()
@@ -394,8 +392,8 @@ class Reminder():
         await ctx.trigger_typing()
         if not isinstance(ctx.message.channel, discord.DMChannel):
             await ctx.send(
-                'Slide into my DMs ;). \n `List Reminder feature only available when DMing Marty.`'
-            )
+                'Slide into my DMs ;). \n `List Reminder feature only available when DMing {}.`'
+                .format(self.bot.config.bot_name))
             return
         else:
             pass
