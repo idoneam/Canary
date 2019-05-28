@@ -21,7 +21,8 @@ import discord
 from discord.ext import commands
 import asyncio
 
-from .utils.checks import is_mod
+from .utils.checks import is_moderator
+
 
 class Mod():
     def __init__(self, bot):
@@ -40,7 +41,7 @@ class Mod():
             await ctx.send("`Message sent`")
 
     @commands.command(aliases=['dm'])
-    @is_mod()
+    @is_moderator()
     async def pm(self, ctx, user: discord.User, *, message):
         """
         PM a user on the server using the bot

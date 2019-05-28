@@ -34,6 +34,8 @@ from datetime import datetime
 from pytz import timezone
 from bot import Canary
 
+from cogs.utils.checks import is_developer, is_moderator
+
 # List the extensions (modules) that should be loaded on startup.
 startup = [
     "cogs.reminder", "cogs.memes", "cogs.helpers", "cogs.mod", "cogs.score",
@@ -59,11 +61,12 @@ MARTY_RESPONSES = {
 
 @bot.event
 async def on_ready():
+    sys.stdout.write('Bot is ready, program output will be written to a log file.')
     bot.logger.info('Logged in as {} ({})'.format(bot.user.name, bot.user.id))
 
 
 @bot.command()
-@commands.has_role(moderator_role)
+@is_moderator()
 async def load(ctx, extension_name: str):
     """
     Load a specific extension. Specify as cogs.<name>
@@ -78,7 +81,7 @@ async def load(ctx, extension_name: str):
 
 
 @bot.command()
-@commands.has_role(moderator_role)
+@is_moderator()
 async def unload(ctx, extension_name: str):
     """
     Unload a specific extension. Specify as cogs.<name>
@@ -93,7 +96,7 @@ async def unload(ctx, extension_name: str):
 
 
 @bot.command()
-@commands.has_role(developer_role)
+@is_developer()
 async def restart(ctx):
     """
     Restart the bot
@@ -105,7 +108,7 @@ async def restart(ctx):
 
 
 @bot.command()
-@commands.has_role(moderator_role)
+@is_moderator()
 async def sleep(ctx):
     """
     Shut down the bot
@@ -116,7 +119,7 @@ async def sleep(ctx):
 
 
 @bot.command()
-@commands.has_role(developer_role)
+@is_developer()
 async def update(ctx):
     """
     Update the bot by pulling changes from the git repository
@@ -141,7 +144,7 @@ async def on_message(message):
 
 
 @bot.command()
-@commands.has_role(moderator_role)
+@is_moderator()
 async def backup(ctx):
     """
     Send the current database file to the owner
@@ -160,7 +163,7 @@ if __name__ == "__main__":
         try:
             bot.load_extension(extension)
         except Exception as e:
-            bot.logger.info('Failed to load extension {}\n{}: {}'.format(
+            bot.logger.warning('Failed to load extension {}\n{}: {}'.format(
                 extension,
                 type(e).__name__, e))
     bot.run(bot.config.discord_key)

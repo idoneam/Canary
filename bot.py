@@ -52,14 +52,14 @@ class Canary(commands.Bot):
             self.logger.warning('No path to database configuration file')
             return
 
-        self.logger.info('Initializing SQLite database')
+        self.logger.debug('Initializing SQLite database')
         conn = sqlite3.connect(self.config.db_path)
         c = conn.cursor()
         with open(self.config.db_schema_path) as fp:
             c.executescript(fp.read())
         conn.commit()
         conn.close()
-        self.logger.info('Database is ready')
+        self.logger.debug('Database is ready')
 
     async def on_command_error(self, ctx, error):
         """The event triggered when an error is raised while invoking a command.
@@ -90,13 +90,10 @@ class Canary(commands.Bot):
                 return await ctx.send(
                     'I could not find that member. Please try again.')
 
-        print(
-            'Ignoring exception in command {}:'.format(ctx.command),
-            file=sys.stderr)
-        self.logger.info('Ignoring exception in command {}:'.format(
+        self.logger.error('Ignoring exception in command {}:'.format(
             ctx.command))
         traceback.print_exception(
             type(error), error, error.__traceback__, file=sys.stderr)
-        self.logger.info(''.join(
+        self.logger.error(''.join(
             traceback.format_exception(
                 type(error), error, error.__traceback__)))
