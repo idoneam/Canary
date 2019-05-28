@@ -61,7 +61,8 @@ MARTY_RESPONSES = {
 
 @bot.event
 async def on_ready():
-    sys.stdout.write('Bot is ready, program output will be written to a log file.')
+    sys.stdout.write(
+        'Bot is ready, program output will be written to a log file.')
     bot.logger.info('Logged in as {} ({})'.format(bot.user.name, bot.user.id))
 
 
