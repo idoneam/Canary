@@ -1,4 +1,21 @@
-#!/usr/bin/python3
+# -*- coding: utf-8 -*-
+#
+# Copyright (C) idoneam (2016-2019)
+#
+# This file is part of Canary
+#
+# Canary is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Canary is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Canary. If not, see <https://www.gnu.org/licenses/>.
 
 # discord.py requirements
 import discord
@@ -39,7 +56,7 @@ TRANSACTION_ACTIONS = (ACTION_INITIAL_CLAIM, ACTION_CLAIM, ACTION_BET_FLIP,
                        ACTION_BET_ROLL, ACTION_GIFTER, ACTION_GIFTEE)
 
 
-class Currency:
+class Currency():
     def __init__(self, bot):
         self.bot = bot
         self.currency = self.bot.config.currency
@@ -67,7 +84,8 @@ class Currency:
         # transaction-ify a series of bank "transactions".
 
         if action not in TRANSACTION_ACTIONS:
-            print("Error: Invalid bank transaction '{}'".format(action))
+            self.bot.logger.info(
+                "Error: Invalid bank transaction '{}'".format(action))
             return
 
         now = int(datetime.datetime.now().timestamp())

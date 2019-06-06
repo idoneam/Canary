@@ -1,4 +1,21 @@
-#!usr/bin python3
+# -*- coding: utf-8 -*-
+#
+# Copyright (C) idoneam (2016-2019)
+#
+# This file is part of Canary
+#
+# Canary is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Canary is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Canary. If not, see <https://www.gnu.org/licenses/>.
 
 # discord.py requirements
 import discord
@@ -11,15 +28,19 @@ from tabulate import tabulate
 from .utils.paginator import Pages
 
 
-class Score():
+class Score:
     def __init__(self, bot):
         self.bot = bot
+        self.guild = None
+        self.UPMARTLET = None
+        self.DOWNMARTLET = None
 
     async def on_ready(self):
-        self.guild = self.bot.get_guild(236668784948019202)
-        self.UPMARTLET = discord.utils.get(self.guild.emojis, name='upmartlet')
+        self.guild = self.bot.get_guild(self.bot.config.server_id)
+        self.UPMARTLET = discord.utils.get(
+            self.guild.emojis, name=self.bot.config.upvote_emoji)
         self.DOWNMARTLET = discord.utils.get(
-            self.guild.emojis, name='downmartlet')
+            self.guild.emojis, name=self.bot.config.downvote_emoji)
 
     async def on_raw_reaction_add(self, payload):
         # Check for Martlet emoji + upmartletting yourself
@@ -33,6 +54,7 @@ class Score():
 
         if user == message.author:
             return
+
         if emoji.id == self.UPMARTLET.id:
             score = 1
         elif emoji.id == self.DOWNMARTLET.id:
@@ -44,19 +66,21 @@ class Score():
         c = conn.cursor()
         # uncomment to enable sqlite3 debugging
         # conn.set_trace_callback(print)
-        t = (message.author.id, )
-        if not c.execute('SELECT * FROM Members WHERE ID=?', t).fetchall():
+        t = (
+            score,
+            message.author.id,
+        )
+        if not c.execute('SELECT * FROM Members WHERE ID=?', t[1:]).fetchall():
             t = (message.author.id, message.author.display_name, score)
-            c.execute('INSERT INTO Members VALUES (?,?,?)', t)
+            c.execute('INSERT INTO Members VALUES (?, ?, ?)', t)
             conn.commit()
             conn.close()
-        else:
-            if score == 1:
-                c.execute('UPDATE Members SET Score=Score+1 WHERE ID=?', t)
-            else:
-                c.execute('UPDATE Members SET Score=Score-1 WHERE ID=?', t)
-            conn.commit()
-            conn.close()
+            return
+
+        # Member record already exists
+        c.execute('UPDATE Members SET Score=Score+? WHERE ID=?', t)
+        conn.commit()
+        conn.close()
 
     async def on_raw_reaction_remove(self, payload):
         # Check for Martlet emoji + upmartletting yourself
@@ -72,6 +96,7 @@ class Score():
 
         if user == message.author:
             return
+
         if emoji.id == self.UPMARTLET.id:
             score = -1
         elif emoji.id == self.DOWNMARTLET.id:
@@ -81,42 +106,48 @@ class Score():
 
         conn = sqlite3.connect(self.bot.config.db_path)
         c = conn.cursor()
-        t = (message.author.id, )
-        if not c.execute('SELECT * FROM Members WHERE ID=?', t).fetchall():
+        t = (
+            score,
+            message.author.id,
+        )
+
+        if not c.execute('SELECT * FROM Members WHERE ID=?', t[1:]).fetchall():
+            # No record exists for the user yet
             t = (message.author.id, message.author.display_name, score)
-            c.execute('INSERT INTO Members VALUES (?,?,?)', t)
+            c.execute('INSERT INTO Members VALUES (?, ?, ?)', t)
             conn.commit()
             conn.close()
-        else:
-            if score == 1:
-                c.execute('UPDATE Members SET Score=Score+1 WHERE ID=?', t)
-            else:
-                c.execute('UPDATE Members SET Score=Score-1 WHERE ID=?', t)
-            conn.commit()
-            conn.close()
+            return
+
+        # Record exists
+        c.execute('UPDATE Members SET Score=Score+? WHERE ID=?', t)
+        conn.commit()
+        conn.close()
 
     async def on_member_update(self, before, after):
         if before.display_name == after.display_name:
             return
+
+        m_id = after.id
+        new_nick = after.display_name
+        conn = sqlite3.connect(self.bot.config.db_path)
+        c = conn.cursor()
+
+        if not c.execute("SELECT * FROM Members WHERE ID = ?", (m_id, )):
+            c.execute("INSERT INTO Members VALUES (?, ?, ?)", (
+                m_id,
+                new_nick,
+                0,
+            ))
+            conn.commit()
         else:
-            id = after.id
-            new_nick = after.display_name
-            conn = sqlite3.connect(self.bot.config.db_path)
-            c = conn.cursor()
-            if not c.execute("SELECT * FROM Members WHERE ID = ?", (id, )):
-                c.execute("INSERT INTO Members VALUES (?,?,?)", (
-                    id,
-                    new_nick,
-                    0,
-                ))
-                conn.commit()
-            else:
-                c.execute("UPDATE Members SET DisplayName = ? WHERE ID = ?", (
-                    new_nick,
-                    id,
-                ))
-                conn.commit()
-            conn.close()
+            c.execute("UPDATE Members SET DisplayName = ? WHERE ID = ?", (
+                new_nick,
+                m_id,
+            ))
+            conn.commit()
+
+        conn.close()
 
     @commands.command()
     async def ranking(self, ctx):
