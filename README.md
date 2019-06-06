@@ -65,6 +65,22 @@ You must set certain values in the `config.ini` file, in particular your Discor
 * `[DB]`
     * `Schema`: Location of the Schema file that creates tables in the database (This file already exists so you shouldn't have to change this unless you rename it or change its location).
     * `Path`: Your database file path (will be created there by the bot if it doesn't exist).
+* `[Currency]`
+    * `Name`: The name of the bot currency.
+    * `Symbol`: The currency's symbol (e.g. `$`).
+    * `Precision`: How many decimal digits after the decimal point are "official" for the currency.
+    * `Initial`: How much currency is given out by the `initial_claim` command.
+    * `SalaryBase`: *Currently unused.*
+    * `Inflation`: *Currently unused.*
+* `[IncomeTax]`: *Currently unused.*
+* `[AssetTax]`: *Currently unused.*
+* `[OtherTax]`: *Currently unused.*
+* `[Betting]`:
+    * `RollCases`: Intervals for `bet_roll`. For example, a value of `66, 90, 99, 100` gives the intervals
+      `[1, 66]`, `[67, 90]`, `[91, 99]`, and `[100]`.
+    * `RollReturns`: The multiplier return for each interval. For example, a value of `0, 2, 4, 10` with the intervals
+      described above gives a 0x return for `random <= 66`, a 2x return for `66 < random <= 90`, a 4x return for
+      `90 < random <= 99`, and a 10x return for `random == 100`.
 </p>
 </details>
 
