@@ -72,10 +72,10 @@ You must set certain values in the `config.ini` file, in particular your Discor
     * `Initial`: How much currency is given out by the `initial_claim` command.
     * `SalaryBase`: *Currently unused.*
     * `Inflation`: *Currently unused.*
-* `IncomeTax`: *Currently unused.*
-* `AssetTax`: *Currently unused.*
-* `OtherTax`: *Currently unused.*
-* `Betting`:
+* `[IncomeTax]`: *Currently unused.*
+* `[AssetTax]`: *Currently unused.*
+* `[OtherTax]`: *Currently unused.*
+* `[Betting]`:
     * `RollCases`: Intervals for `bet_roll`. For example, a value of `66, 90, 99, 100` gives the intervals
       `[1, 66]`, `[67, 90]`, `[91, 99]`, and `[100]`.
     * `RollReturns`: The multiplier return for each interval. For example, a value of `0, 2, 4, 10` with the intervals
