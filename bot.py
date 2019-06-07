@@ -28,6 +28,8 @@ import sqlite3
 import sys
 import traceback
 
+__all__ = ['bot', 'developer_role', 'moderator_role']
+
 _parser = parser.Parser()
 command_prefix = _parser.command_prefix
 
@@ -97,3 +99,9 @@ class Canary(commands.Bot):
         self.logger.error(''.join(
             traceback.format_exception(
                 type(error), error, error.__traceback__)))
+
+
+# predefined variables to be imported
+bot = Canary(case_insensitive=True)
+moderator_role = bot.config.moderator_role
+developer_role = bot.config.developer_role

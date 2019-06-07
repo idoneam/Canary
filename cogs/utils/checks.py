@@ -21,7 +21,7 @@
 import discord
 from discord.ext import commands
 
-from Main import developer_role, moderator_role
+from bot import moderator_role, developer_role
 
 
 def is_moderator():
