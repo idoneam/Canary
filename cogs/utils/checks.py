@@ -21,13 +21,14 @@
 import discord
 from discord.ext import commands
 
+from bot import moderator_role, developer_role
+
 
 def is_moderator():
     """Returns True if user has a moderator role, raises an exception otherwise
     """
 
     def predicate(ctx):
-        from Main import moderator_role
         role = discord.utils.get(ctx.author.roles, name=moderator_role)
         if role is None:
             raise commands.MissingRole(moderator_role)
@@ -41,7 +42,6 @@ def is_developer():
     """
 
     def predicate(ctx):
-        from Main import developer_role
         role = discord.utils.get(ctx.author.roles, name=developer_role)
         if role is None:
             raise commands.MissingRole(moderator_role)

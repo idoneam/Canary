@@ -32,19 +32,16 @@ import sys
 import subprocess
 from datetime import datetime
 from pytz import timezone
-from bot import Canary
+from bot import bot
 
 from cogs.utils.checks import is_developer, is_moderator
+
 
 # List the extensions (modules) that should be loaded on startup.
 startup = [
     "cogs.reminder", "cogs.memes", "cogs.helpers", "cogs.mod", "cogs.score",
     "cogs.quotes", "cogs.images", "cogs.currency"
 ]
-
-bot = Canary(case_insensitive=True)
-moderator_role = bot.config.moderator_role
-developer_role = bot.config.developer_role
 
 # TODO: SHOULD BE DB
 MARTY_RESPONSES = {
@@ -62,7 +59,8 @@ MARTY_RESPONSES = {
 @bot.event
 async def on_ready():
     sys.stdout.write(
-        'Bot is ready, program output will be written to a log file.')
+        'Bot is ready, program output will be written to a log file.\n')
+    sys.stdout.flush()
     bot.logger.info('Logged in as {} ({})'.format(bot.user.name, bot.user.id))
 
 
