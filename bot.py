@@ -28,7 +28,6 @@ import sqlite3
 import sys
 import traceback
 
-
 __all__ = ['bot', 'developer_role', 'moderator_role']
 
 _parser = parser.Parser()
@@ -106,5 +105,3 @@ class Canary(commands.Bot):
 bot = Canary(case_insensitive=True)
 moderator_role = bot.config.moderator_role
 developer_role = bot.config.developer_role
-
-
