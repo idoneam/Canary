@@ -31,7 +31,7 @@ def is_moderator():
     def predicate(ctx):
         role = discord.utils.get(ctx.author.roles, name=moderator_role)
         if role is None:
-            raise commands.MissingRole(moderator_role)
+            raise commands.MissingPermissions(moderator_role)
         return True
 
     return commands.check(predicate)
@@ -44,7 +44,7 @@ def is_developer():
     def predicate(ctx):
         role = discord.utils.get(ctx.author.roles, name=developer_role)
         if role is None:
-            raise commands.MissingRole(moderator_role)
+            raise commands.MissingPermissions(moderator_role)
         return True
 
     return commands.check(predicate)
