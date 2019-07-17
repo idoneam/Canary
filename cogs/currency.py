@@ -70,10 +70,12 @@ class Currency():
         conn = sqlite3.connect(self.bot.config.db_path)
         c = conn.cursor()
         c.execute(
-            "SELECT BT.UserID, M.DisplayName, IFNULL(SUM(BT.Amount), 0) FROM BankTransactions AS BT, Members as M "
+            "SELECT BT.UserID, M.DisplayName, IFNULL(SUM(BT.Amount), 0) "
+            "FROM BankTransactions AS BT, Members as M "
             "WHERE BT.UserID = M.ID GROUP BY UserID")
 
-        results = [(user_id, name, self.db_to_currency(balance)) for user_id, name, balance in c.fetchall()]
+        results = [(user_id, name, self.db_to_currency(balance))
+                   for user_id, name, balance in c.fetchall()]
 
         conn.close()
 
