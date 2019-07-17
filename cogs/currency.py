@@ -23,11 +23,15 @@ from discord.ext import commands
 import asyncio
 
 # For type hinting
-from typing import Dict, Optional
+from typing import Dict, List, Optional, Tuple
 
 # For DB functionality
 import sqlite3
 import datetime
+
+# For tables
+from tabulate import tabulate
+from .utils.paginator import Pages
 
 # For general currency shenanigans
 from decimal import *
@@ -61,6 +65,19 @@ class Currency():
         self.bot = bot
         self.currency = self.bot.config.currency
         self.prec = self.currency["precision"]
+
+    async def fetch_all_balances(self) -> List[Tuple[str, str, Decimal]]:
+        conn = sqlite3.connect(self.bot.config.db_path)
+        c = conn.cursor()
+        c.execute(
+            "SELECT BT.UserID, M.DisplayName, IFNULL(SUM(BT.Amount), 0) FROM BankTransactions AS BT, Members as M "
+            "WHERE BT.UserID = M.ID GROUP BY UserID")
+
+        results = [(user_id, name, self.db_to_currency(balance)) for user_id, name, balance in c.fetchall()]
+
+        conn.close()
+
+        return results
 
     async def fetch_bank_balance(self, user: discord.Member) -> Decimal:
         conn = sqlite3.connect(self.bot.config.db_path)
@@ -430,6 +447,46 @@ class Currency():
             grn, self.format_symbol_currency(amount_dec), gen))
 
         conn.close()
+
+    @commands.command(aliases=["lb"])
+    async def leaderboard(self, ctx):
+        """
+        Currency rankings
+        """
+
+        await ctx.trigger_typing()
+
+        balances = await self.fetch_all_balances()
+
+        if len(balances) == 0:
+            await ctx.send(
+                "Leaderboards are not yet available for this server, please "
+                "collect some currency.")
+            return
+
+        table = []
+        table_list = []
+        counter = 1
+
+        for (_user_id, name, balance) in balances:
+            table.append((counter, name, self.format_symbol_currency(balance)))
+            if counter % 7 == 0 or counter == len(balances):
+                table_list.append(
+                    tabulate(
+                        table[:counter],
+                        headers=["Rank", "Name", "Balance"],
+                        tablefmt="fancy_grid"))
+                del table[:]
+            counter += 1
+
+        p = Pages(
+            ctx,
+            item_list=table_list,
+            title="Currency ranking",
+            display_option=(0, 1),
+            editable_content=False)
+
+        await p.paginate()
 
 
 def setup(bot):
