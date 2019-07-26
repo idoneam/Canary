@@ -118,7 +118,8 @@ class Quotes():
     @commands.command(aliases=['q'])
     async def quotes(self, ctx, str1: str = None, *, str2: str = None):
         """
-        Retrieve a quote with a specified keyword / mention.
+        Retrieve a quote with a specified keyword / mention. Can optionally use
+        regex by surrounding the the query with /.../.
         """
 
         conn = sqlite3.connect(self.bot.config.db_path)
@@ -259,7 +260,8 @@ class Quotes():
     @commands.command(aliases=['allq', 'aq'])
     async def all_quotes(self, ctx, *, query):
         """
-        List all quotes that contain the query string.
+        List all quotes that contain the query string. Can optionally use regex
+        by surrounding the the query with /.../.
         Usage: ?all_quotes [-p pagenum] query
 
         Optional arguments:
