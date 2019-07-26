@@ -457,7 +457,8 @@ class Currency():
 
         await ctx.trigger_typing()
 
-        balances = await self.fetch_all_balances()
+        balances = sorted(
+            await self.fetch_all_balances(), reverse=True, key=lambda b: b[2])
 
         if len(balances) == 0:
             await ctx.send(
