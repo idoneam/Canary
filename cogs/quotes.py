@@ -143,8 +143,9 @@ class Quotes():
                 c.execute("SELECT ID, Name, Quote FROM Quotes")
                 quotes = c.fetchall()
                 try:
-                    quotes = [q for q in quotes
-                              if re.search(query[1:-1], q[2])]
+                    quotes = [
+                        q for q in quotes if re.search(query[1:-1], q[2])
+                    ]
                 except re.error:
                     conn.close()
                     await ctx.send("Invalid regex syntax.")
@@ -292,8 +293,9 @@ class Quotes():
             c.execute("SELECT * FROM Quotes")
             quotes = c.fetchall()
             try:
-                quote_list = [q for q in quotes
-                              if re.search(query[1:-1], q[2])]
+                quote_list = [
+                    q for q in quotes if re.search(query[1:-1], q[2])
+                ]
             except re.error:
                 conn.close()
                 await ctx.send("Invalid regex syntax.")
