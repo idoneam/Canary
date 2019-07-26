@@ -118,7 +118,8 @@ class Quotes():
     @commands.command(aliases=['q'])
     async def quotes(self, ctx, str1: str = None, *, str2: str = None):
         """
-        Retrieve a quote with a specified keyword / mention.
+        Retrieve a quote with a specified keyword / mention. Can optionally use
+        regex by surrounding the the query with /.../.
         """
 
         conn = sqlite3.connect(self.bot.config.db_path)
@@ -139,9 +140,22 @@ class Quotes():
 
         else:    # query for quote only
             query = str1 if str2 is None else str1 + ' ' + str2
-            c.execute('SELECT ID, Name, Quote FROM Quotes WHERE Quote LIKE ?',
-                      ('%{}%'.format(query), ))
-            quotes = c.fetchall()
+            if query[0] == "/" and query[-1] == "/":
+                c.execute("SELECT ID, Name, Quote FROM Quotes")
+                quotes = c.fetchall()
+                try:
+                    quotes = [
+                        q for q in quotes if re.search(query[1:-1], q[2])
+                    ]
+                except re.error:
+                    conn.close()
+                    await ctx.send("Invalid regex syntax.")
+                    return
+            else:
+                c.execute(
+                    'SELECT ID, Name, Quote FROM Quotes WHERE Quote LIKE ?',
+                    ('%{}%'.format(query), ))
+                quotes = c.fetchall()
 
         if not quotes:
             conn.close()
@@ -246,7 +260,8 @@ class Quotes():
     @commands.command(aliases=['allq', 'aq'])
     async def all_quotes(self, ctx, *, query):
         """
-        List all quotes that contain the query string.
+        List all quotes that contain the query string. Can optionally use regex
+        by surrounding the the query with /.../.
         Usage: ?all_quotes [-p pagenum] query
 
         Optional arguments:
@@ -275,9 +290,22 @@ class Quotes():
 
         conn = sqlite3.connect(self.bot.config.db_path)
         c = conn.cursor()
-        t = ('%{}%'.format(query), )
-        c.execute('SELECT * FROM Quotes WHERE Quote LIKE ?', t)
-        quote_list = c.fetchall()
+
+        if query[0] == "/" and query[-1] == "/":
+            c.execute("SELECT * FROM Quotes")
+            quotes = c.fetchall()
+            try:
+                quote_list = [
+                    q for q in quotes if re.search(query[1:-1], q[2])
+                ]
+            except re.error:
+                conn.close()
+                await ctx.send("Invalid regex syntax.")
+                return
+        else:
+            t = ('%{}%'.format(query), )
+            c.execute('SELECT * FROM Quotes WHERE Quote LIKE ?', t)
+            quote_list = c.fetchall()
 
         if not quote_list:
             await ctx.send('No quote found.', delete_after=60)
