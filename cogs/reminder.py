@@ -76,7 +76,8 @@ class Reminder():
                 else:
                     last_date = datetime.datetime.strptime(
                         reminders[i][5], "%Y-%m-%d %H:%M:%S.%f")
-                    if datetime.datetime.now() - last_date > datetime.timedelta(
+                    if datetime.datetime.now(
+                    ) - last_date > datetime.timedelta(
                             days=self.frequencies[reminders[i][3]]):
                         await member.send("Reminding you to {}! [{:d}]".format(
                             reminders[i][2], i + 1))
@@ -167,7 +168,7 @@ class Reminder():
             ("twenty", "20"),
             ("thirty", "30"),
             ("forty", "40"),
-            ("fifty", "50"),    # DO NOT remove this terminating comma.
+            ("fifty", "50"),  # DO NOT remove this terminating comma.
         ]
 
         # Regex for misspellings of time units
@@ -253,9 +254,9 @@ class Reminder():
         # Date-based reminder triggered by "at" and "on" keywords
         if input_segments[0] == 'at' or input_segments[0] == 'on':
             date_result = re.search(ymd_regex,
-                                    original_input_copy)    # Gets YYYY-mm-dd
+                                    original_input_copy)  # Gets YYYY-mm-dd
             time_result = re.search(hm_regex,
-                                    original_input_copy)    # Gets HH:MM
+                                    original_input_copy)  # Gets HH:MM
 
             # If both a date and a time is found, continue
             if date_result and time_result:
@@ -339,16 +340,17 @@ class Reminder():
         # Convert years to a unit that datetime will understand
         time_offset["days"] = time_offset["days"] + time_offset["years"] * 365
 
-        time_now = datetime.datetime.now()    # Current time
+        time_now = datetime.datetime.now()  # Current time
         reminder_time = time_now + datetime.timedelta(
             days=time_offset["days"],
             hours=time_offset["hours"],
             seconds=time_offset["seconds"],
             minutes=time_offset["minutes"],
-            weeks=time_offset["weeks"])    # Time to be reminded on
-        if time_now == reminder_time:    # No time in argument, or it's zero.
-            await ctx.send("Please specify a time! E.g.: `?remindme in 1 hour "
-                           + reminder + "`")
+            weeks=time_offset["weeks"])  # Time to be reminded on
+        if time_now == reminder_time:  # No time in argument, or it's zero.
+            await ctx.send(
+                "Please specify a time! E.g.: `?remindme in 1 hour " +
+                reminder + "`")
             return
         # Strips the string "to " from reminder messages
         if reminder[:3].lower() == 'to ':
@@ -406,16 +408,14 @@ class Reminder():
         rem_list = c.fetchall()
         if rem_list:
             quote_list_text = [
-                ('[{}] (Frequency: {}' +
-                 (' at {}'.format(quote[4].split('.')[0])
-                  if quote[3] == 'once' else '') + ') - {}').format(
-                      i + 1, quote[3].capitalize(), quote[2])
+                ('[{}] (Frequency: {}' + (' at {}'.format(
+                    quote[4].split('.')[0]) if quote[3] == 'once' else '') +
+                 ') - {}').format(i + 1, quote[3].capitalize(), quote[2])
                 for i, quote in zip(range(len(rem_list)), rem_list)
             ]
-            p = Pages(
-                ctx,
-                item_list=quote_list_text,
-                title="{}'s reminders".format(rem_author.display_name))
+            p = Pages(ctx,
+                      item_list=quote_list_text,
+                      title="{}'s reminders".format(rem_author.display_name))
             await p.paginate()
 
             def msg_check(msg):
@@ -432,8 +432,9 @@ class Reminder():
                     'reminder you want to delete, or enter 0 to return.',
                     delete_after=60)
                 try:
-                    message = await self.bot.wait_for(
-                        'message', check=msg_check, timeout=60)
+                    message = await self.bot.wait_for('message',
+                                                      check=msg_check,
+                                                      timeout=60)
                 except asyncio.TimeoutError:
                     await ctx.send(
                         'Command timeout. You may want to run the command again.',
@@ -446,18 +447,19 @@ class Reminder():
                     else:
                         t = (rem_list[index][0], rem_list[index][2])
                         del rem_list[
-                            index]    # Remove deleted reminder from list.
+                            index]  # Remove deleted reminder from list.
                         c.execute(
                             'DELETE FROM Reminders WHERE ID = ? AND '
                             'Reminder = ?', t)
                         conn.commit()
                         await ctx.send('Reminder deleted', delete_after=60)
-                        p.itemList = [('[{}] (Frequency: {}' + (
-                            ' at {}'.format(quote[4].split('.')[0])
-                            if quote[3] == 'once' else '') + ') - {}').format(
-                                i + 1, quote[3].capitalize(), quote[2])
-                                      for i, quote in zip(
-                                          range(len(rem_list)), rem_list)]
+                        p.itemList = [
+                            ('[{}] (Frequency: {}' +
+                             (' at {}'.format(quote[4].split('.')[0]) if
+                              quote[3] == 'once' else '') + ') - {}').format(
+                                  i + 1, quote[3].capitalize(), quote[2])
+                            for i, quote in zip(range(len(rem_list)), rem_list)
+                        ]
                     await p.paginate()
             conn.commit()
             conn.close()
