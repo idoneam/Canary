@@ -225,8 +225,9 @@ class Currency():
 
             metadata = {"channel": ctx.message.channel.id}
 
-            await self.create_bank_transaction(
-                c, ctx.message.author, CLAIM_AMOUNT, ACTION_CLAIM, metadata)
+            await self.create_bank_transaction(c, ctx.message.author,
+                                               CLAIM_AMOUNT, ACTION_CLAIM,
+                                               metadata)
 
             conn.commit()
 
@@ -371,8 +372,8 @@ class Currency():
         author_name = ctx.message.author.display_name
 
         amount_msg_multiplier = -1 if amount_returned < bet_dec else 1
-        bet_str = self.format_symbol_currency(
-            amount_msg_multiplier * (amount_returned - bet_dec))
+        bet_str = self.format_symbol_currency(amount_msg_multiplier *
+                                              (amount_returned - bet_dec))
 
         await ctx.send(message.format(un=author_name, am=bet_str, re=result))
 
@@ -457,8 +458,9 @@ class Currency():
 
         await ctx.trigger_typing()
 
-        balances = sorted(
-            await self.fetch_all_balances(), reverse=True, key=lambda b: b[2])
+        balances = sorted(await self.fetch_all_balances(),
+                          reverse=True,
+                          key=lambda b: b[2])
 
         if len(balances) == 0:
             await ctx.send(
@@ -474,19 +476,17 @@ class Currency():
             table.append((counter, name, self.format_symbol_currency(balance)))
             if counter % 7 == 0 or counter == len(balances):
                 table_list.append(
-                    tabulate(
-                        table[:counter],
-                        headers=["Rank", "Name", "Balance"],
-                        tablefmt="fancy_grid"))
+                    tabulate(table[:counter],
+                             headers=["Rank", "Name", "Balance"],
+                             tablefmt="fancy_grid"))
                 del table[:]
             counter += 1
 
-        p = Pages(
-            ctx,
-            item_list=table_list,
-            title="Currency ranking",
-            display_option=(0, 1),
-            editable_content=False)
+        p = Pages(ctx,
+                  item_list=table_list,
+                  title="Currency ranking",
+                  display_option=(0, 1),
+                  editable_content=False)
 
         await p.paginate()
 
