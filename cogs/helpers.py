@@ -24,9 +24,6 @@ from discord import utils
 import asyncio
 
 # URL access and parsing
-import requests
-import aiohttp
-import async_timeout
 from bs4 import BeautifulSoup
 
 # TeX rendering
@@ -39,7 +36,6 @@ import numpy as np
 import re
 import math
 import time
-import os
 import datetime
 import pickle
 import feedparser
@@ -142,7 +138,7 @@ class Helpers():
             windchill_label = soup.find("a", string="Wind Chill")
             windchill = windchill_label.find_next().get_text().strip(
             ) + u"\xb0C"
-        except:
+        except Exception:
             windchill = u"N/A"
 
         weather_now = discord.Embed(
@@ -201,7 +197,7 @@ class Helpers():
                                     (alert_location.strip(), alert_content),
                                     inline=True)
 
-        except:
+        except Exception:
             weather_alert = discord.Embed(title=alert_title.get_text().strip(),
                                           description="No alerts in effect.",
                                           colour=0xFF0000)
