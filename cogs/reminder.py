@@ -88,7 +88,7 @@ class Reminder():
                         conn.commit()
                         await asyncio.sleep(1)
             conn.close()
-            await asyncio.sleep(60)  # seconds
+            await asyncio.sleep(60)    # seconds
 
     @commands.command(aliases=['rm', 'rem'])
     async def remindme(self, ctx, *, quote: str = ""):
@@ -168,7 +168,7 @@ class Reminder():
             ("twenty", "20"),
             ("thirty", "30"),
             ("forty", "40"),
-            ("fifty", "50"),  # DO NOT remove this terminating comma.
+            ("fifty", "50"),    # DO NOT remove this terminating comma.
         ]
 
         # Regex for misspellings of time units
@@ -254,9 +254,9 @@ class Reminder():
         # Date-based reminder triggered by "at" and "on" keywords
         if input_segments[0] == 'at' or input_segments[0] == 'on':
             date_result = re.search(ymd_regex,
-                                    original_input_copy)  # Gets YYYY-mm-dd
+                                    original_input_copy)    # Gets YYYY-mm-dd
             time_result = re.search(hm_regex,
-                                    original_input_copy)  # Gets HH:MM
+                                    original_input_copy)    # Gets HH:MM
 
             # If both a date and a time is found, continue
             if date_result and time_result:
@@ -340,14 +340,14 @@ class Reminder():
         # Convert years to a unit that datetime will understand
         time_offset["days"] = time_offset["days"] + time_offset["years"] * 365
 
-        time_now = datetime.datetime.now()  # Current time
+        time_now = datetime.datetime.now()    # Current time
         reminder_time = time_now + datetime.timedelta(
             days=time_offset["days"],
             hours=time_offset["hours"],
             seconds=time_offset["seconds"],
             minutes=time_offset["minutes"],
-            weeks=time_offset["weeks"])  # Time to be reminded on
-        if time_now == reminder_time:  # No time in argument, or it's zero.
+            weeks=time_offset["weeks"])    # Time to be reminded on
+        if time_now == reminder_time:    # No time in argument, or it's zero.
             await ctx.send(
                 "Please specify a time! E.g.: `?remindme in 1 hour " +
                 reminder + "`")
@@ -447,7 +447,7 @@ class Reminder():
                     else:
                         t = (rem_list[index][0], rem_list[index][2])
                         del rem_list[
-                            index]  # Remove deleted reminder from list.
+                            index]    # Remove deleted reminder from list.
                         c.execute(
                             'DELETE FROM Reminders WHERE ID = ? AND '
                             'Reminder = ?', t)
