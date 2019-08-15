@@ -9,13 +9,14 @@ sympy = "==1.0.0"
 requests = ">=2.20.0"
 cleverbot = "==1.1.1"
 tabulate = "==0.7.7"
-discord-rewrite = {ref = "860d6a9ace8248dfeec18b8b159e7b757d9f56bb", git = "https://github.com/Rapptz/discord.py"}
+discord-rewrite = {ref = "860d6a9ace8248dfeec18b8b159e7b757d9f56bb",git = "https://github.com/Rapptz/discord.py"}
 opencv-python = "*"
 pytz = "*"
 mpmath = "*"
 numpy = "*"
 aiohttp = "*"
 urllib3 = ">=1.24.2"
+feedparser = "*"
 
 [requires]
 python_version = "3.6"

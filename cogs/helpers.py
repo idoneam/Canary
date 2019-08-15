@@ -20,6 +20,7 @@
 # discord-py requirements
 import discord
 from discord.ext import commands
+from discord import utils
 import asyncio
 
 # URL access and parsing
@@ -40,15 +41,59 @@ import math
 import time
 import os
 import datetime
+import pickle
+import feedparser
 from .utils.paginator import Pages
 from .utils.requests import fetch
 
 MCGILL_EXAM_URL = "https://www.mcgill.ca/exams/dates"
+CFIA_FEED_URL = "http://inspection.gc.ca/eng/1388422350443/1388422374046.xml"
 
 
 class Helpers():
     def __init__(self, bot):
         self.bot = bot
+
+    async def cfia_rss(self):
+        # Written by @jidicula
+        """
+        Co-routine that periodically checks the CFIA Health Hazard Alerts RSS
+         feed for updates.
+        """
+        await self.bot.wait_until_ready()
+        while not self.bot.is_closed():
+            food_channel = utils.get(self.bot.get_guild(
+                self.bot.config.server_id).text_channels,
+                                     name="food")
+            newest_recall = feedparser.parse(CFIA_FEED_URL)['entries'][0]
+            newest_recall_id = newest_recall['id']
+            try:
+                id_unpickle = open("pickles/recall_tag.obj", 'rb')
+                last_recall_id = pickle.load(id_unpickle)
+                id_unpickle.close()
+            except Exception:
+                last_recall_id = ""
+
+            if newest_recall_id != last_recall_id:
+                recall_warning = discord.Embed(
+                    title=newest_recall['title'],
+                    description=newest_recall['link'])
+                soup = BeautifulSoup(newest_recall['summary'], "html.parser")
+                try:
+                    img_url = soup.img['src']
+                    summary = soup.p.find_parent().text.strip()
+                except Exception:
+                    img_url = ""
+                    summary = newest_recall['summary']
+                recall_warning.set_image(url=img_url)
+                recall_warning.add_field(name="Summary", value=summary)
+                # Pickle newest ID
+                id_pickle = open("pickles/recall_tag.obj", 'wb')
+                pickle.dump(newest_recall_id, id_pickle)
+                id_pickle.close()
+                # Send recall warning
+                await food_channel.send(embed=recall_warning)
+            await asyncio.sleep(60)
 
     @commands.command(aliases=['exams'])
     async def exam(self, ctx):
@@ -63,8 +108,8 @@ class Helpers():
         if link[:2] == "//":
             link = "https:" + link
 
-        exam_schedule = discord.Embed(
-            title="Latest Exam Schedule", description="{}".format(link))
+        exam_schedule = discord.Embed(title="Latest Exam Schedule",
+                                      description="{}".format(link))
 
         await ctx.send(embed=exam_schedule)
 
@@ -146,22 +191,20 @@ class Helpers():
             alert_content = alert_location.find_next("p").get_text().strip()
             alert_content = ". ".join(alert_content.split(".")).strip()
 
-            weather_alert = discord.Embed(
-                title=alert_title.get_text().strip(),
-                description="**%s** at %s" %
-                (alert_category.get_text().strip(),
-                 alert_date.get_text().strip()),
-                colour=0xFF0000)
-            weather_alert.add_field(
-                name=alert_heading.get_text().strip(),
-                value="**%s**\n%s" % (alert_location.strip(), alert_content),
-                inline=True)
+            weather_alert = discord.Embed(title=alert_title.get_text().strip(),
+                                          description="**%s** at %s" %
+                                          (alert_category.get_text().strip(),
+                                           alert_date.get_text().strip()),
+                                          colour=0xFF0000)
+            weather_alert.add_field(name=alert_heading.get_text().strip(),
+                                    value="**%s**\n%s" %
+                                    (alert_location.strip(), alert_content),
+                                    inline=True)
 
         except:
-            weather_alert = discord.Embed(
-                title=alert_title.get_text().strip(),
-                description="No alerts in effect.",
-                colour=0xFF0000)
+            weather_alert = discord.Embed(title=alert_title.get_text().strip(),
+                                          description="No alerts in effect.",
+                                          colour=0xFF0000)
 
         # TODO Finish final message. Test on no-alert condition.
 
@@ -172,8 +215,8 @@ class Helpers():
     @commands.command()
     async def wttr(self, ctx):
         """Retrieves Montreal's weather forecast from wttr.in"""
-        await ctx.send('http://wttr.in/Montreal_2mpq_lang=en.png?_=%d' % round(
-            time.time()))
+        await ctx.send('http://wttr.in/Montreal_2mpq_lang=en.png?_=%d' %
+                       round(time.time()))
 
     @commands.command(aliases=["wttrmoon"])
     async def wttr_moon(self, ctx):
@@ -208,9 +251,8 @@ class Helpers():
         if title == 'Page not found':
             await ctx.send("No course found for %s." % query)
             return
-        content = soup.find(
-            "div", id="block-system-main").find_all("div",
-                                                    {"class": "content"})[1]
+        content = soup.find("div", id="block-system-main").find_all(
+            "div", {"class": "content"})[1]
         overview = content.p.get_text().strip()
         terms = soup.find_all(
             "p",
@@ -289,11 +331,10 @@ class Helpers():
         if subsection:
             sections.append(subsection)
 
-        em = discord.Embed(
-            title='McGill Important Dates {0} {1}'.format(
-                term, str(current_year)),
-            description=url,
-            colour=0xDA291C)
+        em = discord.Embed(title='McGill Important Dates {0} {1}'.format(
+            term, str(current_year)),
+                           description=url,
+                           colour=0xDA291C)
 
         for i in range(len(headers)):
             if i == 2:
@@ -335,12 +376,11 @@ class Helpers():
             for entry in definitions
         ]
 
-        p = Pages(
-            ctx,
-            item_list=definitions_list_text,
-            title="Definitions for '%s' from Urban Dictionary:" % query,
-            display_option=(3, 1),
-            editable_content=False)
+        p = Pages(ctx,
+                  item_list=definitions_list_text,
+                  title="Definitions for '%s' from Urban Dictionary:" % query,
+                  display_option=(3, 1),
+                  editable_content=False)
 
         await p.paginate()
 
@@ -370,8 +410,13 @@ class Helpers():
         buf.seek(0)
         img_bytes = np.asarray(bytearray(buf.read()), dtype=np.uint8)
         img = cv2.imdecode(img_bytes, cv2.IMREAD_UNCHANGED)
-        img2 = cv2.copyMakeBorder(
-            img, 10, 10, 10, 10, cv2.BORDER_CONSTANT, value=(255, 255, 255))
+        img2 = cv2.copyMakeBorder(img,
+                                  10,
+                                  10,
+                                  10,
+                                  10,
+                                  cv2.BORDER_CONSTANT,
+                                  value=(255, 255, 255))
         fn = 'latexed.png'
         retval, buf = cv2.imencode('.png', img2)
         img_bytes = BytesIO(buf)
@@ -414,12 +459,11 @@ class Helpers():
             course_list['names'].append(' '.join(title[:2]))
             course_list['values'].append(' '.join(title[2:]))
 
-        p = Pages(
-            ctx,
-            item_list=course_list,
-            title='Courses found for {}'.format(query),
-            display_option=(2, 10),
-            editable_content=False)
+        p = Pages(ctx,
+                  item_list=course_list,
+                  title='Courses found for {}'.format(query),
+                  display_option=(2, 10),
+                  editable_content=False)
         await p.paginate()
 
     @commands.command()
@@ -437,10 +481,10 @@ class Helpers():
             re1 = '([+-]?\\d*\\.\\d+)(?![-+0-9\\.])'
         else:
             re1 = '(\\d+)'
-        re2 = '((?:[a-z][a-z]+))'    # Currency FROM
+        re2 = '((?:[a-z][a-z]+))'  # Currency FROM
         re3 = '(to)'
-        re4 = '((?:[a-z][a-z]+))'    # Currency TO
-        ws = '(\\s+)'    # Whitespace
+        re4 = '((?:[a-z][a-z]+))'  # Currency TO
+        ws = '(\\s+)'  # Whitespace
         rg = re.compile(re1 + ws + re2 + ws + re3 + ws + re4,
                         re.IGNORECASE | re.DOTALL)
 
@@ -457,9 +501,9 @@ class Helpers():
             }).get_text()
 
             # FIXME: there has to be a more elegant way to print this
-            await ctx.send(
-                "%s %s = %s %s" % (m.group(1), m.group(3).upper(),
-                                   converted_cost, m.group(7).upper()))
+            await ctx.send("%s %s = %s %s" %
+                           (m.group(1), m.group(3).upper(), converted_cost,
+                            m.group(7).upper()))
         else:
             await ctx.send(""":warning: Wrong format.
             The correct format is `?xe <AMOUNT> <CURRENCY> to <CURRENCY>`.
@@ -499,3 +543,4 @@ class Helpers():
 
 def setup(bot):
     bot.add_cog(Helpers(bot))
+    bot.loop.create_task(Helpers(bot).cfia_rss())
