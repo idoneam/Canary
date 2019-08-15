@@ -58,9 +58,9 @@ class Helpers():
         """
         await self.bot.wait_until_ready()
         while not self.bot.is_closed():
-            food_channel = utils.get(self.bot.get_guild(
-                self.bot.config.server_id).text_channels,
-                                     name="food")
+            food_channel = utils.get(
+                self.bot.get_guild(self.bot.config.server_id).text_channels,
+                name="food")
             newest_recall = feedparser.parse(CFIA_FEED_URL)['entries'][0]
             newest_recall_id = newest_recall['id']
             try:
@@ -104,8 +104,8 @@ class Helpers():
         if link[:2] == "//":
             link = "https:" + link
 
-        exam_schedule = discord.Embed(title="Latest Exam Schedule",
-                                      description="{}".format(link))
+        exam_schedule = discord.Embed(
+            title="Latest Exam Schedule", description="{}".format(link))
 
         await ctx.send(embed=exam_schedule)
 
@@ -187,20 +187,23 @@ class Helpers():
             alert_content = alert_location.find_next("p").get_text().strip()
             alert_content = ". ".join(alert_content.split(".")).strip()
 
-            weather_alert = discord.Embed(title=alert_title.get_text().strip(),
-                                          description="**%s** at %s" %
-                                          (alert_category.get_text().strip(),
-                                           alert_date.get_text().strip()),
-                                          colour=0xFF0000)
-            weather_alert.add_field(name=alert_heading.get_text().strip(),
-                                    value="**%s**\n%s" %
-                                    (alert_location.strip(), alert_content),
-                                    inline=True)
+            weather_alert = discord.Embed(
+                title=alert_title.get_text().strip(),
+                description="**%s** at %s" %
+                (alert_category.get_text().strip(),
+                 alert_date.get_text().strip()),
+                colour=0xFF0000)
+            weather_alert.add_field(
+                name=alert_heading.get_text().strip(),
+                value="**%s**\n%s" %
+                (alert_location.strip(), alert_content),
+                inline=True)
 
         except Exception:
-            weather_alert = discord.Embed(title=alert_title.get_text().strip(),
-                                          description="No alerts in effect.",
-                                          colour=0xFF0000)
+            weather_alert = discord.Embed(
+                title=alert_title.get_text().strip(),
+                description="No alerts in effect.",
+                colour=0xFF0000)
 
         # TODO Finish final message. Test on no-alert condition.
 
@@ -211,8 +214,8 @@ class Helpers():
     @commands.command()
     async def wttr(self, ctx):
         """Retrieves Montreal's weather forecast from wttr.in"""
-        await ctx.send('http://wttr.in/Montreal_2mpq_lang=en.png?_=%d' %
-                       round(time.time()))
+        await ctx.send('http://wttr.in/Montreal_2mpq_lang=en.png?_=%d' % round(
+            time.time()))
 
     @commands.command(aliases=["wttrmoon"])
     async def wttr_moon(self, ctx):
@@ -247,8 +250,9 @@ class Helpers():
         if title == 'Page not found':
             await ctx.send("No course found for %s." % query)
             return
-        content = soup.find("div", id="block-system-main").find_all(
-            "div", {"class": "content"})[1]
+        content = soup.find(
+            "div", id="block-system-main").find_all("div",
+                                                    {"class": "content"})[1]
         overview = content.p.get_text().strip()
         terms = soup.find_all(
             "p",
@@ -327,10 +331,11 @@ class Helpers():
         if subsection:
             sections.append(subsection)
 
-        em = discord.Embed(title='McGill Important Dates {0} {1}'.format(
+        em = discord.Embed(
+            title='McGill Important Dates {0} {1}'.format(
             term, str(current_year)),
-                           description=url,
-                           colour=0xDA291C)
+            description=url,
+            colour=0xDA291C)
 
         for i in range(len(headers)):
             if i == 2:
@@ -372,11 +377,12 @@ class Helpers():
             for entry in definitions
         ]
 
-        p = Pages(ctx,
-                  item_list=definitions_list_text,
-                  title="Definitions for '%s' from Urban Dictionary:" % query,
-                  display_option=(3, 1),
-                  editable_content=False)
+        p = Pages(
+            ctx,
+            item_list=definitions_list_text,
+            title="Definitions for '%s' from Urban Dictionary:" % query,
+            display_option=(3, 1),
+            editable_content=False)
 
         await p.paginate()
 
@@ -406,13 +412,8 @@ class Helpers():
         buf.seek(0)
         img_bytes = np.asarray(bytearray(buf.read()), dtype=np.uint8)
         img = cv2.imdecode(img_bytes, cv2.IMREAD_UNCHANGED)
-        img2 = cv2.copyMakeBorder(img,
-                                  10,
-                                  10,
-                                  10,
-                                  10,
-                                  cv2.BORDER_CONSTANT,
-                                  value=(255, 255, 255))
+        img2 = cv2.copyMakeBorder(
+            img, 10, 10, 10, 10, cv2.BORDER_CONSTANT, value=(255, 255, 255))
         fn = 'latexed.png'
         retval, buf = cv2.imencode('.png', img2)
         img_bytes = BytesIO(buf)
@@ -455,11 +456,12 @@ class Helpers():
             course_list['names'].append(' '.join(title[:2]))
             course_list['values'].append(' '.join(title[2:]))
 
-        p = Pages(ctx,
-                  item_list=course_list,
-                  title='Courses found for {}'.format(query),
-                  display_option=(2, 10),
-                  editable_content=False)
+        p = Pages(
+            ctx,
+            item_list=course_list,
+            title='Courses found for {}'.format(query),
+            display_option=(2, 10),
+            editable_content=False)
         await p.paginate()
 
     @commands.command()
@@ -497,9 +499,9 @@ class Helpers():
             }).get_text()
 
             # FIXME: there has to be a more elegant way to print this
-            await ctx.send("%s %s = %s %s" %
-                           (m.group(1), m.group(3).upper(), converted_cost,
-                            m.group(7).upper()))
+            await ctx.send(
+                "%s %s = %s %s" % (m.group(1), m.group(3).upper(),
+                                   converted_cost, m.group(7).upper()))
         else:
             await ctx.send(""":warning: Wrong format.
             The correct format is `?xe <AMOUNT> <CURRENCY> to <CURRENCY>`.

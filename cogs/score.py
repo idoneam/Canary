@@ -37,8 +37,8 @@ class Score:
 
     async def on_ready(self):
         self.guild = self.bot.get_guild(self.bot.config.server_id)
-        self.UPMARTLET = discord.utils.get(self.guild.emojis,
-                                           name=self.bot.config.upvote_emoji)
+        self.UPMARTLET = discord.utils.get(
+            self.guild.emojis, name=self.bot.config.upvote_emoji)
         self.DOWNMARTLET = discord.utils.get(
             self.guild.emojis, name=self.bot.config.downvote_emoji)
 
@@ -175,17 +175,19 @@ class Score:
             table.append((counter, DisplayName, Upmartlet))
             if counter % 7 == 0 or counter == len(members):
                 table_list.append(
-                    tabulate(table[:counter],
-                             headers=["Rank", "Name", "Score"],
-                             tablefmt="fancy_grid"))
+                    tabulate(
+                        table[:counter],
+                        headers=["Rank", "Name", "Score"],
+                        tablefmt="fancy_grid"))
                 del table[:]
             counter += 1
 
-        p = Pages(ctx,
-                  item_list=table_list,
-                  title="Upmartlet ranking",
-                  display_option=(0, 1),
-                  editable_content=False)
+        p = Pages(
+            ctx,
+            item_list=table_list,
+            title="Upmartlet ranking",
+            display_option=(0, 1),
+            editable_content=False)
 
         await p.paginate()
 
