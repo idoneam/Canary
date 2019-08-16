@@ -195,8 +195,7 @@ class Helpers():
                 colour=0xFF0000)
             weather_alert.add_field(
                 name=alert_heading.get_text().strip(),
-                value="**%s**\n%s" %
-                (alert_location.strip(), alert_content),
+                value="**%s**\n%s" % (alert_location.strip(), alert_content),
                 inline=True)
 
         except Exception:
@@ -333,7 +332,7 @@ class Helpers():
 
         em = discord.Embed(
             title='McGill Important Dates {0} {1}'.format(
-            term, str(current_year)),
+                term, str(current_year)),
             description=url,
             colour=0xDA291C)
 

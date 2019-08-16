@@ -347,8 +347,8 @@ class Reminder():
             minutes=time_offset["minutes"],
             weeks=time_offset["weeks"])    # Time to be reminded on
         if time_now == reminder_time:    # No time in argument, or it's zero.
-            await ctx.send("Please specify a time! E.g.: `?remindme in 1 hour " +
-                           reminder + "`")
+            await ctx.send("Please specify a time! E.g.: `?remindme in 1 hour "
+                           + reminder + "`")
             return
         # Strips the string "to " from reminder messages
         if reminder[:3].lower() == 'to ':
@@ -409,7 +409,7 @@ class Reminder():
                 ('[{}] (Frequency: {}' +
                  (' at {}'.format(quote[4].split('.')[0])
                   if quote[3] == 'once' else '') + ') - {}').format(
-                          i + 1, quote[3].capitalize(), quote[2])
+                      i + 1, quote[3].capitalize(), quote[2])
                 for i, quote in zip(range(len(rem_list)), rem_list)
             ]
             p = Pages(
@@ -452,13 +452,12 @@ class Reminder():
                             'Reminder = ?', t)
                         conn.commit()
                         await ctx.send('Reminder deleted', delete_after=60)
-                        p.itemList = [
-                            ('[{}] (Frequency: {}' + (
-                                ' at {}'.format(quote[4].split('.')[0])
-                                if quote[3] == 'once' else '') + ') - {}').format(
-                                  i + 1, quote[3].capitalize(), quote[2])
-                            for i, quote in zip(
-                                    range(len(rem_list)), rem_list)
+                        p.itemList = [('[{}] (Frequency: {}' + (
+                            ' at {}'.format(quote[4].split('.')[0])
+                            if quote[3] == 'once' else '') + ') - {}').format(
+                                i + 1, quote[3].capitalize(), quote[2])
+                                      for i, quote in zip(
+                                          range(len(rem_list)), rem_list)
                         ]
                     await p.paginate()
             conn.commit()
