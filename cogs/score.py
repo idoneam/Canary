@@ -42,7 +42,7 @@ class Score:
         self.DOWNMARTLET = discord.utils.get(
             self.guild.emojis, name=self.bot.config.downvote_emoji)
 
-    def get_score(self, emoji):
+    def _get_score(self, emoji):
         if emoji.id == self.UPMARTLET.id:
             return 1
 
@@ -67,27 +67,21 @@ class Score:
         if user == message.author:
             return
 
-        score = self.get_score(emoji) * (-1 if negated else 1)
+        score = self._get_score(emoji) * (-1 if negated else 1)
         if score == 0:
             return
 
         conn = sqlite3.connect(self.bot.config.db_path)
         c = conn.cursor()
-        t = (
-            score,
-            message.author.id,
-        )
+        t = (score, message.author.id)
 
-        if not c.execute('SELECT * FROM Members WHERE ID=?', t[1:]).fetchall():
+        if c.execute('SELECT * FROM Members WHERE ID=?', t[1:]).fetchall():
+            # Member record already exists
+            c.execute('UPDATE Members SET Score=Score+? WHERE ID=?', t)
+        else:
             # No record exists for the user yet
             c.execute('INSERT INTO Members VALUES (?, ?, ?)',
                       (message.author.id, message.author.display_name, score))
-            conn.commit()
-            conn.close()
-            return
-
-        # Member record already exists
-        c.execute('UPDATE Members SET Score=Score+? WHERE ID=?', t)
 
         conn.commit()
         conn.close()
@@ -169,24 +163,25 @@ class Score:
     @commands.command()
     async def score(self, ctx, member: discord.Member = None):
         """Displays member's score in upmartlet rankings."""
+
         member = member if member else ctx.message.author
         m_id = member.id
         nick = member.display_name
+
         conn = sqlite3.connect(self.bot.config.db_path)
         c = conn.cursor()
+
         c.execute("SELECT Score FROM Members WHERE ID = ?", (m_id, ))
         score = c.fetchone()
+
         if not score:
-            t = (
-                m_id,
-                nick,
-                0,
-            )
-            c.execute("INSERT INTO Members VALUES (?,?,?)", t)
+            score = (0,)
+            c.execute("INSERT INTO Members VALUES (?, ?, ?)",
+                      (m_id, nick, 0))
             conn.commit()
-            await ctx.send("{} score is 0.".format(nick))
-        else:
-            await ctx.send("{} score is {}".format(nick, score[0]))
+
+        await ctx.send("{} score is {}.".format(nick, score[0]))
+
         conn.close()
 
 
