@@ -30,12 +30,12 @@ CREATE TABLE IF NOT EXISTS `Members` (
 	`Score`	INTEGER
 );
 CREATE TABLE IF NOT EXISTS 'Reminders' (
-	'ID'INTEGER,
-	'Name'TEXT,
-	'Reminder'TEXT,
-	'Frequency'TEXT,
-	'Date'TEXT,
-	'LastReminder'TEXT
+	'ID' INTEGER,
+	'Name' TEXT,
+	'Reminder' TEXT,
+	'Frequency' TEXT,
+	'Date' TEXT,
+	'LastReminder' TEXT
 );
 
 CREATE TABLE IF NOT EXISTS `BankTransactions` (
