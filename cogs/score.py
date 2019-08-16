@@ -51,7 +51,22 @@ class Score:
 
         return 0
 
-    def _update_score_if_needed(self, emoji, negated=False):
+    async def _update_score_if_needed(self, payload, negated=False):
+        # Check for Martlet emoji + upmartletting yourself
+
+        channel = self.bot.get_channel(payload.channel_id)
+
+        try:
+            message = await channel.get_message(payload.message_id)
+        except discord.errors.NotFound:
+            return
+
+        user = self.bot.get_user(payload.user_id)
+        emoji = payload.emoji
+
+        if user == message.author:
+            return
+
         score = self.get_score(emoji) * (-1 if negated else 1)
         if score == 0:
             return
@@ -78,39 +93,10 @@ class Score:
         conn.close()
 
     async def on_raw_reaction_add(self, payload):
-        # Check for Martlet emoji + upmartletting yourself
-        channel = self.bot.get_channel(payload.channel_id)
-        try:
-            message = await channel.get_message(payload.message_id)
-        except discord.errors.NotFound:
-            return
-        user = self.bot.get_user(payload.user_id)
-        emoji = payload.emoji
-
-        if user == message.author:
-            return
-
-        self._update_score_if_needed(emoji)
+        await self._update_score_if_needed(payload)
 
     async def on_raw_reaction_remove(self, payload):
-        # Check for Martlet emoji + upmartletting yourself
-        """Does the opposite thing when a user up/downmarlets a message
-        """
-
-        channel = self.bot.get_channel(payload.channel_id)
-
-        try:
-            message = await channel.get_message(payload.message_id)
-        except discord.errors.NotFound:
-            return
-
-        user = self.bot.get_user(payload.user_id)
-        emoji = payload.emoji
-
-        if user == message.author:
-            return
-
-        self._update_score_if_needed(emoji, negated=True)
+        await self._update_score_if_needed(payload, negated=True)
 
     async def on_member_update(self, before, after):
         if before.display_name == after.display_name:
