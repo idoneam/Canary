@@ -457,8 +457,7 @@ class Reminder():
                             if quote[3] == 'once' else '') + ') - {}').format(
                                 i + 1, quote[3].capitalize(), quote[2])
                                       for i, quote in zip(
-                                          range(len(rem_list)), rem_list)
-                        ]
+                                          range(len(rem_list)), rem_list)]
                     await p.paginate()
             conn.commit()
             conn.close()
