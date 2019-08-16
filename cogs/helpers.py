@@ -45,26 +45,13 @@ from .utils.requests import fetch
 
 MCGILL_EXAM_URL = "https://www.mcgill.ca/exams/dates"
 MCGILL_KEY_DATES_URL = "https://www.mcgill.ca/importantdates/key-dates"
-MCGILL_COURSE_TPL = "http://www.mcgill.ca/study/2019-2020/courses/{}"
-MCGILL_COURSE_SEARCH_TPL = "http://www.mcgill.ca/study/2018-2019/courses/search" \
-                    "?search_api_views_fulltext={}&sort_by=field_subject_code" \
-                    "&page={}"
 
-# Replace link with any city weather link from http://weather.gc.ca/
-# TODO: Move to config
-MTL_GC_WEATHER_URL = "http://weather.gc.ca/city/pages/qc-147_metric_e.html"
-MTL_GC_WTR_ALERT_URL = "https://weather.gc.ca/warnings/report_e.html?qc67"
-
-WTTR_IN_TEMPLATE = "http://wttr.in/Montreal_2mpq_lang=en.png?_={}"
 WTTR_IN_MOON_URL = "http://wttr.in/moon.png"
 
 URBAN_DICT_TEMPLATE = "http://api.urbandictionary.com/v0/define?term={}"
 
 CURRENCY_TEMPLATE = "http://www.xe.com/currencyconverter/convert/" \
                     "?Amount={}&From={}&To={}"
-
-TEPID_URL = "https://tepid.science.mcgill.ca:8443/tepid/screensaver/queues/" \
-            "status"
 
 
 class Helpers():
@@ -95,7 +82,7 @@ class Helpers():
         Data taken from http://weather.gc.ca/city/pages/qc-147_metric_e.html"""
         await ctx.trigger_typing()
 
-        r = await fetch(MTL_GC_WEATHER_URL, "content")
+        r = await fetch(self.bot.config.gc_weather_url, "content")
 
         soup = BeautifulSoup(r, "html.parser")
         # Get date
@@ -148,7 +135,7 @@ class Helpers():
 
         # Weather alerts
 
-        r_alert = await fetch(MTL_GC_WTR_ALERT_URL, "content")
+        r_alert = await fetch(self.bot.config.gc_weather_alert_url, "content")
         alert_soup = BeautifulSoup(r_alert, "html.parser")
         # Exists
         alert_title = alert_soup.find("h1", string=re.compile("Alerts.*"))
@@ -190,7 +177,7 @@ class Helpers():
     @commands.command()
     async def wttr(self, ctx):
         """Retrieves Montreal's weather forecast from wttr.in"""
-        await ctx.send(WTTR_IN_TEMPLATE.format(round(time.time())))
+        await ctx.send(self.bot.config.wttr_in_tpl.format(round(time.time())))
 
     @commands.command(aliases=["wttrmoon"])
     async def wttr_moon(self, ctx):
@@ -199,8 +186,8 @@ class Helpers():
 
     @commands.command()
     async def course(self, ctx, *, query: str):
-        """Prints a summary of the queried course, taken from the course calendar.
-        ie. ?course comp 206
+        """Prints a summary of the queried course, taken from the course
+        calendar. ie. ?course comp 206
         Note: Bullet points without colons (':') are not parsed because I have
         yet to see one that actually has useful information.
         """
@@ -217,7 +204,8 @@ class Helpers():
 
         search_term = "{}-{}".format(result.group(1), result.group(2))
         search_term = re.sub(r'\s+', r'', search_term)
-        r = await fetch(MCGILL_COURSE_TPL.format(search_term), "content")
+        r = await fetch(
+            self.bot.config.course_tpl.format(search_term), "content")
         soup = BeautifulSoup(r, "html.parser")
 
         # TODO: brute-force parsing at the moment
@@ -408,7 +396,8 @@ class Helpers():
 
         while pagenum < pagelimit:
             r = await fetch(
-                MCGILL_COURSE_SEARCH_TPL.format(keyword, pagenum), "content")
+                self.bot.config.course_search_tpl.format(keyword, pagenum),
+                "content")
             soup = BeautifulSoup(r, "html.parser")
             found = soup.find_all("div", {"class": "views-row"})
 
@@ -497,7 +486,7 @@ class Helpers():
     @commands.command()
     async def tepid(self, ctx):
         """Retrieves the CTF printers' statuses from tepid.science.mcgill.ca"""
-        data = await fetch(TEPID_URL, "json")
+        data = await fetch(self.bot.config.tepid_url, "json")
         for key, value in data.items():
             await ctx.send("At least one printer in {} is {}!".format(
                 key, "up" if value else "down"))
