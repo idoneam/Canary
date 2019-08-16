@@ -212,8 +212,7 @@ class Helpers():
         if not result:
             await ctx.send(
                 ':warning: Incorrect format. The correct format is `?course '
-                '<course name>`.'
-            )
+                '<course name>`.')
             return
 
         search_term = "{}-{}".format(result.group(1), result.group(2))
@@ -336,8 +335,8 @@ class Helpers():
 
         await ctx.trigger_typing()
 
-        definitions = await fetch(URBAN_DICT_TEMPLATE.format(
-            query.replace(" ", "+")), "json")
+        definitions = await fetch(
+            URBAN_DICT_TEMPLATE.format(query.replace(" ", "+")), "json")
         definitions = definitions["list"][:5]
 
         if not definitions:
@@ -375,8 +374,8 @@ class Helpers():
             sp = ctx.message.content.split("$")
 
         if len(sp) < 3:
-            await ctx.send(
-                "PLEASE USE '$' AROUND YOUR LATEX EQUATIONS. CHIRP.")
+            await ctx.send("PLEASE USE '$' AROUND YOUR LATEX EQUATIONS. CHEEP."
+                           )
             return
 
         up = int(len(sp) / 2)
@@ -463,8 +462,9 @@ class Helpers():
         m = rg.search(query)
 
         if m:
-            r = await fetch(CURRENCY_TEMPLATE.format(
-                m.group(1), m.group(3), m.group(7)), "content")
+            r = await fetch(
+                CURRENCY_TEMPLATE.format(m.group(1), m.group(3), m.group(7)),
+                "content")
             soup = BeautifulSoup(r, "html.parser")
 
             converted_cost = soup.find('span', {
@@ -473,8 +473,10 @@ class Helpers():
 
             # FIXME: there has to be a more elegant way to print this
             await ctx.send(
-                "{} {} = {} {}".format(m.group(1), m.group(3).upper(),
-                                       converted_cost, m.group(7).upper()))
+                "{} {} = {} {}".format(
+                    m.group(1),
+                    m.group(3).upper(), converted_cost,
+                    m.group(7).upper()))
         else:
             await ctx.send(""":warning: Wrong format.
             The correct format is `?xe <AMOUNT> <CURRENCY> to <CURRENCY>`.

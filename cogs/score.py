@@ -175,9 +175,8 @@ class Score:
         score = c.fetchone()
 
         if not score:
-            score = (0,)
-            c.execute("INSERT INTO Members VALUES (?, ?, ?)",
-                      (m_id, nick, 0))
+            score = (0, )
+            c.execute("INSERT INTO Members VALUES (?, ?, ?)", (m_id, nick, 0))
             conn.commit()
 
         await ctx.send("{} score is {}.".format(nick, score[0]))

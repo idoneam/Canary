@@ -33,7 +33,6 @@ from .utils.paginator import Pages
 # For remindme functionality
 import re
 
-
 REMINDER_LETTER_REPLACEMENTS = [
     (r"twenty[-\s]one", "21"),
     (r"twenty[-\s]two", "22"),
@@ -107,8 +106,7 @@ REMINDER_UNITS = {
 }
 
 PUNCTUATION_CHARS = ".,+&/ "
-STRING_WORD_SEPARATOR_REGEX = re.compile(
-    r"(\s|[" + PUNCTUATION_CHARS + "])+")
+STRING_WORD_SEPARATOR_REGEX = re.compile(r"(\s|[" + PUNCTUATION_CHARS + "])+")
 TIME_SEPARATOR_REGEX = re.compile(r"^(,|\+|&|and|plus|in)$")
 
 # Matches a natural number. May be used in other regex, so not compiled.
@@ -197,8 +195,7 @@ class Reminder():
             await ctx.send(
                 '**Usage:** \n`?remindme in 1 hour and 20 minutes and 20 '
                 'seconds to eat` **or** \n `?remindme at 2020-04-30 11:30 to '
-                'graduate` **or** \n`?remindme daily to sleep`'
-            )
+                'graduate` **or** \n`?remindme daily to sleep`')
             return
 
         # Copies original reminder message and sets lowercase for regex.
@@ -239,8 +236,9 @@ class Reminder():
             5. Lastly: save beginning of "reminder quote" and end loop
         """
 
-        if len(input_segments) > 0 and (input_segments[0] in
-                                        ("daily", "weekly", "monthly")):
+        if len(input_segments) > 0 and (input_segments[0] in ("daily",
+                                                              "weekly",
+                                                              "monthly")):
             await self.__remindme_repeating(
                 ctx,
                 input_segments[0],
@@ -274,10 +272,12 @@ class Reminder():
                 # Compute datetime.Object
                 absolute_duedate = datetime.datetime.strptime(
                     "{Y}-{m}-{d}-{H}-{M}-{S}".format(
-                        Y=date_result.group(1), m=date_result.group(2),
-                        d=date_result.group(4), H=time_result.group(1),
-                        M=time_result.group(2), S=0.1),
-                    "%Y-%m-%d-%H-%M-%S.%f")
+                        Y=date_result.group(1),
+                        m=date_result.group(2),
+                        d=date_result.group(4),
+                        H=time_result.group(1),
+                        M=time_result.group(2),
+                        S=0.1), "%Y-%m-%d-%H-%M-%S.%f")
 
                 # Strips "to" and dates from the reminder message
                 time_input_end = time_result.span()[1]
@@ -303,10 +303,9 @@ class Reminder():
                 await ctx.author.send(
                     'Hi {}! \nI will remind you to {} on {} at {} unless you '
                     'send me a message to stop reminding you about it! '
-                    '[{:d}]'.format(
-                        ctx.author.name, reminder, date_result.group(0),
-                        time_result.group(0),
-                        len(reminders) + 1))
+                    '[{:d}]'.format(ctx.author.name, reminder,
+                                    date_result.group(0), time_result.group(0),
+                                    len(reminders) + 1))
 
                 await ctx.send('Reminder added.')
 
@@ -334,13 +333,15 @@ class Reminder():
 
         # Regex for the number and time units and store in "match"
         for segment in time_segments:
-            match = re.match(
-                r"^({})\s+{}$".format(NUMBER_REGEX, UNIT_REGEX), segment)
+            match = re.match(r"^({})\s+{}$".format(NUMBER_REGEX, UNIT_REGEX),
+                             segment)
             number = float(match.group(1))
 
-            # Regex potentially misspelled time units and match to proper spelling
+            # Regex potentially misspelled time units and match to proper
+            # spelling.
             for regex in REMINDER_UNITS:
-                if re.match("^{}$".format(REMINDER_UNITS[regex]), match.group(3)):
+                if re.match("^{}$".format(REMINDER_UNITS[regex]),
+                            match.group(3)):
                     time_offset[regex] += number
 
         # Convert years to a unit that datetime will understand
@@ -395,11 +396,14 @@ class Reminder():
 
     @staticmethod
     def formatted_reminder_list(rem_list):
-        return ['[{num}] (Frequency: {freq}{opt_date}) - {rem_text}'.format(
-            num=i, freq=rem[3].capitalize(),
-            opt_date=(' at {date}'.format(date=rem[4].split('.')[0])
-                      if rem[3] == 'once' else ''),
-            rem_text=rem[2]) for i, rem in enumerate(rem_list, 1)]
+        return [
+            '[{num}] (Frequency: {freq}{opt_date}) - {rem_text}'.format(
+                num=i,
+                freq=rem[3].capitalize(),
+                opt_date=(' at {date}'.format(date=rem[4].split('.')[0])
+                          if rem[3] == 'once' else ''),
+                rem_text=rem[2]) for i, rem in enumerate(rem_list, 1)
+        ]
 
     @commands.command(aliases=['lr'])
     async def list_reminders(self, ctx):
@@ -420,7 +424,7 @@ class Reminder():
 
         rem_author = ctx.message.author
         author_id = rem_author.id
-        c.execute('SELECT * FROM Reminders WHERE ID = ?', (author_id,))
+        c.execute('SELECT * FROM Reminders WHERE ID = ?', (author_id, ))
 
         rem_list = c.fetchall()
         if not rem_list:
@@ -545,7 +549,8 @@ class Reminder():
         await ctx.author.send(
             'Hi {}! \nI will remind you to {} {} until you send me a message '
             'to stop reminding you about it! [{:d}]'.format(
-                ctx.author.name, quote, freq, len(reminders) + 1))
+                ctx.author.name, quote, freq,
+                len(reminders) + 1))
 
         await ctx.send('Reminder added.')
 
