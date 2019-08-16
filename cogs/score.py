@@ -42,6 +42,41 @@ class Score:
         self.DOWNMARTLET = discord.utils.get(
             self.guild.emojis, name=self.bot.config.downvote_emoji)
 
+    def get_score(self, emoji):
+        if emoji.id == self.UPMARTLET.id:
+            return 1
+
+        elif emoji.id == self.DOWNMARTLET.id:
+            return -1
+
+        return 0
+
+    def _update_score_if_needed(self, emoji, negated=False):
+        score = self.get_score(emoji) * (-1 if negated else 1)
+        if score == 0:
+            return
+
+        conn = sqlite3.connect(self.bot.config.db_path)
+        c = conn.cursor()
+        t = (
+            score,
+            message.author.id,
+        )
+
+        if not c.execute('SELECT * FROM Members WHERE ID=?', t[1:]).fetchall():
+            # No record exists for the user yet
+            c.execute('INSERT INTO Members VALUES (?, ?, ?)',
+                      (message.author.id, message.author.display_name, score))
+            conn.commit()
+            conn.close()
+            return
+
+        # Member record already exists
+        c.execute('UPDATE Members SET Score=Score+? WHERE ID=?', t)
+
+        conn.commit()
+        conn.close()
+
     async def on_raw_reaction_add(self, payload):
         # Check for Martlet emoji + upmartletting yourself
         channel = self.bot.get_channel(payload.channel_id)
@@ -55,74 +90,27 @@ class Score:
         if user == message.author:
             return
 
-        if emoji.id == self.UPMARTLET.id:
-            score = 1
-        elif emoji.id == self.DOWNMARTLET.id:
-            score = -1
-        else:
-            return
-
-        conn = sqlite3.connect(self.bot.config.db_path)
-        c = conn.cursor()
-        # uncomment to enable sqlite3 debugging
-        # conn.set_trace_callback(print)
-        t = (
-            score,
-            message.author.id,
-        )
-        if not c.execute('SELECT * FROM Members WHERE ID=?', t[1:]).fetchall():
-            t = (message.author.id, message.author.display_name, score)
-            c.execute('INSERT INTO Members VALUES (?, ?, ?)', t)
-            conn.commit()
-            conn.close()
-            return
-
-        # Member record already exists
-        c.execute('UPDATE Members SET Score=Score+? WHERE ID=?', t)
-        conn.commit()
-        conn.close()
+        self._update_score_if_needed(emoji)
 
     async def on_raw_reaction_remove(self, payload):
         # Check for Martlet emoji + upmartletting yourself
         """Does the opposite thing when a user up/downmarlets a message
         """
+
         channel = self.bot.get_channel(payload.channel_id)
+
         try:
             message = await channel.get_message(payload.message_id)
         except discord.errors.NotFound:
             return
+
         user = self.bot.get_user(payload.user_id)
         emoji = payload.emoji
 
         if user == message.author:
             return
 
-        if emoji.id == self.UPMARTLET.id:
-            score = -1
-        elif emoji.id == self.DOWNMARTLET.id:
-            score = 1
-        else:
-            return
-
-        conn = sqlite3.connect(self.bot.config.db_path)
-        c = conn.cursor()
-        t = (
-            score,
-            message.author.id,
-        )
-
-        if not c.execute('SELECT * FROM Members WHERE ID=?', t[1:]).fetchall():
-            # No record exists for the user yet
-            t = (message.author.id, message.author.display_name, score)
-            c.execute('INSERT INTO Members VALUES (?, ?, ?)', t)
-            conn.commit()
-            conn.close()
-            return
-
-        # Record exists
-        c.execute('UPDATE Members SET Score=Score+? WHERE ID=?', t)
-        conn.commit()
-        conn.close()
+        self._update_score_if_needed(emoji, negated=True)
 
     async def on_member_update(self, before, after):
         if before.display_name == after.display_name:
@@ -140,6 +128,7 @@ class Score:
                 0,
             ))
             conn.commit()
+
         else:
             c.execute("UPDATE Members SET DisplayName = ? WHERE ID = ?", (
                 new_nick,
@@ -195,15 +184,15 @@ class Score:
     async def score(self, ctx, member: discord.Member = None):
         """Displays member's score in upmartlet rankings."""
         member = member if member else ctx.message.author
-        id = member.id
+        m_id = member.id
         nick = member.display_name
         conn = sqlite3.connect(self.bot.config.db_path)
         c = conn.cursor()
-        c.execute("SELECT Score FROM Members WHERE ID = ?", (id, ))
+        c.execute("SELECT Score FROM Members WHERE ID = ?", (m_id, ))
         score = c.fetchone()
         if not score:
             t = (
-                id,
+                m_id,
                 nick,
                 0,
             )
