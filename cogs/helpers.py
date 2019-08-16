@@ -472,11 +472,10 @@ class Helpers():
             }).get_text()
 
             # FIXME: there has to be a more elegant way to print this
-            await ctx.send(
-                "{} {} = {} {}".format(
-                    m.group(1),
-                    m.group(3).upper(), converted_cost,
-                    m.group(7).upper()))
+            await ctx.send("{} {} = {} {}".format(
+                m.group(1),
+                m.group(3).upper(), converted_cost,
+                m.group(7).upper()))
         else:
             await ctx.send(""":warning: Wrong format.
             The correct format is `?xe <AMOUNT> <CURRENCY> to <CURRENCY>`.
