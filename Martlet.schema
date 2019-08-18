@@ -25,26 +25,26 @@ CREATE TABLE IF NOT EXISTS "Quotes" (
 	`Date`	TEXT
 );
 CREATE TABLE IF NOT EXISTS `Members` (
-	`ID`	INTEGER UNIQUE,
-	`DisplayName`	TEXT,
-	`Score`	INTEGER
+	`ID`	      INTEGER UNIQUE,
+	`DisplayName` TEXT,
+	`Score`	      INTEGER
 );
 CREATE TABLE IF NOT EXISTS 'Reminders' (
-	'ID'INTEGER,
-	'Name'TEXT,
-	'Reminder'TEXT,
-	'Frequency'TEXT,
-	'Date'TEXT,
-	'LastReminder'TEXT
+	'ID'           INTEGER,
+	'Name'         TEXT,
+	'Reminder'     TEXT,
+	'Frequency'    TEXT,
+	'Date'         TEXT,
+	'LastReminder' TEXT
 );
 
 CREATE TABLE IF NOT EXISTS `BankTransactions` (
     `TransactionID` INTEGER PRIMARY KEY,
-    `UserID` INTEGER,
-    `Amount` INTEGER,
-    `Action` TEXT, -- actions are separated from other metadata since they're mandatory
-    `Metadata` TEXT,
-    `Date` INTEGER,
+    `UserID`        INTEGER,
+    `Amount`        INTEGER,
+    `Action`        TEXT, -- actions are separated from other metadata since they're mandatory
+    `Metadata`      TEXT,
+    `Date`          INTEGER,
 
     FOREIGN KEY(`UserID`) REFERENCES `Members`(`ID`)
 );
