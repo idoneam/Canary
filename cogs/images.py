@@ -101,6 +101,10 @@ class Images:
             image,
             cv2.INTER_LINEAR + cv2.WARP_FILL_OUTLIERS + cv2.WARP_INVERSE_MAP)
 
+    @staticmethod
+    def _bounded_radius(radius: str):
+        return max(1, min(int(radius), 500))
+
     @commands.command()
     @filter_image
     async def polar(self, _ctx, image=None):
@@ -134,7 +138,7 @@ class Images:
         """
         Blur the image horizontally
         """
-        radius = max(1, min(int(radius), 500))
+        radius = self._bounded_radius(radius)
         image = cv2.blur(image, (radius, 1))
         return image
 
@@ -144,7 +148,7 @@ class Images:
         """
         Blur the image vertically
         """
-        radius = max(1, min(int(radius), 500))
+        radius = self._bounded_radius(radius)
         image = cv2.blur(image, (1, radius))
         return image
 
@@ -154,7 +158,7 @@ class Images:
         """
         Radial blur
         """
-        radius = max(1, min(int(radius), 500))
+        radius = self._bounded_radius(radius)
         image = self._polar(image)
         image = cv2.blur(image, (radius, 1))
         image = self._cart(image)
@@ -167,7 +171,7 @@ class Images:
         Circular blur
         """
 
-        radius = max(1, min(int(radius), 500))
+        radius = self._bounded_radius(radius)
         half_radius = radius // 2
 
         # determine values for padding

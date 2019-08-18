@@ -44,6 +44,14 @@ from .utils.paginator import Pages
 from .utils.requests import fetch
 
 MCGILL_EXAM_URL = "https://www.mcgill.ca/exams/dates"
+MCGILL_KEY_DATES_URL = "https://www.mcgill.ca/importantdates/key-dates"
+
+WTTR_IN_MOON_URL = "http://wttr.in/moon.png"
+
+URBAN_DICT_TEMPLATE = "http://api.urbandictionary.com/v0/define?term={}"
+
+CURRENCY_TEMPLATE = "http://www.xe.com/currencyconverter/convert/" \
+                    "?Amount={}&From={}&To={}"
 
 
 class Helpers():
@@ -73,10 +81,8 @@ class Helpers():
         """Retrieves current weather conditions.
         Data taken from http://weather.gc.ca/city/pages/qc-147_metric_e.html"""
         await ctx.trigger_typing()
-        # Replace link with any city weather link from http://weather.gc.ca/
-        url = "http://weather.gc.ca/city/pages/qc-147_metric_e.html"
 
-        r = await fetch(url, "content")
+        r = await fetch(self.bot.config.gc_weather_url, "content")
 
         soup = BeautifulSoup(r, "html.parser")
         # Get date
@@ -129,8 +135,7 @@ class Helpers():
 
         # Weather alerts
 
-        alert_url = "https://weather.gc.ca/warnings/report_e.html?qc67"
-        r_alert = await fetch(alert_url, "content")
+        r_alert = await fetch(self.bot.config.gc_weather_alert_url, "content")
         alert_soup = BeautifulSoup(r_alert, "html.parser")
         # Exists
         alert_title = alert_soup.find("h1", string=re.compile("Alerts.*"))
@@ -172,18 +177,17 @@ class Helpers():
     @commands.command()
     async def wttr(self, ctx):
         """Retrieves Montreal's weather forecast from wttr.in"""
-        await ctx.send('http://wttr.in/Montreal_2mpq_lang=en.png?_=%d' % round(
-            time.time()))
+        await ctx.send(self.bot.config.wttr_in_tpl.format(round(time.time())))
 
     @commands.command(aliases=["wttrmoon"])
     async def wttr_moon(self, ctx):
         """Retrieves the current moon phase from wttr.in/moon"""
-        await ctx.send('http://wttr.in/moon.png')
+        await ctx.send(WTTR_IN_MOON_URL)
 
     @commands.command()
     async def course(self, ctx, *, query: str):
-        """Prints a summary of the queried course, taken from the course calendar.
-        ie. ?course comp 206
+        """Prints a summary of the queried course, taken from the course
+        calendar. ie. ?course comp 206
         Note: Bullet points without colons (':') are not parsed because I have
         yet to see one that actually has useful information.
         """
@@ -194,20 +198,22 @@ class Helpers():
                             re.IGNORECASE | re.DOTALL).search(query)
         if not result:
             await ctx.send(
-                ':warning: Incorrect format. The correct format is `?course <course name>`.'
-            )
+                ':warning: Incorrect format. The correct format is `?course '
+                '<course name>`.')
             return
-        search_term = result.group(1) + '-' + result.group(2)
+
+        search_term = "{}-{}".format(result.group(1), result.group(2))
         search_term = re.sub(r'\s+', r'', search_term)
-        url = "http://www.mcgill.ca/study/2019-2020/courses/%s" % search_term
-        r = await fetch(url, "content")
+        r = await fetch(
+            self.bot.config.course_tpl.format(search_term), "content")
         soup = BeautifulSoup(r, "html.parser")
 
-        # XXX: brute-force parsing at the moment
+        # TODO: brute-force parsing at the moment
         title = soup.find_all("h1", {"id": "page-title"})[0].get_text().strip()
         if title == 'Page not found':
-            await ctx.send("No course found for %s." % query)
+            await ctx.send("No course found for {}.".format(query))
             return
+
         content = soup.find(
             "div", id="block-system-main").find_all("div",
                                                     {"class": "content"})[1]
@@ -242,8 +248,7 @@ class Helpers():
 
         await ctx.trigger_typing()
 
-        url = 'https://www.mcgill.ca/importantdates/key-dates'
-        r = await fetch(url, "content")
+        r = await fetch(MCGILL_KEY_DATES_URL, "content")
         soup = BeautifulSoup(r, 'html.parser')
 
         now = datetime.datetime.now()
@@ -256,7 +261,8 @@ class Helpers():
 
         text = soup.find_all('div', {'class': 'field-item even'})
 
-        # The layout is trash and the divs don't follow a pattern so disintegrate all div tags
+        # The layout is trash and the divs don't follow a pattern so
+        # disintegrate all div tags.
         for div in text[0].find_all('div'):
             div.replaceWithChildren()
 
@@ -269,7 +275,8 @@ class Helpers():
         else:
             node = text[0].find_all('h2')[1].next_sibling
 
-        # Iterate through the tags and gather h3 headings in one list and the text between them in another
+        # Iterate through the tags and gather h3 headings in one list and the
+        # text between them in another.
         while node:
             if hasattr(node, 'name'):
                 if node.name == 'h2' and term == 'Fall':
@@ -316,10 +323,8 @@ class Helpers():
 
         await ctx.trigger_typing()
 
-        url = "http://api.urbandictionary.com/v0/define?term=%s" % query.replace(
-            ' ', '+')
-
-        definitions = await fetch(url, "json")
+        definitions = await fetch(
+            URBAN_DICT_TEMPLATE.format(query.replace(" ", "+")), "json")
         definitions = definitions["list"][:5]
 
         if not definitions:
@@ -338,7 +343,7 @@ class Helpers():
         p = Pages(
             ctx,
             item_list=definitions_list_text,
-            title="Definitions for '%s' from Urban Dictionary:" % query,
+            title="Definitions for '{}' from Urban Dictionary:".format(query),
             display_option=(3, 1),
             editable_content=False)
 
@@ -352,13 +357,13 @@ class Helpers():
         tex = ""
         sp = ""
         if "$$" in ctx.message.content:
-            sp = ctx.message.content.split('$$')
+            sp = ctx.message.content.split("$$")
         elif "$" in ctx.message.content:
-            sp = ctx.message.content.split('$')
+            sp = ctx.message.content.split("$")
 
         if len(sp) < 3:
-            await ctx.send(
-                'PLEASE USE \'$\' AROUND YOUR LATEX EQUATIONS. CHIRP.')
+            await ctx.send("PLEASE USE '$' AROUND YOUR LATEX EQUATIONS. CHEEP."
+                           )
             return
 
         up = int(len(sp) / 2)
@@ -366,14 +371,14 @@ class Helpers():
             tex += "\\[" + sp[2 * i + 1] + "\\]"
 
         buf = BytesIO()
-        preview(tex, viewer='BytesIO', outputbuffer=buf, euler=False)
+        preview(tex, viewer="BytesIO", outputbuffer=buf, euler=False)
         buf.seek(0)
         img_bytes = np.asarray(bytearray(buf.read()), dtype=np.uint8)
         img = cv2.imdecode(img_bytes, cv2.IMREAD_UNCHANGED)
         img2 = cv2.copyMakeBorder(
             img, 10, 10, 10, 10, cv2.BORDER_CONSTANT, value=(255, 255, 255))
-        fn = 'latexed.png'
-        retval, buf = cv2.imencode('.png', img2)
+        fn = "latexed.png"
+        retval, buf = cv2.imencode(".png", img2)
         img_bytes = BytesIO(buf)
 
         await ctx.send(file=discord.File(fp=img_bytes, filename=fn))
@@ -390,10 +395,9 @@ class Helpers():
         await ctx.trigger_typing()
 
         while pagenum < pagelimit:
-            url = "http://www.mcgill.ca/study/2018-2019/courses/search\
-            ?search_api_views_fulltext=%s&sort_by=field_subject_code&page=%d" % (
-                keyword, pagenum)
-            r = await fetch(url, "content")
+            r = await fetch(
+                self.bot.config.course_search_tpl.format(keyword, pagenum),
+                "content")
             soup = BeautifulSoup(r, "html.parser")
             found = soup.find_all("div", {"class": "views-row"})
 
@@ -404,20 +408,20 @@ class Helpers():
                 pagenum += 1
 
         if len(courses) < 1:
-            await ctx.send("No course found for: %s." % query)
+            await ctx.send("No course found for: {}.".format(query))
             return
 
-        course_list = {'names': [], 'values': []}
+        course_list = {"names": [], "values": []}
         for course in courses:
             # split results into titles + information
             title = course.find_all("h4")[0].get_text().split(" ")
-            course_list['names'].append(' '.join(title[:2]))
-            course_list['values'].append(' '.join(title[2:]))
+            course_list["names"].append(" ".join(title[:2]))
+            course_list["values"].append(" ".join(title[2:]))
 
         p = Pages(
             ctx,
             item_list=course_list,
-            title='Courses found for {}'.format(query),
+            title="Courses found for {}".format(query),
             display_option=(2, 10),
             editable_content=False)
         await p.paginate()
@@ -447,9 +451,9 @@ class Helpers():
         m = rg.search(query)
 
         if m:
-            url = 'http://www.xe.com/currencyconverter/convert/?Amount=%s&From=%s&To=%s' % (
-                m.group(1), m.group(3), m.group(7))
-            r = await fetch(url, "content")
+            r = await fetch(
+                CURRENCY_TEMPLATE.format(m.group(1), m.group(3), m.group(7)),
+                "content")
             soup = BeautifulSoup(r, "html.parser")
 
             converted_cost = soup.find('span', {
@@ -457,9 +461,10 @@ class Helpers():
             }).get_text()
 
             # FIXME: there has to be a more elegant way to print this
-            await ctx.send(
-                "%s %s = %s %s" % (m.group(1), m.group(3).upper(),
-                                   converted_cost, m.group(7).upper()))
+            await ctx.send("{} {} = {} {}".format(
+                m.group(1),
+                m.group(3).upper(), converted_cost,
+                m.group(7).upper()))
         else:
             await ctx.send(""":warning: Wrong format.
             The correct format is `?xe <AMOUNT> <CURRENCY> to <CURRENCY>`.
@@ -476,16 +481,15 @@ class Helpers():
             await ctx.send("Trying to owe samosas now, are we? :wink:")
             return
         total = dollar // 2 * 3 + (math.floor(dollar) % 2)
-        await ctx.send("$%.2f is worth %d samosas." % (dollar, total))
+        await ctx.send("${.2f} is worth {} samosas.".format(dollar, total))
 
     @commands.command()
     async def tepid(self, ctx):
         """Retrieves the CTF printers' statuses from tepid.science.mcgill.ca"""
-        url = "https://tepid.science.mcgill.ca:8443/tepid/screensaver/queues/status"
-        data = await fetch(url, "json")
+        data = await fetch(self.bot.config.tepid_url, "json")
         for key, value in data.items():
-            status = "up" if value else "down"
-            await ctx.send("A printer in {} is {}!".format(key, status))
+            await ctx.send("At least one printer in {} is {}!".format(
+                key, "up" if value else "down"))
 
     @commands.command()
     async def modpow(self, ctx, a, b, m):
