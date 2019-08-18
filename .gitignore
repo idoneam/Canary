@@ -113,3 +113,4 @@ Main_flymake.py
 marty_env
 .idea/
 tmp/
+pickles/*

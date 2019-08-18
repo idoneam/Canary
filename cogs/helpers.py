@@ -33,6 +33,7 @@ import cv2
 import numpy as np
 
 # Other utilities
+import os
 import re
 import math
 import time
@@ -55,6 +56,11 @@ URBAN_DICT_TEMPLATE = "http://api.urbandictionary.com/v0/define?term={}"
 CURRENCY_TEMPLATE = "http://www.xe.com/currencyconverter/convert/" \
                     "?Amount={}&From={}&To={}"
 
+try:
+    os.mkdir('./pickles')
+except Exception:
+    pass
+
 
 class Helpers():
     def __init__(self, bot):
@@ -68,9 +74,9 @@ class Helpers():
         """
         await self.bot.wait_until_ready()
         while not self.bot.is_closed():
-            food_channel = utils.get(
+            recall_channel = utils.get(
                 self.bot.get_guild(self.bot.config.server_id).text_channels,
-                name="food")
+                name=self.bot.config.recall_channel)
             newest_recall = feedparser.parse(CFIA_FEED_URL)['entries'][0]
             newest_recall_id = newest_recall['id']
             try:
@@ -98,7 +104,7 @@ class Helpers():
                 pickle.dump(newest_recall_id, id_pickle)
                 id_pickle.close()
                 # Send recall warning
-                await food_channel.send(embed=recall_warning)
+                await recall_channel.send(embed=recall_warning)
             await asyncio.sleep(60)
 
     @commands.command(aliases=['exams'])

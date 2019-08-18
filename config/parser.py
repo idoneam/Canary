@@ -75,6 +75,7 @@ class Parser:
         self.gc_weather_alert_url = config["Helpers"]["GCWeatherAlertURL"]
         self.wttr_in_tpl = config["Helpers"]["WttrINTemplate"]
         self.tepid_url = config["Helpers"]["TepidURL"]
+        self.recall_channel = config["Helpers"]["RecallChannel"]
 
         # Below lies currency configuration
         currency_precision = int(config["Currency"]["Precision"])
