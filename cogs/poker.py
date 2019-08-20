@@ -57,14 +57,23 @@ class PokerGame:
         self._in_play = [None, None, None, None, None]
         self.players = {}
         self.players_order = [host.id]
-        self.num_folded = 0
         self.dealer = 0
         self.small_blind = 1
         self.big_blind = 2
+        self.starting_player = -1
         self.turn = -1  # Must be set at game time
         self.bet = Decimal(0)
         self.pot = Decimal(0)
         self.side_pots = {}  # TODO
+
+    @property
+    def num_folded(self):
+        return len([p for p in self.players if p["status"] == STATUS_FOLDED])
+
+    @property
+    def stage(self):
+        # 0, 1, 2 or 3
+        return min(len([c for c in self._in_play if c is None]), 3)
 
     def _get_player_name_by_index(self, i):
         return self.players[self.players_order[i]]["user_object"].display_name
@@ -157,6 +166,10 @@ class PokerGame:
             player.display_name))
 
     async def start(self, ctx):
+        """
+        Start the round (not the turn!)
+        """
+
         if self.ongoing_round:
             await ctx.send("Cannot start in the middle of a round.")
             return
