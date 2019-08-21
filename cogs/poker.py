@@ -17,6 +17,8 @@ MOVE_CALL = "pk_call"
 MOVE_RAISE = "pk_raise"
 MOVE_ALL_IN = "pk_all_in"
 
+ROUND_STAGES = [0, 3, 4, 5]
+
 TIMEOUT_MINUTES = 10
 
 CARD_TEMPLATE = ("┌────┐ ┌────┐ ┌────┐ ┌────┐ ┌────┐\n"
@@ -72,8 +74,9 @@ class PokerGame:
 
     @property
     def stage(self):
+        # 0  3  4    5
         # 0, 1, 2 or 3
-        return min(len([c for c in self._in_play if c is None]), 3)
+        return ROUND_STAGES.index(len([c for c in self._in_play if c is None]))
 
     def _get_player_name_by_index(self, i):
         return self.players[self.players_order[i]]["user_object"].display_name
