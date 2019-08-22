@@ -204,8 +204,8 @@ class Helpers(commands.Cog):
 
         search_term = "{}-{}".format(result.group(1), result.group(2))
         search_term = re.sub(r'\s+', r'', search_term)
-        r = await fetch(
-            self.bot.config.course_tpl.format(search_term), "content")
+        url = self.bot.config.course_tpl.format(search_term)
+        r = await fetch(url, "content")
         soup = BeautifulSoup(r, "html.parser")
 
         # TODO: brute-force parsing at the moment
@@ -299,7 +299,7 @@ class Helpers(commands.Cog):
         em = discord.Embed(
             title='McGill Important Dates {0} {1}'.format(
                 term, str(current_year)),
-            description=url,
+            description=MCGILL_KEY_DATES_URL,
             colour=0xDA291C)
 
         for i in range(len(headers)):
@@ -323,8 +323,8 @@ class Helpers(commands.Cog):
 
         await ctx.trigger_typing()
 
-        definitions = await fetch(
-            URBAN_DICT_TEMPLATE.format(query.replace(" ", "+")), "json")
+        url = URBAN_DICT_TEMPLATE.format(query.replace(" ", "+"))
+        definitions = await fetch(url, "json")
         definitions = definitions["list"][:5]
 
         if not definitions:
@@ -481,7 +481,7 @@ class Helpers(commands.Cog):
             await ctx.send("Trying to owe samosas now, are we? :wink:")
             return
         total = dollar // 2 * 3 + (math.floor(dollar) % 2)
-        await ctx.send("${.2f} is worth {} samosas.".format(dollar, total))
+        await ctx.send("${:.2f} is worth {} samosas.".format(dollar, total))
 
     @commands.command()
     async def tepid(self, ctx):
