@@ -28,7 +28,7 @@ from tabulate import tabulate
 from .utils.paginator import Pages
 
 
-class Score:
+class Score(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.guild = None

@@ -54,7 +54,7 @@ CURRENCY_TEMPLATE = "http://www.xe.com/currencyconverter/convert/" \
                     "?Amount={}&From={}&To={}"
 
 
-class Helpers():
+class Helpers(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
