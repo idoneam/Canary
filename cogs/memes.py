@@ -24,6 +24,7 @@ import asyncio
 # Other utilities
 import random
 from .utils.auto_incorrect import auto_incorrect
+from .utils.mix import generate_mix
 
 
 class Memes():
@@ -142,8 +143,7 @@ class Memes():
         disappears after."""
         if input_str is None:
             await ctx.send()
-        msg = "".join([(c.upper() if random.randint(0, 1) else c.lower())
-                       for c in input_str])
+        msg = generate_mix(input_str)
         self.bot.logger.info('?mix invoked: Author: {}, Message: {}'.format(
             ctx.message.author, ctx.message.content))
         await ctx.send(msg)

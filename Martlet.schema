@@ -48,3 +48,11 @@ CREATE TABLE IF NOT EXISTS `BankTransactions` (
 
     FOREIGN KEY(`UserID`) REFERENCES `Members`(`ID`)
 );
+
+CREATE TABLE IF NOT EXISTS `ActivePotions` (
+    `ActivationID`    INTEGER PRIMARY KEY AUTOINCREMENT,
+    `PurchaserUserID` INTEGER NOT NULL,
+    `AffectedUserID`  INTEGER NOT NULL,
+    `Expiration`      INTEGER NOT NULL,
+    `Potion`          TEXT NOT NULL
+);
