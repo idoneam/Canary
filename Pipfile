@@ -7,7 +7,6 @@ name = "pypi"
 beautifulsoup4 = "==4.6.0"
 sympy = "==1.0.0"
 requests = ">=2.20.0"
-cleverbot = "==1.1.1"
 tabulate = "==0.7.7"
 discord-rewrite = {ref = "860d6a9ace8248dfeec18b8b159e7b757d9f56bb", git = "https://github.com/Rapptz/discord.py"}
 opencv-python = "*"
