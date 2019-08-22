@@ -44,6 +44,35 @@ It's {turn}'s turn! Would you like to {moves}?
 ```"""
 
 
+class PokerPlayer:
+    def __init__(self, user_object, amount: Decimal):
+        self.user_object = user_object
+        self.amount = amount
+        self.amount_in = Decimal(0)
+        self._status = STATUS_IN
+
+    @property
+    def status(self) -> str:
+        return self._status
+
+    @status.setter
+    def status(self, status: str) -> None:
+        self._status = status
+
+    @property
+    def name(self) -> str:
+        return self.user_object.display_name
+
+    @property
+    def discord_id(self):
+        return self.user_object.id
+
+    def move_in(self, amount: Decimal) -> None:
+        # TODO: Check amounts?
+        self.amount -= amount
+        self.amount_in += amount
+
+
 class PokerGame:
     def __init__(self, currency, host, round_limit: int, buy_in: Decimal):
         self.currency = currency
@@ -78,21 +107,32 @@ class PokerGame:
         # 0, 1, 2 or 3
         return ROUND_STAGES.index(len([c for c in self._in_play if c is None]))
 
-    def _get_player_name_by_index(self, i):
-        return self.players[self.players_order[i]]["user_object"].display_name
+    @property
+    def _turn_player(self) -> PokerPlayer:
+        return self.players[self.players_order[
+            self.turn % len(self.players_order)]]
 
-    def _get_turn_player(self):
-        return self.players[self.players_order[self.turn]]
+    @property
+    def _dealer_player(self) -> PokerPlayer:
+        return self.players[self.players_order[self.dealer]]
 
-    def _get_fold_winner(self):
+    @property
+    def _small_blind_player(self) -> PokerPlayer:
+        return self.players[self.players_order[self.small_blind]]
+
+    @property
+    def _big_blind_player(self) -> PokerPlayer:
+        return self.players[self.players_order[self.big_blind]]
+
+    def _get_fold_winner(self) -> Optional[PokerPlayer]:
         if self.num_folded < len(self.players_order) - 1:
             return None
 
         for player in self.players:
-            if player["status"] != STATUS_FOLDED:
+            if player.get_status() != STATUS_FOLDED:
                 return player
 
-    async def _print_game_screen(self, ctx):
+    async def _print_game_screen(self, ctx) -> None:
         card_format = {}
         for n, card in enumerate(self._in_play, 1):
             if card is None:
@@ -115,15 +155,14 @@ class PokerGame:
             moves = ", ".join(moves[:-1]) + ", or {}".format(moves[-1])
 
         await ctx.send(GAME_BOARD.format(
-            dealer=self._get_player_name_by_index(self.dealer),
-            small_blind=self._get_player_name_by_index(self.small_blind),
+            dealer=self._dealer_player.name,
+            small_blind=self._small_blind_player.name,
             sb_amount=self.small_blind,
-            big_blind=self._get_player_name_by_index(self.big_blind),
+            big_blind=self._big_blind_player.name,
             bb_amount=self.big_blind,
             symbol=self.currency["symbol"],
             cards=CARD_TEMPLATE.format(**card_format),
-            turn=self._get_player_name_by_index(
-                self.turn % len(self.players_order)),
+            turn=self._turn_player.name,
             bet=self.bet,
             moves=moves))
 
@@ -140,7 +179,7 @@ class PokerGame:
 
         return True
 
-    async def join(self, ctx):
+    async def join(self, ctx) -> None:
         await ctx.trigger_typing()
 
         if self.ongoing_game:
@@ -154,21 +193,15 @@ class PokerGame:
                 "{} is already in the game.".format(player.display_name))
             return
 
-        # TODO: Buy-in
+        # TODO: Buy-in accounting
 
-        self.players[player.id] = {
-            "user_object": player,
-            "amount": self.buy_in,
-            "amount_in": Decimal(0),
-            "status": STATUS_IN
-        }
-
+        self.players[player.id] = PokerPlayer(player, self.buy_in)
         self.players_order.append(player.id)
 
         await ctx.send("{} has joined the game!".format(
-            player.display_name))
+            self.players[player.id].name))
 
-    async def start(self, ctx):
+    async def start(self, ctx) -> None:
         """
         Start the round (not the turn!)
         """
@@ -190,15 +223,8 @@ class PokerGame:
         self.ongoing_round = True
         self._time_started = datetime.now()  # Bump the timeout
 
-        self.players[self.players_order[self.small_blind]][
-            "amount"] -= self._blind / Decimal(2)
-        self.players[self.players_order[self.small_blind]][
-            "amount_in"] = self._blind / Decimal(2)
-
-        self.players[self.players_order[self.big_blind]][
-            "amount"] -= self._blind
-        self.players[self.players_order[self.big_blind]][
-            "amount_in"] = self._blind
+        self._small_blind_player.move_in(self._blind / Decimal(2))
+        self._big_blind_player.move_in(self._blind)
 
         self.bet = self._blind
 
@@ -208,10 +234,10 @@ class PokerGame:
 
         # TODO: What to do here?
 
-    async def _advance_turn(self, ctx):
+    async def _advance_turn(self, ctx) -> None:
         if self._get_fold_winner() is not None:
             await ctx.send("{name} won {symbol}{amount:.2f}".format(
-                name=self._get_fold_winner()["user_object"].display_name,
+                name=self._get_fold_winner().name,
                 symbol=self.currency["symbol"],
                 amount=self.pot))
 
@@ -220,19 +246,26 @@ class PokerGame:
             return
 
         self.turn += 1
-        while self._get_turn_player()["status"] in (STATUS_FOLDED,
-                                                    STATUS_ALL_IN):
+        while self._turn_player.status in (STATUS_FOLDED, STATUS_ALL_IN):
             await ctx.send("{} is {}.".format(
-                self._get_turn_player()["user_object"].display_name,
-                self._get_turn_player()["status"]))
+                self._turn_player.name,
+                self._turn_player.status))
             self.turn += 1
 
         # TODO: WHAT?
 
         await self._print_game_screen(ctx)
 
-    async def try_move(self, ctx, move: str, amount: Optional[Decimal] = None):
-        if ctx.message.author.id != self.players_order[self.turn]:
+    async def try_move(self, ctx, move: str, amount: Optional[Decimal] = None) -> None:
+        if self.game is None:
+            await ctx.send("No poker game is in progress.")
+            return
+
+        if ctx.message.author.id not in self.players_order:
+            await ctx.send("You are not a participant in this game.")
+            return
+
+        if ctx.message.author.id != self._turn_player.discord_id:
             await ctx.send("It is not your turn!")
             return
 
@@ -250,55 +283,47 @@ class PokerGame:
                                               amount=self.bet))
             return
 
-        if self.bet >= self._get_turn_player()["amount"] + \
-                self._get_turn_player()["amount_in"] and move in (
-                MOVE_CALL, MOVE_RAISE):
+        if self.bet >= self._turn_player.amount + self._turn_player.amount_in \
+                and move in (MOVE_CALL, MOVE_RAISE):
             await ctx.send("You must go {}!".format(MOVE_ALL_IN))
             return
 
         # TODO: Make sure all players can pay raised amount?
 
         if move == MOVE_FOLD:
-            self.players[ctx.message.author.id]["status"] = STATUS_FOLDED
-            await ctx.send("{} folded!".format(
-                ctx.message.author.display_name))
+            self._turn_player.status = STATUS_FOLDED
+            await ctx.send("{} folded!".format(self._turn_player.name))
 
         elif move == MOVE_CHECK:
-            await ctx.send("{} checked.".format(
-                ctx.message.author.display_name))
+            await ctx.send("{} checked.".format(self._turn_player.name))
 
         elif move == MOVE_CALL:
-            self._get_turn_player()["amount"] -= self.bet
-            self._get_turn_player()["amount_in"] += self.bet
-            await ctx.send("{} called.".format(
-                ctx.message.author.display_name))
+            self._turn_player.move_in(self.bet)
+            await ctx.send("{} called.".format(self._turn_player.name))
 
         elif move == MOVE_RAISE:
             await ctx.send(
                 "{} called the bet {} and raised by {:.2f} to {:2.f}!".format(
-                    ctx.message.author.display_name,
+                    self._turn_player.name,
                     self.bet,
                     amount,
                     self.bet + amount
                 ))
 
             self.bet = self.bet + amount
-            self._get_turn_player()["amount"] -= self.bet
-            self._get_turn_player()["amount_in"] += self.bet
+            self._turn_player.move_in(self.bet)
 
         elif move == MOVE_ALL_IN:
-            all_in_amount = self._get_turn_player()["amount"]
+            all_in_amount = self._turn_player.amount
 
             await ctx.send("{} went all in with {:.2f}!".format(
-                ctx.message.author.display_name, all_in_amount))
+                self._turn_player.name, all_in_amount))
 
             # TODO: POT LOGIC
             # TODO: AAAAAAH
 
-            self._get_turn_player()["amount"] -= all_in_amount
-            self._get_turn_player()["amount_in"] += all_in_amount
-
-            self._get_turn_player()["status"] = STATUS_ALL_IN
+            self._turn_player.move_in(all_in_amount)
+            self._turn_player.status = STATUS_ALL_IN
 
         await self._advance_turn(ctx)
 
@@ -410,10 +435,6 @@ class Poker:
         # Cannot check unless starting player (either first time or after a
         # round), or bet is currently
 
-        if self.game is None:
-            await ctx.send("No poker game is in progress.")
-            return
-
         await self.game.try_move(ctx, MOVE_CHECK)
 
     @commands.command(aliases=["pk_call"])
@@ -425,10 +446,6 @@ class Poker:
         # Synonym for check if amount is currently 0
         # Cannot call if insufficient funds (have to do all_in)
 
-        if self.game is None:
-            await ctx.send("No poker game is in progress.")
-            return
-
         await self.game.try_move(ctx, MOVE_CALL)
 
     @commands.command(aliases=["pk_raise"])
@@ -438,10 +455,6 @@ class Poker:
         """
         # Cannot raise if insufficient funds
         # Big blind can do it at end of the first round
-
-        if self.game is None:
-            await ctx.send("No poker game is in progress.")
-            return
 
         try:
             amount = Decimal(amount)
@@ -457,9 +470,5 @@ class Poker:
         Fold
         """
         # Cannot fold if bet is 0 (to make it fun)
-
-        if self.game is None:
-            await ctx.send("No poker game is in progress.")
-            return
 
         await self.game.try_move(ctx, MOVE_FOLD)
