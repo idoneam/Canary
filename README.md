@@ -65,6 +65,13 @@ You must set certain values in the `config.ini` file, in particular your Discor
 * `[DB]`
     * `Schema`: Location of the Schema file that creates tables in the database (This file already exists so you shouldn't have to change this unless you rename it or change its location).
     * `Path`: Your database file path (will be created there by the bot if it doesn't exist).
+* `[Helpers]`
+    * `CourseTemplate`: McGill course schedule URL. **Changes every school year.**
+    * `CourseSearchTemplate`: McGill course search URL. **Changes every school year.**
+    * `GCWeatherURL`: Government of Canada weather URL. **Region-specific.**
+    * `GCWeatherAlertURL`: Government of Canada weather alerts URL. **Region-specific.**
+    * `WttrINTemplate`: [http://wttr.in/](http://wttr.in/) URL template. **Region-specific.**
+    * `TepidURL`: [TEPID](https://github.com/ctf/TEPID-Server) screensaver endpoint for printer status.
 * `[Currency]`
     * `Name`: The name of the bot currency.
     * `Symbol`: The currency's symbol (e.g. `$`).

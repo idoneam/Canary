@@ -26,7 +26,7 @@ import random
 from .utils.auto_incorrect import auto_incorrect
 
 
-class Memes():
+class Memes(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 

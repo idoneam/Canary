@@ -65,13 +65,12 @@ def filter_image(func):
             await ctx.send(file=discord.File(fp=buffer, filename=fn))
 
         except Exception:
-            # traceback.print_exc()
             await ctx.send('Error occurred.', delete_after=60)
 
     return wrapper
 
 
-class Images:
+class Images(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
@@ -89,8 +88,8 @@ class Images:
 
     def _cv_linear_polar(self, image, flags):
         h, w = image.shape[:2]
-        r = math.sqrt(width**2 + height**2) / 2
-        return cv2.linearPolar(image, (w / 2), (h / 2), r, flags)
+        r = math.sqrt(w**2 + h**2) / 2
+        return cv2.linearPolar(image, (w / 2, h / 2), r, flags)
 
     def _polar(self, image):
         return self._cv_linear_polar(image,
@@ -100,6 +99,10 @@ class Images:
         return self._cv_linear_polar(
             image,
             cv2.INTER_LINEAR + cv2.WARP_FILL_OUTLIERS + cv2.WARP_INVERSE_MAP)
+
+    @staticmethod
+    def _bounded_radius(radius: str):
+        return max(1, min(int(radius), 500))
 
     @commands.command()
     @filter_image
@@ -134,7 +137,7 @@ class Images:
         """
         Blur the image horizontally
         """
-        radius = max(1, min(int(radius), 500))
+        radius = self._bounded_radius(radius)
         image = cv2.blur(image, (radius, 1))
         return image
 
@@ -144,7 +147,7 @@ class Images:
         """
         Blur the image vertically
         """
-        radius = max(1, min(int(radius), 500))
+        radius = self._bounded_radius(radius)
         image = cv2.blur(image, (1, radius))
         return image
 
@@ -154,7 +157,7 @@ class Images:
         """
         Radial blur
         """
-        radius = max(1, min(int(radius), 500))
+        radius = self._bounded_radius(radius)
         image = self._polar(image)
         image = cv2.blur(image, (radius, 1))
         image = self._cart(image)
@@ -167,7 +170,7 @@ class Images:
         Circular blur
         """
 
-        radius = max(1, min(int(radius), 500))
+        radius = self._bounded_radius(radius)
         half_radius = radius // 2
 
         # determine values for padding

@@ -20,12 +20,10 @@
 # discord-py requirements
 import discord
 from discord.ext import commands
+from discord import utils
 import asyncio
 
 # URL access and parsing
-import requests
-import aiohttp
-import async_timeout
 from bs4 import BeautifulSoup
 
 # TeX rendering
@@ -35,20 +33,78 @@ import cv2
 import numpy as np
 
 # Other utilities
+import os
 import re
 import math
 import time
-import os
 import datetime
+import pickle
+import feedparser
 from .utils.paginator import Pages
 from .utils.requests import fetch
 
 MCGILL_EXAM_URL = "https://www.mcgill.ca/exams/dates"
 
+CFIA_FEED_URL = "http://inspection.gc.ca/eng/1388422350443/1388422374046.xml"
 
-class Helpers():
+MCGILL_KEY_DATES_URL = "https://www.mcgill.ca/importantdates/key-dates"
+
+WTTR_IN_MOON_URL = "http://wttr.in/moon.png"
+
+URBAN_DICT_TEMPLATE = "http://api.urbandictionary.com/v0/define?term={}"
+
+try:
+    os.mkdir('./pickles')
+except Exception:
+    pass
+
+
+class Helpers(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+
+    async def cfia_rss(self):
+        # Written by @jidicula
+        """
+        Co-routine that periodically checks the CFIA Health Hazard Alerts RSS
+         feed for updates.
+        """
+        await self.bot.wait_until_ready()
+        while not self.bot.is_closed():
+            recall_channel = utils.get(
+                self.bot.get_guild(self.bot.config.server_id).text_channels,
+                name=self.bot.config.recall_channel)
+            newest_recalls = feedparser.parse(CFIA_FEED_URL)['entries']
+            try:
+                id_unpickle = open("pickles/recall_tag.obj", 'rb')
+                recalls = pickle.load(id_unpickle)
+                id_unpickle.close()
+            except Exception:
+                recalls = {}
+            new_recalls = False
+            for recall in newest_recalls:
+                recall_id = recall['id']
+                if recall_id not in recalls:
+                    new_recalls = True
+                    recalls[recall_id] = ""
+                    recall_warning = discord.Embed(
+                        title=recall['title'], description=recall['link'])
+                    soup = BeautifulSoup(recall['summary'], "html.parser")
+                    try:
+                        img_url = soup.img['src']
+                        summary = soup.p.find_parent().text.strip()
+                    except Exception:
+                        img_url = ""
+                        summary = recall['summary']
+                    recall_warning.set_image(url=img_url)
+                    recall_warning.add_field(name="Summary", value=summary)
+                    await recall_channel.send(embed=recall_warning)
+            if new_recalls:
+                # Pickle newly added IDs
+                id_pickle = open("pickles/recall_tag.obj", 'wb')
+                pickle.dump(recalls, id_pickle)
+                id_pickle.close()
+            await asyncio.sleep(12 * 3600)    # run every 12 hours
 
     @commands.command(aliases=['exams'])
     async def exam(self, ctx):
@@ -73,10 +129,8 @@ class Helpers():
         """Retrieves current weather conditions.
         Data taken from http://weather.gc.ca/city/pages/qc-147_metric_e.html"""
         await ctx.trigger_typing()
-        # Replace link with any city weather link from http://weather.gc.ca/
-        url = "http://weather.gc.ca/city/pages/qc-147_metric_e.html"
 
-        r = await fetch(url, "content")
+        r = await fetch(self.bot.config.gc_weather_url, "content")
 
         soup = BeautifulSoup(r, "html.parser")
         # Get date
@@ -97,7 +151,7 @@ class Helpers():
             windchill_label = soup.find("a", string="Wind Chill")
             windchill = windchill_label.find_next().get_text().strip(
             ) + u"\xb0C"
-        except:
+        except Exception:
             windchill = u"N/A"
 
         weather_now = discord.Embed(
@@ -129,8 +183,7 @@ class Helpers():
 
         # Weather alerts
 
-        alert_url = "https://weather.gc.ca/warnings/report_e.html?qc67"
-        r_alert = await fetch(alert_url, "content")
+        r_alert = await fetch(self.bot.config.gc_weather_alert_url, "content")
         alert_soup = BeautifulSoup(r_alert, "html.parser")
         # Exists
         alert_title = alert_soup.find("h1", string=re.compile("Alerts.*"))
@@ -157,7 +210,7 @@ class Helpers():
                 value="**%s**\n%s" % (alert_location.strip(), alert_content),
                 inline=True)
 
-        except:
+        except Exception:
             weather_alert = discord.Embed(
                 title=alert_title.get_text().strip(),
                 description="No alerts in effect.",
@@ -172,18 +225,17 @@ class Helpers():
     @commands.command()
     async def wttr(self, ctx):
         """Retrieves Montreal's weather forecast from wttr.in"""
-        await ctx.send('http://wttr.in/Montreal_2mpq_lang=en.png?_=%d' % round(
-            time.time()))
+        await ctx.send(self.bot.config.wttr_in_tpl.format(round(time.time())))
 
     @commands.command(aliases=["wttrmoon"])
     async def wttr_moon(self, ctx):
         """Retrieves the current moon phase from wttr.in/moon"""
-        await ctx.send('http://wttr.in/moon.png')
+        await ctx.send(WTTR_IN_MOON_URL)
 
     @commands.command()
     async def course(self, ctx, *, query: str):
-        """Prints a summary of the queried course, taken from the course calendar.
-        ie. ?course comp 206
+        """Prints a summary of the queried course, taken from the course
+        calendar. ie. ?course comp 206
         Note: Bullet points without colons (':') are not parsed because I have
         yet to see one that actually has useful information.
         """
@@ -194,20 +246,22 @@ class Helpers():
                             re.IGNORECASE | re.DOTALL).search(query)
         if not result:
             await ctx.send(
-                ':warning: Incorrect format. The correct format is `?course <course name>`.'
-            )
+                ':warning: Incorrect format. The correct format is `?course '
+                '<course name>`.')
             return
-        search_term = result.group(1) + '-' + result.group(2)
+
+        search_term = "{}-{}".format(result.group(1), result.group(2))
         search_term = re.sub(r'\s+', r'', search_term)
-        url = "http://www.mcgill.ca/study/2019-2020/courses/%s" % search_term
+        url = self.bot.config.course_tpl.format(search_term)
         r = await fetch(url, "content")
         soup = BeautifulSoup(r, "html.parser")
 
-        # XXX: brute-force parsing at the moment
+        # TODO: brute-force parsing at the moment
         title = soup.find_all("h1", {"id": "page-title"})[0].get_text().strip()
         if title == 'Page not found':
-            await ctx.send("No course found for %s." % query)
+            await ctx.send("No course found for {}.".format(query))
             return
+
         content = soup.find(
             "div", id="block-system-main").find_all("div",
                                                     {"class": "content"})[1]
@@ -242,8 +296,7 @@ class Helpers():
 
         await ctx.trigger_typing()
 
-        url = 'https://www.mcgill.ca/importantdates/key-dates'
-        r = await fetch(url, "content")
+        r = await fetch(MCGILL_KEY_DATES_URL, "content")
         soup = BeautifulSoup(r, 'html.parser')
 
         now = datetime.datetime.now()
@@ -256,7 +309,8 @@ class Helpers():
 
         text = soup.find_all('div', {'class': 'field-item even'})
 
-        # The layout is trash and the divs don't follow a pattern so disintegrate all div tags
+        # The layout is trash and the divs don't follow a pattern so
+        # disintegrate all div tags.
         for div in text[0].find_all('div'):
             div.replaceWithChildren()
 
@@ -269,7 +323,8 @@ class Helpers():
         else:
             node = text[0].find_all('h2')[1].next_sibling
 
-        # Iterate through the tags and gather h3 headings in one list and the text between them in another
+        # Iterate through the tags and gather h3 headings in one list and the
+        # text between them in another.
         while node:
             if hasattr(node, 'name'):
                 if node.name == 'h2' and term == 'Fall':
@@ -292,7 +347,7 @@ class Helpers():
         em = discord.Embed(
             title='McGill Important Dates {0} {1}'.format(
                 term, str(current_year)),
-            description=url,
+            description=MCGILL_KEY_DATES_URL,
             colour=0xDA291C)
 
         for i in range(len(headers)):
@@ -316,9 +371,7 @@ class Helpers():
 
         await ctx.trigger_typing()
 
-        url = "http://api.urbandictionary.com/v0/define?term=%s" % query.replace(
-            ' ', '+')
-
+        url = URBAN_DICT_TEMPLATE.format(query.replace(" ", "+"))
         definitions = await fetch(url, "json")
         definitions = definitions["list"][:5]
 
@@ -338,7 +391,7 @@ class Helpers():
         p = Pages(
             ctx,
             item_list=definitions_list_text,
-            title="Definitions for '%s' from Urban Dictionary:" % query,
+            title="Definitions for '{}' from Urban Dictionary:".format(query),
             display_option=(3, 1),
             editable_content=False)
 
@@ -352,13 +405,13 @@ class Helpers():
         tex = ""
         sp = ""
         if "$$" in ctx.message.content:
-            sp = ctx.message.content.split('$$')
+            sp = ctx.message.content.split("$$")
         elif "$" in ctx.message.content:
-            sp = ctx.message.content.split('$')
+            sp = ctx.message.content.split("$")
 
         if len(sp) < 3:
-            await ctx.send(
-                'PLEASE USE \'$\' AROUND YOUR LATEX EQUATIONS. CHIRP.')
+            await ctx.send("PLEASE USE '$' AROUND YOUR LATEX EQUATIONS. CHEEP."
+                           )
             return
 
         up = int(len(sp) / 2)
@@ -366,14 +419,14 @@ class Helpers():
             tex += "\\[" + sp[2 * i + 1] + "\\]"
 
         buf = BytesIO()
-        preview(tex, viewer='BytesIO', outputbuffer=buf, euler=False)
+        preview(tex, viewer="BytesIO", outputbuffer=buf, euler=False)
         buf.seek(0)
         img_bytes = np.asarray(bytearray(buf.read()), dtype=np.uint8)
         img = cv2.imdecode(img_bytes, cv2.IMREAD_UNCHANGED)
         img2 = cv2.copyMakeBorder(
             img, 10, 10, 10, 10, cv2.BORDER_CONSTANT, value=(255, 255, 255))
-        fn = 'latexed.png'
-        retval, buf = cv2.imencode('.png', img2)
+        fn = "latexed.png"
+        retval, buf = cv2.imencode(".png", img2)
         img_bytes = BytesIO(buf)
 
         await ctx.send(file=discord.File(fp=img_bytes, filename=fn))
@@ -390,10 +443,9 @@ class Helpers():
         await ctx.trigger_typing()
 
         while pagenum < pagelimit:
-            url = "http://www.mcgill.ca/study/2018-2019/courses/search\
-            ?search_api_views_fulltext=%s&sort_by=field_subject_code&page=%d" % (
-                keyword, pagenum)
-            r = await fetch(url, "content")
+            r = await fetch(
+                self.bot.config.course_search_tpl.format(keyword, pagenum),
+                "content")
             soup = BeautifulSoup(r, "html.parser")
             found = soup.find_all("div", {"class": "views-row"})
 
@@ -404,66 +456,23 @@ class Helpers():
                 pagenum += 1
 
         if len(courses) < 1:
-            await ctx.send("No course found for: %s." % query)
+            await ctx.send("No course found for: {}.".format(query))
             return
 
-        course_list = {'names': [], 'values': []}
+        course_list = {"names": [], "values": []}
         for course in courses:
             # split results into titles + information
             title = course.find_all("h4")[0].get_text().split(" ")
-            course_list['names'].append(' '.join(title[:2]))
-            course_list['values'].append(' '.join(title[2:]))
+            course_list["names"].append(" ".join(title[:2]))
+            course_list["values"].append(" ".join(title[2:]))
 
         p = Pages(
             ctx,
             item_list=course_list,
-            title='Courses found for {}'.format(query),
+            title="Courses found for {}".format(query),
             display_option=(2, 10),
             editable_content=False)
         await p.paginate()
-
-    @commands.command()
-    async def xe(self, ctx, *, query: str):
-        """Currency conversion.
-        Uses real-time exchange rates taken from http://www.xe.com.
-        Usage: ?xe <AMOUNT> <CURRENCY> to <CURRENCY>
-        ie. ?xe 60.00 CAD to EUR
-        The currencies supported for conversion (and their abbreviations) can
-        be found at http://www.xe.com/currency/.
-        """
-        await ctx.trigger_typing()
-        if '.' in query.split(' ')[0]:
-            # Distinguish regex between floats and ints
-            re1 = '([+-]?\\d*\\.\\d+)(?![-+0-9\\.])'
-        else:
-            re1 = '(\\d+)'
-        re2 = '((?:[a-z][a-z]+))'    # Currency FROM
-        re3 = '(to)'
-        re4 = '((?:[a-z][a-z]+))'    # Currency TO
-        ws = '(\\s+)'    # Whitespace
-        rg = re.compile(re1 + ws + re2 + ws + re3 + ws + re4,
-                        re.IGNORECASE | re.DOTALL)
-
-        m = rg.search(query)
-
-        if m:
-            url = 'http://www.xe.com/currencyconverter/convert/?Amount=%s&From=%s&To=%s' % (
-                m.group(1), m.group(3), m.group(7))
-            r = await fetch(url, "content")
-            soup = BeautifulSoup(r, "html.parser")
-
-            converted_cost = soup.find('span', {
-                'class': 'uccResultAmount'
-            }).get_text()
-
-            # FIXME: there has to be a more elegant way to print this
-            await ctx.send(
-                "%s %s = %s %s" % (m.group(1), m.group(3).upper(),
-                                   converted_cost, m.group(7).upper()))
-        else:
-            await ctx.send(""":warning: Wrong format.
-            The correct format is `?xe <AMOUNT> <CURRENCY> to <CURRENCY>`.
-            ie. `?xe 60.00 CAD to EUR`""")
 
     @commands.command()
     async def mose(self, ctx, dollar: float):
@@ -476,16 +485,15 @@ class Helpers():
             await ctx.send("Trying to owe samosas now, are we? :wink:")
             return
         total = dollar // 2 * 3 + (math.floor(dollar) % 2)
-        await ctx.send("$%.2f is worth %d samosas." % (dollar, total))
+        await ctx.send("${:.2f} is worth {} samosas.".format(dollar, total))
 
     @commands.command()
     async def tepid(self, ctx):
         """Retrieves the CTF printers' statuses from tepid.science.mcgill.ca"""
-        url = "https://tepid.science.mcgill.ca:8443/tepid/screensaver/queues/status"
-        data = await fetch(url, "json")
+        data = await fetch(self.bot.config.tepid_url, "json")
         for key, value in data.items():
-            status = "up" if value else "down"
-            await ctx.send("A printer in {} is {}!".format(key, status))
+            await ctx.send("At least one printer in {} is {}!".format(
+                key, "up" if value else "down"))
 
     @commands.command()
     async def modpow(self, ctx, a, b, m):
@@ -499,3 +507,4 @@ class Helpers():
 
 def setup(bot):
     bot.add_cog(Helpers(bot))
+    bot.loop.create_task(Helpers(bot).cfia_rss())

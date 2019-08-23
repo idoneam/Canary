@@ -4,18 +4,18 @@ url = "https://pypi.org/simple"
 name = "pypi"
 
 [packages]
-beautifulsoup4 = "==4.6.0"
-sympy = "==1.0.0"
+beautifulsoup4 = "==4.8.0"
+sympy = "==1.4.0"
 requests = ">=2.20.0"
-cleverbot = "==1.1.1"
 tabulate = "==0.7.7"
-discord-rewrite = {ref = "860d6a9ace8248dfeec18b8b159e7b757d9f56bb", git = "https://github.com/Rapptz/discord.py"}
+discord.py = "==1.2.3"
 opencv-python = "*"
 pytz = "*"
 mpmath = "*"
 numpy = "*"
 aiohttp = "*"
-urllib3 = ">=1.24.2"
+urllib3 = ">=1.25.3"
+feedparser = "*"
 
 [requires]
 python_version = "3.6"

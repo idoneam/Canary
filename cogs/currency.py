@@ -60,7 +60,7 @@ TRANSACTION_ACTIONS = (ACTION_INITIAL_CLAIM, ACTION_CLAIM, ACTION_BET_FLIP,
                        ACTION_BET_ROLL, ACTION_GIFTER, ACTION_GIFTEE)
 
 
-class Currency():
+class Currency(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.currency = self.bot.config.currency
