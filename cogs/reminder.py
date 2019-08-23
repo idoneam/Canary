@@ -181,7 +181,7 @@ class Reminder():
                         await asyncio.sleep(1)
 
             conn.close()
-            await asyncio.sleep(60)
+            await asyncio.sleep(60)    # seconds
 
     @commands.command(aliases=['rm', 'rem'])
     async def remindme(self, ctx, *, quote: str = ""):

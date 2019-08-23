@@ -20,12 +20,10 @@
 # discord-py requirements
 import discord
 from discord.ext import commands
+from discord import utils
 import asyncio
 
 # URL access and parsing
-import requests
-import aiohttp
-import async_timeout
 from bs4 import BeautifulSoup
 
 # TeX rendering
@@ -35,15 +33,20 @@ import cv2
 import numpy as np
 
 # Other utilities
+import os
 import re
 import math
 import time
-import os
 import datetime
+import pickle
+import feedparser
 from .utils.paginator import Pages
 from .utils.requests import fetch
 
 MCGILL_EXAM_URL = "https://www.mcgill.ca/exams/dates"
+
+CFIA_FEED_URL = "http://inspection.gc.ca/eng/1388422350443/1388422374046.xml"
+
 MCGILL_KEY_DATES_URL = "https://www.mcgill.ca/importantdates/key-dates"
 
 WTTR_IN_MOON_URL = "http://wttr.in/moon.png"
@@ -53,10 +56,58 @@ URBAN_DICT_TEMPLATE = "http://api.urbandictionary.com/v0/define?term={}"
 CURRENCY_TEMPLATE = "http://www.xe.com/currencyconverter/convert/" \
                     "?Amount={}&From={}&To={}"
 
+try:
+    os.mkdir('./pickles')
+except Exception:
+    pass
+
 
 class Helpers():
     def __init__(self, bot):
         self.bot = bot
+
+    async def cfia_rss(self):
+        # Written by @jidicula
+        """
+        Co-routine that periodically checks the CFIA Health Hazard Alerts RSS
+         feed for updates.
+        """
+        await self.bot.wait_until_ready()
+        while not self.bot.is_closed():
+            recall_channel = utils.get(
+                self.bot.get_guild(self.bot.config.server_id).text_channels,
+                name=self.bot.config.recall_channel)
+            newest_recalls = feedparser.parse(CFIA_FEED_URL)['entries']
+            try:
+                id_unpickle = open("pickles/recall_tag.obj", 'rb')
+                recalls = pickle.load(id_unpickle)
+                id_unpickle.close()
+            except Exception:
+                recalls = {}
+            new_recalls = False
+            for recall in newest_recalls:
+                recall_id = recall['id']
+                if recall_id not in recalls:
+                    new_recalls = True
+                    recalls[recall_id] = ""
+                    recall_warning = discord.Embed(
+                        title=recall['title'], description=recall['link'])
+                    soup = BeautifulSoup(recall['summary'], "html.parser")
+                    try:
+                        img_url = soup.img['src']
+                        summary = soup.p.find_parent().text.strip()
+                    except Exception:
+                        img_url = ""
+                        summary = recall['summary']
+                    recall_warning.set_image(url=img_url)
+                    recall_warning.add_field(name="Summary", value=summary)
+                    await recall_channel.send(embed=recall_warning)
+            if new_recalls:
+                # Pickle newly added IDs
+                id_pickle = open("pickles/recall_tag.obj", 'wb')
+                pickle.dump(recalls, id_pickle)
+                id_pickle.close()
+            await asyncio.sleep(12 * 3600)    # run every 12 hours
 
     @commands.command(aliases=['exams'])
     async def exam(self, ctx):
@@ -103,7 +154,7 @@ class Helpers():
             windchill_label = soup.find("a", string="Wind Chill")
             windchill = windchill_label.find_next().get_text().strip(
             ) + u"\xb0C"
-        except:
+        except Exception:
             windchill = u"N/A"
 
         weather_now = discord.Embed(
@@ -162,7 +213,7 @@ class Helpers():
                 value="**%s**\n%s" % (alert_location.strip(), alert_content),
                 inline=True)
 
-        except:
+        except Exception:
             weather_alert = discord.Embed(
                 title=alert_title.get_text().strip(),
                 description="No alerts in effect.",
@@ -503,3 +554,4 @@ class Helpers():
 
 def setup(bot):
     bot.add_cog(Helpers(bot))
+    bot.loop.create_task(Helpers(bot).cfia_rss())
