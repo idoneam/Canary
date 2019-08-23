@@ -48,8 +48,8 @@ class Mod(commands.Cog):
         """
         dest = user
         await dest.send(
-            content='{}\n*To answer write* `{}answer "your message here"`'
-            .format(message, self.bot.config.command_prefix))
+            content='{}\n*To answer write* `{}answer "your message here"`'.
+            format(message, self.bot.config.command_prefix))
         channel_to_forward = self.bot.get_channel(
             self.bot.config.reception_channel_id)
         msg = '🐦 ({}) to {}: {}'.format(ctx.author.name, dest.name, message)

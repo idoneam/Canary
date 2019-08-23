@@ -15,6 +15,7 @@ mpmath = "*"
 numpy = "*"
 aiohttp = "*"
 urllib3 = ">=1.25.3"
+feedparser = "*"
 
 [requires]
 python_version = "3.6"
