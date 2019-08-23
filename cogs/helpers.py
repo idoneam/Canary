@@ -53,16 +53,13 @@ WTTR_IN_MOON_URL = "http://wttr.in/moon.png"
 
 URBAN_DICT_TEMPLATE = "http://api.urbandictionary.com/v0/define?term={}"
 
-CURRENCY_TEMPLATE = "http://www.xe.com/currencyconverter/convert/" \
-                    "?Amount={}&From={}&To={}"
-
 try:
     os.mkdir('./pickles')
 except Exception:
     pass
 
 
-class Helpers():
+class Helpers(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
@@ -255,8 +252,8 @@ class Helpers():
 
         search_term = "{}-{}".format(result.group(1), result.group(2))
         search_term = re.sub(r'\s+', r'', search_term)
-        r = await fetch(
-            self.bot.config.course_tpl.format(search_term), "content")
+        url = self.bot.config.course_tpl.format(search_term)
+        r = await fetch(url, "content")
         soup = BeautifulSoup(r, "html.parser")
 
         # TODO: brute-force parsing at the moment
@@ -350,7 +347,7 @@ class Helpers():
         em = discord.Embed(
             title='McGill Important Dates {0} {1}'.format(
                 term, str(current_year)),
-            description=url,
+            description=MCGILL_KEY_DATES_URL,
             colour=0xDA291C)
 
         for i in range(len(headers)):
@@ -374,8 +371,8 @@ class Helpers():
 
         await ctx.trigger_typing()
 
-        definitions = await fetch(
-            URBAN_DICT_TEMPLATE.format(query.replace(" ", "+")), "json")
+        url = URBAN_DICT_TEMPLATE.format(query.replace(" ", "+"))
+        definitions = await fetch(url, "json")
         definitions = definitions["list"][:5]
 
         if not definitions:
@@ -478,50 +475,6 @@ class Helpers():
         await p.paginate()
 
     @commands.command()
-    async def xe(self, ctx, *, query: str):
-        """Currency conversion.
-        Uses real-time exchange rates taken from http://www.xe.com.
-        Usage: ?xe <AMOUNT> <CURRENCY> to <CURRENCY>
-        ie. ?xe 60.00 CAD to EUR
-        The currencies supported for conversion (and their abbreviations) can
-        be found at http://www.xe.com/currency/.
-        """
-        await ctx.trigger_typing()
-        if '.' in query.split(' ')[0]:
-            # Distinguish regex between floats and ints
-            re1 = '([+-]?\\d*\\.\\d+)(?![-+0-9\\.])'
-        else:
-            re1 = '(\\d+)'
-        re2 = '((?:[a-z][a-z]+))'    # Currency FROM
-        re3 = '(to)'
-        re4 = '((?:[a-z][a-z]+))'    # Currency TO
-        ws = '(\\s+)'    # Whitespace
-        rg = re.compile(re1 + ws + re2 + ws + re3 + ws + re4,
-                        re.IGNORECASE | re.DOTALL)
-
-        m = rg.search(query)
-
-        if m:
-            r = await fetch(
-                CURRENCY_TEMPLATE.format(m.group(1), m.group(3), m.group(7)),
-                "content")
-            soup = BeautifulSoup(r, "html.parser")
-
-            converted_cost = soup.find('span', {
-                'class': 'uccResultAmount'
-            }).get_text()
-
-            # FIXME: there has to be a more elegant way to print this
-            await ctx.send("{} {} = {} {}".format(
-                m.group(1),
-                m.group(3).upper(), converted_cost,
-                m.group(7).upper()))
-        else:
-            await ctx.send(""":warning: Wrong format.
-            The correct format is `?xe <AMOUNT> <CURRENCY> to <CURRENCY>`.
-            ie. `?xe 60.00 CAD to EUR`""")
-
-    @commands.command()
     async def mose(self, ctx, dollar: float):
         """Currency conversion. Converts $$$ to the equivalent number of
         samosas, based on holy prices.
@@ -532,7 +485,7 @@ class Helpers():
             await ctx.send("Trying to owe samosas now, are we? :wink:")
             return
         total = dollar // 2 * 3 + (math.floor(dollar) % 2)
-        await ctx.send("${.2f} is worth {} samosas.".format(dollar, total))
+        await ctx.send("${:.2f} is worth {} samosas.".format(dollar, total))
 
     @commands.command()
     async def tepid(self, ctx):

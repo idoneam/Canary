@@ -24,7 +24,7 @@ import asyncio
 from .utils.checks import is_moderator
 
 
-class Mod():
+class Mod(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 

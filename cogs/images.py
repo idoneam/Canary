@@ -65,13 +65,12 @@ def filter_image(func):
             await ctx.send(file=discord.File(fp=buffer, filename=fn))
 
         except Exception:
-            # traceback.print_exc()
             await ctx.send('Error occurred.', delete_after=60)
 
     return wrapper
 
 
-class Images:
+class Images(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
@@ -89,8 +88,8 @@ class Images:
 
     def _cv_linear_polar(self, image, flags):
         h, w = image.shape[:2]
-        r = math.sqrt(width**2 + height**2) / 2
-        return cv2.linearPolar(image, (w / 2), (h / 2), r, flags)
+        r = math.sqrt(w**2 + h**2) / 2
+        return cv2.linearPolar(image, (w / 2, h / 2), r, flags)
 
     def _polar(self, image):
         return self._cv_linear_polar(image,
