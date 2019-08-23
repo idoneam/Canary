@@ -50,9 +50,6 @@ WTTR_IN_MOON_URL = "http://wttr.in/moon.png"
 
 URBAN_DICT_TEMPLATE = "http://api.urbandictionary.com/v0/define?term={}"
 
-CURRENCY_TEMPLATE = "http://www.xe.com/currencyconverter/convert/" \
-                    "?Amount={}&From={}&To={}"
-
 
 class Helpers(commands.Cog):
     def __init__(self, bot):
@@ -425,50 +422,6 @@ class Helpers(commands.Cog):
             display_option=(2, 10),
             editable_content=False)
         await p.paginate()
-
-    @commands.command()
-    async def xe(self, ctx, *, query: str):
-        """Currency conversion.
-        Uses real-time exchange rates taken from http://www.xe.com.
-        Usage: ?xe <AMOUNT> <CURRENCY> to <CURRENCY>
-        ie. ?xe 60.00 CAD to EUR
-        The currencies supported for conversion (and their abbreviations) can
-        be found at http://www.xe.com/currency/.
-        """
-        await ctx.trigger_typing()
-        if '.' in query.split(' ')[0]:
-            # Distinguish regex between floats and ints
-            re1 = '([+-]?\\d*\\.\\d+)(?![-+0-9\\.])'
-        else:
-            re1 = '(\\d+)'
-        re2 = '((?:[a-z][a-z]+))'    # Currency FROM
-        re3 = '(to)'
-        re4 = '((?:[a-z][a-z]+))'    # Currency TO
-        ws = '(\\s+)'    # Whitespace
-        rg = re.compile(re1 + ws + re2 + ws + re3 + ws + re4,
-                        re.IGNORECASE | re.DOTALL)
-
-        m = rg.search(query)
-
-        if m:
-            r = await fetch(
-                CURRENCY_TEMPLATE.format(m.group(1), m.group(3), m.group(7)),
-                "content")
-            soup = BeautifulSoup(r, "html.parser")
-
-            converted_cost = soup.find('span', {
-                'class': 'uccResultAmount'
-            }).get_text()
-
-            # FIXME: there has to be a more elegant way to print this
-            await ctx.send("{} {} = {} {}".format(
-                m.group(1),
-                m.group(3).upper(), converted_cost,
-                m.group(7).upper()))
-        else:
-            await ctx.send(""":warning: Wrong format.
-            The correct format is `?xe <AMOUNT> <CURRENCY> to <CURRENCY>`.
-            ie. `?xe 60.00 CAD to EUR`""")
 
     @commands.command()
     async def mose(self, ctx, dollar: float):
