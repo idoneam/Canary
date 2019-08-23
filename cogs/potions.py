@@ -18,27 +18,18 @@ ANNOYING_CHILD_CHANCE = 0.4
 DRUNK_MESSAGE_TEMPLATE = "{user} 📣 {message}"
 
 DISAPPOINTMENT_REACTS = (
-    (":rolling_eyes:", ),
-    (":grimacing:", ),
-    (":regional_indicator_x:", ),
-    (":regional_indicator_n:", ":regional_indicator_o:"),
+    ("🙄", ),
+    ("😬", ),
+    ("🇽", ),
+    ("🇳", "🇴"),
 )
 
 PRAISE_REACTS = (
-    (":100:", ),
-    (":point_up:", ),
-    (
-        ":regional_indicator_t:",
-        ":regional_indicator_r:",
-        ":regional_indicator_u:",
-        ":regional_indicator_e:",
-    ),
-    (
-        ":regional_indicator_y:",
-        ":regional_indicator_e:",
-        ":regional_indicator_s:",
-    ),
-    (":heart:", ),
+    ("💯", ),
+    ("👆", ),
+    ("🇹", "🇷", "🇺", "🇪"),
+    ("🇾", "🇪", "🇸"),
+    ("❤", ),
 )
 
 
@@ -48,10 +39,11 @@ async def annoying_child(message: discord.Message):
 
 
 async def drunk(message: discord.Message):
+    print(message.author.display_name)
     await message.channel.send(DRUNK_MESSAGE_TEMPLATE.format(
         user=message.author.display_name,
         message=auto_incorrect(message.content)))
-    await message.channel.delete()
+    await message.delete()
 
 
 async def disappointment(message: discord.Message):
@@ -63,7 +55,10 @@ async def disappointment(message: discord.Message):
 async def praise(message: discord.Message):
     reacts = random.choice(PRAISE_REACTS)
     for r in reacts:
-        await message.add_reaction(r)
+        try:
+            await message.add_reaction(r)
+        except Exception as e:
+            print(r)
 
 
 POTIONS = {
@@ -95,25 +90,29 @@ POTIONS = {
 }
 
 
-class Potions:
+class Potions(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
     @commands.Cog.listener()
     async def on_message(self, message):
-        if message.user == self.bot.user:
+        if message.author == self.bot.user:
+            return
+
+        if message.content[0] in self.bot.config.command_prefix:
             return
 
         conn = sqlite3.connect(self.bot.config.db_path)
         c = conn.cursor()
 
         c.execute("SELECT * FROM ActivePotions WHERE AffectedUserID = ?",
-                  message.user.id)
+                  (message.author.id, ))
 
         potions_on_user = c.fetchall()
 
         for p in potions_on_user:
-            if datetime.fromisoformat(p[3]) < datetime.now():
+            # TODO: Replace with fromisoformat for Python 3.7
+            if datetime.strptime(p[3], "%Y-%m-%dT%H:%M:%S.%f") < datetime.now():
                 c.execute("DELETE FROM ActivePotions WHERE ActivationID = ?",
                           (p[0], ))
                 conn.commit()
@@ -123,17 +122,21 @@ class Potions:
                 await POTIONS[p[4]]["function"](message)
 
     @commands.command()
-    async def potions(self, ctx: Contex):
+    async def potions(self, ctx: Context):
         await ctx.trigger_typing()
 
         await ctx.send("```Welcome to the potion shop! Potions: {}```".format(
             ", ".join(POTIONS.keys())))
 
     @commands.command(aliases=["bp"])
-    async def buy_potion(self, ctx: Context, potion: str, user: discord.Member = None):
+    async def buy_potion(self, ctx: Context, potion: str,
+                         user: discord.Member = None):
         await ctx.trigger_typing()
 
-        if not isinstance(potion, str) or not isinstance(user, discord.Member):
+        if not isinstance(potion, str) or not (isinstance(user, discord.Member)
+                                               or user is None):
+            print(type(potion))
+            print(type(user))
             return
 
         potion = potion.strip().lower()
@@ -153,10 +156,15 @@ class Potions:
             "INSERT INTO ActivePotions (PurchaserUserID, AffectedUserID, "
             "Expiration, Potion) VALUES (?, ?, ?, ?)",
             (ctx.message.author.id, target.id,
-             (datetime.now() + timedelta(hours=POTION_TIME), potion)))
+             (datetime.now() + timedelta(hours=POTION_TIME)).isoformat(),
+             potion))
 
         conn.commit()
 
         await ctx.send("{} has {} the {} potion!".format(
             target.display_name, "been hit with" if user else "drank",
             potion))
+
+
+def setup(bot):
+    bot.add_cog(Potions(bot))
