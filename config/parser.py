@@ -75,7 +75,7 @@ class Parser:
         self.gc_weather_alert_url = config["Helpers"]["GCWeatherAlertURL"]
         self.wttr_in_tpl = config["Helpers"]["WttrINTemplate"]
         self.tepid_url = config["Helpers"]["TepidURL"]
-        self.recall_channel = config["Helpers"]["RecallChannel"]
+        self.recall_channel = config["Helpers"]["FoodRecallChannel"]
 
         # Below lies currency configuration
         currency_precision = int(config["Currency"]["Precision"])
@@ -112,7 +112,6 @@ class Parser:
             "transaction_tax":
             float(config["OtherTax"]["TransactionTax"]),
             "bet_roll_cases":
-            sorted(
-                [(int(c), decimal.Decimal(a)) for c, a in br_cases],
-                key=lambda c: c[0])
+            sorted([(int(c), decimal.Decimal(a)) for c, a in br_cases],
+                   key=lambda c: c[0])
         }
