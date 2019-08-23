@@ -71,9 +71,9 @@ class Helpers(commands.Cog):
         """
         await self.bot.wait_until_ready()
         while not self.bot.is_closed():
-            recall_channel = utils.get(
-                self.bot.get_guild(self.bot.config.server_id).text_channels,
-                name=self.bot.config.recall_channel)
+            recall_channel = utils.get(self.bot.get_guild(
+                self.bot.config.server_id).text_channels,
+                                       name=self.bot.config.recall_channel)
             newest_recalls = feedparser.parse(CFIA_FEED_URL)['entries']
             try:
                 id_unpickle = open("pickles/recall_tag.obj", 'rb')
@@ -87,8 +87,8 @@ class Helpers(commands.Cog):
                 if recall_id not in recalls:
                     new_recalls = True
                     recalls[recall_id] = ""
-                    recall_warning = discord.Embed(
-                        title=recall['title'], description=recall['link'])
+                    recall_warning = discord.Embed(title=recall['title'],
+                                                   description=recall['link'])
                     soup = BeautifulSoup(recall['summary'], "html.parser")
                     try:
                         img_url = soup.img['src']
@@ -119,8 +119,8 @@ class Helpers(commands.Cog):
         if link[:2] == "//":
             link = "https:" + link
 
-        exam_schedule = discord.Embed(
-            title="Latest Exam Schedule", description="{}".format(link))
+        exam_schedule = discord.Embed(title="Latest Exam Schedule",
+                                      description="{}".format(link))
 
         await ctx.send(embed=exam_schedule)
 
@@ -199,22 +199,20 @@ class Helpers(commands.Cog):
             alert_content = alert_location.find_next("p").get_text().strip()
             alert_content = ". ".join(alert_content.split(".")).strip()
 
-            weather_alert = discord.Embed(
-                title=alert_title.get_text().strip(),
-                description="**%s** at %s" %
-                (alert_category.get_text().strip(),
-                 alert_date.get_text().strip()),
-                colour=0xFF0000)
-            weather_alert.add_field(
-                name=alert_heading.get_text().strip(),
-                value="**%s**\n%s" % (alert_location.strip(), alert_content),
-                inline=True)
+            weather_alert = discord.Embed(title=alert_title.get_text().strip(),
+                                          description="**%s** at %s" %
+                                          (alert_category.get_text().strip(),
+                                           alert_date.get_text().strip()),
+                                          colour=0xFF0000)
+            weather_alert.add_field(name=alert_heading.get_text().strip(),
+                                    value="**%s**\n%s" %
+                                    (alert_location.strip(), alert_content),
+                                    inline=True)
 
         except Exception:
-            weather_alert = discord.Embed(
-                title=alert_title.get_text().strip(),
-                description="No alerts in effect.",
-                colour=0xFF0000)
+            weather_alert = discord.Embed(title=alert_title.get_text().strip(),
+                                          description="No alerts in effect.",
+                                          colour=0xFF0000)
 
         # TODO Finish final message. Test on no-alert condition.
 
@@ -262,9 +260,8 @@ class Helpers(commands.Cog):
             await ctx.send("No course found for {}.".format(query))
             return
 
-        content = soup.find(
-            "div", id="block-system-main").find_all("div",
-                                                    {"class": "content"})[1]
+        content = soup.find("div", id="block-system-main").find_all(
+            "div", {"class": "content"})[1]
         overview = content.p.get_text().strip()
         terms = soup.find_all(
             "p",
@@ -344,11 +341,10 @@ class Helpers(commands.Cog):
         if subsection:
             sections.append(subsection)
 
-        em = discord.Embed(
-            title='McGill Important Dates {0} {1}'.format(
-                term, str(current_year)),
-            description=MCGILL_KEY_DATES_URL,
-            colour=0xDA291C)
+        em = discord.Embed(title='McGill Important Dates {0} {1}'.format(
+            term, str(current_year)),
+                           description=MCGILL_KEY_DATES_URL,
+                           colour=0xDA291C)
 
         for i in range(len(headers)):
             if i == 2:
@@ -428,14 +424,13 @@ class Helpers(commands.Cog):
         buf.seek(0)
         img_bytes = np.asarray(bytearray(buf.read()), dtype=np.uint8)
         img = cv2.imdecode(img_bytes, cv2.IMREAD_UNCHANGED)
-        img2 = cv2.copyMakeBorder(
-            img,
-            115,
-            115,
-            115,
-            115,
-            cv2.BORDER_CONSTANT,
-            value=(255, 255, 255))
+        img2 = cv2.copyMakeBorder(img,
+                                  115,
+                                  115,
+                                  115,
+                                  115,
+                                  cv2.BORDER_CONSTANT,
+                                  value=(255, 255, 255))
         fn = "latexed.png"
         retval, buf = cv2.imencode(".png", img2)
         img_bytes = BytesIO(buf)
@@ -477,12 +472,11 @@ class Helpers(commands.Cog):
             course_list["names"].append(" ".join(title[:2]))
             course_list["values"].append(" ".join(title[2:]))
 
-        p = Pages(
-            ctx,
-            item_list=course_list,
-            title="Courses found for {}".format(query),
-            display_option=(2, 10),
-            editable_content=False)
+        p = Pages(ctx,
+                  item_list=course_list,
+                  title="Courses found for {}".format(query),
+                  display_option=(2, 10),
+                  editable_content=False)
         await p.paginate()
 
     @commands.command()
