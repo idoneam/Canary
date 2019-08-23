@@ -54,17 +54,12 @@ WTTR_IN_MOON_URL = "http://wttr.in/moon.png"
 URBAN_DICT_TEMPLATE = "http://api.urbandictionary.com/v0/define?term={}"
 
 
-<<<<<<< HEAD
-class Helpers(commands.Cog):
-=======
 try:
     os.mkdir('./pickles')
 except Exception:
     pass
 
-
-class Helpers():
->>>>>>> origin/dev
+class Helpers(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
