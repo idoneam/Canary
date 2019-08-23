@@ -35,9 +35,8 @@ command_prefix = _parser.command_prefix
 
 _logger = logging.getLogger('Canary')
 _logger.setLevel(_parser.log_level)
-_handler = logging.FileHandler(filename=_parser.log_file,
-                               encoding='utf-8',
-                               mode='a')
+_handler = logging.FileHandler(
+    filename=_parser.log_file, encoding='utf-8', mode='a')
 _handler.setFormatter(
     logging.Formatter('[%(levelname)s] %(asctime)s: %(message)s'))
 _logger.addHandler(_handler)
@@ -96,8 +95,8 @@ class Canary(commands.Bot):
         self.logger.error('Ignoring exception in command {}:'.format(
             ctx.command))
         self.logger.error(''.join(
-            traceback.format_exception(type(error), error,
-                                       error.__traceback__)))
+            traceback.format_exception(
+                type(error), error, error.__traceback__)))
 
 
 # predefined variables to be imported

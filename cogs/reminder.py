@@ -169,8 +169,7 @@ class Reminder(commands.Cog):
                     last_date = datetime.datetime.strptime(
                         reminders[i][5], "%Y-%m-%d %H:%M:%S.%f")
 
-                    if datetime.datetime.now(
-                    ) - last_date > datetime.timedelta(
+                    if datetime.datetime.now() - last_date > datetime.timedelta(
                             days=self.frequencies[reminders[i][3]]):
                         await member.send("Reminding you to {}! [{:d}]".format(
                             reminders[i][2], i + 1))
@@ -272,13 +271,13 @@ class Reminder(commands.Cog):
             if date_result and time_result:
                 # Compute datetime.Object
                 absolute_duedate = datetime.datetime.strptime(
-                    "{Y}-{m}-{d}-{H}-{M}-{S}".format(Y=date_result.group(1),
-                                                     m=date_result.group(2),
-                                                     d=date_result.group(4),
-                                                     H=time_result.group(1),
-                                                     M=time_result.group(2),
-                                                     S=0.1),
-                    "%Y-%m-%d-%H-%M-%S.%f")
+                    "{Y}-{m}-{d}-{H}-{M}-{S}".format(
+                        Y=date_result.group(1),
+                        m=date_result.group(2),
+                        d=date_result.group(4),
+                        H=time_result.group(1),
+                        M=time_result.group(2),
+                        S=0.1), "%Y-%m-%d-%H-%M-%S.%f")
 
                 # Strips "to" and dates from the reminder message
                 time_input_end = time_result.span()[1]
@@ -357,9 +356,8 @@ class Reminder(commands.Cog):
             weeks=time_offset["weeks"])    # Time to be reminded on
 
         if time_now == reminder_time:    # No time in argument, or it's zero.
-            await ctx.send(
-                "Please specify a time! E.g.: `?remindme in 1 hour " +
-                reminder + "`")
+            await ctx.send("Please specify a time! E.g.: `?remindme in 1 hour "
+                           + reminder + "`")
             return
 
         # Strips the string "to " from reminder messages
@@ -402,8 +400,8 @@ class Reminder(commands.Cog):
             '[{num}] (Frequency: {freq}{opt_date}) - {rem_text}'.format(
                 num=i,
                 freq=rem[3].capitalize(),
-                opt_date=(' at {date}'.format(
-                    date=rem[4].split('.')[0]) if rem[3] == 'once' else ''),
+                opt_date=(' at {date}'.format(date=rem[4].split('.')[0])
+                          if rem[3] == 'once' else ''),
                 rem_text=rem[2]) for i, rem in enumerate(rem_list, 1)
         ]
 
@@ -435,9 +433,10 @@ class Reminder(commands.Cog):
             conn.close()
             return
 
-        p = Pages(ctx,
-                  item_list=self.formatted_reminder_list(rem_list),
-                  title="{}'s reminders".format(rem_author.display_name))
+        p = Pages(
+            ctx,
+            item_list=self.formatted_reminder_list(rem_list),
+            title="{}'s reminders".format(rem_author.display_name))
 
         await p.paginate()
 
@@ -457,9 +456,8 @@ class Reminder(commands.Cog):
                 delete_after=60)
 
             try:
-                message = await self.bot.wait_for('message',
-                                                  check=msg_check,
-                                                  timeout=60)
+                message = await self.bot.wait_for(
+                    'message', check=msg_check, timeout=60)
 
             except asyncio.TimeoutError:
                 await ctx.send(
