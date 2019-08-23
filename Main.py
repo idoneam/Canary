@@ -150,9 +150,9 @@ async def backup(ctx):
     current_time = datetime.now(
         tz=timezone('America/New_York')).strftime('%Y%m%d-%H:%M')
     backup_filename = 'Martlet{}.db'.format(current_time)
-    await ctx.send(content='Here you go',
-                   file=discord.File(fp=bot.config.db_path,
-                                     filename=backup_filename))
+    await ctx.send(
+        content='Here you go',
+        file=discord.File(fp=bot.config.db_path, filename=backup_filename))
     bot.logger.info('Database backup')
 
 
