@@ -27,7 +27,7 @@ from .utils.auto_incorrect import auto_incorrect
 from .utils.mix import generate_mix
 
 
-class Memes():
+class Memes(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 

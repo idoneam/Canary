@@ -20,12 +20,10 @@
 # discord-py requirements
 import discord
 from discord.ext import commands
+from discord import utils
 import asyncio
 
 # URL access and parsing
-import requests
-import aiohttp
-import async_timeout
 from bs4 import BeautifulSoup
 
 # TeX rendering
@@ -35,28 +33,78 @@ import cv2
 import numpy as np
 
 # Other utilities
+import os
 import re
 import math
 import time
-import os
 import datetime
+import pickle
+import feedparser
 from .utils.paginator import Pages
 from .utils.requests import fetch
 
 MCGILL_EXAM_URL = "https://www.mcgill.ca/exams/dates"
+
+CFIA_FEED_URL = "http://inspection.gc.ca/eng/1388422350443/1388422374046.xml"
+
 MCGILL_KEY_DATES_URL = "https://www.mcgill.ca/importantdates/key-dates"
 
 WTTR_IN_MOON_URL = "http://wttr.in/moon.png"
 
 URBAN_DICT_TEMPLATE = "http://api.urbandictionary.com/v0/define?term={}"
 
-CURRENCY_TEMPLATE = "http://www.xe.com/currencyconverter/convert/" \
-                    "?Amount={}&From={}&To={}"
+try:
+    os.mkdir('./pickles')
+except Exception:
+    pass
 
 
-class Helpers():
+class Helpers(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+
+    async def cfia_rss(self):
+        # Written by @jidicula
+        """
+        Co-routine that periodically checks the CFIA Health Hazard Alerts RSS
+         feed for updates.
+        """
+        await self.bot.wait_until_ready()
+        while not self.bot.is_closed():
+            recall_channel = utils.get(
+                self.bot.get_guild(self.bot.config.server_id).text_channels,
+                name=self.bot.config.recall_channel)
+            newest_recalls = feedparser.parse(CFIA_FEED_URL)['entries']
+            try:
+                id_unpickle = open("pickles/recall_tag.obj", 'rb')
+                recalls = pickle.load(id_unpickle)
+                id_unpickle.close()
+            except Exception:
+                recalls = {}
+            new_recalls = False
+            for recall in newest_recalls:
+                recall_id = recall['id']
+                if recall_id not in recalls:
+                    new_recalls = True
+                    recalls[recall_id] = ""
+                    recall_warning = discord.Embed(
+                        title=recall['title'], description=recall['link'])
+                    soup = BeautifulSoup(recall['summary'], "html.parser")
+                    try:
+                        img_url = soup.img['src']
+                        summary = soup.p.find_parent().text.strip()
+                    except Exception:
+                        img_url = ""
+                        summary = recall['summary']
+                    recall_warning.set_image(url=img_url)
+                    recall_warning.add_field(name="Summary", value=summary)
+                    await recall_channel.send(embed=recall_warning)
+            if new_recalls:
+                # Pickle newly added IDs
+                id_pickle = open("pickles/recall_tag.obj", 'wb')
+                pickle.dump(recalls, id_pickle)
+                id_pickle.close()
+            await asyncio.sleep(12 * 3600)    # run every 12 hours
 
     @commands.command(aliases=['exams'])
     async def exam(self, ctx):
@@ -103,7 +151,7 @@ class Helpers():
             windchill_label = soup.find("a", string="Wind Chill")
             windchill = windchill_label.find_next().get_text().strip(
             ) + u"\xb0C"
-        except:
+        except Exception:
             windchill = u"N/A"
 
         weather_now = discord.Embed(
@@ -162,7 +210,7 @@ class Helpers():
                 value="**%s**\n%s" % (alert_location.strip(), alert_content),
                 inline=True)
 
-        except:
+        except Exception:
             weather_alert = discord.Embed(
                 title=alert_title.get_text().strip(),
                 description="No alerts in effect.",
@@ -204,8 +252,8 @@ class Helpers():
 
         search_term = "{}-{}".format(result.group(1), result.group(2))
         search_term = re.sub(r'\s+', r'', search_term)
-        r = await fetch(
-            self.bot.config.course_tpl.format(search_term), "content")
+        url = self.bot.config.course_tpl.format(search_term)
+        r = await fetch(url, "content")
         soup = BeautifulSoup(r, "html.parser")
 
         # TODO: brute-force parsing at the moment
@@ -299,7 +347,7 @@ class Helpers():
         em = discord.Embed(
             title='McGill Important Dates {0} {1}'.format(
                 term, str(current_year)),
-            description=url,
+            description=MCGILL_KEY_DATES_URL,
             colour=0xDA291C)
 
         for i in range(len(headers)):
@@ -323,8 +371,8 @@ class Helpers():
 
         await ctx.trigger_typing()
 
-        definitions = await fetch(
-            URBAN_DICT_TEMPLATE.format(query.replace(" ", "+")), "json")
+        url = URBAN_DICT_TEMPLATE.format(query.replace(" ", "+"))
+        definitions = await fetch(url, "json")
         definitions = definitions["list"][:5]
 
         if not definitions:
@@ -427,50 +475,6 @@ class Helpers():
         await p.paginate()
 
     @commands.command()
-    async def xe(self, ctx, *, query: str):
-        """Currency conversion.
-        Uses real-time exchange rates taken from http://www.xe.com.
-        Usage: ?xe <AMOUNT> <CURRENCY> to <CURRENCY>
-        ie. ?xe 60.00 CAD to EUR
-        The currencies supported for conversion (and their abbreviations) can
-        be found at http://www.xe.com/currency/.
-        """
-        await ctx.trigger_typing()
-        if '.' in query.split(' ')[0]:
-            # Distinguish regex between floats and ints
-            re1 = '([+-]?\\d*\\.\\d+)(?![-+0-9\\.])'
-        else:
-            re1 = '(\\d+)'
-        re2 = '((?:[a-z][a-z]+))'    # Currency FROM
-        re3 = '(to)'
-        re4 = '((?:[a-z][a-z]+))'    # Currency TO
-        ws = '(\\s+)'    # Whitespace
-        rg = re.compile(re1 + ws + re2 + ws + re3 + ws + re4,
-                        re.IGNORECASE | re.DOTALL)
-
-        m = rg.search(query)
-
-        if m:
-            r = await fetch(
-                CURRENCY_TEMPLATE.format(m.group(1), m.group(3), m.group(7)),
-                "content")
-            soup = BeautifulSoup(r, "html.parser")
-
-            converted_cost = soup.find('span', {
-                'class': 'uccResultAmount'
-            }).get_text()
-
-            # FIXME: there has to be a more elegant way to print this
-            await ctx.send("{} {} = {} {}".format(
-                m.group(1),
-                m.group(3).upper(), converted_cost,
-                m.group(7).upper()))
-        else:
-            await ctx.send(""":warning: Wrong format.
-            The correct format is `?xe <AMOUNT> <CURRENCY> to <CURRENCY>`.
-            ie. `?xe 60.00 CAD to EUR`""")
-
-    @commands.command()
     async def mose(self, ctx, dollar: float):
         """Currency conversion. Converts $$$ to the equivalent number of
         samosas, based on holy prices.
@@ -481,7 +485,7 @@ class Helpers():
             await ctx.send("Trying to owe samosas now, are we? :wink:")
             return
         total = dollar // 2 * 3 + (math.floor(dollar) % 2)
-        await ctx.send("${.2f} is worth {} samosas.".format(dollar, total))
+        await ctx.send("${:.2f} is worth {} samosas.".format(dollar, total))
 
     @commands.command()
     async def tepid(self, ctx):
@@ -503,3 +507,4 @@ class Helpers():
 
 def setup(bot):
     bot.add_cog(Helpers(bot))
+    bot.loop.create_task(Helpers(bot).cfia_rss())

@@ -38,7 +38,7 @@ GEN_SPACE_SYMBOLS = re.compile(r"[,“”\".?!]")
 GEN_BLANK_SYMBOLS = re.compile(r"['()`]")
 
 
-class Quotes():
+class Quotes(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.mc_table = {}

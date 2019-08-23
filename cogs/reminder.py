@@ -125,7 +125,7 @@ YMD_REGEX = re.compile(r"(2[0-1][0-9][0-9])[\s./-]((1[0-2]|0?[1-9]))[\s./-]"
 HM_REGEX = re.compile(r"\b([0-1]?[0-9]|2[0-4]):([0-5][0-9])")
 
 
-class Reminder():
+class Reminder(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.frequencies = {"daily": 1, "weekly": 7, "monthly": 30}
@@ -181,7 +181,7 @@ class Reminder():
                         await asyncio.sleep(1)
 
             conn.close()
-            await asyncio.sleep(60)
+            await asyncio.sleep(60)    # seconds
 
     @commands.command(aliases=['rm', 'rem'])
     async def remindme(self, ctx, *, quote: str = ""):
