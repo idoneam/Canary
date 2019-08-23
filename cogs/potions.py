@@ -39,7 +39,6 @@ async def annoying_child(message: discord.Message):
 
 
 async def drunk(message: discord.Message):
-    print(message.author.display_name)
     await message.channel.send(DRUNK_MESSAGE_TEMPLATE.format(
         user=message.author.display_name,
         message=auto_incorrect(message.content)))
@@ -55,10 +54,7 @@ async def disappointment(message: discord.Message):
 async def praise(message: discord.Message):
     reacts = random.choice(PRAISE_REACTS)
     for r in reacts:
-        try:
-            await message.add_reaction(r)
-        except Exception as e:
-            print(r)
+        await message.add_reaction(r)
 
 
 POTIONS = {
@@ -135,8 +131,6 @@ class Potions(commands.Cog):
 
         if not isinstance(potion, str) or not (isinstance(user, discord.Member)
                                                or user is None):
-            print(type(potion))
-            print(type(user))
             return
 
         potion = potion.strip().lower()
