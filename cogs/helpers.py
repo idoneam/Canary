@@ -59,6 +59,7 @@ try:
 except Exception:
     pass
 
+
 class Helpers(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
