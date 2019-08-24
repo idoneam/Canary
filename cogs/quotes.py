@@ -114,19 +114,18 @@ class Quotes(commands.Cog):
         await msg.add_reaction('🚮')
 
         def check(reaction, user):
-            return user == ctx.message.author or user == member and str(reaction.emoji) == '🚮'
+            return user == ctx.message.author or user == member and str(
+                reaction.emoji) == '🚮''
 
         try:
-            await self.bot.wait_for(
-                'reaction_add', check=check, timeout=120)
+            await self.bot.wait_for('reaction_add', check=check, timeout=120)
 
         except asyncio.TimeoutError:
             await msg.remove_reaction('🚮', self.bot.user)
 
         else:
             t = (member.id, quote)
-            c.execute('DELETE FROM Quotes WHERE ID = ? AND Quote = ?',
-                      t)
+            c.execute('DELETE FROM Quotes WHERE ID = ? AND Quote = ?', t)
             conn.commit()
             await msg.delete()
             await ctx.send('`Quote deleted.`', delete_after=60)
