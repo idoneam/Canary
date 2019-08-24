@@ -115,7 +115,7 @@ class Quotes(commands.Cog):
 
         def check(reaction, user):
             return user == ctx.message.author or user == member and str(
-                reaction.emoji) == '🚮''
+                reaction.emoji) == '🚮'
 
         try:
             await self.bot.wait_for('reaction_add', check=check, timeout=120)
