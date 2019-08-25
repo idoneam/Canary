@@ -114,8 +114,10 @@ class Quotes(commands.Cog):
         await msg.add_reaction('🚮')
 
         def check(reaction, user):
-            return user == ctx.message.author or user == member and str(
-                reaction.emoji) == '🚮'
+            return (
+                user == ctx.message.author
+                or user == member) and user != self.bot.user and str(
+                    reaction.emoji) == '🚮' and reaction.message.id == msg.id
 
         try:
             await self.bot.wait_for('reaction_add', check=check, timeout=120)
