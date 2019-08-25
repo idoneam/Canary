@@ -114,8 +114,15 @@ class Quotes(commands.Cog):
         await msg.add_reaction('🚮')
 
         def check(reaction, user):
-            return user == ctx.message.author or user == member and str(
-                reaction.emoji) == '🚮'
+            # returns True if all the following is true:
+            # The user who reacted is either the quoter or the quoted person
+            # The user who reacted isn't the bot
+            # The react is the delete emoji
+            # The react is on the "Quote added." message
+            return (
+                user == ctx.message.author
+                or user == member) and user != self.bot.user and str(
+                    reaction.emoji) == '🚮' and reaction.message.id == msg.id
 
         try:
             await self.bot.wait_for('reaction_add', check=check, timeout=120)
