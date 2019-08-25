@@ -114,6 +114,11 @@ class Quotes(commands.Cog):
         await msg.add_reaction('🚮')
 
         def check(reaction, user):
+            # returns True if all the following is true:
+            # The user who reacted is either the quoter or the quoted person
+            # The user who reacted isn't the bot
+            # The react is the delete emoji
+            # The react is on the "Quote added." message
             return (
                 user == ctx.message.author
                 or user == member) and user != self.bot.user and str(
