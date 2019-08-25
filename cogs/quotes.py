@@ -107,13 +107,32 @@ class Quotes(commands.Cog):
         c = conn.cursor()
         t = (member.id, member.name, quote, str(ctx.message.created_at))
         c.execute('INSERT INTO Quotes VALUES (?,?,?,?)', t)
-        await ctx.send('`Quote added.`')
+        msg = await ctx.send('`Quote added.`')
 
         conn.commit()
-        conn.close()
+
+        await msg.add_reaction('🚮')
+
+        def check(reaction, user):
+            return user == ctx.message.author or user == member and str(
+                reaction.emoji) == '🚮'
+
+        try:
+            await self.bot.wait_for('reaction_add', check=check, timeout=120)
+
+        except asyncio.TimeoutError:
+            await msg.remove_reaction('🚮', self.bot.user)
+
+        else:
+            t = (member.id, quote)
+            c.execute('DELETE FROM Quotes WHERE ID = ? AND Quote = ?', t)
+            conn.commit()
+            await msg.delete()
+            await ctx.send('`Quote deleted.`', delete_after=60)
 
         # Rebuild the Markov Chain lookup table to include new quote data.
         self.rebuild_mc()
+        conn.close()
 
     @commands.command(aliases=['q'])
     async def quotes(self, ctx, str1: str = None, *, str2: str = None):

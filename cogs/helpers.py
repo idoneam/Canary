@@ -419,12 +419,23 @@ class Helpers(commands.Cog):
             tex += "\\[" + sp[2 * i + 1] + "\\]"
 
         buf = BytesIO()
-        preview(tex, viewer="BytesIO", outputbuffer=buf, euler=False)
+        preview(
+            tex,
+            viewer="BytesIO",
+            outputbuffer=buf,
+            euler=False,
+            dvioptions=["-T", "tight", "-z", "9", "--truecolor", "-D", "600"])
         buf.seek(0)
         img_bytes = np.asarray(bytearray(buf.read()), dtype=np.uint8)
         img = cv2.imdecode(img_bytes, cv2.IMREAD_UNCHANGED)
         img2 = cv2.copyMakeBorder(
-            img, 10, 10, 10, 10, cv2.BORDER_CONSTANT, value=(255, 255, 255))
+            img,
+            115,
+            115,
+            115,
+            115,
+            cv2.BORDER_CONSTANT,
+            value=(255, 255, 255))
         fn = "latexed.png"
         retval, buf = cv2.imencode(".png", img2)
         img_bytes = BytesIO(buf)
