@@ -27,7 +27,7 @@ Dependencies may be installed using pipenv with the following command:
 $ pipenv install
 ```
 
-Use of the LaTeX equation functionality requires a working LaTeX installation (at the very minimum, `latex` and `dvipng` must be present). The easiest way to do this is to install TeX Live (usually possible through your distro's package manager, or through TeX Live's own facilities for the latest version). See the [Tex Live site](https://tug.org/texlive/) for more information.
+Use of the LaTeX equation functionality requires a working LaTeX installation (at the very minimum, `latex` and `dvipng` must be present). The easiest way to do this is to install TeX Live (usually possible through your distro's package manager, or through TeX Live's own facilities for the latest version). See the [TeX Live site](https://tug.org/texlive/) for more information.
 
 Development dependencies (YAPF) can be installed alongside all other dependencies with:
 ```bash
