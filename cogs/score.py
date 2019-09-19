@@ -35,10 +35,11 @@ class Score(commands.Cog):
         self.UPMARTLET = None
         self.DOWNMARTLET = None
 
+    @commands.Cog.listener()
     async def on_ready(self):
         self.guild = self.bot.get_guild(self.bot.config.server_id)
-        self.UPMARTLET = discord.utils.get(
-            self.guild.emojis, name=self.bot.config.upvote_emoji)
+        self.UPMARTLET = discord.utils.get(self.guild.emojis,
+                                           name=self.bot.config.upvote_emoji)
         self.DOWNMARTLET = discord.utils.get(
             self.guild.emojis, name=self.bot.config.downvote_emoji)
 
@@ -57,7 +58,7 @@ class Score(commands.Cog):
         channel = self.bot.get_channel(payload.channel_id)
 
         try:
-            message = await channel.get_message(payload.message_id)
+            message = await channel.fetch_message(payload.message_id)
         except discord.errors.NotFound:
             return
 
@@ -86,12 +87,15 @@ class Score(commands.Cog):
         conn.commit()
         conn.close()
 
+    @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload):
         await self._update_score_if_needed(payload)
 
+    @commands.Cog.listener()
     async def on_raw_reaction_remove(self, payload):
         await self._update_score_if_needed(payload, negated=True)
 
+    @commands.Cog.listener()
     async def on_member_update(self, before, after):
         if before.display_name == after.display_name:
             return
@@ -144,19 +148,17 @@ class Score(commands.Cog):
             table.append((counter, DisplayName, Upmartlet))
             if counter % 7 == 0 or counter == len(members):
                 table_list.append(
-                    tabulate(
-                        table[:counter],
-                        headers=["Rank", "Name", "Score"],
-                        tablefmt="fancy_grid"))
+                    tabulate(table[:counter],
+                             headers=["Rank", "Name", "Score"],
+                             tablefmt="fancy_grid"))
                 del table[:]
             counter += 1
 
-        p = Pages(
-            ctx,
-            item_list=table_list,
-            title="Upmartlet ranking",
-            display_option=(0, 1),
-            editable_content=False)
+        p = Pages(ctx,
+                  item_list=table_list,
+                  title="Upmartlet ranking",
+                  display_option=(0, 1),
+                  editable_content=False)
 
         await p.paginate()
 
