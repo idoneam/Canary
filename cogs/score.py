@@ -38,7 +38,6 @@ class Score(commands.Cog):
     @commands.Cog.listener()
     async def on_ready(self):
         self.guild = self.bot.get_guild(self.bot.config.server_id)
-        print(self.bot.get_guild, self.bot.config.server_id)
         self.UPMARTLET = discord.utils.get(
             self.guild.emojis, name=self.bot.config.upvote_emoji)
         self.DOWNMARTLET = discord.utils.get(
