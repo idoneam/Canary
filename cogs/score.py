@@ -35,6 +35,7 @@ class Score(commands.Cog):
         self.UPMARTLET = None
         self.DOWNMARTLET = None
 
+    @commands.Cog.listener()
     async def on_ready(self):
         self.guild = self.bot.get_guild(self.bot.config.server_id)
         self.UPMARTLET = discord.utils.get(self.guild.emojis,
@@ -57,7 +58,7 @@ class Score(commands.Cog):
         channel = self.bot.get_channel(payload.channel_id)
 
         try:
-            message = await channel.get_message(payload.message_id)
+            message = await channel.fetch_message(payload.message_id)
         except discord.errors.NotFound:
             return
 
@@ -86,12 +87,15 @@ class Score(commands.Cog):
         conn.commit()
         conn.close()
 
+    @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload):
         await self._update_score_if_needed(payload)
 
+    @commands.Cog.listener()
     async def on_raw_reaction_remove(self, payload):
         await self._update_score_if_needed(payload, negated=True)
 
+    @commands.Cog.listener()
     async def on_member_update(self, before, after):
         if before.display_name == after.display_name:
             return
