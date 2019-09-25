@@ -510,12 +510,16 @@ class Helpers(commands.Cog):
         except ValueError:
             ctx.send("Input must be integers")
 
-    @commands.command()
-    async def food(self, ctx, *args):
+    @commands.command(
+        aliases=['foodspot', 'fs', 'food', 'foodspotting', 'food_spotting'])
+    async def food_spot(self, ctx, *args):
         """Posts a food sale in #foodspotting.
-        Use: `?food Samosas in leacock`
-        You can also attach one picture to your message"""
-        message = " ".join(args)
+        Use: `?foodspot Samosas in leacock`
+        You can also attach one picture to your message (Write the command in the uploaded image caption)"""
+        if not args:
+            message = "\u200b"
+        else:
+            message = "**{}**".format(" ".join(args))
         channel = utils.get(self.bot.get_guild(
             self.bot.config.server_id).text_channels,
                             name=self.bot.config.food_spotting_channel)
@@ -524,15 +528,14 @@ class Helpers(commands.Cog):
         embed = discord.Embed()
         try:
             embed.set_image(url=ctx.message.attachments[0].url)
-        except:
+        except Exception:
             pass
         embed.set_footer(
             text=
-            "Added by {0} • Use '{1}food' if you spot food (See '{1}help food')"
+            "Added by {0} • Use '{1}foodspot' or {1}fs if you spot food (See '{1}help foodspot')"
             .format(username, self.bot.config.command_prefix[0]),
             icon_url=pfp)
-        embed.add_field(name="`Food spotted`", value="**{}**".format(message))
-
+        embed.add_field(name="`Food spotted`", value=message)
         await channel.send(embed=embed)
 
 
