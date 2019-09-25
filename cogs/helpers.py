@@ -510,6 +510,31 @@ class Helpers(commands.Cog):
         except ValueError:
             ctx.send("Input must be integers")
 
+    @commands.command()
+    async def food(self, ctx, *args):
+        """Posts a food sale in #foodspotting.
+        Use: `?food Samosas in leacock`
+        You can also attach one picture to your message"""
+        message = " ".join(args)
+        channel = utils.get(self.bot.get_guild(
+            self.bot.config.server_id).text_channels,
+                            name=self.bot.config.food_spotting_channel)
+        username = ctx.message.author
+        pfp = ctx.message.author.avatar_url
+        embed = discord.Embed()
+        try:
+            embed.set_image(url=ctx.message.attachments[0].url)
+        except:
+            pass
+        embed.set_footer(
+            text=
+            "Added by {0} • Use '{1}food' if you spot food (See '{1}help food')"
+            .format(username, self.bot.config.command_prefix[0]),
+            icon_url=pfp)
+        embed.add_field(name="`Food spotted`", value="**{}**".format(message))
+
+        await channel.send(embed=embed)
+
 
 def setup(bot):
     bot.add_cog(Helpers(bot))

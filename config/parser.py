@@ -53,7 +53,7 @@ class Parser:
         self.downvote_emoji = config['Server']['DownvoteEmoji']
         self.moderator_role = config['Server']['ModeratorRole']
         self.developer_role = config['Server']['DeveloperRole']
-        self.reception_channel_id = int(config['Server']['ReceptionChannelID'])
+        self.reception_channel = config['Server']['ReceptionChannel']
 
         # Logging
         self.log_file = config['Logging']['LogFile']
@@ -76,6 +76,7 @@ class Parser:
         self.wttr_in_tpl = config["Helpers"]["WttrINTemplate"]
         self.tepid_url = config["Helpers"]["TepidURL"]
         self.recall_channel = config["Helpers"]["FoodRecallChannel"]
+        self.food_spotting_channel = config["Helpers"]["FoodSpottingChannel"]
 
         # Below lies currency configuration
         currency_precision = int(config["Currency"]["Precision"])
