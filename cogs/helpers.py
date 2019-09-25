@@ -516,6 +516,9 @@ class Helpers(commands.Cog):
         """Posts a food sale in #foodspotting.
         Use: `?foodspot Samosas in leacock`
         You can also attach one picture to your message (Write the command in the uploaded image caption)"""
+        if utils.get(ctx.author.roles,
+                     name=self.bot.config.no_food_spotting_role):
+            return
         if not args:
             message = "\u200b"
         else:
@@ -532,7 +535,7 @@ class Helpers(commands.Cog):
             pass
         embed.set_footer(
             text=
-            "Added by {0} • Use '{1}foodspot' or {1}fs if you spot food (See '{1}help foodspot')"
+            "Added by {0} • Use '{1}foodspot' or '{1}fs' if you spot food (See '{1}help foodspot')"
             .format(username, self.bot.config.command_prefix[0]),
             icon_url=pfp)
         embed.add_field(name="`Food spotted`", value=message)

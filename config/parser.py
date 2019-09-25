@@ -77,6 +77,7 @@ class Parser:
         self.tepid_url = config["Helpers"]["TepidURL"]
         self.recall_channel = config["Helpers"]["FoodRecallChannel"]
         self.food_spotting_channel = config["Helpers"]["FoodSpottingChannel"]
+        self.no_food_spotting_role = config["Helpers"]["NoFoodSpottingRole"]
 
         # Below lies currency configuration
         currency_precision = int(config["Currency"]["Precision"])
