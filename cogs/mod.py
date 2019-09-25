@@ -18,6 +18,7 @@
 # along with Canary. If not, see <https://www.gnu.org/licenses/>.
 
 import discord
+from discord import utils
 from discord.ext import commands
 import asyncio
 
@@ -34,8 +35,9 @@ class Mod(commands.Cog):
             message = "{}".format(
                 " ".join(args)
             )    # to work regardless of whether the person uses apostrophes
-            channel_to_send = self.bot.get_channel(
-                self.bot.config.reception_channel_id)
+            channel_to_send = utils.get(self.bot.get_guild(
+                self.bot.config.server_id).text_channels,
+                                        name=self.bot.config.reception_channel)
             msg = '{} 📣 {}'.format(str(ctx.author.name), message)
             await channel_to_send.send(content=msg)
             await ctx.send("`Message sent`")
@@ -49,9 +51,10 @@ class Mod(commands.Cog):
         dest = user
         await dest.send(
             content='{}\n*To answer write* `{}answer "your message here"`'.
-            format(message, self.bot.config.command_prefix))
-        channel_to_forward = self.bot.get_channel(
-            self.bot.config.reception_channel_id)
+            format(message, self.bot.config.command_prefix[0]))
+        channel_to_forward = utils.get(self.bot.get_guild(
+            self.bot.config.server_id).text_channels,
+                                       name=self.bot.config.reception_channel)
         msg = '🐦 ({}) to {}: {}'.format(ctx.author.name, dest.name, message)
         await channel_to_forward.send(msg)
         await ctx.message.delete()
