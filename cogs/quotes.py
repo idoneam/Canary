@@ -199,12 +199,13 @@ class Quotes(commands.Cog):
         # current nick will be displayed, otherwise use the name stored
         # in db
 
-        author_name = author.display_name if author else name
-        pfp = author.avatar_url
+        author_fields = {"name": author.display_name if author else name}
+        if author is not None:
+            author_fields["icon_url"] = author.avatar_url
 
-        embed = discord.Embed()
-        embed.set_author(name=author_name, icon_url=pfp)
-        embed.add_field(name="📣", value=quote)
+        embed = discord.Embed(description=quote)
+        embed.set_author(**author_fields)
+
         await ctx.send(embed=embed)
 
     @commands.command(aliases=['lq'])
