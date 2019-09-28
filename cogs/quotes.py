@@ -37,6 +37,8 @@ from .utils.paginator import Pages
 GEN_SPACE_SYMBOLS = re.compile(r"[,“”\".?!]")
 GEN_BLANK_SYMBOLS = re.compile(r"['()`]")
 
+DEFAULT_AVATAR = "https://cdn.discordapp.com/embed/avatars/0.png"
+
 
 class Quotes(commands.Cog):
     def __init__(self, bot):
@@ -199,13 +201,12 @@ class Quotes(commands.Cog):
         # current nick will be displayed, otherwise use the name stored
         # in db
 
-        author_fields = {"name": author.display_name if author else name}
-        if author is not None:
-            author_fields["icon_url"] = author.avatar_url
-
-        embed = discord.Embed(description=quote)
-        embed.set_author(**author_fields)
-
+        author_name = author.display_name if author else name
+        pfp = author.avatar_url if author else DEFAULT_AVATAR
+        embed = discord.Embed(colour=discord.Colour(random.randint(
+            0, 16777215)),
+                              description=quote)
+        embed.set_author(name=author_name, icon_url=pfp)
         await ctx.send(embed=embed)
 
     @commands.command(aliases=['lq'])
