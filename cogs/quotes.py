@@ -113,6 +113,9 @@ class Quotes(commands.Cog):
 
         conn.commit()
 
+        # Rebuild the Markov Chain lookup table to include new quote data.
+        self.rebuild_mc()
+
         await msg.add_reaction('🚮')
 
         def check(reaction, user):
@@ -139,8 +142,6 @@ class Quotes(commands.Cog):
             await msg.delete()
             await ctx.send('`Quote deleted.`', delete_after=60)
 
-        # Rebuild the Markov Chain lookup table to include new quote data.
-        self.rebuild_mc()
         conn.close()
 
     @commands.command(aliases=['q'])
