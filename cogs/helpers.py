@@ -534,9 +534,9 @@ class Helpers(commands.Cog):
         except Exception:
             pass
         embed.set_footer(
-            text=
-            "Added by {0} • Use '{1}foodspot' or '{1}fs' if you spot food (See '{1}help foodspot')"
-            .format(username, self.bot.config.command_prefix[0]),
+            text=("Added by {0} • Use '{1}foodspot' or '{1}fs' if you spot "
+                  "food (See '{1}help foodspot')").format(
+                      username, self.bot.config.command_prefix[0]),
             icon_url=pfp)
         embed.add_field(name="`Food spotted`", value=message)
         await channel.send(embed=embed)
