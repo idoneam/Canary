@@ -139,6 +139,7 @@ class Quotes(commands.Cog):
             t = (member.id, quote)
             c.execute('DELETE FROM Quotes WHERE ID = ? AND Quote = ?', t)
             conn.commit()
+            self.rebuild_mc()
             await msg.delete()
             await ctx.send('`Quote deleted.`', delete_after=60)
 
