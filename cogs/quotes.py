@@ -208,6 +208,13 @@ class Quotes(commands.Cog):
         embed = discord.Embed(colour=discord.Colour(random.randint(
             0, 16777215)),
                               description=quote)
+
+        img_regex = r'https?://.*\.(?:jpg|gif|png|jpeg)\S*'
+        img_urls_found = re.findall(img_regex, quote)
+
+        if img_urls_found:
+            embed.set_image(url=img_urls_found[0])
+
         embed.set_author(name=author_name, icon_url=pfp)
         await ctx.send(embed=embed)
 
