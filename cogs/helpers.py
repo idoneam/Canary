@@ -96,7 +96,8 @@ class Helpers(commands.Cog):
                     except Exception:
                         img_url = ""
                         summary = recall['summary']
-                    if re.search(r'Quebec|National', summary, re.IGNORECASE):
+                    if re.search(self.bot.config.recall_filter, summary,
+                                 re.IGNORECASE):
                         recall_warning.set_image(url=img_url)
                         recall_warning.add_field(name="Summary", value=summary)
                         await recall_channel.send(embed=recall_warning)
