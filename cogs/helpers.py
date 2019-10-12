@@ -96,9 +96,10 @@ class Helpers(commands.Cog):
                     except Exception:
                         img_url = ""
                         summary = recall['summary']
-                    recall_warning.set_image(url=img_url)
-                    recall_warning.add_field(name="Summary", value=summary)
-                    await recall_channel.send(embed=recall_warning)
+                    if re.search(r'Quebec|National', summary, re.IGNORECASE):
+                        recall_warning.set_image(url=img_url)
+                        recall_warning.add_field(name="Summary", value=summary)
+                        await recall_channel.send(embed=recall_warning)
             if new_recalls:
                 # Pickle newly added IDs
                 id_pickle = open("pickles/recall_tag.obj", 'wb')
