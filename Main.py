@@ -30,6 +30,8 @@ import sqlite3
 import os
 import sys
 import subprocess
+import traceback
+
 from datetime import datetime
 from pytz import timezone
 from bot import bot
@@ -122,10 +124,24 @@ async def update(ctx):
     """
     Update the bot by pulling changes from the git repository
     """
-    bot.logger.info('Update Git repository')
-    shell_output = subprocess.check_output("git pull", shell=True)
-    status_message = shell_output.decode("unicode_escape")
-    await ctx.send('`{}`'.format(status_message))
+
+    bot.logger.info("Update Git repository")
+    subprocess.run("git stash", shell=True)
+
+    await ctx.send("Attempting to update...")
+
+    try:
+        subprocess.run("pipenv sync", shell=True)
+        shell_output = subprocess.check_output("git pull", shell=True)
+        status_message = shell_output.decode("unicode_escape")
+        await ctx.send("```{}```".format(status_message))
+        await ctx.send("Done.")
+
+    except subprocess.CalledProcessError:
+        await ctx.send("Error updating:\n```{}```".format(
+            traceback.format_exc()))
+
+    subprocess.run("git stash pop", shell=True)
 
 
 @bot.event
