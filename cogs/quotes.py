@@ -37,6 +37,8 @@ from .utils.paginator import Pages
 GEN_SPACE_SYMBOLS = re.compile(r"[,“”\".?!]")
 GEN_BLANK_SYMBOLS = re.compile(r"['()`]")
 
+IMAGE_REGEX = re.compile(r"https?://\S+\.(?:jpg|gif|png|jpeg)\S*")
+
 DEFAULT_AVATAR = "https://cdn.discordapp.com/embed/avatars/0.png"
 
 
@@ -209,8 +211,7 @@ class Quotes(commands.Cog):
             0, 16777215)),
                               description=quote)
 
-        img_regex = r'https?://.*\.(?:jpg|gif|png|jpeg)\S*'
-        img_urls_found = re.findall(img_regex, quote)
+        img_urls_found = re.findall(IMAGE_REGEX, quote)
 
         if img_urls_found:
             embed.set_image(url=img_urls_found[0])
