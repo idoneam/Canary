@@ -76,6 +76,7 @@ class Parser:
         self.wttr_in_tpl = config["Helpers"]["WttrINTemplate"]
         self.tepid_url = config["Helpers"]["TepidURL"]
         self.recall_channel = config["Helpers"]["FoodRecallChannel"]
+        self.recall_filter = config["Helpers"]["FoodRecallLocationFilter"]
         self.food_spotting_channel = config["Helpers"]["FoodSpottingChannel"]
         self.no_food_spotting_role = config["Helpers"]["NoFoodSpottingRole"]
 

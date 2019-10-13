@@ -37,6 +37,8 @@ from .utils.paginator import Pages
 GEN_SPACE_SYMBOLS = re.compile(r"[,“”\".?!]")
 GEN_BLANK_SYMBOLS = re.compile(r"['()`]")
 
+IMAGE_REGEX = re.compile(r"https?://\S+\.(?:jpg|gif|png|jpeg)\S*")
+
 DEFAULT_AVATAR = "https://cdn.discordapp.com/embed/avatars/0.png"
 
 
@@ -113,6 +115,9 @@ class Quotes(commands.Cog):
 
         conn.commit()
 
+        # Rebuild the Markov Chain lookup table to include new quote data.
+        self.rebuild_mc()
+
         await msg.add_reaction('🚮')
 
         def check(reaction, user):
@@ -136,11 +141,10 @@ class Quotes(commands.Cog):
             t = (member.id, quote)
             c.execute('DELETE FROM Quotes WHERE ID = ? AND Quote = ?', t)
             conn.commit()
+            self.rebuild_mc()
             await msg.delete()
             await ctx.send('`Quote deleted.`', delete_after=60)
 
-        # Rebuild the Markov Chain lookup table to include new quote data.
-        self.rebuild_mc()
         conn.close()
 
     @commands.command(aliases=['q'])
@@ -206,6 +210,12 @@ class Quotes(commands.Cog):
         embed = discord.Embed(colour=discord.Colour(random.randint(
             0, 16777215)),
                               description=quote)
+
+        img_urls_found = re.findall(IMAGE_REGEX, quote)
+
+        if img_urls_found:
+            embed.set_image(url=img_urls_found[0])
+
         embed.set_author(name=author_name, icon_url=pfp)
         await ctx.send(embed=embed)
 
