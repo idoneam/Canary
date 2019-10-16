@@ -190,8 +190,31 @@ class Quotes(commands.Cog):
                 quotes = c.fetchall()
 
         if not quotes:
+            msg = await ctx.send('Quote not found.\n')
+            await msg.add_reaction('🆗')
+
+            def check(reaction, user):
+                # returns True if all the following is true:
+                # The user who reacted isn't the bot
+                # The react is the ok emoji
+                # The react is on the "Quote not found." message
+                return (user == ctx.message.author and user != self.bot.user
+                        ) and (str(reaction.emoji) == '🆗'
+                               and reaction.message.id == msg.id)
+
+            try:
+                await self.bot.wait_for('reaction_add',
+                                        check=check,
+                                        timeout=120)
+
+            except asyncio.TimeoutError:
+                await msg.remove_reaction('🆗', self.bot.user)
+
+            else:
+                await ctx.message.delete()
+                await msg.delete()
+
             conn.close()
-            await ctx.send('Quote not found.')
             return
 
         conn.close()
