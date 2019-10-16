@@ -18,6 +18,7 @@
 # along with Canary. If not, see <https://www.gnu.org/licenses/>.
 
 # discord-py requirements
+import discord
 from discord.ext import commands
 import asyncio
 
@@ -148,6 +149,30 @@ class Memes(commands.Cog):
             ctx.message.author, ctx.message.content))
         await ctx.send(msg)
         await ctx.message.delete()
+
+    @commands.command()
+    async def boot(self, ctx, num: int = 2):
+        """Draws a pyramid of boots, default is 3 unless user specifies
+        an integer number of levels of boots."""
+        def booty(n, m):
+            spaces = (m - n) * 3
+            msg = ""
+            while (spaces > 0):
+                msg += " "
+                spaces -= 1
+
+            while (n > 0):
+                msg = msg + "👢 "
+                n -= 1
+            return msg
+
+        n = num
+        msg = ""
+        while (n > 0):
+            msg = booty(n, num) + "\n" + msg
+            n -= 1
+
+        await ctx.send("**\n" + msg + "**")
 
 
 def setup(bot):
