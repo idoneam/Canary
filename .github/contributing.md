@@ -24,6 +24,8 @@ Github provides a user-friendly interface for managing issues for a repository. 
 
 When you have finished your task and pushed your work to the corresponding branch on remote, you can create a pull request via Github web interface to integrate your code into production. By default, your PR should be requesting to merge into `dev` -- however, it's good practice to check that this is indeed the case before you submit your PR. After creating a pull request, you should ask at least 1 person to review your work and update it accordingly. If your pull request is approved, changes will be applied to the destination branch, and the feature/enhancement will be deployed eventually.
 
+Only the submitter should merge their PR once it's been accepted.
+
 ### Reviewing PRs
 
 - Go through the code line-by-line to see what was changed. A good way to do this in-browser is to click the `Files changed` tab.
@@ -32,3 +34,4 @@ When you have finished your task and pushed your work to the corresponding branc
 - Provide constructive criticism on the code. You don't have to restrict yourself to things to fix -- this is an excellent opportunity to compliment good design choices, new concepts you're seeing for the first time, etc.!
 - Ensure that the changes are understandable by a newcomer to the project. The writer of the code will have their own familiarity with the code since they've built it from their own mental model. As reviewer, consider yourself to be 1 degree removed from that mental model, and be liberal about asking for clarification on changes you don't understand! (This is a 2-way street: submitters should also be responsive to questions and suggestions.)
 - Don't be afraid to request changes. It's ok if it's blocking the merge. If the submitter is not willing to make changes, try to come to an agreement in the comment thread. You're not always going to agree, but in the end, the feature has to be implemented.
+- Let the submitter merge their own PR after it's been approved.
