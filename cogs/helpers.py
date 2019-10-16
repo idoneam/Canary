@@ -40,6 +40,7 @@ import time
 import datetime
 import pickle
 import feedparser
+import random
 from .utils.paginator import Pages
 from .utils.requests import fetch
 
@@ -543,6 +544,17 @@ class Helpers(commands.Cog):
         embed.add_field(name="`Food spotted`", value=message)
         await channel.send(embed=embed)
 
+    @commands.command() 
+    async def choose(self, ctx, *, inputOpts: str):
+        """Randomly chooses one of the given options delimited by semicola.
+        Usage: ?choose opt1;opt2 
+        """ 
+        opts = inputOpts.split(';'); 
+        sel = random.randint(0, (len(opts)-1))
+        msg = "🤔\n" + opts[sel]
+        embed = discord.Embed(colour=discord.Colour(random.randint(0, 16777215)), 
+                description=msg)
+        await ctx.send(embed=embed)
 
 def setup(bot):
     bot.add_cog(Helpers(bot))
