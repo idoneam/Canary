@@ -154,25 +154,15 @@ class Memes(commands.Cog):
     async def boot(self, ctx, num: int = 2):
         """Draws a pyramid of boots, default is 3 unless user specifies
         an integer number of levels of boots."""
+
+        num = max(min(num, 28), 1)    # Above 28, the message cap is hit
+
         def booty(n, m):
-            spaces = (m - n) * 3
-            msg = ""
-            while (spaces > 0):
-                msg += " "
-                spaces -= 1
+            return "{spaces}{boots}".format(spaces=" " * ((m - n) * 3),
+                                            boots="👢 " * n)
 
-            while (n > 0):
-                msg = msg + "👢 "
-                n -= 1
-            return msg
-
-        n = num
-        msg = ""
-        while (n > 0):
-            msg = booty(n, num) + "\n" + msg
-            n -= 1
-
-        await ctx.send("**\n" + msg + "**")
+        msg = "\n".join(booty(ln, num) for ln in range(1, num + 1))
+        await ctx.send("**\n{}**".format(msg))
 
 
 def setup(bot):
