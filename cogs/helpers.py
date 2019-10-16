@@ -507,9 +507,7 @@ class Helpers(commands.Cog):
         opts = inputOpts.split(';')
         sel = random.randint(0, (len(opts) - 1))
         msg = "🤔\n" + opts[sel]
-        embed = discord.Embed(colour=discord.Colour(random.randint(
-            0, 16777215)),
-                              description=msg)
+        embed = discord.Embed(colour=0xDA291C, description=msg)
         await ctx.send(embed=embed)
 
 
