@@ -34,6 +34,7 @@ class Info(commands.Cog):
     async def roles(self, ctx):
         """Returns list of all roles in server"""
         roleNames = list(map(lambda role: role.name + "\n", ctx.guild.roles))
+        roleNames.reverse()
         p = Pages(ctx,
                   item_list=roleNames,
                   title="All roles in server",
