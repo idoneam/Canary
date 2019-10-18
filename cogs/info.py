@@ -25,9 +25,22 @@ import asyncio
 from .utils.paginator import Pages
 import math
 
+
 class Info(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+
+    @commands.command()
+    async def roles(self, ctx):
+        """Returns list of all roles in server"""
+        roleNames = list(map(lambda role: role.name + "\n", ctx.guild.roles))
+        p = Pages(ctx,
+                  item_list=roleNames,
+                  title="All roles in server",
+                  display_option=(3, 20),
+                  editable_content=False)
+
+        await p.paginate()
 
     @commands.command()
     async def inrole(self, ctx, *, r):
@@ -42,18 +55,17 @@ class Info(commands.Cog):
 
         names = list(map(lambda m: str(m) + "\n", members))
         numNames = len(names)
-        pages = math.ceil(numNames/20) # 20 names per page
-        header = "List of users in {role} role - {num}".format(
-                role = role.name, 
-                num = numNames)
-        
+        header = "List of users in {role} role - {num}".format(role=role.name,
+                                                               num=numNames)
+
         p = Pages(ctx,
-                item_list=names,
-                title=header,
-                display_option=(3,20),
-                editable_content=False)
+                  item_list=names,
+                  title=header,
+                  display_option=(3, 20),
+                  editable_content=False)
 
         await p.paginate()
+
 
 def setup(bot):
     bot.add_cog(Info(bot))
