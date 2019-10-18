@@ -44,28 +44,32 @@ class Info(commands.Cog):
         await p.paginate()
 
     @commands.command()
-    async def inrole(self, ctx, *, r):
+    async def inrole(self, ctx, *, queryRole):
         """Returns list of users in the specified role"""
-        members = []
+        members = None
         for role in ctx.guild.roles:
-            if role.name.lower() == r.lower():
+            if role.name.lower() == queryRole.lower():
                 members = role.members
                 break
 
-        if (len(members) == 0): return
+        if (members is None): return
 
         names = list(map(lambda m: str(m) + "\n", members))
-        numNames = len(names)
         header = "List of users in {role} role - {num}".format(role=role.name,
-                                                               num=numNames)
+                                                               num=len(names))
 
-        p = Pages(ctx,
-                  item_list=names,
-                  title=header,
-                  display_option=(3, 20),
-                  editable_content=False)
-
-        await p.paginate()
+        # TODO remove for paginator take empty list for embed
+        if (len(names) == 0):
+            em = discord.Embed(title=header, colour=0xDA291C)
+            em.set_footer(text="Page 01 of 01")
+            await ctx.send(embed=em)
+        else:
+            pages = Pages(ctx,
+                          item_list=names,
+                          title=header,
+                          display_option=(3, 20),
+                          editable_content=False)
+            await pages.paginate()
 
 
 def setup(bot):
