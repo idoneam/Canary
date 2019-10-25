@@ -37,14 +37,13 @@ from .utils.requests import fetch
 
 CFIA_FEED_URL = "http://inspection.gc.ca/eng/1388422350443/1388422374046.xml"
 
-
 try:
     os.mkdir('./pickles')
 except Exception:
     pass
 
 
-class Helpers(commands.Cog):
+class Subscribers(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
@@ -95,5 +94,5 @@ class Helpers(commands.Cog):
 
 
 def setup(bot):
-    bot.add_cog(Helpers(bot))
-    bot.loop.create_task(Helpers(bot).cfia_rss())
+    bot.add_cog(Subscribers(bot))
+    bot.loop.create_task(Subscribers(bot).cfia_rss())

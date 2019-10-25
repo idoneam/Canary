@@ -75,10 +75,14 @@ class Parser:
         self.gc_weather_alert_url = config["Helpers"]["GCWeatherAlertURL"]
         self.wttr_in_tpl = config["Helpers"]["WttrINTemplate"]
         self.tepid_url = config["Helpers"]["TepidURL"]
-        self.recall_channel = config["Helpers"]["FoodRecallChannel"]
-        self.recall_filter = config["Helpers"]["FoodRecallLocationFilter"]
-        self.food_spotting_channel = config["Helpers"]["FoodSpottingChannel"]
-        self.no_food_spotting_role = config["Helpers"]["NoFoodSpottingRole"]
+
+        # Subscription configuration
+        self.recall_channel = config["Subscribers"]["FoodRecallChannel"]
+        self.recall_filter = config["Subscribers"]["FoodRecallLocationFilter"]
+        self.food_spotting_channel = config["Subscribers"][
+            "FoodSpottingChannel"]
+        self.no_food_spotting_role = config["Subscribers"][
+            "NoFoodSpottingRole"]
 
         # Below lies currency configuration
         currency_precision = int(config["Currency"]["Precision"])
