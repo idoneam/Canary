@@ -37,10 +37,12 @@ CFIA_FEED_URL = "http://inspection.gc.ca/eng/1388422350443/1388422374046.xml"
 
 # Default values by line number for status
 # Integers in list are line colours
-METRO_STATUS = {"1": ["Normal métro service", 36431],  # Green Line
-                "2": ["Normal métro service", 15761699],  # Orange Line
-                "4": ["Normal métro service", 16770048],  # Yellow Line
-                "5": ["Normal métro service", 33738]}  # Blue Line
+METRO_STATUS = {
+    "1": ["Normal métro service", 36431],    # Green Line
+    "2": ["Normal métro service", 15761699],    # Orange Line
+    "4": ["Normal métro service", 16770048],    # Yellow Line
+    "5": ["Normal métro service", 33738]
+}    # Blue Line
 
 try:
     os.mkdir('./pickles')
@@ -119,9 +121,8 @@ class Subscribers(commands.Cog):
             metro_status_channel = utils.get(
                 self.bot.get_guild(self.bot.config.server_id).text_channels,
                 name=self.bot.config.metro_status_channel)
-            response = requests.request(
-                "GET",
-                self.bot.config.metro_status_url)
+            response = requests.request("GET",
+                                        self.bot.config.metro_status_url)
             for line_status in METRO_STATUS.items():
                 line_number = line_status[0]
                 cached_status = line_status[1][0]
@@ -134,7 +135,7 @@ class Subscribers(commands.Cog):
                         description=current_status[1],
                         colour=line_colour)
                     await metro_status_channel.send(embed=metro_status_update)
-            await asyncio.sleep(60)  # Run every 60 seconds
+            await asyncio.sleep(60)    # Run every 60 seconds
 
 
 def setup(bot):
