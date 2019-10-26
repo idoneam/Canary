@@ -83,6 +83,8 @@ class Parser:
             "FoodSpottingChannel"]
         self.no_food_spotting_role = config["Subscribers"][
             "NoFoodSpottingRole"]
+        self.metro_status_url = config["Subscribers"]["STMMetroStatusAPIURL"]
+        self.metro_status_channel = config["Subscribers"]["MetroStatusChannel"]
 
         # Below lies currency configuration
         currency_precision = int(config["Currency"]["Precision"])

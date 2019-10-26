@@ -21,7 +21,6 @@
 import discord
 from discord.ext import commands
 from discord import utils
-import asyncio
 
 # URL access and parsing
 from bs4 import BeautifulSoup
@@ -38,8 +37,6 @@ import re
 import math
 import time
 import datetime
-import pickle
-import feedparser
 import random
 from .utils.paginator import Pages
 from .utils.requests import fetch
@@ -513,4 +510,3 @@ class Helpers(commands.Cog):
 
 def setup(bot):
     bot.add_cog(Helpers(bot))
-    bot.loop.create_task(Helpers(bot).cfia_rss())
