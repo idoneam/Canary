@@ -7,7 +7,7 @@ name = 'pypi'
 python_version = "3.6"
 
 [packages]
-beautifulsoup4 = "==4.8.0"
+beautifulsoup4 = "==4.8.1"
 sympy = "==1.4.0"
 requests = ">=2.20.0"
 tabulate = "==0.7.7"
