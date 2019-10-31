@@ -4,7 +4,7 @@ url = "https://pypi.org/simple"
 name = "pypi"
 
 [packages]
-beautifulsoup4 = "==4.8.0"
+beautifulsoup4 = "==4.8.1"
 sympy = "==1.4.0"
 requests = ">=2.20.0"
 tabulate = "==0.7.7"
