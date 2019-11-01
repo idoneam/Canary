@@ -148,14 +148,19 @@ class Helpers(commands.Cog):
         tendency_label = soup.find("dt", string="Tendency:")
         # Get wind
         wind_label = soup.find("dt", string="Wind:")
-        # Get windchill, only if it can be found.
-
-        try:
-            windchill_label = soup.find("a", string="Wind Chill")
-            windchill = windchill_label.find_next().get_text().strip(
-            ) + u"\xb0C"
-        except Exception:
-            windchill = u"N/A"
+        # Get windchill using standard formula from Environment Canada
+        temperature = float(
+            re.search("-*\d+\.\d",
+                      temperature_label.find_next_sibling().get_text().strip()
+                      ).group())
+        wind_speed = float(
+            re.search(
+                "\d+",
+                wind_label.find_next_sibling().get_text().strip()).group())
+        windchill = "{}°C".format(
+            round(
+                13.12 + 0.6215 * temperature - 11.37 * wind_speed**0.16 +
+                0.3965 * temperature * wind_speed**0.16, 1))
 
         weather_now = discord.Embed(
             title='Current Weather',
