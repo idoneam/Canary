@@ -575,7 +575,7 @@ class Helpers(commands.Cog):
         img[:, :] = (b, g, r)
         ext = "jpg"
         retval, buffer = cv2.imencode('.{}'.format(ext), img,
-                                      [cv2.IMWRITE_JPEG_QUALITY, 100])
+                                      [cv2.IMWRITE_JPEG_QUALITY, 0])
         buffer = BytesIO(buffer)
         fn = "{}.{}".format(match.group(1), ext)
         await ctx.send(file=discord.File(fp=buffer, filename=fn))
