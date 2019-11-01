@@ -150,12 +150,12 @@ class Helpers(commands.Cog):
         wind_label = soup.find("dt", string="Wind:")
         # Get windchill using standard formula from Environment Canada
         temperature = float(
-            re.search("-*\d+\.\d",
+            re.search(r"-?\d+\.\d",
                       temperature_label.find_next_sibling().get_text().strip()
                       ).group())
         wind_speed = float(
             re.search(
-                "\d+",
+                r"\d+",
                 wind_label.find_next_sibling().get_text().strip()).group())
         windchill = "{}°C".format(
             round(
