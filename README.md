@@ -66,10 +66,12 @@ You must set certain values in the `config.ini` file, in particular your Discor
     * `GCWeatherAlertURL`: Government of Canada weather alerts URL. **Region-specific.**
     * `WttrINTemplate`: [http://wttr.in/](http://wttr.in/) URL template. **Region-specific.**
     * `TepidURL`: [TEPID](https://github.com/ctf/TEPID-Server) screensaver endpoint for printer status.
+* `[Subscribers]`
     * `FoodRecallChannel`: Channel where you want CFIA recall notices posted.
     * `FoodRecallLocationFilter`: Regions you want to receive CFIA recall notices for.
     * `FoodSpottingChannel`: Channel where you want foodspotting posts to be sent, ideally in a dedicated channel.
     * `NoFoodSpottingRole`: Name of role assigned to abusers of the foodspotting command that will prevent them from using it.
+    * `MetroStatusChannel`: Channel where you want metro status alerts to be sent, ideally in a dedicated channel with opt-in read permissions for users.
 * `[Currency]`
     * `Name`: The name of the bot currency.
     * `Symbol`: The currency's symbol (e.g. `$`).

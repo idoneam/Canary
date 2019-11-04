@@ -34,7 +34,7 @@ import feedparser
 import requests
 
 CFIA_FEED_URL = "http://inspection.gc.ca/eng/1388422350443/1388422374046.xml"
-METRO_STATUS_API = "https://www.stm.info/en/ajax/etats-du-service"
+metro_status_api = "https://www.stm.info/en/ajax/etats-du-service"
 
 # Default values by line number for status
 # Integers in list are line colours
@@ -45,10 +45,7 @@ METRO_STATUS = {
     "5": ["Normal métro service", 33738]
 }    # Blue Line
 
-try:
-    os.mkdir('./pickles')
-except Exception:
-    pass
+os.mkdir('./pickles', exist_ok=True)
 
 
 class Subscribers(commands.Cog):
@@ -122,7 +119,7 @@ class Subscribers(commands.Cog):
             metro_status_channel = utils.get(
                 self.bot.get_guild(self.bot.config.server_id).text_channels,
                 name=self.bot.config.metro_status_channel)
-            response = requests.request("GET", METRO_STATUS_API)
+            response = requests.request("GET", metro_status_api)
             for line_status in METRO_STATUS.items():
                 line_number = line_status[0]
                 cached_status = line_status[1][0]
