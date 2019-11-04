@@ -555,6 +555,31 @@ class Helpers(commands.Cog):
         embed = discord.Embed(colour=0xDA291C, description=msg)
         await ctx.send(embed=embed)
 
+    @commands.command(aliases=["color"])
+    async def colour(self, ctx, *, arg: str):
+        """Shows a small image filled with the given hex colour.
+        Usage: `?colour hex`
+        """
+        allowed = re.compile("^#?(?:0x)?([0-9a-fA-F]{6})$")
+        match = allowed.match(arg)
+        if not match:
+            await ctx.send("Please use a valid 6-digit hex number.")
+            return
+        await ctx.trigger_typing()
+        c = int(match.group(1), 16)
+        r = (c & 0xFF0000) >> 16
+        g = (c & 0xFF00) >> 8
+        b = c & 0xFF
+        SIZE = 64
+        img = np.zeros((SIZE, SIZE, 3), np.uint8)
+        img[:, :] = (b, g, r)
+        ext = "jpg"
+        retval, buffer = cv2.imencode('.{}'.format(ext), img,
+                                      [cv2.IMWRITE_JPEG_QUALITY, 0])
+        buffer = BytesIO(buffer)
+        fn = "{}.{}".format(match.group(1), ext)
+        await ctx.send(file=discord.File(fp=buffer, filename=fn))
+
 
 def setup(bot):
     bot.add_cog(Helpers(bot))
