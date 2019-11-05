@@ -373,6 +373,7 @@ class Helpers(commands.Cog):
         buf = BytesIO()
         preview(
             tex,
+            preamble="\\documentclass[varwidth,12pt]{standalone}\\usepackage{alphabeta}\\usepackage[utf8]{inputenc}\\usepackage[LGR,T1]{fontenc}\\usepackage{amsmath,amsfonts,lmodern}\\begin{document}",
             viewer="BytesIO",
             outputbuffer=buf,
             euler=False,
