@@ -372,11 +372,11 @@ class Helpers(commands.Cog):
 
         buf = BytesIO()
         LATEX_PREAMBLE = ("\\documentclass[varwidth,12pt]{standalone}"
-                   "\\usepackage{alphabeta}"
-                   "\\usepackage[utf8]{inputenc}"
-                   "\\usepackage[LGR,T1]{fontenc}"
-                   "\\usepackage{amsmath,amsfonts,lmodern}"
-                   "\\begin{document}")
+                          "\\usepackage{alphabeta}"
+                          "\\usepackage[utf8]{inputenc}"
+                          "\\usepackage[LGR,T1]{fontenc}"
+                          "\\usepackage{amsmath,amsfonts,lmodern}"
+                          "\\begin{document}")
         preview(
             tex,
             preamble=LATEX_PREAMBLE,
