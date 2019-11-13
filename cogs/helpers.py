@@ -371,10 +371,15 @@ class Helpers(commands.Cog):
             tex += "\\[" + sp[2 * i + 1] + "\\]"
 
         buf = BytesIO()
+        LATEX_PREAMBLE = ("\\documentclass[varwidth,12pt]{standalone}"
+                   "\\usepackage{alphabeta}"
+                   "\\usepackage[utf8]{inputenc}"
+                   "\\usepackage[LGR,T1]{fontenc}"
+                   "\\usepackage{amsmath,amsfonts,lmodern}"
+                   "\\begin{document}")
         preview(
             tex,
-            preamble=
-            "\\documentclass[varwidth,12pt]{standalone}\\usepackage{alphabeta}\\usepackage[utf8]{inputenc}\\usepackage[LGR,T1]{fontenc}\\usepackage{amsmath,amsfonts,lmodern}\\begin{document}",
+            preamble=LATEX_PREAMBLE,
             viewer="BytesIO",
             outputbuffer=buf,
             euler=False,
