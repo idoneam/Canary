@@ -83,58 +83,85 @@ class Helpers(commands.Cog):
     async def weather(self, ctx):
         """Retrieves current weather conditions.
         Data taken from http://weather.gc.ca/city/pages/qc-147_metric_e.html"""
+        def retrieve_string(label):
+            return soup.find(
+                "dt", string=label).find_next_sibling().get_text().strip()
+
         await ctx.trigger_typing()
 
         r = await fetch(self.bot.config.gc_weather_url, "content")
 
         soup = BeautifulSoup(r, "html.parser")
         # Get date
-        observed_label = soup.find("dt", string="Date: ")
+        observed_string = retrieve_string("Date: ")
         # Get temperature
-        temperature_label = soup.find("dt", string="Temperature:")
+        temperature_string = retrieve_string("Temperature:")
         # Get condition
-        condition_label = soup.find("dt", string="Condition:")
+        condition_string = retrieve_string("Condition:")
         # Get pressure
-        pressure_label = soup.find("dt", string="Pressure:")
+        pressure_string = retrieve_string("Pressure:")
         # Get tendency
-        tendency_label = soup.find("dt", string="Tendency:")
+        tendency_string = retrieve_string("Tendency:")
         # Get wind
-        wind_label = soup.find("dt", string="Wind:")
-        # Get windchill, only if it can be found.
+        wind_string = retrieve_string("Wind:")
+        # Get relative humidity
+        humidity_string = retrieve_string("Humidity:")
+        # Get "Feels like" temperature using formula from MetService (Meteorological
+        # Service of New Zealand), which uses the standard formula for windchill from
+        # Environment Canada for temperatures of 10°C and less (or the normal
+        # temperature if the wind speed is less than 5 km/h), the Australian apparent
+        # temperature for temperatures of 14°C and more (or the normal temperature if
+        # it is higher), and a linear roll-off of the wind chill between 10°C and 14°C
+        # (https://blog.metservice.com/FeelsLikeTemp)
+        temperature = float(
+            re.search(r"-?\d+\.\d", temperature_string).group())
+        wind_speed_kph = float(re.search(r"\d+", wind_string).group())
+        wind_speed_mps = wind_speed_kph * 1000 / 3600
+        humidity = float(re.search(r"\d+", humidity_string).group())
+        wind_chill = (13.12 + 0.6215 * temperature -
+                      11.37 * wind_speed_kph**0.16 +
+                      0.3965 * temperature * wind_speed_kph**0.16)
+        vapour_pressure = humidity / 100 * 6.105 * math.exp(
+            (17.27 * temperature) / (237.7 + temperature))
+        apparent_temperature = (temperature + 0.33 * vapour_pressure -
+                                0.7 * wind_speed_mps - 4.00)
+        feels_like = temperature
+        if temperature <= 10:
+            if wind_speed_kph >= 5:
+                feels_like = wind_chill
+        elif temperature >= 14:
+            if apparent_temperature > temperature:
+                feels_like = apparent_temperature
+        else:
+            if wind_speed_kph >= 5:
+                feels_like = temperature - ((temperature - wind_chill) *
+                                            (14 - temperature)) / 4
 
-        try:
-            windchill_label = soup.find("a", string="Wind Chill")
-            windchill = windchill_label.find_next().get_text().strip(
-            ) + u"\xb0C"
-        except Exception:
-            windchill = u"N/A"
+        feels_like = round(feels_like, 1)
+        feels_like_string = "{}°C".format(feels_like)
 
-        weather_now = discord.Embed(
-            title='Current Weather',
-            description='Conditions observed at %s' %
-            observed_label.find_next_sibling().get_text().rstrip(),
-            colour=0x7EC0EE)
-        weather_now.add_field(
-            name="Temperature",
-            value=temperature_label.find_next_sibling().get_text().strip(),
-            inline=True)
-        weather_now.add_field(
-            name="Condition",
-            value=condition_label.find_next_sibling().get_text().strip(),
-            inline=True)
-        weather_now.add_field(
-            name="Pressure",
-            value=pressure_label.find_next_sibling().get_text().strip(),
-            inline=True)
-        weather_now.add_field(
-            name="Tendency",
-            value=tendency_label.find_next_sibling().get_text().strip(),
-            inline=True)
-        weather_now.add_field(
-            name="Wind Speed",
-            value=wind_label.find_next_sibling().get_text().strip(),
-            inline=True)
-        weather_now.add_field(name="Wind Chill", value=windchill, inline=True)
+        weather_now = discord.Embed(title='Current Weather',
+                                    description='Conditions observed at %s' %
+                                    observed_string,
+                                    colour=0x7EC0EE)
+        weather_now.add_field(name="Temperature",
+                              value=temperature_string,
+                              inline=True)
+        weather_now.add_field(name="Condition",
+                              value=condition_string,
+                              inline=True)
+        weather_now.add_field(name="Pressure",
+                              value=pressure_string,
+                              inline=True)
+        weather_now.add_field(name="Tendency",
+                              value=tendency_string,
+                              inline=True)
+        weather_now.add_field(name="Wind Speed",
+                              value=wind_string,
+                              inline=True)
+        weather_now.add_field(name="Feels like",
+                              value=feels_like_string,
+                              inline=True)
 
         # Weather alerts
 
