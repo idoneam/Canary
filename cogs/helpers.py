@@ -154,17 +154,21 @@ class Helpers(commands.Cog):
         wind_string = retrieve_string("Wind:")
         # Get relative humidity
         humidity_string = retrieve_string("Humidity:")
-        # Get "Feels like" temperature using formula from MetService (Meteorological Service of New Zealand), which
-        # uses the standard formula for windchill from Environment Canada for temperatures of 10°C and less (or the
-        # normal temperature if the wind speed is less than 5 km/h), the Australian apparent temperature for
-        # temperatures of 14°C and more (or the normal temperature if it is higher), and a linear roll-off of the wind
-        # chill between 10°C and 14°C (https://blog.metservice.com/FeelsLikeTemp)
+        # Get "Feels like" temperature using formula from MetService (Meteorological
+        # Service of New Zealand), which uses the standard formula for windchill from
+        # Environment Canada for temperatures of 10°C and less (or the normal
+        # temperature if the wind speed is less than 5 km/h), the Australian apparent
+        # temperature for temperatures of 14°C and more (or the normal temperature if
+        # it is higher), and a linear roll-off of the wind chill between 10°C and 14°C
+        # (https://blog.metservice.com/FeelsLikeTemp)
         temperature = float(
             re.search(r"-?\d+\.\d", temperature_string).group())
         wind_speed_kph = float(re.search(r"\d+", wind_string).group())
         wind_speed_mps = wind_speed_kph * 1000 / 3600
         humidity = float(re.search(r"\d+", humidity_string).group())
-        wind_chill = 13.12 + 0.6215 * temperature - 11.37 * wind_speed_kph**0.16 + 0.3965 * temperature * wind_speed_kph**0.16
+        wind_chill = (13.12 + 0.6215 * temperature -
+                      11.37 * wind_speed_kph**0.16 +
+                      0.3965 * temperature * wind_speed_kph**0.16)
         vapour_pressure = humidity / 100 * 6.105 * math.exp(
             (17.27 * temperature) / (237.7 + temperature))
         apparent_temperature = temperature + 0.33 * vapour_pressure - 0.7 * wind_speed_mps - 4.00
