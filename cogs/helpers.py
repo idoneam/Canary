@@ -21,7 +21,6 @@
 import discord
 from discord.ext import commands
 from discord import utils
-import asyncio
 
 # URL access and parsing
 from bs4 import BeautifulSoup
@@ -38,8 +37,6 @@ import re
 import math
 import time
 import datetime
-import pickle
-import feedparser
 import random
 from .utils.paginator import Pages
 from .utils.requests import fetch
@@ -63,51 +60,6 @@ except Exception:
 class Helpers(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-
-    async def cfia_rss(self):
-        # Written by @jidicula
-        """
-        Co-routine that periodically checks the CFIA Health Hazard Alerts RSS
-         feed for updates.
-        """
-        await self.bot.wait_until_ready()
-        while not self.bot.is_closed():
-            recall_channel = utils.get(self.bot.get_guild(
-                self.bot.config.server_id).text_channels,
-                                       name=self.bot.config.recall_channel)
-            newest_recalls = feedparser.parse(CFIA_FEED_URL)['entries']
-            try:
-                id_unpickle = open("pickles/recall_tag.obj", 'rb')
-                recalls = pickle.load(id_unpickle)
-                id_unpickle.close()
-            except Exception:
-                recalls = {}
-            new_recalls = False
-            for recall in newest_recalls:
-                recall_id = recall['id']
-                if recall_id not in recalls:
-                    new_recalls = True
-                    recalls[recall_id] = ""
-                    recall_warning = discord.Embed(title=recall['title'],
-                                                   description=recall['link'])
-                    soup = BeautifulSoup(recall['summary'], "html.parser")
-                    try:
-                        img_url = soup.img['src']
-                        summary = soup.p.find_parent().text.strip()
-                    except Exception:
-                        img_url = ""
-                        summary = recall['summary']
-                    if re.search(self.bot.config.recall_filter, summary,
-                                 re.IGNORECASE):
-                        recall_warning.set_image(url=img_url)
-                        recall_warning.add_field(name="Summary", value=summary)
-                        await recall_channel.send(embed=recall_warning)
-            if new_recalls:
-                # Pickle newly added IDs
-                id_pickle = open("pickles/recall_tag.obj", 'wb')
-                pickle.dump(recalls, id_pickle)
-                id_pickle.close()
-            await asyncio.sleep(12 * 3600)    # run every 12 hours
 
     @commands.command(aliases=['exams'])
     async def exam(self, ctx):
@@ -446,8 +398,15 @@ class Helpers(commands.Cog):
             tex += "\\[" + sp[2 * i + 1] + "\\]"
 
         buf = BytesIO()
+        LATEX_PREAMBLE = ("\\documentclass[varwidth,12pt]{standalone}"
+                          "\\usepackage{alphabeta}"
+                          "\\usepackage[utf8]{inputenc}"
+                          "\\usepackage[LGR,T1]{fontenc}"
+                          "\\usepackage{amsmath,amsfonts,lmodern}"
+                          "\\begin{document}")
         preview(
             tex,
+            preamble=LATEX_PREAMBLE,
             viewer="BytesIO",
             outputbuffer=buf,
             euler=False,
@@ -582,7 +541,31 @@ class Helpers(commands.Cog):
         embed = discord.Embed(colour=0xDA291C, description=msg)
         await ctx.send(embed=embed)
 
+    @commands.command(aliases=["color"])
+    async def colour(self, ctx, *, arg: str):
+        """Shows a small image filled with the given hex colour.
+        Usage: `?colour hex`
+        """
+        allowed = re.compile("^#?(?:0x)?([0-9a-fA-F]{6})$")
+        match = allowed.match(arg)
+        if not match:
+            await ctx.send("Please use a valid 6-digit hex number.")
+            return
+        await ctx.trigger_typing()
+        c = int(match.group(1), 16)
+        r = (c & 0xFF0000) >> 16
+        g = (c & 0xFF00) >> 8
+        b = c & 0xFF
+        SIZE = 64
+        img = np.zeros((SIZE, SIZE, 3), np.uint8)
+        img[:, :] = (b, g, r)
+        ext = "jpg"
+        retval, buffer = cv2.imencode('.{}'.format(ext), img,
+                                      [cv2.IMWRITE_JPEG_QUALITY, 0])
+        buffer = BytesIO(buffer)
+        fn = "{}.{}".format(match.group(1), ext)
+        await ctx.send(file=discord.File(fp=buffer, filename=fn))
+
 
 def setup(bot):
     bot.add_cog(Helpers(bot))
-    bot.loop.create_task(Helpers(bot).cfia_rss())
