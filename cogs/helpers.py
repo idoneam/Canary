@@ -171,7 +171,8 @@ class Helpers(commands.Cog):
                       0.3965 * temperature * wind_speed_kph**0.16)
         vapour_pressure = humidity / 100 * 6.105 * math.exp(
             (17.27 * temperature) / (237.7 + temperature))
-        apparent_temperature = temperature + 0.33 * vapour_pressure - 0.7 * wind_speed_mps - 4.00
+        apparent_temperature = (temperature + 0.33 * vapour_pressure -
+                                0.7 * wind_speed_mps - 4.00)
         feels_like = temperature
         if temperature <= 10:
             if wind_speed_kph >= 5:
