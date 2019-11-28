@@ -45,7 +45,7 @@ metro_status = {
     "5": ["Normal métro service", 33738]
 }    # Blue Line
 
-os.mkdir('./pickles', exist_ok=True)
+os.makedirs('./pickles', exist_ok=True)
 
 
 class Subscribers(commands.Cog):
