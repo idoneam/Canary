@@ -36,14 +36,27 @@ import requests
 CFIA_FEED_URL = "http://inspection.gc.ca/eng/1388422350443/1388422374046.xml"
 METRO_STATUS_API = "https://www.stm.info/en/ajax/etats-du-service"
 
+METRO_GREEN_LINE = "1"
+METRO_ORANGE_LINE = "2"
+METRO_YELLOW_LINE = "4"
+METRO_BLUE_LINE = "5"
+
+METRO_COLOURS = {
+    METRO_GREEN_LINE: 0x008E4F,
+    METRO_ORANGE_LINE: 0xF08123,
+    METRO_YELLOW_LINE: 0xFFE400,
+    METRO_BLUE_LINE: 0x0083CA,
+}
+
+METRO_NORMAL_SERVICE_MESSAGE = "Normal métro service"
+
 # Default values by line number for status
-# Integers in list are line colours
 metro_status = {
-    "1": ["Normal métro service", 36431],    # Green Line
-    "2": ["Normal métro service", 15761699],    # Orange Line
-    "4": ["Normal métro service", 16770048],    # Yellow Line
-    "5": ["Normal métro service", 33738]
-}    # Blue Line
+    METRO_GREEN_LINE: METRO_NORMAL_SERVICE_MESSAGE,
+    METRO_ORANGE_LINE: METRO_NORMAL_SERVICE_MESSAGE,
+    METRO_YELLOW_LINE: METRO_NORMAL_SERVICE_MESSAGE,
+    METRO_BLUE_LINE: METRO_NORMAL_SERVICE_MESSAGE,
+}
 
 os.makedirs('./pickles', exist_ok=True)
 
@@ -122,11 +135,11 @@ class Subscribers(commands.Cog):
             response = requests.request("GET", METRO_STATUS_API)
             for line_status in metro_status.items():
                 line_number = line_status[0]
-                cached_status = line_status[1][0]
-                line_colour = line_status[1][1]
+                cached_status = line_status[1]
+                line_colour = METRO_COLOURS[line_number]
                 current_status = check_status(line_number, response)
                 if current_status[1] != cached_status:
-                    metro_status[line_number] = current_status
+                    metro_status[line_number] = current_status[1]
                     metro_status_update = discord.Embed(
                         title=current_status[0],
                         description=current_status[1],
