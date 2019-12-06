@@ -132,18 +132,17 @@ class Subscribers(commands.Cog):
             metro_status_channel = utils.get(
                 self.bot.get_guild(self.bot.config.server_id).text_channels,
                 name=self.bot.config.metro_status_channel)
-            response = requests.request("GET", METRO_STATUS_API)
+            response = requests.get(METRO_STATUS_API)
             for line_status in metro_status.items():
                 line_number = line_status[0]
                 cached_status = line_status[1]
-                line_colour = METRO_COLOURS[line_number]
-                current_status = check_status(line_number, response)
-                if current_status[1] != cached_status:
-                    metro_status[line_number] = current_status[1]
+                line_name, current_status = check_status(line_number, response)
+                if current_status != cached_status:
+                    metro_status[line_number] = current_status
                     metro_status_update = discord.Embed(
-                        title=current_status[0],
-                        description=current_status[1],
-                        colour=line_colour)
+                        title=line_name,
+                        description=current_status,
+                        colour=METRO_COLOURS[line_number])
                     await metro_status_channel.send(embed=metro_status_update)
             await asyncio.sleep(60)    # Run every 60 seconds
 
