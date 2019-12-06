@@ -155,7 +155,7 @@ class Memes(commands.Cog):
         """Draws a pyramid of boots, default is 3 unless user specifies
         an integer number of levels of boots."""
 
-        num = max(min(num, 28), 1)    # Above 28, the message cap is hit
+        num = max(min(num, 8), 1)    # Above 8, herre gets angry
 
         def booty(n, m):
             return "{spaces}{boots}".format(spaces=" " * ((m - n) * 3),
