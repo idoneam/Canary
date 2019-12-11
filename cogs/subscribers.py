@@ -48,6 +48,8 @@ METRO_COLOURS = {
     METRO_BLUE_LINE: 0x0083CA,
 }
 
+METRO_INTERIM_STATUS = "No information"
+
 METRO_NORMAL_SERVICE_MESSAGE = "Normal métro service"
 
 # Default values by line number for status
@@ -137,7 +139,8 @@ class Subscribers(commands.Cog):
                 line_number = line_status[0]
                 cached_status = line_status[1]
                 line_name, current_status = check_status(line_number, response)
-                if current_status != cached_status:
+                if (current_status != cached_status
+                        and current_status != METRO_INTERIM_STATUS):
                     metro_status[line_number] = current_status
                     metro_status_update = discord.Embed(
                         title=line_name,
