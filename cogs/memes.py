@@ -31,6 +31,11 @@ class Memes(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
+    def _log_usage(self, ctx):
+        self.bot.logger.info("{}{} invoked: Author: {}, Message: {}".format(
+            self.bot.config.command_prefix[0], ctx.command.name,
+            ctx.message.author, ctx.message.content))
+
     @staticmethod
     async def _delete_and_send(ctx, v):
         await ctx.send(v)
@@ -42,10 +47,9 @@ class Memes(commands.Cog):
         Purposefully auto-incorrects inputted sentences
         """
         if input_str is None:
-            await ctx.send()
+            return
         msg = auto_incorrect(input_str)
-        self.bot.logger.info('?bac invoked: Author: {}, Message: {}'.format(
-            ctx.message.author, ctx.message.content))
+        self._log_usage(ctx)
         await self._delete_and_send(ctx, msg)
 
     @commands.command()
@@ -134,11 +138,10 @@ class Memes(commands.Cog):
         """Alternates upper/lower case for input string. Input message
         disappears after."""
         if input_str is None:
-            await ctx.send()
-        self.bot.logger.info('?mix invoked: Author: {}, Message: {}'.format(
-            ctx.message.author, ctx.message.content))
+            return
         msg = "".join((c.upper() if random.randint(0, 1) else c.lower())
                       for c in input_str)
+        self._log_usage(ctx)
         await self._delete_and_send(ctx, msg)
 
     @commands.command()
