@@ -19,6 +19,7 @@
 
 # discord-py requirements
 import discord
+import subprocess
 from discord.ext import commands
 import asyncio
 
@@ -70,6 +71,15 @@ class Info(commands.Cog):
                           display_option=(3, 20),
                           editable_content=False)
             await pages.paginate()
+
+    @commands.command()
+    async def version(self, ctx):
+        version = subprocess.check_output(("git", "describe", "--tags"),
+                                          universal_newlines=True).strip()
+        commit = subprocess.check_output(
+            ("git", "rev-parse", "--short", "HEAD"),
+            universal_newlines=True).strip()
+        await ctx.send("Version: `{}` (commit: `{}`)".format(version, commit))
 
 
 def setup(bot):
