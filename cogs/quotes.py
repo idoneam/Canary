@@ -273,14 +273,6 @@ class Quotes(commands.Cog):
 
         await p.paginate()
 
-        def msg_check(msg):
-            try:
-                return (0 <= int(msg.content) <= len(quote_list)
-                        and msg.author.id == author_id
-                        and msg.channel == ctx.message.channel)
-            except ValueError:
-                return False
-
         while p.delete:
             await ctx.send(
                 'Delete option selected. Enter a number to specify which '
@@ -289,7 +281,8 @@ class Quotes(commands.Cog):
 
             try:
                 message = await self.bot.wait_for('message',
-                                                  check=msg_check,
+                                                  check=check_delete_message(
+                                                      len(quote_list)),
                                                   timeout=60)
 
             except asyncio.TimeoutError:

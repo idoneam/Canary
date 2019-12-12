@@ -24,6 +24,20 @@ import asyncio
 import math
 
 
+def check_delete_message(list_length: int):
+    def _check(msg: str):
+        try:
+            return all((
+                0 <= int(msg.content) <= list_length,
+                msg.author.id == author_id,
+                msg.channel == ctx.message.channel
+            ))
+        except ValueError:
+            return False
+
+    return _check
+
+
 class Pages:
     def __init__(self,
                  ctx,

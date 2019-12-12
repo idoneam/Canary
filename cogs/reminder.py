@@ -28,7 +28,7 @@ import datetime
 
 # Other utilities
 import random
-from .utils.paginator import Pages
+from .utils.paginator import check_delete_message, Pages
 
 # For remindme functionality
 import re
@@ -441,15 +441,6 @@ class Reminder(commands.Cog):
 
         await p.paginate()
 
-        def msg_check(msg):
-            try:
-                return (0 <= int(msg.content) <= len(rem_list)
-                        and msg.author.id == author_id
-                        and msg.channel == ctx.message.channel)
-
-            except ValueError:
-                return False
-
         while p.delete:
             await ctx.send(
                 'Delete option selected. Enter a number to specify which '
@@ -458,7 +449,8 @@ class Reminder(commands.Cog):
 
             try:
                 message = await self.bot.wait_for('message',
-                                                  check=msg_check,
+                                                  check=check_delete_message(
+                                                      len(rem_list)),
                                                   timeout=60)
 
             except asyncio.TimeoutError:
