@@ -79,37 +79,43 @@ class Subscribers(commands.Cog):
                 self.bot.config.server_id).text_channels,
                                        name=self.bot.config.recall_channel)
             newest_recalls = feedparser.parse(CFIA_FEED_URL)['entries']
+
             try:
-                id_unpickle = open("pickles/recall_tag.obj", 'rb')
-                recalls = pickle.load(id_unpickle)
-                id_unpickle.close()
+                with open("pickles/recall_tag.obj", "rb") as id_unpickle:
+                    recalls = pickle.load(id_unpickle)
             except Exception:
                 recalls = {}
+
             new_recalls = False
             for recall in newest_recalls:
-                recall_id = recall['id']
-                if recall_id not in recalls:
-                    new_recalls = True
-                    recalls[recall_id] = ""
-                    recall_warning = discord.Embed(title=recall['title'],
-                                                   description=recall['link'])
-                    soup = BeautifulSoup(recall['summary'], "html.parser")
-                    try:
-                        img_url = soup.img['src']
-                        summary = soup.p.find_parent().text.strip()
-                    except Exception:
-                        img_url = ""
-                        summary = recall['summary']
-                    if re.search(self.bot.config.recall_filter, summary,
-                                 re.IGNORECASE):
-                        recall_warning.set_image(url=img_url)
-                        recall_warning.add_field(name="Summary", value=summary)
-                        await recall_channel.send(embed=recall_warning)
+                recall_id = recall["id"]
+                if recall_id in recalls:
+                    continue
+
+                new_recalls = True
+                recalls[recall_id] = ""
+                recall_warning = discord.Embed(title=recall['title'],
+                                               description=recall['link'])
+
+                soup = BeautifulSoup(recall['summary'], "html.parser")
+                try:
+                    img_url = soup.img['src']
+                    summary = soup.p.find_parent().text.strip()
+                except Exception:
+                    img_url = ""
+                    summary = recall['summary']
+
+                if re.search(self.bot.config.recall_filter, summary,
+                             re.IGNORECASE):
+                    recall_warning.set_image(url=img_url)
+                    recall_warning.add_field(name="Summary", value=summary)
+                    await recall_channel.send(embed=recall_warning)
+
             if new_recalls:
                 # Pickle newly added IDs
-                id_pickle = open("pickles/recall_tag.obj", 'wb')
-                pickle.dump(recalls, id_pickle)
-                id_pickle.close()
+                with open("pickles/recall_tag.obj", "wb") as id_pickle:
+                    pickle.dump(recalls, id_pickle)
+
             await asyncio.sleep(12 * 3600)    # run every 12 hours
 
     async def metro_status(self):
