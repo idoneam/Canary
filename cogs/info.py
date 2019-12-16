@@ -76,10 +76,11 @@ class Info(commands.Cog):
     async def version(self, ctx):
         version = subprocess.check_output(("git", "describe", "--tags"),
                                           universal_newlines=True).strip()
-        commit = subprocess.check_output(
-            ("git", "rev-parse", "--short", "HEAD"),
-            universal_newlines=True).strip()
-        await ctx.send("Version: `{}` (commit: `{}`)".format(version, commit))
+        commit, authored = subprocess.check_output(
+            ("git", "log", "-1", "--pretty=format:%h %aI"),
+            universal_newlines=True).strip().split(" ")
+        await ctx.send("Version: `{}`\nCommit: `{}` authored `{}`".format(
+            version, commit, authored))
 
 
 def setup(bot):
