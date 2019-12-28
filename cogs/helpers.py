@@ -51,6 +51,8 @@ WTTR_IN_MOON_URL = "http://wttr.in/moon.png"
 
 URBAN_DICT_TEMPLATE = "http://api.urbandictionary.com/v0/define?term={}"
 
+LMGTFY_TEMPLATE = "https://lmgtfy.com/?q={}"
+
 try:
     os.mkdir('./pickles')
 except Exception:
@@ -375,6 +377,13 @@ class Helpers(commands.Cog):
             editable_content=False)
 
         await p.paginate()
+
+    @commands.command()
+    async def lmgtfy(self, ctx, *, query):
+        """Generates a Let Me Google that For You link."""
+        url = LMGTFY_TEMPLATE.format(
+            query.replace("+", "%2B").replace(" ", "+"))
+        await ctx.send(url)
 
     @commands.command()
     async def tex(self, ctx, *, query: str):
