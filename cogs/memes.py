@@ -150,22 +150,22 @@ class Memes(commands.Cog):
         await ctx.send(msg)
         await ctx.message.delete()
 
-    @commands.command()
-    async def boot(self, ctx, num: int = 2, emoji: str = "👢"):
-        """Draws a pyramid of boots (or any other emoji), default is 2 unless user specifies
-        an integer number of levels of boots."""
-        def booty(n, m):
-            return "{spaces}{boots}".format(spaces=" " * ((m - n) * 3),
-                                            boots=(emoji + " ") * n)
+    @commands.command(aliases=['boot'])
+    async def pyramid(self, ctx, num: int = 2, emoji: str = "👢"):
+        """Draws a pyramid of boots, default is 2 unless user specifies an integer number of levels of boots between -8 and 8. Also accepts any other emoji, word or multiword (in quotes) string."""
+        def pyramidy(n, m):
+            return "{spaces}{emojis}".format(spaces=" " * ((m - n) * 3),
+                                             emojis=(emoji + " ") * n)
 
         if (num > 0):
             num = max(min(num, 8), 1)    # Above 8, herre gets angry
-            msg = "\n".join(booty(ln, num) for ln in range(1, num + 1))
+            msg = "\n".join(pyramidy(ln, num) for ln in range(1, num + 1))
         else:
             num = min(max(num, -8), -1)    # Below -8, herre gets angry
             msg = "\n".join(
-                booty(ln, abs(num)) for ln in reversed(range(1,
-                                                             abs(num) + 1)))
+                pyramidy(ln, abs(num))
+                for ln in reversed(range(1,
+                                         abs(num) + 1)))
 
         await ctx.send("**\n{}**".format(msg))
 
