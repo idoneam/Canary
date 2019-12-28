@@ -381,7 +381,8 @@ class Helpers(commands.Cog):
     @commands.command()
     async def lmgtfy(self, ctx, *, query):
         """Generates a Let Me Google that For You link."""
-        url = LMGTFY_TEMPLATE.format(query.replace("+", "%2B").replace(" ", "+"))
+        url = LMGTFY_TEMPLATE.format(
+            query.replace("+", "%2B").replace(" ", "+"))
         await ctx.send(url)
 
     @commands.command()
