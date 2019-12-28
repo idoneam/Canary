@@ -154,7 +154,6 @@ class Memes(commands.Cog):
     async def boot(self, ctx, num: int = 2, emoji: str = "👢"):
         """Draws a pyramid of boots (or any other emoji), default is 2 unless user specifies
         an integer number of levels of boots."""
-        
         def booty(n, m):
             return "{spaces}{boots}".format(spaces=" " * ((m - n) * 3),
                                             boots=(emoji + " ") * n)
