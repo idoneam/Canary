@@ -8,21 +8,20 @@ python:
 
 env:
  global:
-  - PIPENV_IGNORE_VIRTUALENVS=1
-  - PIPENV_VERBOSITY=-1
+  - POETRY_VIRTUALENVS_IN_PROJECT=true
 
 before_install:
  - sed -i "s/KEY/$DISCORD_TOKEN/g" config/config.ini
 
 install:
- - pip install pipenv
- - pipenv install --dev
+ - pip install poetry
+ - poetry install
 
 jobs:
   include:
    - stage: Build
      script: bash ./test.sh
-     script: pipenv run yapf --diff --recursive .
+     script: poetry run yapf --diff --recursive .
 
 notifications:
  email: false
