@@ -4,8 +4,8 @@ url = "https://pypi.org/simple"
 name = "pypi"
 
 [packages]
-beautifulsoup4 = "==4.8.0"
-sympy = "==1.4.0"
+beautifulsoup4 = "==4.8.2"
+sympy = "==1.5.1"
 requests = ">=2.20.0"
 tabulate = "==0.8.6"
 discord.py = "==1.2.5"
