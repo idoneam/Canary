@@ -1,6 +1,6 @@
 #!/bin/bash
 
-pipenv run python Main.py &
+poetry run python Main.py &
 
 sleep 10
 
