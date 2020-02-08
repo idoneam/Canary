@@ -18,14 +18,11 @@
 # You should have received a copy of the GNU General Public License
 # along with Canary. If not, see <https://www.gnu.org/licenses/>.
 
-import asyncio
-import discord
 from discord.ext import commands
 
 from config import parser
 import logging
 import sqlite3
-import sys
 import traceback
 
 __all__ = ['bot', 'developer_role', 'moderator_role']
@@ -86,7 +83,7 @@ class Canary(commands.Bot):
                 return await ctx.author.send(
                     '{} can not be used in Private Messages.'.format(
                         ctx.command))
-            except:
+            except Exception:
                 pass
 
         elif isinstance(error, commands.BadArgument):
