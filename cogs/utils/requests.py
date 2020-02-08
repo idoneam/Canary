@@ -18,7 +18,6 @@
 # along with Canary. If not, see <https://www.gnu.org/licenses/>.
 
 import aiohttp
-import asyncio
 import async_timeout
 
 
@@ -35,7 +34,8 @@ async def fetch(url, type="content"):
 
     Args:
         url (str): URL endpoint to fetch from.
-        type (str): Specify type of content to be fetched. Default = "content". Possible = ["content", "json"]
+        type (str): Specify type of content to be fetched.
+                    Default = "content".Possible = ["content", "json"]
     """
     async with aiohttp.ClientSession() as session:
         with async_timeout.timeout(10):

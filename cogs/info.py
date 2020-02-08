@@ -51,7 +51,8 @@ class Info(commands.Cog):
                 members = role.members
                 break
 
-        if (members is None): return
+        if (members is None):
+            return
 
         names = list(map(lambda m: str(m) + "\n", members))
         header = "List of users in {role} role - {num}".format(role=role.name,
