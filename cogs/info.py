@@ -21,10 +21,8 @@
 import discord
 import subprocess
 from discord.ext import commands
-import asyncio
 
 from .utils.paginator import Pages
-import math
 
 
 class Info(commands.Cog):

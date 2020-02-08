@@ -18,9 +18,7 @@
 # along with Canary. If not, see <https://www.gnu.org/licenses/>.
 
 # discord-py requirements
-import discord
 from discord.ext import commands
-import asyncio
 
 # Other utilities
 import random

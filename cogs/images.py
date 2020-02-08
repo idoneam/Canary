@@ -20,18 +20,14 @@
 # imports for Discord
 import discord
 from discord.ext import commands
-import asyncio
 
 # misc imports
 import os
-import sys
-import random
 import numpy as np
 import cv2
 import math
 from functools import wraps
 from io import BytesIO
-import traceback
 
 
 def filter_image(func):
