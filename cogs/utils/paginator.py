@@ -18,8 +18,6 @@
 # along with Canary. If not, see <https://www.gnu.org/licenses/>.
 
 import discord
-from discord.ext import commands
-import asyncio
 
 import math
 

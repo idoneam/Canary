@@ -1,4 +1,4 @@
-import sys, random
+import random
 
 
 # Credit to lazho for this function
