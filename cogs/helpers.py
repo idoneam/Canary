@@ -108,12 +108,13 @@ class Helpers(commands.Cog):
         wind_string = retrieve_string("Wind:")
         # Get relative humidity
         humidity_string = retrieve_string("Humidity:")
-        # Get "Feels like" temperature using formula from MetService (Meteorological
-        # Service of New Zealand), which uses the standard formula for windchill from
-        # Environment Canada for temperatures of 10°C and less (or the normal
-        # temperature if the wind speed is less than 5 km/h), the Australian apparent
-        # temperature for temperatures of 14°C and more (or the normal temperature if
-        # it is higher), and a linear roll-off of the wind chill between 10°C and 14°C
+        # Get "Feels like" temperature using formula from MetService
+        # (Meteorological Service of New Zealand), which uses the standard
+        # formula for windchill from Environment Canada for temperatures of 10°C
+        # and less (or the normal temperature if the wind speed is less than 5
+        # km/h), the Australian apparent temperature for temperatures of 14°C
+        # and more (or the normal temperature if it is higher), and a linear
+        # roll-off of the wind chill between 10°C and 14°C
         # (https://blog.metservice.com/FeelsLikeTemp)
         temperature = float(
             re.search(r"-?\d+\.\d", temperature_string).group())
@@ -513,7 +514,8 @@ class Helpers(commands.Cog):
     async def food_spot(self, ctx, *args):
         """Posts a food sale in #foodspotting.
         Use: `?foodspot Samosas in leacock`
-        You can also attach one picture to your message (Write the command in the uploaded image caption)"""
+        You can also attach one picture to your message (Write the command in
+        the uploaded image caption)"""
         if utils.get(ctx.author.roles,
                      name=self.bot.config.no_food_spotting_role):
             return
@@ -542,7 +544,7 @@ class Helpers(commands.Cog):
     @commands.command()
     async def choose(self, ctx, *, inputOpts: str):
         """Randomly chooses one of the given options delimited by semicola.
-        Usage: ?choose opt1;opt2 
+        Usage: ?choose opt1;opt2
         """
         opts = inputOpts.split(';')
         sel = random.randint(0, (len(opts) - 1))
