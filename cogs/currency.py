@@ -20,7 +20,6 @@
 # discord.py requirements
 import discord
 from discord.ext import commands
-import asyncio
 
 # For type hinting
 from typing import Dict, List, Optional, Tuple
@@ -34,7 +33,7 @@ from tabulate import tabulate
 from .utils.paginator import Pages
 
 # For general currency shenanigans
-from decimal import *
+from decimal import Decimal, InvalidOperation
 
 # For betting
 import random
