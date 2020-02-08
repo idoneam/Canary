@@ -24,7 +24,6 @@ import asyncio
 
 # For DB functionality
 import sqlite3
-import datetime
 
 # For Markov Chain
 import numpy as np
@@ -50,7 +49,8 @@ class Quotes(commands.Cog):
 
     def rebuild_mc(self):
         """
-        Rebuilds the Markov Chain lookup table for use with the ?generate command.
+        Rebuilds the Markov Chain lookup table for use with the ?generate
+        command.
         Blame David for this code.
         """
         conn = sqlite3.connect(self.bot.config.db_path)
@@ -435,10 +435,11 @@ class Quotes(commands.Cog):
                     old_word = current_word
                     current_word = np.random.choice(c_words, p=p_dist)
 
-                    # Don't allow termination until the minimum length is met or we
-                    # don't have any other option.
-                    while current_word == 'TERM' and len(sentence) < min_length \
-                            and len(self.mc_table[old_word].keys()) > 1:
+                    # Don't allow termination until the minimum length is met
+                    # or we don't have any other option.
+                    while (current_word == 'TERM'
+                           and len(sentence) < min_length
+                           and len(self.mc_table[old_word].keys()) > 1):
                         current_word = np.random.choice(c_words, p=p_dist)
 
                     # Don't allow repeat words too much
@@ -447,8 +448,8 @@ class Quotes(commands.Cog):
                              == sentence[-2] == sentence[-3]):
                         current_word = np.random.choice(c_words, p=p_dist)
 
-                    # Cap sentence at 1000 words, just in case, and terminate if
-                    # termination symbol is seen.
+                    # Cap sentence at 1000 words, just in case, and terminate
+                    # if termination symbol is seen.
                     if current_word == 'TERM' or len(sentence) >= 1000:
                         break
                     sentence.append(current_word)

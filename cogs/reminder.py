@@ -131,7 +131,8 @@ class Reminder(commands.Cog):
 
     async def check_reminders(self):
         """
-        Co-routine that periodically checks if the bot must issue reminders to users.
+        Co-routine that periodically checks if the bot must issue reminders to
+        users.
         :return: None
         """
 
@@ -158,7 +159,8 @@ class Reminder(commands.Cog):
                             reminders[i][2]))
                         # Remove from from DB non-repeating reminder
                         c.execute(
-                            'DELETE FROM Reminders WHERE Reminder=? AND ID=? AND DATE=?',
+                            ('DELETE FROM Reminders WHERE Reminder=? AND ID=?'
+                             + ' AND DATE=?'),
                             (reminders[i][2], reminders[i][0],
                              reminder_activation_date))
                         conn.commit()
@@ -175,7 +177,8 @@ class Reminder(commands.Cog):
                             reminders[i][2], i + 1))
 
                         c.execute(
-                            "UPDATE 'Reminders' SET LastReminder = ? WHERE Reminder = ?",
+                            ("UPDATE 'Reminders' SET LastReminder=? WHERE " +
+                             "Reminder=?"),
                             (datetime.datetime.now(), reminders[i][2]))
                         conn.commit()
                         await asyncio.sleep(1)
@@ -186,9 +189,9 @@ class Reminder(commands.Cog):
     @commands.command(aliases=['rm', 'rem'])
     async def remindme(self, ctx, *, quote: str = ""):
         """
-        Parses the reminder and adds a one-time reminder to the reminder database or
-        calls remindme_repeating to deal with repetitive reminders when keyword
-        "daily", "weekly" or "monthly" is found.
+        Parses the reminder and adds a one-time reminder to the reminder
+        database or calls remindme_repeating to deal with repetitive reminders
+        when keyword "daily", "weekly" or "monthly" is found.
         """
 
         if quote == "":
@@ -228,11 +231,14 @@ class Reminder(commands.Cog):
         last_number = "0"
         first_reminder_segment = ""
         """ Checks the following logic:
-            1. If daily, weekly or monthly is specified, go to old reminder function for repetitive reminders
-        for all input segments:
-            2. If one of the keywords commonly used for listing times is there, continue
-            3. If a number is found, save the number, mark that a number has been found for next iteration
-            4. Elif: A "unit" (years, days ... etc.) has been found, append the last number + its unit
+            1. If daily, weekly or monthly is specified, go to old reminder
+               function for repetitive reminders for all input segments:
+            2. If one of the keywords commonly used for listing times is there,
+               continue
+            3. If a number is found, save the number, mark that a number has
+               been found for next iteration
+            4. Elif: A "unit" (years, days ... etc.) has been found, append the
+               last number + its unit
             5. Lastly: save beginning of "reminder quote" and end loop
         """
 
@@ -316,17 +322,16 @@ class Reminder(commands.Cog):
 
             # Wrong input feedback depending on what is missing.
             await ctx.send(
-                "Please check your private messages for information on correct syntax!"
-            )
+                "Check your private messages for info on correct syntax!")
             await ctx.author.send("Please double check the following: ")
             if not date_result:
                 await ctx.author.send(
-                    "Make sure you have specified a date in the format: `YYYY-mm-dd`"
-                )
+                    ("Make sure you have specified a date in the format: " +
+                     "`YYYY-mm-dd`"))
             if not time_result:
-                await ctx.author.send(
-                    "Make sure you have specified a time in the 24H format: `HH:MM`"
-                )
+                await ctx.author.send((
+                    "Make sure you have specified a time in the 24H format: " +
+                    "`HH:MM`"))
             await ctx.author.send(
                 "E.g.: `?remindme on 2020-12-05 at 21:44 to feed Marty`")
             return
@@ -365,7 +370,8 @@ class Reminder(commands.Cog):
         if reminder[:3].lower() == 'to ':
             reminder = reminder[3:]
 
-        # DB: Date will hold TDELTA (When reminder is due), LastReminder will hold datetime.datetime.now()
+        # DB: Date will hold TDELTA (When reminder is due), LastReminder will
+        # hold datetime.datetime.now()
         conn = sqlite3.connect(self.bot.config.db_path)
         c = conn.cursor()
         t = (ctx.message.author.id, ctx.message.author.name, reminder, "once",
@@ -386,10 +392,10 @@ class Reminder(commands.Cog):
             reminder_time).split()[1].split(":")[1]
 
         await ctx.author.send(
-            'Hi {}! \nI will remind you to {} on {} at {} unless you send me a message to stop '
-            'reminding you about it! [{:d}]'.format(ctx.author.name, reminder,
-                                                    due_date, due_time,
-                                                    len(reminders) + 1))
+            'Hi {}! \nI will remind you to {} on {} at {} unless you send me '
+            'a message to stop reminding you about it! [{:d}]'.format(
+                ctx.author.name, reminder, due_date, due_time,
+                len(reminders) + 1))
         await ctx.send('Reminder added.')
 
         conn.commit()
@@ -498,7 +504,8 @@ class Reminder(commands.Cog):
                                    *,
                                    quote: str = ""):
         """
-        Called by remindme to add a repeating reminder to the reminder database.
+        Called by remindme to add a repeating reminder to the reminder
+        database.
         """
 
         bad_input = False
@@ -508,8 +515,8 @@ class Reminder(commands.Cog):
 
         if freq not in self.frequencies.keys():
             await ctx.send(
-                "Please ensure you specify a frequency from the following list: `daily`, `weekly`, "
-                "`monthly`, before your message!")
+                "Please ensure you specify a frequency from the following "
+                "list: `daily`, `weekly`, `monthly`, before your message!")
             bad_input = True
 
         if quote == "":
