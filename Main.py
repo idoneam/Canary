@@ -20,11 +20,6 @@
 
 # discord-py requirements
 import discord
-from discord.ext import commands
-import asyncio
-
-# for database
-import sqlite3
 
 # Other utilities
 import os
