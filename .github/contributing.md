@@ -20,6 +20,10 @@ Github provides a user-friendly interface for managing issues for a repository. 
 - **master**: This is the deployment branch, direct push are blocked for both admin and regular members. Ideally, code contained in this branch should be the least error-prone.
 - **Feature/Issue branches**: Anytime you want to work on resolving an issue or implementing a new feature, branch off of the `dev` branch into one of these branches. Name the branch `issue-x` where `x` is the issue number with the issue you are trying to resolve/feature you are trying to implement. You can be more descriptive so other people know what exactly you are working on. Example: `issue-42` or `issue-30/paginator` are both acceptable.
 
+### Testing
+
+All new bot functions must be tested. Tests are located in the `tests/` directory, with a filename prefixed with `test_` for each `.py` file in the bot. Tests can be run locally with `poetry run pytest`. If you need help with creating new tests for your new functions, reach out to @jidicula or @davidlougheed.
+
 ### Pull requests
 
 When you have finished your task and pushed your work to the corresponding branch on remote, you can create a pull request via Github web interface to integrate your code into production. By default, your PR should be requesting to merge into `dev` -- however, it's good practice to check that this is indeed the case before you submit your PR. After creating a pull request, you should ask at least 1 person to review your work and update it accordingly. If your pull request is approved, changes will be applied to the destination branch, and the feature/enhancement will be deployed eventually.
