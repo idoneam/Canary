@@ -29,7 +29,7 @@ $ poetry install --no-dev
 
 4. Use of the LaTeX equation functionality requires a working LaTeX installation (at the very minimum, `latex` and `dvipng` must be present). The easiest way to do this is to install TeX Live (usually possible through your distro's package manager, or through TeX Live's own facilities for the latest version). See the [TeX Live site](https://tug.org/texlive/) for more information.
 
-5. Development dependencies (YAPF) can be installed alongside all other dependencies with:
+5. Development dependencies (YAPF and `pytest`) can be installed alongside all other dependencies with:
 ```bash
 $ poetry install
 ```
@@ -90,6 +90,9 @@ You must set certain values in the `config.ini` file, in particular your Discor
       `90 < random <= 99`, and a 10x return for `random == 100`.
 </p>
 </details>
+
+## Testing functions
+If you installed all dev dependencies, you can run tests with `poetry run pytest`.
 
 ## Running the bot
 Run `poetry run python Main.py` in your shell. Ensure that your Discord token is set in the `config.ini` file within the `config` directory.
