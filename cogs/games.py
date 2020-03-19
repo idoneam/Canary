@@ -32,7 +32,7 @@ class Games(commands.Cog):
         self.bot = bot
     
     @commands.command()
-    async def roll(self, ctx, arg: str = ''):
+    async def roll(self, ctx, arg: str = '', mpr: str =''):
         """
         Performs a DnD-style diceroll
         Supports modifiers, multiple rolls, any-sided dice
@@ -59,15 +59,24 @@ class Games(commands.Cog):
             if roll_cmd.group(3) != '':
                 params['mod'] = min(max(-100,int(roll_cmd.group(3))), 100)
                 
-        roll_list, total, maximum, minimum = dnd_roll(params['sides'],
+        if mpr == 'each':
+            roll_list, total, maximum, minimum = dnd_roll(params['sides'],
+                                                      params['repeat'],
+                                                      params['mod'],
+                                                      mpr=True)
+            mod_desc = ' to each roll'
+        else:
+            roll_list, total, maximum, minimum = dnd_roll(params['sides'],
                                                       params['repeat'],
                                                       params['mod'])
+            mod_desc = ' to the sum of rolls'
         # Now that we have our rolls, prep the embed:
         resultsmsg = discord.Embed(description='Rolling {} {}-sided dice'
                                                ', with a {} modifier'.format(
                                                     params['repeat'],
                                                     params['sides'],
-                                                    params['mod']),
+                                                    params['mod'])
+                                               +mod_desc,
                                    colour=0x822AE0)
         if params['repeat'] <= 10: # Anything more and the roll list is too long
             resultsmsg.add_field(name='Rolls', value=str(roll_list)[1:-1], inline=False)
