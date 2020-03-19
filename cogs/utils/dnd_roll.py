@@ -17,8 +17,8 @@
 # You should have received a copy of the GNU General Public License
 # along with Canary. If not, see <https://www.gnu.org/licenses/>.
 
-
 from random import randint
+
 
 def dnd_roll(sides=20, n=1, modifier=0, mpr=False):
     """
@@ -26,18 +26,18 @@ def dnd_roll(sides=20, n=1, modifier=0, mpr=False):
     Set mpr to True to mod each roll, otherwise, only the sum is modified
     """
     roll_list = []
-    
+
     if mpr == True:
         roll_mod = modifier
         total_mod = 0
     else:
         roll_mod = 0
         total_mod = modifier
-    
+
     for i in range(n):
-        result = randint(1,sides)
+        result = randint(1, sides)
         roll_list.append(result + roll_mod)
-    
+
     total = sum(roll_list) + total_mod
-    
+
     return roll_list, total, max(roll_list), min(roll_list)
