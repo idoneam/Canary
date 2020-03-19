@@ -42,6 +42,9 @@ class Games(commands.Cog):
         params = {'sides' : 20, # Default parameters
                   'repeat': 1,
                   'mod'   : 0}
+        if arg == 'safe': # nice meme bro
+            await ctx.send('https://i.kym-cdn.com/entries/icons/original/000/022/138/highresrollsafe.jpg') 
+            return
         if arg == 'help' or arg == 'h':
             helpmsg = discord.Embed(title='DnD Dice Roller Help',
                                     description='Usage: `[r]d[s][+m]`\n'
