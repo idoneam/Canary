@@ -18,6 +18,7 @@
 # along with Canary. If not, see <https://www.gnu.org/licenses/>.
 
 # discord-py requirements
+import discord
 from discord.ext import commands
 
 # Other utilities
@@ -36,10 +37,13 @@ class Games(commands.Cog):
         Supports modifiers, multiple rolls, any-sided dice
         """
         if arg == 'help' or arg == 'h':
-            await ctx.send('Usage: `[r]d[s][+m]`\n'
-                           'Rolls an [s]-sided die [r] times, '
-                           'with modifier [+-m].\n'
-                           'Rolls one 20-sided die by default')
+            helpmsg = discord.Embed(title='DnD Dice Roller Help',
+                                    description='Usage: `[r]d[s][+m]`\n'
+                                                'Rolls an [s]-sided die [r] '
+                                                'times, with modifier [+-m].\n'
+                                                'Rolls one 20-sided die by default',
+                                    colour=0x822AE0)
+            await ctx.send(embed=helpmsg)
         else:
             await ctx.send(random.randint(1,20))
         
