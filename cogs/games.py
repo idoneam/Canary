@@ -47,11 +47,19 @@ class Games(commands.Cog):
             return
         if arg == 'help' or arg == 'h':
             helpmsg = discord.Embed(title='DnD Dice Roller Help',
-                                    description='Usage: `[r]d[s][+m]`\n'
-                                                'Rolls an [s]-sided die [r] '
-                                                'times, with modifier [+-m].\n'
+                                    description='Usage: `[r]d[s][+m] [\'each\']`\n'
+                                                'Rolls an `s`-sided die `r` '
+                                                'times, with modifier `+-m`.\n'
+                                                'If `each` is specified, the '
+                                                'modifier is applied to each roll.\n'
                                                 'Rolls one 20-sided die by default',
                                     colour=0x822AE0)
+            helpmsg.add_field(name='Examples',
+                              value='`d6` roll one 6-sided die\n'
+                                    '`3d` rolls 3 20-sided dice\n'
+                                    '`5d12-4` rolls 5 12-sided dice, subtracting 4 from the total\n'
+                                    '`5d+3 each` rolls 5 20-sided dice, adding 3 to each roll',
+                              inline=False)
             await ctx.send(embed=helpmsg)
             return
         elif roll_cmd != None: # Applying some bounds on parameters
