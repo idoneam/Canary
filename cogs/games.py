@@ -24,6 +24,7 @@ from discord.ext import commands
 # Other utilities
 import random
 import re
+from .utils.dnd_roll import dnd_roll
 
 
 class Games(commands.Cog):
@@ -36,6 +37,11 @@ class Games(commands.Cog):
         Performs a DnD-style diceroll
         Supports modifiers, multiple rolls, any-sided dice
         """
+        roll_pattern = re.compile(r'^(\d*)d(\d*)([+-]?\d*)$')
+        roll_cmd = roll_pattern.match(arg)
+        params = {'sides' : 20, # Default parameters
+                  'repeat': 1,
+                  'mod'   : 0}
         if arg == 'help' or arg == 'h':
             helpmsg = discord.Embed(title='DnD Dice Roller Help',
                                     description='Usage: `[r]d[s][+m]`\n'
@@ -44,9 +50,31 @@ class Games(commands.Cog):
                                                 'Rolls one 20-sided die by default',
                                     colour=0x822AE0)
             await ctx.send(embed=helpmsg)
-        else:
-            await ctx.send(random.randint(1,20))
-        
+            return
+        elif roll_cmd != None: # Applying some bounds on parameters
+            if roll_cmd.group(1) != '':
+                params['repeat'] = min(max(1,int(roll_cmd.group(1))), 10000)
+            if roll_cmd.group(2) != '':
+                params['sides'] = min(max(1,int(roll_cmd.group(2))), 100)
+            if roll_cmd.group(3) != '':
+                params['mod'] = min(max(-100,int(roll_cmd.group(3))), 100)
+                
+        roll_list, total, maximum, minimum = dnd_roll(params['sides'],
+                                                      params['repeat'],
+                                                      params['mod'])
+        # Now that we have our rolls, prep the embed:
+        resultsmsg = discord.Embed(description='Rolling {} {}-sided dice'
+                                               ', with a {} modifier'.format(
+                                                    params['repeat'],
+                                                    params['sides'],
+                                                    params['mod']),
+                                   colour=0x822AE0)
+        resultsmsg.add_field(name='Rolls', value=str(roll_list)[1:-1], inline=False)
+        resultsmsg.add_field(name='Sum', value=total)
+        resultsmsg.add_field(name='Minimum', value=minimum)
+        resultsmsg.add_field(name='Maximum', value=maximum)
+        await ctx.send(embed=resultsmsg)
+
     
 def setup(bot):
     bot.add_cog(Games(bot))
