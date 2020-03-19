@@ -69,10 +69,12 @@ class Games(commands.Cog):
                                                     params['sides'],
                                                     params['mod']),
                                    colour=0x822AE0)
-        resultsmsg.add_field(name='Rolls', value=str(roll_list)[1:-1], inline=False)
-        resultsmsg.add_field(name='Sum', value=total)
-        resultsmsg.add_field(name='Minimum', value=minimum)
-        resultsmsg.add_field(name='Maximum', value=maximum)
+        if params['repeat'] <= 10: # Anything more and the roll list is too long
+            resultsmsg.add_field(name='Rolls', value=str(roll_list)[1:-1], inline=False)
+        if params['repeat'] > 1:
+            resultsmsg.add_field(name='Sum', value=total)
+            resultsmsg.add_field(name='Minimum', value=minimum)
+            resultsmsg.add_field(name='Maximum', value=maximum)
         await ctx.send(embed=resultsmsg)
 
     
