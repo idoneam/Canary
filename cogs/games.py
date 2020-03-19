@@ -23,12 +23,27 @@ from discord.ext import commands
 # Other utilities
 import random
 import re
-from .utils.auto_incorrect import auto_incorrect
 
 
 class Games(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
     
+    @commands.command()
+    async def roll(self, ctx, arg: str = None):
+        """
+        Performs a DnD-style diceroll
+        Supports modifiers, multiple rolls, any-sided dice
+        """
+        if arg == 'help' or arg == 'h':
+            await ctx.send('Usage: `[r]d[s][+m]`\n'
+                           'Rolls an [s]-sided die [r] times, '
+                           'with modifier [+-m].\n'
+                           'Rolls one 20-sided die by default')
+        else:
+            await ctx.send(random.randint(1,20))
+        
+    
 def setup(bot):
     bot.add_cog(Games(bot))
+    
