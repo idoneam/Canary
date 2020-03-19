@@ -32,7 +32,7 @@ class Games(commands.Cog):
         self.bot = bot
     
     @commands.command()
-    async def roll(self, ctx, arg: str = None):
+    async def roll(self, ctx, arg: str = ''):
         """
         Performs a DnD-style diceroll
         Supports modifiers, multiple rolls, any-sided dice
