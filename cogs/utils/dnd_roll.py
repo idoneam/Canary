@@ -27,7 +27,7 @@ def dnd_roll(sides=20, n=1, modifier=0, mpr=False):
     """
     roll_list = []
     
-    if mpr = True:
+    if mpr == True:
         roll_mod = modifier
         total_mod = 0
     else:
