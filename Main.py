@@ -43,6 +43,7 @@ startup = [
     "cogs.reminder",
     "cogs.score",
     "cogs.subscribers",
+    "cogs.games",
 ]
 
 # TODO: SHOULD BE DB
