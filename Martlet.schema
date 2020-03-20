@@ -48,3 +48,14 @@ CREATE TABLE IF NOT EXISTS `BankTransactions` (
 
     FOREIGN KEY(`UserID`) REFERENCES `Members`(`ID`)
 );
+
+CREATE TABLE IF NOT EXISTS `CustomReactions` (
+	`CustomReactionID`	INTEGER PRIMARY KEY,
+    `Prompt`        TEXT,
+    `Response`      TEXT,
+    `UserID`        INTEGER,
+    `DeletePrompt`  INTEGER,
+    `Anywhere`      INTEGER,
+    `DM`            INTEGER,
+    `Proposal`      INTEGER
+);
