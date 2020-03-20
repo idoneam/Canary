@@ -50,7 +50,8 @@ class Games(commands.Cog):
         """
         roll_cmd = ROLL_PATTERN.match(arg)
         if arg == 'safe':    # nice meme bro
-            await ctx.send('https://i.imgur.com/2icUGpc.png')
+            await ctx.send('https://media.giphy.com/media/'
+                           'd3mlE7uhX8KFgEmY/giphy.gif')
             return
         # Applying some bounds on parameters
         if roll_cmd is not None:
