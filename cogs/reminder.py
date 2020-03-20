@@ -454,7 +454,7 @@ class Reminder(commands.Cog):
             except ValueError:
                 return False
 
-        while p.delete:
+        while p.edit_mode:
             await ctx.send(
                 'Delete option selected. Enter a number to specify which '
                 'reminder you want to delete, or enter 0 to return.',
