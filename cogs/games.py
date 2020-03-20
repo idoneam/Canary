@@ -24,6 +24,7 @@ from discord.ext import commands
 # Other utilities
 import re
 from .utils.dnd_roll import dnd_roll
+from .utils.clamp_default import clamp_default
 
 ROLL_PATTERN = re.compile(r'^(\d*)d(\d*)([+-]?\d*)$')
 
@@ -42,7 +43,7 @@ class Games(commands.Cog):
                                 Defaults to rolling one 20-sided die.
           Examples:
            roll             rolls a d20
-           roll d6          roll one 6-sided die
+           roll d6          rolls one 6-sided die
            roll 3d          rolls 3 20-sided dice
            roll 5d12-4      rolls 5 12-sided dice, subtracting 4 from the total
            roll 5d+3 each   rolls 5 20-sided dice, adding 3 to each roll
@@ -56,13 +57,10 @@ class Games(commands.Cog):
         if arg == 'safe':    # nice meme bro
             await ctx.send('https://i.imgur.com/2icUGpc.png')
             return
-        elif roll_cmd != None:    # Applying some bounds on parameters
-            if roll_cmd.group(1) != '':
-                params['repeat'] = min(max(1, int(roll_cmd.group(1))), 10000)
-            if roll_cmd.group(2) != '':
-                params['sides'] = min(max(1, int(roll_cmd.group(2))), 100)
-            if roll_cmd.group(3) != '':
-                params['mod'] = min(max(-100, int(roll_cmd.group(3))), 100)
+        # Applying some bounds on parameters
+        params['repeat'] = clamp_default(roll_cmd.group(1), 1, 10000, 1)
+        params['sides'] = clamp_default(roll_cmd.group(2), 1, 100, 20)
+        params['mod'] = clamp_default(roll_cmd.group(3), -100, 100, 0)
 
         if mpr == 'each':
             roll_list, total, maximum, minimum = dnd_roll(params['sides'],
