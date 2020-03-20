@@ -25,6 +25,7 @@ from discord.ext import commands
 import re
 from .utils.dnd_roll import dnd_roll
 
+ROLL_PATTERN = re.compile(r'^(\d*)d(\d*)([+-]?\d*)$')
 
 class Games(commands.Cog):
     def __init__(self, bot):
@@ -46,8 +47,7 @@ class Games(commands.Cog):
            roll 5d12-4      rolls 5 12-sided dice, subtracting 4 from the total
            roll 5d+3 each   rolls 5 20-sided dice, adding 3 to each roll
         """
-        roll_pattern = re.compile(r'^(\d*)d(\d*)([+-]?\d*)$')
-        roll_cmd = roll_pattern.match(arg)
+        roll_cmd = ROLL_PATTERN.match(arg)
         params = {
             'sides': 20,    # Default parameters
             'repeat': 1,
