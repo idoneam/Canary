@@ -23,7 +23,7 @@ from discord.ext import commands
 
 # Other utilities
 import re
-from .utils.dnd_roll import dnd_roll
+from .utils.dice_roll import dice_roll
 from .utils.clamp_default import clamp_default
 
 ROLL_PATTERN = re.compile(r'^(\d*)d(\d*)([+-]?\d*)$')
@@ -64,13 +64,13 @@ class Games(commands.Cog):
             mod = 0
 
         if mpr == 'each':
-            roll_list, total, maximum, minimum = dnd_roll(sides,
+            roll_list, total, maximum, minimum = dice_roll(sides,
                                                           repeat,
                                                           mod,
                                                           mpr=True)
             mod_desc = ' to each roll'
         else:
-            roll_list, total, maximum, minimum = dnd_roll(
+            roll_list, total, maximum, minimum = dice_roll(
                 sides, repeat, mod)
             mod_desc = ' to the sum of rolls'
         # Now that we have our rolls, prep the embed:

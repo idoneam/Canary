@@ -25,19 +25,7 @@ def dice_roll(sides=20, n=1, modifier=0, mpr=False):
     Rolls a die with given parameters
     Set mpr to True to mod each roll, otherwise, only the sum is modified
     """
-    roll_list = []
-
-    if mpr == True:
-        roll_mod = modifier
-        total_mod = 0
-    else:
-        roll_mod = 0
-        total_mod = modifier
-
-    for i in range(n):
-        result = randint(1, sides)
-        roll_list.append(result + roll_mod)
-
-    total = sum(roll_list) + total_mod
-
-    return roll_list, total, max(roll_list), min(roll_list)
+    roll_mod = modifier if mpr else 0
+    total_mod = 0 if mpr else modifier
+    roll_list = [randint(1, sides) + roll_mod for _ in range(n)]
+    return roll_list, sum(roll_list)+total_mod, max(roll_list), min(roll_list)
