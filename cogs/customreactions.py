@@ -93,8 +93,6 @@ class Customreactions(commands.Cog):
                 await message.channel.send(reaction[2])
             return
 
-        await self.bot.process_commands(message)
-
     @commands.command(
         aliases=['customreaction', 'customreacts', 'customreact'])
     async def customreactions(self, ctx):
