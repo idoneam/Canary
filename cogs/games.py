@@ -28,6 +28,7 @@ from .utils.clamp_default import clamp_default
 
 ROLL_PATTERN = re.compile(r'^(\d*)d(\d*)([+-]?\d*)$')
 
+
 class Games(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -58,27 +59,26 @@ class Games(commands.Cog):
             repeat = clamp_default(roll_cmd.group(1), 1, 10000, 1)
             sides = clamp_default(roll_cmd.group(2), 1, 100, 20)
             mod = clamp_default(roll_cmd.group(3), -100, 100, 0)
-        else: # Necessary for empty roll commands - regex won't even match
+        else:    # Necessary for empty roll commands - regex won't even match
             repeat = 1
             sides = 20
             mod = 0
 
         if mpr == 'each':
             roll_list, total, maximum, minimum = dice_roll(sides,
-                                                          repeat,
-                                                          mod,
-                                                          mpr=True)
+                                                           repeat,
+                                                           mod,
+                                                           mpr=True)
             mod_desc = ' to each roll'
         else:
-            roll_list, total, maximum, minimum = dice_roll(
-                sides, repeat, mod)
+            roll_list, total, maximum, minimum = dice_roll(sides, repeat, mod)
             mod_desc = ' to the sum of rolls'
         # Now that we have our rolls, prep the embed:
         resultsmsg = discord.Embed(
             description='Rolling {} {}-sided dice'
             ', with a {} modifier'.format(repeat, sides, mod) + mod_desc,
             colour=0x822AE0)
-        if repeat <= 10:  # Anything more and the roll list is too long
+        if repeat <= 10:    # Anything more and the roll list is too long
             resultsmsg.add_field(name='Rolls',
                                  value=str(roll_list)[1:-1],
                                  inline=False)
