@@ -30,6 +30,7 @@ import time
 
 
 class Customreactions(commands.Cog):
+    # Written by @le-potate
     def __init__(self, bot):
         self.bot = bot
         self.reaction_list = []
