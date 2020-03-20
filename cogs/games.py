@@ -22,7 +22,6 @@ import discord
 from discord.ext import commands
 
 # Other utilities
-import random
 import re
 from .utils.dnd_roll import dnd_roll
 
