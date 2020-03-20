@@ -53,9 +53,14 @@ class Games(commands.Cog):
             await ctx.send('https://i.imgur.com/2icUGpc.png')
             return
         # Applying some bounds on parameters
-        repeat = clamp_default(roll_cmd.group(1), 1, 10000, 1)
-        sides = clamp_default(roll_cmd.group(2), 1, 100, 20)
-        mod = clamp_default(roll_cmd.group(3), -100, 100, 0)
+        if roll_cmd is not None:
+            repeat = clamp_default(roll_cmd.group(1), 1, 10000, 1)
+            sides = clamp_default(roll_cmd.group(2), 1, 100, 20)
+            mod = clamp_default(roll_cmd.group(3), -100, 100, 0)
+        else: # Necessary for empty roll commands - regex won't even match
+            repeat = 1
+            sides = 20
+            mod = 0
 
         if mpr == 'each':
             roll_list, total, maximum, minimum = dnd_roll(sides,
