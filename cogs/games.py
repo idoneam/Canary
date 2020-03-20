@@ -34,8 +34,18 @@ class Games(commands.Cog):
     @commands.command()
     async def roll(self, ctx, arg: str = '', mpr: str = ''):
         """
-        Performs a DnD-style diceroll
-        Supports modifiers, multiple rolls, any-sided dice
+        Perform a DnD-style diceroll
+        [r]d[s][+m] ['each']    Rolls an [s]-sided die [r] times, with modifier
+                                [+-m]. If 'each' is specified, applies modifier
+                                to each roll rather than the sum of all rolls.
+                                All parameters are optional.
+                                Defaults to rolling one 20-sided die.
+          Examples:
+           roll             rolls a d20
+           roll d6          roll one 6-sided die
+           roll 3d          rolls 3 20-sided dice
+           roll 5d12-4      rolls 5 12-sided dice, subtracting 4 from the total
+           roll 5d+3 each   rolls 5 20-sided dice, adding 3 to each roll
         """
         roll_pattern = re.compile(r'^(\d*)d(\d*)([+-]?\d*)$')
         roll_cmd = roll_pattern.match(arg)
@@ -46,25 +56,6 @@ class Games(commands.Cog):
         }
         if arg == 'safe':    # nice meme bro
             await ctx.send('https://i.imgur.com/2icUGpc.png')
-            return
-        if arg == 'help' or arg == 'h':
-            helpmsg = discord.Embed(
-                title='DnD Dice Roller Help',
-                description='Usage: `[r]d[s][+m] [\'each\']`\n'
-                'Rolls an `s`-sided die `r` '
-                'times, with modifier `+-m`.\n'
-                'If `each` is specified, the '
-                'modifier is applied to each roll.\n'
-                'Rolls one 20-sided die by default',
-                colour=0x822AE0)
-            helpmsg.add_field(
-                name='Examples',
-                value='`d6` roll one 6-sided die\n'
-                '`3d` rolls 3 20-sided dice\n'
-                '`5d12-4` rolls 5 12-sided dice, subtracting 4 from the total\n'
-                '`5d+3 each` rolls 5 20-sided dice, adding 3 to each roll',
-                inline=False)
-            await ctx.send(embed=helpmsg)
             return
         elif roll_cmd != None:    # Applying some bounds on parameters
             if roll_cmd.group(1) != '':
@@ -91,7 +82,7 @@ class Games(commands.Cog):
                                           params['mod']) + mod_desc,
             colour=0x822AE0)
         if params[
-                'repeat'] <= 10:    # Anything more and the roll list is too long
+                'repeat'] <= 10:  # Anything more and the roll list is too long
             resultsmsg.add_field(name='Rolls',
                                  value=str(roll_list)[1:-1],
                                  inline=False)
