@@ -49,41 +49,34 @@ class Games(commands.Cog):
            roll 5d+3 each   rolls 5 20-sided dice, adding 3 to each roll
         """
         roll_cmd = ROLL_PATTERN.match(arg)
-        params = {
-            'sides': 20,    # Default parameters
-            'repeat': 1,
-            'mod': 0
-        }
         if arg == 'safe':    # nice meme bro
             await ctx.send('https://i.imgur.com/2icUGpc.png')
             return
         # Applying some bounds on parameters
-        params['repeat'] = clamp_default(roll_cmd.group(1), 1, 10000, 1)
-        params['sides'] = clamp_default(roll_cmd.group(2), 1, 100, 20)
-        params['mod'] = clamp_default(roll_cmd.group(3), -100, 100, 0)
+        repeat = clamp_default(roll_cmd.group(1), 1, 10000, 1)
+        sides = clamp_default(roll_cmd.group(2), 1, 100, 20)
+        mod = clamp_default(roll_cmd.group(3), -100, 100, 0)
 
         if mpr == 'each':
-            roll_list, total, maximum, minimum = dnd_roll(params['sides'],
-                                                          params['repeat'],
-                                                          params['mod'],
+            roll_list, total, maximum, minimum = dnd_roll(sides,
+                                                          repeat,
+                                                          mod,
                                                           mpr=True)
             mod_desc = ' to each roll'
         else:
             roll_list, total, maximum, minimum = dnd_roll(
-                params['sides'], params['repeat'], params['mod'])
+                sides, repeat, mod)
             mod_desc = ' to the sum of rolls'
         # Now that we have our rolls, prep the embed:
         resultsmsg = discord.Embed(
             description='Rolling {} {}-sided dice'
-            ', with a {} modifier'.format(params['repeat'], params['sides'],
-                                          params['mod']) + mod_desc,
+            ', with a {} modifier'.format(repeat, sides, mod) + mod_desc,
             colour=0x822AE0)
-        if params[
-                'repeat'] <= 10:  # Anything more and the roll list is too long
+        if repeat <= 10:  # Anything more and the roll list is too long
             resultsmsg.add_field(name='Rolls',
                                  value=str(roll_list)[1:-1],
                                  inline=False)
-        if params['repeat'] > 1:
+        if repeat > 1:
             resultsmsg.add_field(name='Sum', value=total)
             resultsmsg.add_field(name='Minimum', value=minimum)
             resultsmsg.add_field(name='Maximum', value=maximum)
