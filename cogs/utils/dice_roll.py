@@ -20,7 +20,7 @@
 from random import randint
 
 
-def dnd_roll(sides=20, n=1, modifier=0, mpr=False):
+def dice_roll(sides=20, n=1, modifier=0, mpr=False):
     """
     Rolls a die with given parameters
     Set mpr to True to mod each roll, otherwise, only the sum is modified
