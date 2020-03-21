@@ -76,7 +76,7 @@ class Games(commands.Cog):
         # Now that we have our rolls, prep the embed:
         resultsmsg = discord.Embed(
             description='Rolling {} {}-sided dice'
-            ', with a {} modifier'.format(repeat, sides, mod) + mod_desc,
+            ', with a {} modifier{}'.format(repeat, sides, mod, mod_desc),
             colour=0x822AE0)
         if repeat <= 10:    # Anything more and the roll list is too long
             resultsmsg.add_field(name='Rolls',
