@@ -18,9 +18,7 @@
 # along with Canary. If not, see <https://www.gnu.org/licenses/>.
 
 # discord-py requirements
-import discord
 from discord.ext import commands
-import asyncio
 
 # Other utilities
 import random
@@ -150,18 +148,23 @@ class Memes(commands.Cog):
         await ctx.send(msg)
         await ctx.message.delete()
 
-    @commands.command()
-    async def boot(self, ctx, num: int = 2):
-        """Draws a pyramid of boots, default is 3 unless user specifies
-        an integer number of levels of boots."""
+    @commands.command(aliases=['boot'])
+    async def pyramid(self, ctx, num: int = 2, emoji: str = "👢"):
+        """Draws a pyramid of boots, default is 2 unless user specifies an integer number of levels of boots between -8 and 8. Also accepts any other emoji, word or multiword (in quotes) string."""
+        def pyramidy(n, m):
+            return "{spaces}{emojis}".format(spaces=" " * ((m - n) * 3),
+                                             emojis=(emoji + " ") * n)
 
-        num = max(min(num, 8), 1)    # Above 8, herre gets angry
+        if (num > 0):
+            num = max(min(num, 8), 1)    # Above 8, herre gets angry
+            msg = "\n".join(pyramidy(ln, num) for ln in range(1, num + 1))
+        else:
+            num = min(max(num, -8), -1)    # Below -8, herre gets angry
+            msg = "\n".join(
+                pyramidy(ln, abs(num))
+                for ln in reversed(range(1,
+                                         abs(num) + 1)))
 
-        def booty(n, m):
-            return "{spaces}{boots}".format(spaces=" " * ((m - n) * 3),
-                                            boots="👢 " * n)
-
-        msg = "\n".join(booty(ln, num) for ln in range(1, num + 1))
         await ctx.send("**\n{}**".format(msg))
 
 

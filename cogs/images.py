@@ -20,18 +20,14 @@
 # imports for Discord
 import discord
 from discord.ext import commands
-import asyncio
 
 # misc imports
 import os
-import sys
-import random
 import numpy as np
 import cv2
 import math
 from functools import wraps
 from io import BytesIO
-import traceback
 
 
 def filter_image(func):
@@ -180,12 +176,14 @@ class Images(commands.Cog):
         v_pad = int(r - height / 2)
         h_pad = int(r - width / 2)
 
-        # pad border to avoid black regions when transforming image back to normal
+        # pad border to avoid black regions when transforming image back to
+        # normal
         image = cv2.copyMakeBorder(image, v_pad, v_pad, h_pad, h_pad,
                                    cv2.BORDER_REPLICATE)
         image = self._polar(image)
 
-        # wrap border to avoid the sharp horizontal line when transforming image back to normal
+        # wrap border to avoid the sharp horizontal line when transforming
+        # image back to normal
         image = cv2.copyMakeBorder(image, half_radius, half_radius,
                                    half_radius, half_radius, cv2.BORDER_WRAP)
         image = cv2.blur(image, (1, radius))

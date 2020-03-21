@@ -19,11 +19,10 @@
 
 # discord-py requirements
 import discord
+import subprocess
 from discord.ext import commands
-import asyncio
 
 from .utils.paginator import Pages
-import math
 
 
 class Info(commands.Cog):
@@ -52,7 +51,8 @@ class Info(commands.Cog):
                 members = role.members
                 break
 
-        if (members is None): return
+        if (members is None):
+            return
 
         names = list(map(lambda m: str(m) + "\n", members))
         header = "List of users in {role} role - {num}".format(role=role.name,
@@ -70,6 +70,16 @@ class Info(commands.Cog):
                           display_option=(3, 20),
                           editable_content=False)
             await pages.paginate()
+
+    @commands.command()
+    async def version(self, ctx):
+        version = subprocess.check_output(("git", "describe", "--tags"),
+                                          universal_newlines=True).strip()
+        commit, authored = subprocess.check_output(
+            ("git", "log", "-1", "--pretty=format:%h %aI"),
+            universal_newlines=True).strip().split(" ")
+        await ctx.send("Version: `{}`\nCommit: `{}` authored `{}`".format(
+            version, commit, authored))
 
 
 def setup(bot):

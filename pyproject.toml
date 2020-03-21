@@ -1,0 +1,27 @@
+[tool.poetry]
+name = "Canary"
+version = "1.0.4"
+description = ""
+license = "GPL-3.0-only"
+repository = "https://github.com/idoneam/Canary"
+readme = "README.md"
+authors = []
+
+[tool.poetry.dependencies]
+python = "^3.6.0"
+beautifulsoup4 = "==4.8.0"
+sympy = "==1.5"
+requests = ">=2.20.0"
+tabulate = "==0.8.6"
+"discord.py" = "==1.2.5"
+opencv-python = "*"
+pytz = "*"
+mpmath = "*"
+numpy = "*"
+aiohttp = "*"
+urllib3 = ">=1.25.3"
+feedparser = "*"
+
+[tool.poetry.dev-dependencies]
+yapf = "==0.29.0"
+pytest = "^5.3.5"
