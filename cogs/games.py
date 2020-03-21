@@ -74,10 +74,10 @@ class Games(commands.Cog):
             roll_list, total, maximum, minimum = dice_roll(sides, repeat, mod)
             mod_desc = ' to the sum of rolls'
         # Now that we have our rolls, prep the embed:
-        resultsmsg = discord.Embed(
-            description='Rolling {} {}-sided dice'
-            ', with a {} modifier{}'.format(repeat, sides, mod, mod_desc),
-            colour=0x822AE0)
+        resultsmsg = discord.Embed(description='Rolling {} {}-sided dice'
+                                   ', with a {} modifier{}'.format(
+                                       repeat, sides, mod, mod_desc),
+                                   colour=0x822AE0)
         if repeat <= 10:    # Anything more and the roll list is too long
             resultsmsg.add_field(name='Rolls',
                                  value=str(roll_list)[1:-1],
