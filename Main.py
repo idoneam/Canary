@@ -33,9 +33,17 @@ from cogs.utils.checks import is_developer, is_moderator
 
 # List the extensions (modules) that should be loaded on startup.
 startup = [
-    "cogs.currency", "cogs.helpers", "cogs.images", "cogs.info", "cogs.memes",
-    "cogs.mod", "cogs.quotes", "cogs.reminder", "cogs.score",
-    "cogs.subscribers", "cogs.customreactions"
+    "cogs.currency",
+    "cogs.helpers",
+    "cogs.images",
+    "cogs.info",
+    "cogs.memes",
+    "cogs.mod",
+    "cogs.quotes",
+    "cogs.reminder",
+    "cogs.score",
+    "cogs.subscribers",
+    "cogs.customreactions",    # Do not remove this terminating comma.
 ]
 
 

@@ -34,9 +34,11 @@ class Customreactions(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.reaction_list = []
-        self.reaction_list_prompts = [
-        ]    # to not compute it every time a message is sent
+        self.reaction_list_prompts = []
         self.proposal_list = []
+        self.rebuild_lists()
+
+    def rebuild_lists(self):
         self.rebuild_reaction_list()
         self.rebuild_proposal_list()
 
@@ -63,14 +65,14 @@ class Customreactions(commands.Cog):
 
         if any(s.lower() in message.content.lower()
                for s in self.reaction_list_prompts):
-            # get indices of every prompt that contains the message. Done this way to not compute it every time a
-            # message is sent
+            # get indices of every prompt that contains the message.
+            # Done this way to not compute it every time a message is sent
             indices = [
                 i for i, x in enumerate(self.reaction_list_prompts)
                 if x.lower() in message.content.lower()
             ]
-            # only keep the ones that are exactly the message, or that are contained in the message AND have the
-            # anywhere option activated
+            # only keep the ones that are exactly the message, or that are
+            # contained in the message AND have the anywhere option activated
             reactions_at_indices = [self.reaction_list[i] for i in indices]
             reactions = [
                 reaction for reaction in reactions_at_indices
@@ -85,8 +87,8 @@ class Customreactions(commands.Cog):
             if reaction[4] == 1:
                 await message.delete()
 
-            # send the response
-            # if DM option selected, send in the DM of the user who wrote the prompt
+            # send the response if DM option selected,
+            # send in the DM of the user who wrote the prompt
             if reaction[6] == 1:
                 await message.author.send(reaction[2])
             else:
@@ -104,35 +106,25 @@ class Customreactions(commands.Cog):
             return len(self.proposal_list)
 
         def reaction_check(reaction, user):
-            if reaction.emoji in current_options and user == author and reaction.message.id == initial_message.id:
-                return True
-            else:
-                return False
+            return all((reaction.emoji in current_options, user == author,
+                        reaction.message.id == initial_message.id))
 
         def reaction_check_any_user(reaction, user):
-            if reaction.emoji in current_options and reaction.message.id == initial_message.id:
-                return True
-            else:
-                return False
+            return all((reaction.emoji in current_options,
+                        reaction.message.id == initial_message.id))
 
         def reaction_check_moderators(reaction, user):
-            if (reaction.emoji in current_options) and (reaction.message.id == initial_message.id) \
-                    and (discord.utils.get(user.roles, name=self.bot.config.moderator_role) is not None):
-                return True
-            else:
-                return False
+            return all(
+                (reaction.emoji in current_options,
+                 reaction.message.id == initial_message.id,
+                 discord.utils.get(user.roles,
+                                   name=self.bot.config.moderator_role)))
 
         def msg_check(msg):
-            if msg.author == author:
-                return True
-            else:
-                return False
+            return msg.author == author
 
         def number_check(msg):
-            if msg.content.isdigit():
-                return True
-            else:
-                return False
+            return msg.content.isdigit()
 
         async def wait_for_reaction(message):
             try:
@@ -285,8 +277,7 @@ class Customreactions(commands.Cog):
                     'Proposal) VALUES(?,?,?,?,?,?,?)', t)
                 conn.commit()
                 conn.close()
-                self.rebuild_reaction_list()
-                self.rebuild_proposal_list()
+                self.rebuild_lists()
 
                 if is_moderator:
                     title = "Custom reaction successfully added!"
@@ -611,8 +602,7 @@ class Customreactions(commands.Cog):
                     'UPDATE CustomReactions SET Prompt = ? WHERE CustomReactionID = ?',
                     t)
                 conn.commit()
-                self.rebuild_reaction_list()
-                self.rebuild_proposal_list()
+                self.rebuild_lists()
                 if proposals:
                     title = "Prompt successfully modified! Returning to list of reaction proposals..."
                 else:
@@ -675,8 +665,7 @@ class Customreactions(commands.Cog):
                     'UPDATE CustomReactions SET Response = ? WHERE CustomReactionID = ?',
                     t)
                 conn.commit()
-                self.rebuild_reaction_list()
-                self.rebuild_proposal_list()
+                self.rebuild_lists()
                 if proposals:
                     title = "Response successfully modified! Returning to list of reaction proposals..."
                 else:
@@ -763,8 +752,7 @@ class Customreactions(commands.Cog):
                             'UPDATE CustomReactions SET DeletePrompt = ? WHERE CustomReactionID = ?',
                             t)
                         conn.commit()
-                        self.rebuild_reaction_list()
-                        self.rebuild_proposal_list()
+                        self.rebuild_lists()
                         if proposals:
                             title = "Option successfully modified! Returning to list of current reaction proposals..."
                         else:
@@ -794,8 +782,7 @@ class Customreactions(commands.Cog):
                             'UPDATE CustomReactions SET DeletePrompt = ? WHERE CustomReactionID = ?',
                             t)
                         conn.commit()
-                        self.rebuild_reaction_list()
-                        self.rebuild_proposal_list()
+                        self.rebuild_lists()
                         if proposals:
                             title = "Option successfully modified! Returning to list of current reaction proposals..."
                         else:
@@ -885,8 +872,7 @@ class Customreactions(commands.Cog):
                             'UPDATE CustomReactions SET Anywhere = ? WHERE CustomReactionID = ?',
                             t)
                         conn.commit()
-                        self.rebuild_reaction_list()
-                        self.rebuild_proposal_list()
+                        self.rebuild_lists()
                         if proposals:
                             title = "Option successfully modified! Returning to list of current reaction proposals..."
                         else:
@@ -916,8 +902,7 @@ class Customreactions(commands.Cog):
                             'UPDATE CustomReactions SET Anywhere = ? WHERE CustomReactionID = ?',
                             t)
                         conn.commit()
-                        self.rebuild_reaction_list()
-                        self.rebuild_proposal_list()
+                        self.rebuild_lists()
                         if proposals:
                             title = "Option successfully modified! Returning to list of current reaction proposals..."
                         else:
@@ -1008,8 +993,7 @@ class Customreactions(commands.Cog):
                             'UPDATE CustomReactions SET DM = ? WHERE CustomReactionID = ?',
                             t)
                         conn.commit()
-                        self.rebuild_reaction_list()
-                        self.rebuild_proposal_list()
+                        self.rebuild_lists()
                         if proposals:
                             title = "Option successfully modified! Returning to list of current reaction proposals..."
                         else:
@@ -1039,8 +1023,7 @@ class Customreactions(commands.Cog):
                             'UPDATE CustomReactions SET DM = ? WHERE CustomReactionID = ?',
                             t)
                         conn.commit()
-                        self.rebuild_reaction_list()
-                        self.rebuild_proposal_list()
+                        self.rebuild_lists()
                         if proposals:
                             title = "Option successfully modified! Returning to list of current reaction proposals..."
                         else:
@@ -1061,8 +1044,7 @@ class Customreactions(commands.Cog):
                     'UPDATE CustomReactions SET Proposal = ? WHERE CustomReactionID = ?',
                     t)
                 conn.commit()
-                self.rebuild_reaction_list()
-                self.rebuild_proposal_list()
+                self.rebuild_lists()
                 title = "Custom reaction proposal successfully approved! " \
                         "Returning to list of current reaction proposals..."
                 footer = "Aproved by {}.".format(user)
@@ -1089,8 +1071,7 @@ class Customreactions(commands.Cog):
                 embed.set_footer(text=footer, icon_url=user.avatar_url)
                 await message.edit(embed=embed)
                 conn.close()
-                self.rebuild_reaction_list()
-                self.rebuild_proposal_list()
+                self.rebuild_lists()
                 time.sleep(5)
 
             if reaction.emoji == "⏹":
