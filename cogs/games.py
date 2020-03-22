@@ -82,10 +82,12 @@ class Games(commands.Cog):
             resultsmsg.add_field(name='Rolls',
                                  value=str(roll_list)[1:-1],
                                  inline=False)
-        if repeat > 1:
+        # Want the modified sum to be shown even for single rolls:
+        if repeat > 1 or mod != 0:
             resultsmsg.add_field(name='Sum', value=total)
-            resultsmsg.add_field(name='Minimum', value=minimum)
-            resultsmsg.add_field(name='Maximum', value=maximum)
+            if repeat > 1:
+                resultsmsg.add_field(name='Minimum', value=minimum)
+                resultsmsg.add_field(name='Maximum', value=maximum)
         await ctx.send(embed=resultsmsg)
 
 
