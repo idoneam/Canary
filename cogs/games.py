@@ -42,6 +42,10 @@ class Games(commands.Cog):
                                 to each roll rather than the sum of all rolls.
                                 All parameters are optional.
                                 Defaults to rolling one 20-sided die.
+                                
+                                Dice can have 1 to 100 sides
+                                Rolls 1 to 10000 dice at once
+                                Modifier can be any int between -100 and +100
           Examples:
            roll             rolls a d20
            roll d6          rolls one 6-sided die
