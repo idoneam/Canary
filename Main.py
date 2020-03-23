@@ -127,13 +127,12 @@ async def update(ctx):
     Update the bot by pulling changes from the git repository
     """
     bot.logger.info('Update Git repository')
-    branch = subprocess.check_output(
-        "git rev-parse --abbrev-ref HEAD", shell=True
-    ).decode("unicode_escape")
+    branch = subprocess.check_output("git rev-parse --abbrev-ref HEAD",
+                                     shell=True).decode("unicode_escape")
     bot.logger.info('Branch: {}'.format(branch))
-    shell_output = subprocess.check_output(
-        "git pull {} {}".format(bot.config.repository, branch),
-        shell=True)
+    shell_output = subprocess.check_output("git pull {} {}".format(
+        bot.config.repository, branch),
+                                           shell=True)
     status_message = shell_output.decode("unicode_escape")
     await ctx.send('`{}`'.format(status_message))
 
