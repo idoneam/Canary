@@ -61,7 +61,7 @@ description = "Screen-scraping library"
 name = "beautifulsoup4"
 optional = false
 python-versions = "*"
-version = "4.8.0"
+version = "4.8.2"
 
 [package.dependencies]
 soupsieve = ">=1.2"
@@ -404,7 +404,7 @@ docs = ["sphinx", "jaraco.packaging (>=3.2)", "rst.linker (>=1.9)"]
 testing = ["jaraco.itertools"]
 
 [metadata]
-content-hash = "61651ad31999fa3977a1aa9ed272ee71b2f4779222f3a4e76e1d7fdab3742447"
+content-hash = "b240630722f2e2362f11017fd8c900d79bc0dbb41f9f318edc3f814d3fdb0f3e"
 python-versions = "^3.6.0"
 
 [metadata.files]
@@ -445,9 +445,9 @@ attrs = [
     {file = "attrs-19.3.0.tar.gz", hash = "sha256:f7b7ce16570fe9965acd6d30101a28f62fb4a7f9e926b3bbc9b61f8b04247e72"},
 ]
 beautifulsoup4 = [
-    {file = "beautifulsoup4-4.8.0-py2-none-any.whl", hash = "sha256:05668158c7b85b791c5abde53e50265e16f98ad601c402ba44d70f96c4159612"},
-    {file = "beautifulsoup4-4.8.0-py3-none-any.whl", hash = "sha256:f040590be10520f2ea4c2ae8c3dae441c7cfff5308ec9d58a0ec0c1b8f81d469"},
-    {file = "beautifulsoup4-4.8.0.tar.gz", hash = "sha256:25288c9e176f354bf277c0a10aa96c782a6a18a17122dba2e8cec4a97e03343b"},
+    {file = "beautifulsoup4-4.8.2-py2-none-any.whl", hash = "sha256:e1505eeed31b0f4ce2dbb3bc8eb256c04cc2b3b72af7d551a4ab6efd5cbe5dae"},
+    {file = "beautifulsoup4-4.8.2-py3-none-any.whl", hash = "sha256:9fbb4d6e48ecd30bcacc5b63b94088192dcda178513b2ae3c394229f8911b887"},
+    {file = "beautifulsoup4-4.8.2.tar.gz", hash = "sha256:05fd825eb01c290877657a56df4c6e4c311b3965bda790c613a3d6fb01a5462a"},
 ]
 certifi = [
     {file = "certifi-2019.11.28-py2.py3-none-any.whl", hash = "sha256:017c25db2a153ce562900032d5bc68e9f191e44e9a0f762f373977de9df1fbb3"},
