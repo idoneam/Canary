@@ -31,7 +31,7 @@ import re
 
 # Other utils
 import random
-from .utils.paginator import Pages
+from ..utils.paginator import Pages
 
 GEN_SPACE_SYMBOLS = re.compile(r"[,“”\".?!]")
 GEN_BLANK_SYMBOLS = re.compile(r"['()`]")
@@ -232,7 +232,7 @@ class Quotes(commands.Cog):
         pfp = author.avatar_url if author else DEFAULT_AVATAR
         embed = discord.Embed(colour=discord.Colour(random.randint(
             0, 16777215)),
-                              description=quote)
+            description=quote)
 
         img_urls_found = re.findall(IMAGE_REGEX, quote)
 

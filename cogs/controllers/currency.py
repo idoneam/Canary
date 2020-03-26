@@ -30,7 +30,7 @@ import datetime
 
 # For tables
 from tabulate import tabulate
-from .utils.paginator import Pages
+from ..utils.paginator import Pages
 
 # For general currency shenanigans
 from decimal import Decimal, InvalidOperation

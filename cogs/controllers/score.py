@@ -24,7 +24,7 @@ from discord.ext import commands
 # for DB
 import sqlite3
 from tabulate import tabulate
-from .utils.paginator import Pages
+from ..utils.paginator import Pages
 
 
 class Score(commands.Cog):

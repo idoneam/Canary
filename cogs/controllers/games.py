@@ -23,8 +23,8 @@ from discord.ext import commands
 
 # Other utilities
 import re
-from .utils.dice_roll import dice_roll
-from .utils.clamp_default import clamp_default
+from ..utils.dice_roll import dice_roll
+from ..utils.clamp_default import clamp_default
 
 ROLL_PATTERN = re.compile(r'^(\d*)d(\d*)([+-]?\d*)$')
 
@@ -42,7 +42,7 @@ class Games(commands.Cog):
                                 to each roll rather than the sum of all rolls.
                                 All parameters are optional.
                                 Defaults to rolling one 20-sided die.
-                                
+
                                 Dice can have 1 to 100 sides
                                 Rolls 1 to 10000 dice at once
                                 Modifier can be any int between -100 and +100

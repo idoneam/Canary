@@ -21,7 +21,7 @@ import discord
 from discord import utils
 from discord.ext import commands
 
-from .utils.checks import is_moderator
+from ..utils.checks import is_moderator
 
 
 class Mod(commands.Cog):
@@ -36,7 +36,7 @@ class Mod(commands.Cog):
             )    # to work regardless of whether the person uses apostrophes
             channel_to_send = utils.get(self.bot.get_guild(
                 self.bot.config.server_id).text_channels,
-                                        name=self.bot.config.reception_channel)
+                name=self.bot.config.reception_channel)
             msg = '{} 📣 {}'.format(str(ctx.author.name), message)
             await channel_to_send.send(content=msg)
             await ctx.send("`Message sent`")
@@ -53,7 +53,7 @@ class Mod(commands.Cog):
             format(message, self.bot.config.command_prefix[0]))
         channel_to_forward = utils.get(self.bot.get_guild(
             self.bot.config.server_id).text_channels,
-                                       name=self.bot.config.reception_channel)
+            name=self.bot.config.reception_channel)
         msg = '🐦 ({}) to {}: {}'.format(ctx.author.name, dest.name, message)
         await channel_to_forward.send(msg)
         await ctx.message.delete()

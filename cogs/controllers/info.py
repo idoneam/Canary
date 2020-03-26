@@ -22,7 +22,7 @@ import discord
 import subprocess
 from discord.ext import commands
 
-from .utils.paginator import Pages
+from ..utils.paginator import Pages
 
 
 class Info(commands.Cog):

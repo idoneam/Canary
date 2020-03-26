@@ -38,8 +38,8 @@ import math
 import time
 import datetime
 import random
-from .utils.paginator import Pages
-from .utils.requests import fetch
+from ..utils.paginator import Pages
+from ..utils.requests import fetch
 
 MCGILL_EXAM_URL = "https://www.mcgill.ca/exams/dates"
 
@@ -329,8 +329,8 @@ class Helpers(commands.Cog):
 
         em = discord.Embed(title='McGill Important Dates {0} {1}'.format(
             term, str(current_year)),
-                           description=MCGILL_KEY_DATES_URL,
-                           colour=0xDA291C)
+            description=MCGILL_KEY_DATES_URL,
+            colour=0xDA291C)
 
         for i in range(len(headers)):
             if i == 2:
@@ -525,7 +525,7 @@ class Helpers(commands.Cog):
             message = "**{}**".format(" ".join(args))
         channel = utils.get(self.bot.get_guild(
             self.bot.config.server_id).text_channels,
-                            name=self.bot.config.food_spotting_channel)
+            name=self.bot.config.food_spotting_channel)
         username = ctx.message.author
         pfp = ctx.message.author.avatar_url
         embed = discord.Embed()

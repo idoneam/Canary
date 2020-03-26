@@ -27,7 +27,7 @@ import sqlite3
 import datetime
 
 # Other utilities
-from .utils.paginator import Pages
+from ..utils.paginator import Pages
 
 # For remindme functionality
 import re
