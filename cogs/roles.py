@@ -55,6 +55,9 @@ class Roles(commands.Cog):
             role = discord.utils.get(ctx.guild.roles, name=pronoun)
             await member.remove_roles(role, reason="Self Requested")
 
+        else:
+            await ctx.send("Error, that role doesn't exist")
+
     @commands.command()
     async def field(self, ctx, transaction, field):
         """
@@ -71,6 +74,8 @@ class Roles(commands.Cog):
         elif (transaction == "remove") and (field in fields):
             role = discord.utils.get(ctx.guild.roles, name=field)
             await member.remove_roles(role, reason="Self Requested")
+        else:
+            await ctx.send("Error, that role doesn't exist")
 
     @commands.command()
     async def faculty(self, ctx, transaction, faculty):
@@ -97,6 +102,9 @@ class Roles(commands.Cog):
             role = discord.utils.get(ctx.guild.roles, name=faculty)
             await member.remove_roles(role, reason="Self Requested")
 
+        else:
+            await ctx.send("Error, that role doesn't exist")
+
     @commands.command()
     async def year(self, ctx, transaction, year):
         """
@@ -122,6 +130,9 @@ class Roles(commands.Cog):
             role = discord.utils.get(ctx.guild.roles, name=year)
             await member.remove_roles(role, reason="Self Requested")
 
+        else:
+            await ctx.send("Error, that role doesn't exist")
+
     @commands.command()
     async def iam(self, ctx, transaction, generic):
         """
@@ -138,6 +149,9 @@ class Roles(commands.Cog):
         elif (transaction == "remove") and (generic in generics):
             role = discord.utils.get(ctx.guild.roles, name=generic)
             await member.remove_roles(role, reason="Self Requested")
+
+        else:
+            await ctx.send("Error, that role doesn't exist")
 
 
 def setup(bot):
