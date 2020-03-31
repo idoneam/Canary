@@ -61,6 +61,9 @@ class Roles(commands.Cog):
         """
         member = ctx.message.author
 
+        # normalize field
+        field = field.title()
+
         fields = self.roles.get("fields").split(", ")
 
         if (transaction == "add") and (field in fields):
@@ -79,6 +82,9 @@ class Roles(commands.Cog):
         Self-assign a faculty of study role to a user. 
         """
         member = ctx.message.author
+
+        # normalize field
+        faculty = faculty.title()
 
         faculties = self.roles.get("faculties").split(", ")
 
@@ -107,6 +113,9 @@ class Roles(commands.Cog):
         Self-assign a year of study role to a user. 
         """
         member = ctx.message.author
+
+        # normalize year
+        year = year.title()
 
         years = self.roles.get("years").split(", ")
 
