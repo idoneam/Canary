@@ -43,13 +43,6 @@ class Roles(commands.Cog):
         if (transaction == "add") and (pronoun in pronouns):
             role = discord.utils.get(ctx.guild.roles, name=pronoun)
 
-            # Allow only a single pronoun role per user.
-            for item in pronouns:
-                role_item = discord.utils.get(ctx.guild.roles, name=item)
-                if role_item is not None:
-                    await member.remove_roles(role_item,
-                                              reason="Self Requested")
-
             await member.add_roles(role, reason="Self Requested")
         elif (transaction == "remove") and (pronoun in pronouns):
             role = discord.utils.get(ctx.guild.roles, name=pronoun)
