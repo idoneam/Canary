@@ -38,6 +38,9 @@ class Roles(commands.Cog):
         """
         member = ctx.message.author
 
+        # normalize pronoun
+        pronoun = pronoun.title()
+
         pronouns = self.roles.get("pronouns").split(", ")
 
         if (transaction == "add") and (pronoun in pronouns):
