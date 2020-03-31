@@ -128,6 +128,6 @@ class Parser:
             "pronouns": config["Roles"]["Pronouns"],
             "fields": config["Roles"]["Fields"],
             "faculties": config["Roles"]["Faculties"],
-            "year": config["Roles"]["Year"],
+            "years": config["Roles"]["Year"],
             "generics": config["Roles"]["Generics"]
         }
