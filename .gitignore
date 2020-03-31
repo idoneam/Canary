@@ -114,3 +114,4 @@ marty_env
 .idea/
 tmp/
 pickles/*
+.vscode/settings.json

@@ -123,3 +123,11 @@ class Parser:
             sorted([(int(c), decimal.Decimal(a)) for c, a in br_cases],
                    key=lambda c: c[0])
         }
+
+        self.roles = {
+            "pronouns": config["Roles"]["Pronouns"],
+            "fields": config["Roles"]["Fields"],
+            "faculties": config["Roles"]["Faculties"],
+            "year": config["Roles"]["Year"],
+            "generics": config["Roles"]["Generics"]
+        }
