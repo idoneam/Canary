@@ -52,7 +52,8 @@ class Roles(commands.Cog):
             await ctx.send("Error, that role doesn't exist in this category")
         return
 
-    async def toggleRestrictedRole(self, ctx, transaction, requestedRole, category):
+    async def toggleRestrictedRole(self, ctx, transaction, requestedRole,
+                                   category):
         """
         Assigs a single role to a user with no checks from a category of roles
         """
@@ -66,10 +67,11 @@ class Roles(commands.Cog):
             role = discord.utils.get(ctx.guild.roles, name=requestedRole)
             # Allow only a single faculty role per user.
             for category_roles in roles:
-                old_role = discord.utils.get(
-                    ctx.guild.roles, name=category_roles)
+                old_role = discord.utils.get(ctx.guild.roles,
+                                             name=category_roles)
                 if old_role is not None:
-                    await member.remove_roles(old_role, reason="Self Requested")
+                    await member.remove_roles(old_role,
+                                              reason="Self Requested")
             await member.add_roles(role, reason="Self Requested")
         elif (transaction == "remove") and (requestedRole in roles):
             role = discord.utils.get(ctx.guild.roles, name=requestedRole)
@@ -97,7 +99,8 @@ class Roles(commands.Cog):
         """
         Self-assign a faculty of study role to a user. 
         """
-        await Roles.toggleRestrictedRole(self, ctx, transaction, faculty, "faculties")
+        await Roles.toggleRestrictedRole(self, ctx, transaction, faculty,
+                                         "faculties")
 
     @commands.command()
     async def year(self, ctx, transaction, year):
