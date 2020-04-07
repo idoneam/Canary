@@ -32,132 +32,86 @@ class Roles(commands.Cog):
         self.bot = bot
         self.roles = self.bot.config.roles
 
+    async def toggleRole(self, ctx, transaction, requestedRole, category):
+        """
+        Assigs a single role to a user with no checks from a category of roles
+        """
+        member = ctx.message.author
+        roles = self.roles.get(category).split(", ")
+
+        # normalize user input to title case
+        requestedRole = requestedRole.title()
+
+        if (transaction == "add") and (requestedRole in roles):
+            role = discord.utils.get(ctx.guild.roles, name=requestedRole)
+            await member.add_roles(role, reason="Self Requested")
+        elif (transaction == "remove") and (requestedRole in roles):
+            role = discord.utils.get(ctx.guild.roles, name=requestedRole)
+            await member.remove_roles(role, reason="Self Requested")
+        else:
+            await ctx.send("Error, that role doesn't exist in this category")
+        return
+
+    async def toggleRestrictedRole(self, ctx, transaction, requestedRole, category):
+        """
+        Assigs a single role to a user with no checks from a category of roles
+        """
+        member = ctx.message.author
+        roles = self.roles.get(category).split(", ")
+
+        # normalize user input to title case
+        requestedRole = requestedRole.title()
+
+        if (transaction == "add") and (requestedRole in roles):
+            role = discord.utils.get(ctx.guild.roles, name=requestedRole)
+            # Allow only a single faculty role per user.
+            for category_roles in roles:
+                old_role = discord.utils.get(
+                    ctx.guild.roles, name=category_roles)
+                if old_role is not None:
+                    await member.remove_roles(old_role, reason="Self Requested")
+            await member.add_roles(role, reason="Self Requested")
+        elif (transaction == "remove") and (requestedRole in roles):
+            role = discord.utils.get(ctx.guild.roles, name=requestedRole)
+            await member.remove_roles(role, reason="Self Requested")
+        else:
+            await ctx.send("Error, that role doesn't exist in this category")
+        return
+
     @commands.command()
     async def pronoun(self, ctx, transaction, pronoun):
         """
         Self-assign a pronoun role to a user. 
         """
-        member = ctx.message.author
-
-        # normalize pronoun
-        pronoun = pronoun.title()
-
-        pronouns = self.roles.get("pronouns").split(", ")
-
-        if (transaction == "add") and (pronoun in pronouns):
-            role = discord.utils.get(ctx.guild.roles, name=pronoun)
-
-            await member.add_roles(role, reason="Self Requested")
-        elif (transaction == "remove") and (pronoun in pronouns):
-            role = discord.utils.get(ctx.guild.roles, name=pronoun)
-            await member.remove_roles(role, reason="Self Requested")
-
-        else:
-            await ctx.send("Error, that role doesn't exist")
+        await Roles.toggleRole(self, ctx, transaction, pronoun, "pronouns")
 
     @commands.command()
     async def field(self, ctx, transaction, field):
         """
         Self-assign a field of study role to a user. 
         """
-        member = ctx.message.author
-
-        # normalize field
-        field = field.title()
-
-        fields = self.roles.get("fields").split(", ")
-
-        if (transaction == "add") and (field in fields):
-            role = discord.utils.get(ctx.guild.roles, name=field)
-            await member.add_roles(role, reason="Self Requested")
-
-        elif (transaction == "remove") and (field in fields):
-            role = discord.utils.get(ctx.guild.roles, name=field)
-            await member.remove_roles(role, reason="Self Requested")
-        else:
-            await ctx.send("Error, that role doesn't exist")
+        await Roles.toggleRole(self, ctx, transaction, field, "fields")
 
     @commands.command()
     async def faculty(self, ctx, transaction, faculty):
         """
         Self-assign a faculty of study role to a user. 
         """
-        member = ctx.message.author
-
-        # normalize field
-        faculty = faculty.title()
-
-        faculties = self.roles.get("faculties").split(", ")
-
-        if (transaction == "add") and (faculty in faculties):
-            role = discord.utils.get(ctx.guild.roles, name=faculty)
-
-            # Allow only a single faculty role per user.
-            for item in faculties:
-                role_item = discord.utils.get(ctx.guild.roles, name=item)
-                if role_item is not None:
-                    await member.remove_roles(role_item,
-                                              reason="Self Requested")
-
-            await member.add_roles(role, reason="Self Requested")
-
-        elif (transaction == "remove") and (faculty in faculties):
-            role = discord.utils.get(ctx.guild.roles, name=faculty)
-            await member.remove_roles(role, reason="Self Requested")
-
-        else:
-            await ctx.send("Error, that role doesn't exist")
+        await Roles.toggleRestrictedRole(self, ctx, transaction, faculty, "faculties")
 
     @commands.command()
     async def year(self, ctx, transaction, year):
         """
         Self-assign a year of study role to a user. 
         """
-        member = ctx.message.author
-
-        # normalize year
-        year = year.title()
-
-        years = self.roles.get("years").split(", ")
-
-        if (transaction == "add") and (year in years):
-            role = discord.utils.get(ctx.guild.roles, name=year)
-
-            # Allow only a single year role per user.
-            for item in years:
-                role_item = discord.utils.get(ctx.guild.roles, name=item)
-                if role_item is not None:
-                    await member.remove_roles(role_item,
-                                              reason="Self Requested")
-
-            await member.add_roles(role, reason="Self Requested")
-
-        elif (transaction == "remove") and (year in years):
-            role = discord.utils.get(ctx.guild.roles, name=year)
-            await member.remove_roles(role, reason="Self Requested")
-
-        else:
-            await ctx.send("Error, that role doesn't exist")
+        await Roles.toggleRestrictedRole(self, ctx, transaction, year, "years")
 
     @commands.command()
     async def iam(self, ctx, transaction, generic):
         """
         Self-assign a generic role to a user. 
         """
-        member = ctx.message.author
-
-        generics = self.roles.get("generics").split(", ")
-
-        if (transaction == "add") and (generic in generics):
-            role = discord.utils.get(ctx.guild.roles, name=generic)
-            await member.add_roles(role, reason="Self Requested")
-
-        elif (transaction == "remove") and (generic in generics):
-            role = discord.utils.get(ctx.guild.roles, name=generic)
-            await member.remove_roles(role, reason="Self Requested")
-
-        else:
-            await ctx.send("Error, that role doesn't exist")
+        await Roles.toggleRole(self, ctx, transaction, generic, "generics")
 
     @commands.command()
     async def roles(self, ctx):
