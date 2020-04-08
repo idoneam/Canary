@@ -32,39 +32,45 @@ class Roles(commands.Cog):
         self.bot = bot
         self.roles = self.bot.config.roles
 
-    async def toggleRole(self, ctx, transaction, requestedRole, category):
+    async def toggle_role(self, ctx, transaction, requested_role, category):
         """
-        Assigs a single role to a user with no checks from a category of roles
+        Assigns a single role to a user with no checks from a category of roles
         """
         member = ctx.message.author
-        roles = self.roles.get(category).split(", ")
+        roles = self.roles[category]
 
         # normalize user input to title case
-        requestedRole = requestedRole.title()
+        requested_role = requested_role.title()
+        role = discord.utils.get(ctx.guild.roles, name=requested_role)
 
-        if (transaction == "add") and (requestedRole in roles):
-            role = discord.utils.get(ctx.guild.roles, name=requestedRole)
+        if (requested_role not in roles):
+            await ctx.send("Invalid Role")
+            return
+
+        if (transaction == "add"):
             await member.add_roles(role, reason="Self Requested")
-        elif (transaction == "remove") and (requestedRole in roles):
-            role = discord.utils.get(ctx.guild.roles, name=requestedRole)
+        elif (transaction == "remove"):
             await member.remove_roles(role, reason="Self Requested")
         else:
-            await ctx.send("Error, that role doesn't exist in this category")
-        return
+            await ctx.send("Must `add` or `remove` a role")
 
-    async def toggleRestrictedRole(self, ctx, transaction, requestedRole,
-                                   category):
+    async def toggle_unique_role(self, ctx, transaction, requested_role,
+                                 category):
         """
         Assigs a single role to a user with no checks from a category of roles
         """
         member = ctx.message.author
-        roles = self.roles.get(category).split(", ")
+        roles = self.roles[category]
 
         # normalize user input to title case
-        requestedRole = requestedRole.title()
+        requested_role = requested_role.title()
+        role = discord.utils.get(ctx.guild.roles, name=requested_role)
 
-        if (transaction == "add") and (requestedRole in roles):
-            role = discord.utils.get(ctx.guild.roles, name=requestedRole)
+        if (requested_role not in roles):
+            await ctx.send("Invalid Role")
+            return
+
+        if (transaction == "add"):
             # Allow only a single faculty role per user.
             for category_roles in roles:
                 old_role = discord.utils.get(ctx.guild.roles,
@@ -73,48 +79,45 @@ class Roles(commands.Cog):
                     await member.remove_roles(old_role,
                                               reason="Self Requested")
             await member.add_roles(role, reason="Self Requested")
-        elif (transaction == "remove") and (requestedRole in roles):
-            role = discord.utils.get(ctx.guild.roles, name=requestedRole)
+        elif (transaction == "remove"):
             await member.remove_roles(role, reason="Self Requested")
         else:
-            await ctx.send("Error, that role doesn't exist in this category")
-        return
+            await ctx.send("Must `add` or `remove` a role")
 
     @commands.command()
     async def pronoun(self, ctx, transaction, pronoun):
         """
         Self-assign a pronoun role to a user. 
         """
-        await Roles.toggleRole(self, ctx, transaction, pronoun, "pronouns")
+        await self.toggle_role(ctx, transaction, pronoun, "pronouns")
 
     @commands.command()
     async def field(self, ctx, transaction, field):
         """
         Self-assign a field of study role to a user. 
         """
-        await Roles.toggleRole(self, ctx, transaction, field, "fields")
+        await self.toggle_role(ctx, transaction, field, "fields")
 
     @commands.command()
     async def faculty(self, ctx, transaction, faculty):
         """
         Self-assign a faculty of study role to a user. 
         """
-        await Roles.toggleRestrictedRole(self, ctx, transaction, faculty,
-                                         "faculties")
+        await self.toggle_unique_role(ctx, transaction, faculty, "faculties")
 
     @commands.command()
     async def year(self, ctx, transaction, year):
         """
         Self-assign a year of study role to a user. 
         """
-        await Roles.toggleRestrictedRole(self, ctx, transaction, year, "years")
+        await Roles.toggle_unique_role(self, ctx, transaction, year, "years")
 
     @commands.command()
     async def iam(self, ctx, transaction, generic):
         """
         Self-assign a generic role to a user. 
         """
-        await Roles.toggleRole(self, ctx, transaction, generic, "generics")
+        await self.toggle_role(ctx, transaction, generic, "generics")
 
     @commands.command()
     async def roles(self, ctx):
