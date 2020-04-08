@@ -101,15 +101,25 @@ Run `poetry run python Main.py` in your shell. Ensure that your Discord token is
 ### Docker Container
 A Docker Container is provided for easier development. 
 #### Building the Image
+Freeze requirements to a requirements.txt 
+
+```
+$ poetry export -f requirements.txt > requirements.txt
+```
+
 From within the root of the repository:
+
 ```
 $ docker build -t canary:latest .
 ```
+
 #### Running the Container
 From within the root of the repository:
+
 ```
 $ docker run -v $(pwd):/mnt/canary canary:latest
 ```
+
 Optionally provide the `-d` flag to run the container in detached state.
 
 Note that the current host directory is mounted into the container, any changes to log files, pickles, configuration are reflected 

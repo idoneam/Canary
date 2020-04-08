@@ -7,10 +7,8 @@ RUN pip install poetry
 RUN git config --global user.name "Martlet"
 RUN git config --global user.email "idoneam.collective@gmail.com" 
 
-# Freeze and install requirements with pip to use Docker cache.
-COPY pyproject.toml /mnt/
-COPY poetry.lock /mnt/
-RUN cd /mnt && poetry export -f requirements.txt > requirements.txt
+# Install requirements with pip to use Docker cache independent of project metadata
+COPY requirements.txt /mnt/
 RUN pip3 install -r /mnt/requirements.txt
 
 WORKDIR /mnt/canary
