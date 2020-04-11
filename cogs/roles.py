@@ -21,9 +21,6 @@
 import discord
 from discord import utils
 from discord.ext import commands
-
-import codecs
-import configparser
 from .utils.paginator import Pages
 
 
@@ -32,52 +29,35 @@ class Roles(commands.Cog):
         self.bot = bot
         self.roles = self.bot.config.roles
 
-    async def toggle_role(self, ctx, transaction, requested_role, category):
+    async def toggle_role(self,
+                          ctx,
+                          transaction,
+                          requested_role,
+                          category,
+                          exclusive=False):
         """
         Assigns a single role to a user with no checks from a category of roles
         """
         member = ctx.message.author
-        roles = self.roles[category]
+        roles = self.roles[category].split(", ")
 
         # normalize user input to title case
         requested_role = requested_role.title()
-        role = discord.utils.get(ctx.guild.roles, name=requested_role)
+        role = utils.get(ctx.guild.roles, name=requested_role)
 
         if (requested_role not in roles):
             await ctx.send("Invalid Role")
             return
 
         if (transaction == "add"):
-            await member.add_roles(role, reason="Self Requested")
-        elif (transaction == "remove"):
-            await member.remove_roles(role, reason="Self Requested")
-        else:
-            await ctx.send("Must `add` or `remove` a role")
-
-    async def toggle_unique_role(self, ctx, transaction, requested_role,
-                                 category):
-        """
-        Assigs a single role to a user with no checks from a category of roles
-        """
-        member = ctx.message.author
-        roles = self.roles[category]
-
-        # normalize user input to title case
-        requested_role = requested_role.title()
-        role = discord.utils.get(ctx.guild.roles, name=requested_role)
-
-        if (requested_role not in roles):
-            await ctx.send("Invalid Role")
-            return
-
-        if (transaction == "add"):
-            # Allow only a single faculty role per user.
-            for category_roles in roles:
-                old_role = discord.utils.get(ctx.guild.roles,
-                                             name=category_roles)
-                if old_role is not None:
-                    await member.remove_roles(old_role,
-                                              reason="Self Requested")
+            # For roles defined as "exclusive" only one in that category may
+            # be applied at a time.
+            if (exclusive):
+                for category_roles in roles:
+                    old_role = utils.get(ctx.guild.roles, name=category_roles)
+                    if old_role is not None:
+                        await member.remove_roles(old_role,
+                                                  reason="Self Requested")
             await member.add_roles(role, reason="Self Requested")
         elif (transaction == "remove"):
             await member.remove_roles(role, reason="Self Requested")
@@ -103,14 +83,14 @@ class Roles(commands.Cog):
         """
         Self-assign a faculty of study role to a user. 
         """
-        await self.toggle_unique_role(ctx, transaction, faculty, "faculties")
+        await self.toggle_role(ctx, transaction, faculty, "faculties", True)
 
     @commands.command()
     async def year(self, ctx, transaction, year):
         """
         Self-assign a year of study role to a user. 
         """
-        await Roles.toggle_unique_role(self, ctx, transaction, year, "years")
+        await Roles.toggle_role(self, ctx, transaction, year, "years", True)
 
     @commands.command()
     async def iam(self, ctx, transaction, generic):
