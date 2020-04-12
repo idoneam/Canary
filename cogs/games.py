@@ -42,6 +42,10 @@ class Games(commands.Cog):
                                 to each roll rather than the sum of all rolls.
                                 All parameters are optional.
                                 Defaults to rolling one 20-sided die.
+                                
+                                Dice can have 1 to 100 sides
+                                Rolls 1 to 10000 dice at once
+                                Modifier can be any int between -100 and +100
           Examples:
            roll             rolls a d20
            roll d6          rolls one 6-sided die
@@ -82,10 +86,12 @@ class Games(commands.Cog):
             resultsmsg.add_field(name='Rolls',
                                  value=str(roll_list)[1:-1],
                                  inline=False)
-        if repeat > 1:
+        # Want the modified sum to be shown even for single rolls:
+        if repeat > 1 or mod != 0:
             resultsmsg.add_field(name='Sum', value=total)
-            resultsmsg.add_field(name='Minimum', value=minimum)
-            resultsmsg.add_field(name='Maximum', value=maximum)
+            if repeat > 1:
+                resultsmsg.add_field(name='Minimum', value=minimum)
+                resultsmsg.add_field(name='Maximum', value=maximum)
         await ctx.send(embed=resultsmsg)
 
 
