@@ -45,21 +45,21 @@ class Roles(commands.Cog):
         requested_role = requested_role.title()
         role = utils.get(ctx.guild.roles, name=requested_role)
 
-        if (requested_role not in roles):
+        if requested_role not in roles:
             await ctx.send("Invalid Role")
             return
 
-        if (transaction == "add"):
+        if transaction == "add":
             # For roles defined as "exclusive" only one in that category may
             # be applied at a time.
-            if (exclusive):
+            if exclusive:
                 for category_roles in roles:
                     old_role = utils.get(ctx.guild.roles, name=category_roles)
                     if old_role is not None:
                         await member.remove_roles(old_role,
                                                   reason="Self Requested")
             await member.add_roles(role, reason="Self Requested")
-        elif (transaction == "remove"):
+        elif transaction == "remove":
             await member.remove_roles(role, reason="Self Requested")
         else:
             await ctx.send("Must `add` or `remove` a role")
@@ -121,7 +121,7 @@ class Roles(commands.Cog):
                 members = role.members
                 break
 
-        if (members is None):
+        if members is None:
             return
 
         names = list(map(lambda m: str(m) + "\n", members))
@@ -129,7 +129,7 @@ class Roles(commands.Cog):
                                                                num=len(names))
 
         # TODO remove for paginator take empty list for embed
-        if (len(names) == 0):
+        if len(names) == 0:
             em = discord.Embed(title=header, colour=0xDA291C)
             em.set_footer(text="Page 01 of 01")
             await ctx.send(embed=em)
