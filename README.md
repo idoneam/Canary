@@ -5,9 +5,9 @@ Canary is a Python3 bot designed for the McGill University Community Discord Ser
 
 ## Build Statuses
 
-| Master |  [![Build Status](https://travis-ci.org/idoneam/Canary.svg?branch=master)](https://travis-ci.org/idoneam/Canary)  |
-|--------|---|
-| **Dev**    |  [![Build Status](https://travis-ci.org/idoneam/Canary.svg?branch=dev)](https://travis-ci.org/idoneam/Canary) |
+| Master  | [![Build Status](https://travis-ci.org/idoneam/Canary.svg?branch=master)](https://travis-ci.org/idoneam/Canary) |
+| ------- | --------------------------------------------------------------------------------------------------------------- |
+| **Dev** | [![Build Status](https://travis-ci.org/idoneam/Canary.svg?branch=dev)](https://travis-ci.org/idoneam/Canary)    |
 
 ## Installation
 
@@ -90,6 +90,12 @@ You must set certain values in the `config.ini` file, in particular your Discor
     * `RollReturns`: The multiplier return for each interval. For example, a value of `0, 2, 4, 10` with the intervals
       described above gives a 0x return for `random <= 66`, a 2x return for `66 < random <= 90`, a 4x return for
       `90 < random <= 99`, and a 10x return for `random == 100`.
+* `[Roles]`:
+    * `Pronouns`: Comma seperated list of pronoun roles in server.
+    * `Fields`: Comma seperated list of field of study roles in server.
+    * `Faculties`: Comma seperated list of faculty roles in server.
+    * `Years`: Comma seperated list of year roles in server.
+    * `Generics`: Comma seperated list of generic or meme roles in server.
 </p>
 </details>
 
