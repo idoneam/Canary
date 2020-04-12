@@ -55,6 +55,8 @@ class Parser:
         self.developer_role = config['Server']['DeveloperRole']
         self.reception_channel = config['Server']['ReceptionChannel']
 
+        self.repository = config['Meta']['Repository']
+
         # Logging
         self.log_file = config['Logging']['LogFile']
         loglevel = config['Logging']['LogLevel'].lower()
