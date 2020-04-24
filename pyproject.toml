@@ -23,5 +23,5 @@ urllib3 = ">=1.25.3"
 feedparser = "*"
 
 [tool.poetry.dev-dependencies]
-yapf = "==0.29.0"
+yapf = "==0.30.0"
 pytest = "^5.4.1"
