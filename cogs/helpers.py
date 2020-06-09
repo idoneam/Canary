@@ -318,8 +318,8 @@ class Helpers(commands.Cog):
                     if previous.name == 'p':
                         headers.append(previous.get_text())
                     else:
-                        headers.append("...") # just in case the layout changes again,
-                                              # at least the whole thing won't break
+                        # just in case the layout changes again, at least the whole thing won't break
+                        headers.append("...")
 
             node = node.next_sibling
 
