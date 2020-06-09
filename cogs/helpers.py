@@ -299,33 +299,29 @@ class Helpers(commands.Cog):
 
         headers = []
         sections = []
-        subsection = []
 
         if term == 'Fall':
             node = text[0].find_all('h2')[0].next_sibling
         else:
             node = text[0].find_all('h2')[1].next_sibling
 
-        # Iterate through the tags and gather h3 headings in one list and the
-        # text between them in another.
+        # Iterate through the tags and find unordered lists.
+        # The content of each list will become the body of each section
+        # while the contents of the <p> above it will become the headers.
         while node:
             if hasattr(node, 'name'):
                 if node.name == 'h2' and term == 'Fall':
                     break
-                elif node.name == 'h3':
-                    headers.append(node.get_text())
-                    if subsection:
-                        sections.append(subsection)
-                    subsection = []
-                else:
-                    nodestr = str(node)
-                    if nodestr[0] != '\n' and nodestr and nodestr != ' ':
-                        subsection.append(node.get_text().replace('\xa0', ' '))
+                elif node.name == 'ul':
+                    sections.append(node.get_text())
+                    previous = node.previous_sibling.previous_sibling
+                    if previous.name == 'p':
+                        headers.append(previous.get_text())
+                    else:
+                        headers.append("...") # just in case the layout changes again,
+                                              # at least the whole thing won't break
 
             node = node.next_sibling
-
-        if subsection:
-            sections.append(subsection)
 
         em = discord.Embed(title='McGill Important Dates {0} {1}'.format(
             term, str(current_year)),
@@ -333,17 +329,7 @@ class Helpers(commands.Cog):
                            colour=0xDA291C)
 
         for i in range(len(headers)):
-            if i == 2:
-                continue
-
-            if i == 1:
-                value = ' '.join(sections[i][1:-1])
-            elif i == 3:
-                value = ' '.join(sections[i][1:-2])
-            else:
-                value = ' '.join(sections[i][1:])
-
-            em.add_field(name=headers[i], value=value, inline=False)
+            em.add_field(name=headers[i], value=sections[i], inline=False)
 
         await ctx.send(embed=em)
 
