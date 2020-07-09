@@ -52,6 +52,11 @@ EMOJI = {
 NUMBERS = (EMOJI["zero"], EMOJI["one"], EMOJI["two"], EMOJI["three"],
            EMOJI["four"], EMOJI["five"])
 
+CUSTOM_REACTION_TIMEOUT = 'Custom Reaction timed out. ' \
+                          'You may want to run the command again.'
+STOP_TEXT = "stop"
+LOADING = "Loading..."
+
 
 class CustomReactions(commands.Cog):
     # Written by @le-potate
@@ -155,8 +160,7 @@ class CustomReactions(commands.Cog):
                                                          check=reaction_check,
                                                          timeout=60)
             except asyncio.TimeoutError:
-                embed = discord.Embed(title='Custom Reaction timed out. '
-                                      'You may want to run the command again.')
+                embed = discord.Embed(title=CUSTOM_REACTION_TIMEOUT)
                 await message.clear_reactions()
                 await message.edit(embed=embed, delete_after=60)
                 return
@@ -168,8 +172,7 @@ class CustomReactions(commands.Cog):
                                               check=msg_check,
                                               timeout=60)
             except asyncio.TimeoutError:
-                embed = discord.Embed(title='Custom Reaction timed out. '
-                                      'You may want to run the command again.')
+                embed = discord.Embed(title=CUSTOM_REACTION_TIMEOUT)
                 await message.clear_reactions()
                 await message.edit(embed=embed, delete_after=60)
                 return
@@ -244,11 +247,11 @@ class CustomReactions(commands.Cog):
             if is_moderator:
                 title = "Add a custom reaction"
                 footer = "{} is currently adding a custom reaction. \n" \
-                         "Write 'stop' to cancel.".format(author)
+                         "Write '{}' to cancel.".format(author, STOP_TEXT)
             else:
                 title = "Propose a custom reaction"
                 footer = "{} is currently proposing a custom reaction. \n" \
-                         "Write 'stop' to cancel.".format(author)
+                         "Write '{}' to cancel.".format(author, STOP_TEXT)
             description = "Write the prompt the bot will react to"
             embed = discord.Embed(title=title, description=description)
             embed.set_footer(text=footer, icon_url=author.avatar_url)
@@ -256,7 +259,7 @@ class CustomReactions(commands.Cog):
             prompt_message = await wait_for_message(message)
             if prompt_message is None:
                 return
-            elif prompt_message.lower() == "stop":
+            elif prompt_message.lower() == STOP_TEXT:
                 await leave(message)
                 return
             description = "Prompt: {}\nWrite the response the bot will send"\
@@ -267,10 +270,10 @@ class CustomReactions(commands.Cog):
             response = await wait_for_message(message)
             if response is None:
                 return
-            elif response.lower() == "stop":
+            elif response.lower() == STOP_TEXT:
                 await leave(message)
                 return
-            embed = discord.Embed(title="Loading...")
+            embed = discord.Embed(title=LOADING)
             await message.edit(embed=embed)
             description = "Prompt: {}\nResponse: {}\nReact with the options " \
                           "you want and click {} when you are ready\n"\
@@ -384,7 +387,7 @@ class CustomReactions(commands.Cog):
                 "values": prompts_and_responses
             }
 
-            embed = discord.Embed(title="Loading...")
+            embed = discord.Embed(title=LOADING)
             await message.edit(embed=embed)
 
             await add_control_reactions(message)
@@ -512,7 +515,7 @@ class CustomReactions(commands.Cog):
                               display_option=(2, 10),
                               editable_content_emoji=EMOJI["ok"],
                               return_user_on_edit=True)
-                embed = discord.Embed(title="Loading...")
+                embed = discord.Embed(title=LOADING)
                 await message.edit(embed=embed)
 
                 await add_control_reactions(message)
@@ -521,7 +524,7 @@ class CustomReactions(commands.Cog):
 
         async def information_on_react(message, current_list, number,
                                        proposals):
-            embed = discord.Embed(title="Loading...")
+            embed = discord.Embed(title=LOADING)
             await message.edit(embed=embed)
 
             custom_react = current_list[number - 1]
@@ -631,11 +634,11 @@ class CustomReactions(commands.Cog):
                     title = "Modify a custom reaction proposal"
                     footer = "{} is currently modifying " \
                              "a custom reaction proposal. \n" \
-                             "Write 'stop' to cancel.".format(user)
+                             "Write '{}' to cancel.".format(user, STOP_TEXT)
                 else:
                     title = "Modify a custom reaction"
                     footer = "{} is currently modifying a custom reaction. " \
-                             "\nWrite 'stop' to cancel.".format(user)
+                             "\nWrite '{}' to cancel.".format(user, STOP_TEXT)
                 description = "Please enter the new prompt"
                 embed = discord.Embed(title=title, description=description)
                 embed.set_footer(text=footer, icon_url=user.avatar_url)
@@ -671,7 +674,7 @@ class CustomReactions(commands.Cog):
 
                 if prompt is None:
                     return
-                elif prompt.lower() == "stop":
+                elif prompt.lower() == STOP_TEXT:
                     await leave(message)
                     return
 
@@ -699,11 +702,11 @@ class CustomReactions(commands.Cog):
                     title = "Modify a custom reaction proposal"
                     footer = "{} is currently modifying a " \
                              "custom reaction proposal. \n" \
-                             "Write 'stop' to cancel.".format(user)
+                             "Write '{}' to cancel.".format(user, STOP_TEXT)
                 else:
                     title = "Modify a custom reaction"
                     footer = "{} is currently modifying a custom reaction. " \
-                             "\nWrite 'stop' to cancel.".format(user)
+                             "\nWrite '{}' to cancel.".format(user, STOP_TEXT)
                 description = "Please enter the new response"
                 embed = discord.Embed(title=title, description=description)
                 embed.set_footer(text=footer, icon_url=user.avatar_url)
@@ -739,7 +742,7 @@ class CustomReactions(commands.Cog):
 
                 if response is None:
                     return
-                elif response.lower() == "stop":
+                elif response.lower() == STOP_TEXT:
                     await leave(message)
                     return
 
@@ -763,7 +766,7 @@ class CustomReactions(commands.Cog):
                 time.sleep(5)
 
             if reaction.emoji == EMOJI["three"]:
-                embed = discord.Embed(title="Loading...")
+                embed = discord.Embed(title=LOADING)
                 await message.edit(embed=embed)
                 if proposals:
                     title = "Modify a custom reaction proposal. " \
@@ -902,7 +905,7 @@ class CustomReactions(commands.Cog):
                     return
 
             if reaction.emoji == EMOJI["four"]:
-                embed = discord.Embed(title="Loading...")
+                embed = discord.Embed(title=LOADING)
                 await message.edit(embed=embed)
                 if proposals:
                     title = "Modify a custom reaction proposal. " \
@@ -1037,7 +1040,7 @@ class CustomReactions(commands.Cog):
                     return
 
             if reaction.emoji == EMOJI["five"]:
-                embed = discord.Embed(title="Loading...")
+                embed = discord.Embed(title=LOADING)
                 await message.edit(embed=embed)
                 if proposals:
                     title = "Modify a custom reaction proposal. " \
@@ -1219,7 +1222,7 @@ class CustomReactions(commands.Cog):
             await message.delete()
 
         initial_message = await ctx.send(embed=discord.Embed(
-            title="Loading..."))
+            title=LOADING))
         is_moderator = (discord.utils.get(ctx.author.roles,
                                           name=self.bot.config.moderator_role)
                         is not None)
