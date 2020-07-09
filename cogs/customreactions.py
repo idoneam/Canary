@@ -49,6 +49,9 @@ EMOJI = {
     "five": "5️⃣",
 }
 
+NUMBERS = (EMOJI["zero"], EMOJI["one"], EMOJI["two"], EMOJI["three"],
+           EMOJI["four"], EMOJI["five"])
+
 
 class CustomReactions(commands.Cog):
     # Written by @le-potate
@@ -114,7 +117,6 @@ class CustomReactions(commands.Cog):
                 await message.author.send(reaction[2])
             else:
                 await message.channel.send(reaction[2])
-            return
 
     @commands.command(
         aliases=['customreaction', 'customreacts', 'customreact'])
@@ -175,6 +177,20 @@ class CustomReactions(commands.Cog):
             await msg.delete()
             return content
 
+        async def add_multiple_reactions(message, reactions):
+            for reaction in reactions:
+                await message.add_reaction(reaction)
+
+        async def add_yes_or_no_reactions(message):
+            await add_multiple_reactions(
+                message, (EMOJI["zero"], EMOJI["one"], EMOJI["stop_button"]))
+
+        async def add_control_reactions(message):
+            await add_multiple_reactions(
+                message, (EMOJI["rewind"], EMOJI["arrow_backward"],
+                          EMOJI["arrow_forward"], EMOJI["fast_forward"],
+                          EMOJI["stop_button"], EMOJI["ok"]))
+
         async def create_assistant(message, is_moderator):
             if is_moderator:
                 description = "{} Add a new custom reaction\n" \
@@ -198,12 +214,11 @@ class CustomReactions(commands.Cog):
                              "(If a list is chosen, all users will be able "
                              "to interact with it)".format(author),
                              icon_url=author.avatar_url)
-            current_options.extend([
-                EMOJI["new"], EMOJI["mag"], EMOJI["pencil"],
-                EMOJI["stop_button"]
-            ])
-            for option in current_options:
-                await message.add_reaction(option)
+            current_options.extend((EMOJI["new"], EMOJI["mag"],
+                                    EMOJI["pencil"], EMOJI["stop_button"]))
+            await add_multiple_reactions(
+                message, (EMOJI["new"], EMOJI["mag"], EMOJI["pencil"],
+                          EMOJI["stop_button"]))
             await message.edit(embed=embed)
             try:
                 reaction, user = await wait_for_reaction(message)
@@ -267,13 +282,12 @@ class CustomReactions(commands.Cog):
                 .format(prompt_message, response, EMOJI["ok"], EMOJI["one"],
                         EMOJI["two"], EMOJI["three"])
             embed = discord.Embed(title=title, description=description)
+            footer = "{} is currently proposing a custom reaction."\
+                     .format(author)
             embed.set_footer(text=footer, icon_url=author.avatar_url)
-            current_options.extend([EMOJI["ok"], EMOJI["stop_button"]])
-            await message.add_reaction(EMOJI["one"])
-            await message.add_reaction(EMOJI["two"])
-            await message.add_reaction(EMOJI["three"])
-            await message.add_reaction(EMOJI["ok"])
-            await message.add_reaction(EMOJI["stop_button"])
+            current_options.extend((EMOJI["ok"], EMOJI["stop_button"]))
+            await add_multiple_reactions(
+                message, NUMBERS[1:4] + (EMOJI["ok"], EMOJI["stop_button"]))
             await message.edit(embed=embed)
             try:
                 reaction, user = await wait_for_reaction(message)
@@ -318,7 +332,7 @@ class CustomReactions(commands.Cog):
                 if delete:
                     description = "{}\n-Will delete the " \
                                   "message that calls the reaction"\
-                                  .format( description)
+                                  .format(description)
                 if anywhere:
                     description = "{}\n-Will activate the custom reaction " \
                                   "if the prompt is anywhere in a message"\
@@ -335,7 +349,7 @@ class CustomReactions(commands.Cog):
 
                 return
 
-            if reaction_emoji == EMOJI["stop_button"]:
+            if reaction.emoji == EMOJI["stop_button"]:
                 await leave(message)
                 return
 
@@ -373,12 +387,7 @@ class CustomReactions(commands.Cog):
             embed = discord.Embed(title="Loading...")
             await message.edit(embed=embed)
 
-            await message.add_reaction(EMOJI["rewind"])
-            await message.add_reaction(EMOJI["arrow_backward"])
-            await message.add_reaction(EMOJI["arrow_forward"])
-            await message.add_reaction(EMOJI["fast_forward"])
-            await message.add_reaction(EMOJI["stop_button"])
-            await message.add_reaction(EMOJI["ok"])
+            await add_control_reactions(message)
 
             if proposals:
                 title = "Current custom reaction proposals\n" \
@@ -506,12 +515,7 @@ class CustomReactions(commands.Cog):
                 embed = discord.Embed(title="Loading...")
                 await message.edit(embed=embed)
 
-                await message.add_reaction(EMOJI["rewind"])
-                await message.add_reaction(EMOJI["arrow_backward"])
-                await message.add_reaction(EMOJI["arrow_forward"])
-                await message.add_reaction(EMOJI["fast_forward"])
-                await message.add_reaction(EMOJI["stop_button"])
-                await message.add_reaction(EMOJI["ok"])
+                await add_control_reactions(message)
 
                 user_modifying = await p.paginate()
 
@@ -582,28 +586,21 @@ class CustomReactions(commands.Cog):
             current_options.clear()
             await message.clear_reactions()
             if proposals:
-                current_options.extend([
-                    EMOJI["one"], EMOJI["two"], EMOJI["three"], EMOJI["four"],
-                    EMOJI["five"], EMOJI["white_check_mark"], EMOJI["x"],
-                    EMOJI["stop_button"]
-                ])
+                current_options.extend(NUMBERS[1:6] +
+                                       (EMOJI["white_check_mark"], EMOJI["x"],
+                                        EMOJI["stop_button"]))
             else:
-                current_options.extend([
-                    EMOJI["one"], EMOJI["two"], EMOJI["three"], EMOJI["four"],
-                    EMOJI["five"], EMOJI["put_litter_in_its_place"],
-                    EMOJI["stop_button"]
-                ])
-            await message.add_reaction(EMOJI["one"])
-            await message.add_reaction(EMOJI["two"])
-            await message.add_reaction(EMOJI["three"])
-            await message.add_reaction(EMOJI["four"])
-            await message.add_reaction(EMOJI["five"])
+                current_options.extend(NUMBERS[1:6] +
+                                       (EMOJI["put_litter_in_its_place"],
+                                        EMOJI["stop_button"]))
             if proposals:
-                await message.add_reaction(EMOJI["white_check_mark"])
-                await message.add_reaction(EMOJI["x"])
+                await add_multiple_reactions(
+                    message, NUMBERS[1:6] + (EMOJI["white_check_mark"],
+                                             EMOJI["x"], MOJI["stop_button"]))
             else:
-                await message.add_reaction(EMOJI["put_litter_in_its_place"])
-            await message.add_reaction(EMOJI["stop_button"])
+                await add_multiple_reactions(
+                    message, NUMBERS[1:6] +
+                    (EMOJI["put_litter_in_its_place"], EMOJI["stop_button"]))
             await message.edit(embed=embed)
 
             try:
@@ -777,8 +774,7 @@ class CustomReactions(commands.Cog):
                     title = "Modify a custom reaction. React with the " \
                             "option you want"
                     footer = "{} is currently modifying a " \
-                             "custom reaction. \n".format(
-                        user)
+                             "custom reaction. \n".format(user)
                 description = "Should the message that calls the " \
                               "reaction be deleted?\n" \
                               "{} No\n" \
@@ -787,11 +783,8 @@ class CustomReactions(commands.Cog):
                 embed.set_footer(text=footer, icon_url=user.avatar_url)
                 current_options.clear()
                 await message.clear_reactions()
-                current_options.extend(
-                    [EMOJI["zero"], EMOJI["one"], EMOJI["stop_button"]])
-                await message.add_reaction(EMOJI["zero"])
-                await message.add_reaction(EMOJI["one"])
-                await message.add_reaction(EMOJI["stop_button"])
+                current_options.extend((NUMBERS[0:2], EMOJI["stop_button"]))
+                await add_yes_or_no_reactions(message)
                 await message.edit(embed=embed)
                 reaction = None
                 try:
@@ -929,11 +922,8 @@ class CustomReactions(commands.Cog):
                 embed.set_footer(text=footer, icon_url=user.avatar_url)
                 current_options.clear()
                 await message.clear_reactions()
-                current_options.extend(
-                    [EMOJI["zero"], EMOJI["one"], EMOJI["stop_button"]])
-                await message.add_reaction(EMOJI["zero"])
-                await message.add_reaction(EMOJI["one"])
-                await message.add_reaction(EMOJI["stop_button"])
+                current_options.extend((NUMBERS[0:2], EMOJI["stop_button"]))
+                await add_yes_or_no_reactions(message)
                 await message.edit(embed=embed)
                 reaction = None
                 try:
@@ -1053,8 +1043,7 @@ class CustomReactions(commands.Cog):
                     title = "Modify a custom reaction proposal. " \
                             "React with the option you want"
                     footer = "{} is currently modifying a custom reaction " \
-                             "proposal. \n".format(
-                        user)
+                             "proposal. \n".format(user)
                 else:
                     title = "Modify a custom reaction. React with the " \
                             "option you want"
@@ -1069,11 +1058,8 @@ class CustomReactions(commands.Cog):
                 embed.set_footer(text=footer, icon_url=user.avatar_url)
                 current_options.clear()
                 await message.clear_reactions()
-                current_options.extend(
-                    [EMOJI["zero"], EMOJI["one"], EMOJI["stop_button"]])
-                await message.add_reaction(EMOJI["zero"])
-                await message.add_reaction(EMOJI["one"])
-                await message.add_reaction(EMOJI["stop_button"])
+                current_options.extend((NUMBERS[0:2], EMOJI["stop_button"]))
+                await add_yes_or_no_reactions(message)
                 await message.edit(embed=embed)
                 reaction = None
                 try:
