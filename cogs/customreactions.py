@@ -28,8 +28,29 @@ import sqlite3
 from .utils.paginator import Pages
 import time
 
+EMOJI = {
+    "new": "🆕",
+    "mag": "🔍",
+    "pencil": "📝",
+    "stop_button": "⏹",
+    "ok": "🆗",
+    "white_check_mark": "✅",
+    "x": "❌",
+    "put_litter_in_its_place": "🚮",
+    "rewind": "⏪",
+    "arrow_backward": "◀",
+    "arrow_forward": "▶",
+    "fast_forward": "⏩",
+    "zero": "0️⃣",
+    "one": "1️⃣",
+    "two": "2️⃣",
+    "three": "3️⃣",
+    "four": "4️⃣",
+    "five": "5️⃣",
+}
 
-class Customreactions(commands.Cog):
+
+class CustomReactions(commands.Cog):
     # Written by @le-potate
     def __init__(self, bot):
         self.bot = bot
@@ -132,10 +153,8 @@ class Customreactions(commands.Cog):
                                                          check=reaction_check,
                                                          timeout=60)
             except asyncio.TimeoutError:
-                embed = discord.Embed(
-                    title=
-                    'Custom Reaction timed out. You may want to run the command again.'
-                )
+                embed = discord.Embed(title='Custom Reaction timed out. '
+                                      'You may want to run the command again.')
                 await message.clear_reactions()
                 await message.edit(embed=embed, delete_after=60)
                 return
@@ -147,10 +166,8 @@ class Customreactions(commands.Cog):
                                               check=msg_check,
                                               timeout=60)
             except asyncio.TimeoutError:
-                embed = discord.Embed(
-                    title=
-                    'Custom Reaction timed out. You may want to run the command again.'
-                )
+                embed = discord.Embed(title='Custom Reaction timed out. '
+                                      'You may want to run the command again.')
                 await message.clear_reactions()
                 await message.edit(embed=embed, delete_after=60)
                 return
@@ -160,23 +177,31 @@ class Customreactions(commands.Cog):
 
         async def create_assistant(message, is_moderator):
             if is_moderator:
-                description = "🆕 Add a new custom reaction\n" \
-                              "🔍 See the list of current reactions and modify them\n" \
-                              "📝 See the list of proposed reactions ({}) and approve or reject them"\
-                              .format(get_number_of_proposals())
+                description = "{} Add a new custom reaction\n" \
+                              "{} See the list of current reactions " \
+                              "and modify them\n" \
+                              "{} See the list of proposed reactions ({}) " \
+                              "and approve or reject them"\
+                              .format(EMOJI["new"], EMOJI["mag"],
+                                      EMOJI["pencil"],
+                                      get_number_of_proposals())
             else:
-                description = "🆕 Propose a new custom reaction\n" \
-                              "🔍 See the list of current reactions\n" \
-                              "📝 See the list of proposed reactions ({})"\
-                              .format(get_number_of_proposals())
+                description = "{} Propose a new custom reaction\n" \
+                              "{} See the list of current reactions\n" \
+                              "{} See the list of proposed reactions ({})"\
+                              .format(EMOJI["new"], EMOJI["mag"],
+                                      EMOJI["pencil"],
+                                      get_number_of_proposals())
             embed = discord.Embed(title="Custom Reactions",
                                   description=description)
-            embed.set_footer(
-                text="{}: Click on an emoji to choose an option "
-                "(If a list is chosen, all users will be able to interact with it)"
-                .format(author),
-                icon_url=author.avatar_url)
-            current_options.extend(["🆕", "🔍", "📝", "⏹"])
+            embed.set_footer(text="{}: Click on an emoji to choose an option "
+                             "(If a list is chosen, all users will be able "
+                             "to interact with it)".format(author),
+                             icon_url=author.avatar_url)
+            current_options.extend([
+                EMOJI["new"], EMOJI["mag"], EMOJI["pencil"],
+                EMOJI["stop_button"]
+            ])
             for option in current_options:
                 await message.add_reaction(option)
             await message.edit(embed=embed)
@@ -187,16 +212,16 @@ class Customreactions(commands.Cog):
             current_options.clear()
             await message.clear_reactions()
             # Add/Propose a new custom reaction
-            if reaction.emoji == "🆕":
+            if reaction.emoji == EMOJI["new"]:
                 await addcustomreact(message, is_moderator)
                 return
-            if reaction.emoji == "🔍":
+            if reaction.emoji == EMOJI["mag"]:
                 await listcustomreacts(message, proposals=False)
                 return
-            if reaction.emoji == "📝":
+            if reaction.emoji == EMOJI["pencil"]:
                 await listcustomreacts(message, proposals=True)
                 return
-            if reaction.emoji == "⏹":
+            if reaction.emoji == EMOJI["stop_button"]:
                 await leave(message)
                 return
 
@@ -219,8 +244,8 @@ class Customreactions(commands.Cog):
             elif prompt_message.lower() == "stop":
                 await leave(message)
                 return
-            description = "Prompt: {}\nWrite the response the bot will send".format(
-                prompt_message)
+            description = "Prompt: {}\nWrite the response the bot will send"\
+                .format(prompt_message)
             embed = discord.Embed(title=title, description=description)
             embed.set_footer(text=footer, icon_url=author.avatar_url)
             await message.edit(embed=embed)
@@ -232,26 +257,30 @@ class Customreactions(commands.Cog):
                 return
             embed = discord.Embed(title="Loading...")
             await message.edit(embed=embed)
-            description = "Prompt: {}\nResponse: {}\nReact with the options you want and click 🆗 when you are ready\n"\
-                          "1️⃣ Delete the message that calls the reaction\n" \
-                          "2️⃣ Activate the custom reaction if the prompt is anywhere in a message \n" \
-                          "3️⃣ React in the DMs of the user who calls the reaction instead of the channel\n"\
-                .format(prompt_message, response)
+            description = "Prompt: {}\nResponse: {}\nReact with the options " \
+                          "you want and click {} when you are ready\n"\
+                          "{} Delete the message that calls the reaction\n" \
+                          "{} Activate the custom reaction if the prompt is " \
+                          "anywhere in a message \n" \
+                          "{} React in the DMs of the user who calls the " \
+                          "reaction instead of the channel\n"\
+                .format(prompt_message, response, EMOJI["ok"], EMOJI["one"],
+                        EMOJI["two"], EMOJI["three"])
             embed = discord.Embed(title=title, description=description)
             embed.set_footer(text=footer, icon_url=author.avatar_url)
-            current_options.extend(["🆗", "⏹"])
-            await message.add_reaction("1️⃣")
-            await message.add_reaction("2️⃣")
-            await message.add_reaction("3️⃣")
-            await message.add_reaction("🆗")
-            await message.add_reaction("⏹")
+            current_options.extend([EMOJI["ok"], EMOJI["stop_button"]])
+            await message.add_reaction(EMOJI["one"])
+            await message.add_reaction(EMOJI["two"])
+            await message.add_reaction(EMOJI["three"])
+            await message.add_reaction(EMOJI["ok"])
+            await message.add_reaction(EMOJI["stop_button"])
             await message.edit(embed=embed)
             try:
                 reaction, user = await wait_for_reaction(message)
             except TypeError:
                 return
 
-            if reaction.emoji == "🆗":
+            if reaction.emoji == EMOJI["ok"]:
                 delete = False
                 anywhere = False
                 dm = False
@@ -259,11 +288,11 @@ class Customreactions(commands.Cog):
                 for reaction in cache_msg.reactions:
                     users_who_reacted = await reaction.users().flatten()
                     if author in users_who_reacted:
-                        if reaction.emoji == "1️⃣":
+                        if reaction.emoji == EMOJI["one"]:
                             delete = True
-                        if reaction.emoji == "2️⃣":
+                        if reaction.emoji == EMOJI["two"]:
                             anywhere = True
-                        if reaction.emoji == "3️⃣":
+                        if reaction.emoji == EMOJI["three"]:
                             dm = True
 
                 current_options.clear()
@@ -273,8 +302,9 @@ class Customreactions(commands.Cog):
                 t = (prompt_message, response, author.id, delete, anywhere, dm,
                      not is_moderator)
                 c.execute(
-                    'INSERT INTO CustomReactions(Prompt, Response, UserID, DeletePrompt, Anywhere, DM, '
-                    'Proposal) VALUES(?,?,?,?,?,?,?)', t)
+                    'INSERT INTO CustomReactions(Prompt, Response, UserID, '
+                    'DeletePrompt, Anywhere, DM, Proposal) '
+                    'VALUES(?,?,?,?,?,?,?)', t)
                 conn.commit()
                 conn.close()
                 self.rebuild_lists()
@@ -286,13 +316,16 @@ class Customreactions(commands.Cog):
                 description = "-Prompt: {}\n-Response: {}".format(
                     prompt_message, response)
                 if delete:
-                    description = "{}\n-Will delete the message that calls the reaction".format(
-                        description)
+                    description = "{}\n-Will delete the " \
+                                  "message that calls the reaction"\
+                                  .format( description)
                 if anywhere:
-                    description = "{}\n-Will activate the custom reaction if the prompt is anywhere in a message"\
-                        .format(description)
+                    description = "{}\n-Will activate the custom reaction " \
+                                  "if the prompt is anywhere in a message"\
+                                  .format(description)
                 if dm:
-                    description = "{}\n-Will react in the DMs of the user who calls the reaction instead of the "\
+                    description = "{}\n-Will react in the DMs of the user " \
+                                  "who calls the reaction instead of the "\
                                   "channel".format(description)
 
                 embed = discord.Embed(title=title, description=description)
@@ -302,7 +335,7 @@ class Customreactions(commands.Cog):
 
                 return
 
-            if reaction_emoji == "⏹":
+            if reaction_emoji == EMOJI["stop_button"]:
                 await leave(message)
                 return
 
@@ -314,11 +347,13 @@ class Customreactions(commands.Cog):
 
             if not current_list:
                 if proposals:
-                    title = 'There are currently no custom reaction proposals in this server'
+                    title = 'There are currently no custom reaction ' \
+                            'proposals in this server'
                 else:
-                    title = 'There are currently no custom reactions in this server'
-                embed = discord.Embed(title=title, delete_after=60)
-                await message.edit(embed=embed)
+                    title = 'There are currently no custom reactions in ' \
+                            'this server'
+                embed = discord.Embed(title=title)
+                await message.edit(embed=embed, delete_after=60)
                 return
 
             index_list = [
@@ -338,25 +373,28 @@ class Customreactions(commands.Cog):
             embed = discord.Embed(title="Loading...")
             await message.edit(embed=embed)
 
-            await message.add_reaction("⏪")
-            await message.add_reaction("◀")
-            await message.add_reaction("▶")
-            await message.add_reaction("⏩")
-            await message.add_reaction("⏹")
-            await message.add_reaction("🆗")
+            await message.add_reaction(EMOJI["rewind"])
+            await message.add_reaction(EMOJI["arrow_backward"])
+            await message.add_reaction(EMOJI["arrow_forward"])
+            await message.add_reaction(EMOJI["fast_forward"])
+            await message.add_reaction(EMOJI["stop_button"])
+            await message.add_reaction(EMOJI["ok"])
 
             if proposals:
                 title = "Current custom reaction proposals\n" \
-                        "Click on 🆗 to approve, reject, edit, or see more information on one of them"
+                        "Click on {} to approve, reject, edit, or see more " \
+                        "information on one of them".format(EMOJI["ok"])
             else:
-                title = "Current custom reactions\nClick on 🆗 to edit or see more information on one of them"
+                title = "Current custom reactions\nClick on {} to edit or " \
+                        "see more information on one of them"\
+                        .format(EMOJI["ok"])
 
             p = Pages(ctx,
                       msg=message,
                       item_list=reaction_dict,
                       title=title,
                       display_option=(2, 10),
-                      editable_content_emoji="🆗",
+                      editable_content_emoji=EMOJI["ok"],
                       return_user_on_edit=True)
 
             user_modifying = await p.paginate()
@@ -364,11 +402,13 @@ class Customreactions(commands.Cog):
                 await message.clear_reactions()
                 if proposals:
                     title = "Current custom reaction proposals\n" \
-                            "{}: Write the number of the custom reaction proposal you want to " \
-                            "approve, reject, edit, or see more information on".format(user_modifying)
+                            "{}: Write the number of the custom reaction " \
+                            "proposal you want to approve, reject, edit, or " \
+                            "see more information on".format(user_modifying)
                 else:
                     title = "Current custom reactions\n" \
-                            "{}: Write the number of the custom reaction you want to edit or see more " \
+                            "{}: Write the number of the custom reaction " \
+                            "you want to edit or see more " \
                             "information on".format(user_modifying)
                 message.embeds[0].title = title
                 await message.edit(embed=message.embeds[0])
@@ -393,28 +433,38 @@ class Customreactions(commands.Cog):
 
                 if number < 1 or number > len(current_list):
                     if proposals:
-                        title = "Current custom reaction proposals\nClick on 🆗 to approve, reject, edit, or see " \
-                                "more information on one of them (Previous attempt received invalid input or timed out)"
+                        title = "Current custom reaction proposals\n" \
+                                "Click on {} to approve, reject, edit, or " \
+                                "see more information on one of them " \
+                                "(Previous attempt received invalid input " \
+                                "or timed out)".format(EMOJI["ok"])
                     else:
-                        title = "Current custom reactions\nClick on 🆗 to edit or see more information on one of " \
-                                "them (Previous attempt received invalid input or timed out)"
+                        title = "Current custom reactions\nClick on {} " \
+                                "to edit or see more information on one of " \
+                                "them (Previous attempt received invalid " \
+                                "input or timed out)".format(EMOJI["ok"])
                     p = Pages(ctx,
                               msg=message,
                               item_list=reaction_dict,
                               title=title,
                               display_option=(2, 10),
-                              editable_content_emoji="🆗",
+                              editable_content_emoji=EMOJI["ok"],
                               return_user_on_edit=True)
                 else:
                     await information_on_react(message, current_list, number,
                                                proposals)
                     if proposals:
-                        title = "Current custom reaction proposals\nClick on 🆗 to approve, reject, edit, or see " \
-                                "more information on one of them"
+                        title = "Current custom reaction proposals\n" \
+                                "Click on {} to approve, reject, edit, or " \
+                                "see more information on one of them"\
+                                .format(EMOJI["ok"])
                     else:
-                        title = "Current custom reactions\nClick on 🆗 to edit or see more information on one of them"
+                        title = "Current custom reactions\nClick on {} to " \
+                                "edit or see more information on one of them"\
+                                .format(EMOJI["ok"])
 
-                    # update dictionary since a custom reaction might have been modified
+                    # update dictionary since a custom reaction might have been
+                    # modified
                     if proposals:
                         current_list = self.proposal_list
                     else:
@@ -422,11 +472,13 @@ class Customreactions(commands.Cog):
 
                     if not current_list:
                         if proposals:
-                            title = 'There are currently no custom reaction proposals in this server'
+                            title = 'There are currently no custom ' \
+                                    'reaction proposals in this server'
                         else:
-                            title = 'There are currently no custom reactions in this server'
-                        embed = discord.Embed(title=title, delete_after=60)
-                        await message.edit(embed=embed)
+                            title = 'There are currently no custom ' \
+                                    'reactions in this server'
+                        embed = discord.Embed(title=title)
+                        await message.edit(embed=embed, delete_after=60)
                         return
 
                     index_list = [
@@ -449,17 +501,17 @@ class Customreactions(commands.Cog):
                               item_list=reaction_dict,
                               title=title,
                               display_option=(2, 10),
-                              editable_content_emoji="🆗",
+                              editable_content_emoji=EMOJI["ok"],
                               return_user_on_edit=True)
                 embed = discord.Embed(title="Loading...")
                 await message.edit(embed=embed)
 
-                await message.add_reaction("⏪")
-                await message.add_reaction("◀")
-                await message.add_reaction("▶")
-                await message.add_reaction("⏩")
-                await message.add_reaction("⏹")
-                await message.add_reaction("🆗")
+                await message.add_reaction(EMOJI["rewind"])
+                await message.add_reaction(EMOJI["arrow_backward"])
+                await message.add_reaction(EMOJI["arrow_forward"])
+                await message.add_reaction(EMOJI["fast_forward"])
+                await message.add_reaction(EMOJI["stop_button"])
+                await message.add_reaction(EMOJI["ok"])
 
                 user_modifying = await p.paginate()
 
@@ -478,54 +530,80 @@ class Customreactions(commands.Cog):
             if delete == 1:
                 delete_str = "Deletes the message that calls the reaction"
             else:
-                delete_str = "Does not delete the message that calls the reaction"
+                delete_str = "Does not delete the message that " \
+                             "calls the reaction"
             if anywhere == 1:
-                anywhere_str = "Activates the custom reaction if the prompt is anywhere in a message"
+                anywhere_str = "Activates the custom reaction if " \
+                               "the prompt is anywhere in a message"
             else:
-                anywhere_str = "Only activates the custom reaction if the prompt is the full message"
+                anywhere_str = "Only activates the custom reaction " \
+                               "if the prompt is the full message"
             if dm == 1:
-                dm_str = "Reacts in the DMs of the user who calls the reaction instead of the channel"
+                dm_str = "Reacts in the DMs of the user who calls " \
+                         "the reaction instead of the channel"
             else:
                 dm_str = "Reacts directly into the channel"
 
             if proposals:
-                description = "1️⃣ Prompt: {}\n2️⃣ Response: {}\n3️⃣ {}\n4️⃣ {}\n5️⃣ {}" \
-                              "\n✅ Approve this proposal\n❌ Reject this proposal\nAdded by {}"\
-                              .format(prompt, response, delete_str, anywhere_str, dm_str, user_who_added)
+                description = "{} Prompt: {}\n{} Response: {}" \
+                              "\n{} {}\n{} {}\n{} {}" \
+                              "\n{} Approve this proposal\n{} " \
+                              "Reject this proposal\nAdded by {}"\
+                              .format(EMOJI["one"], prompt, EMOJI["two"],
+                                      response, EMOJI["three"], delete_str,
+                                      EMOJI["four"], anywhere_str,
+                                      EMOJI["five"], dm_str,
+                                      EMOJI["white_check_mark"],
+                                      EMOJI["x"], user_who_added)
                 title = "More information on a custom reaction proposal.\n" \
-                        "{}s may click on emojis to modify those values or approve/refuse this proposal\n" \
-                        "(Will return to the list of current reaction proposals in 40 seconds otherwise)"\
+                        "{}s may click on emojis to modify those values or " \
+                        "approve/refuse this proposal\n" \
+                        "(Will return to the list of current reaction " \
+                        "proposals in 40 seconds otherwise)"\
                         .format(self.bot.config.moderator_role)
             else:
-                description = "1️⃣ Prompt: {}\n2️⃣ Response: {}\n3️⃣ {}\n4️⃣ {}\n5️⃣ {}" \
-                              "\n🚮 Delete this custom reaction\nAdded by {}".format(prompt, response, delete_str,
-                                                                                    anywhere_str, dm_str,
-                                                                                    user_who_added)
+                description = "{} Prompt: {}\n{} Response: {}" \
+                              "\n{} {}\n{} {}\n{} {}" \
+                              "\n{} Delete this custom reaction\n" \
+                              "Added by {}"\
+                              .format(EMOJI["one"], prompt, EMOJI["two"],
+                                      response, EMOJI["three"],  delete_str,
+                                      EMOJI["four"], anywhere_str,
+                                      EMOJI["five"], dm_str,
+                                      EMOJI["put_litter_in_its_place"],
+                                      user_who_added)
                 title = "More information on a custom reaction.\n" \
-                        "{}s may click on emojis to modify those values or select an option\n" \
-                        "(Will return to the list of current reactions in 40 seconds otherwise)"\
+                        "{}s may click on emojis to modify those values " \
+                        "or select an option\n(Will return to the list of " \
+                        "current reactions in 40 seconds otherwise)"\
                         .format(self.bot.config.moderator_role)
 
             embed = discord.Embed(title=title, description=description)
             current_options.clear()
             await message.clear_reactions()
             if proposals:
-                current_options.extend(
-                    ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "✅", "❌", "⏹"])
+                current_options.extend([
+                    EMOJI["one"], EMOJI["two"], EMOJI["three"], EMOJI["four"],
+                    EMOJI["five"], EMOJI["white_check_mark"], EMOJI["x"],
+                    EMOJI["stop_button"]
+                ])
             else:
-                current_options.extend(
-                    ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "🚮", "⏹"])
-            await message.add_reaction("1️⃣")
-            await message.add_reaction("2️⃣")
-            await message.add_reaction("3️⃣")
-            await message.add_reaction("4️⃣")
-            await message.add_reaction("5️⃣")
+                current_options.extend([
+                    EMOJI["one"], EMOJI["two"], EMOJI["three"], EMOJI["four"],
+                    EMOJI["five"], EMOJI["put_litter_in_its_place"],
+                    EMOJI["stop_button"]
+                ])
+            await message.add_reaction(EMOJI["one"])
+            await message.add_reaction(EMOJI["two"])
+            await message.add_reaction(EMOJI["three"])
+            await message.add_reaction(EMOJI["four"])
+            await message.add_reaction(EMOJI["five"])
             if proposals:
-                await message.add_reaction("✅")
-                await message.add_reaction("❌")
+                await message.add_reaction(EMOJI["white_check_mark"])
+                await message.add_reaction(EMOJI["x"])
             else:
-                await message.add_reaction("🚮")
-            await message.add_reaction("⏹")
+                await message.add_reaction(EMOJI["put_litter_in_its_place"])
+            await message.add_reaction(EMOJI["stop_button"])
             await message.edit(embed=embed)
 
             try:
@@ -551,15 +629,16 @@ class Customreactions(commands.Cog):
             conn = sqlite3.connect(self.bot.config.db_path)
             c = conn.cursor()
 
-            if reaction.emoji == "1️⃣":
+            if reaction.emoji == EMOJI["one"]:
                 if proposals:
                     title = "Modify a custom reaction proposal"
-                    footer = "{} is currently modifying a custom reaction proposal. \n" \
+                    footer = "{} is currently modifying " \
+                             "a custom reaction proposal. \n" \
                              "Write 'stop' to cancel.".format(user)
                 else:
                     title = "Modify a custom reaction"
-                    footer = "{} is currently modifying a custom reaction. \n" \
-                             "Write 'stop' to cancel.".format(user)
+                    footer = "{} is currently modifying a custom reaction. " \
+                             "\nWrite 'stop' to cancel.".format(user)
                 description = "Please enter the new prompt"
                 embed = discord.Embed(title=title, description=description)
                 embed.set_footer(text=footer, icon_url=user.avatar_url)
@@ -580,10 +659,12 @@ class Customreactions(commands.Cog):
 
                 except asyncio.TimeoutError:
                     if proposals:
-                        title = 'The modification of the custom reaction proposal timed out. ' \
+                        title = 'The modification of the custom reaction ' \
+                                'proposal timed out. ' \
                                 'Returning to list of reaction proposals...'
                     else:
-                        title = 'The modification of the custom reaction timed out. ' \
+                        title = 'The modification of the custom reaction ' \
+                                'timed out. ' \
                                 'Returning to list of current reactions...'
                     embed = discord.Embed(title=title)
                     await message.edit(embed=embed)
@@ -599,14 +680,16 @@ class Customreactions(commands.Cog):
 
                 t = (prompt, custom_react_id)
                 c.execute(
-                    'UPDATE CustomReactions SET Prompt = ? WHERE CustomReactionID = ?',
-                    t)
+                    'UPDATE CustomReactions SET Prompt = ? '
+                    'WHERE CustomReactionID = ?', t)
                 conn.commit()
                 self.rebuild_lists()
                 if proposals:
-                    title = "Prompt successfully modified! Returning to list of reaction proposals..."
+                    title = "Prompt successfully modified! " \
+                            "Returning to list of reaction proposals..."
                 else:
-                    title = "Prompt successfully modified! Returning to list of current reactions..."
+                    title = "Prompt successfully modified! " \
+                            "Returning to list of current reactions..."
                 embed = discord.Embed(title=title)
                 embed.set_footer(text="Modified by {}.".format(user),
                                  icon_url=user.avatar_url)
@@ -614,15 +697,16 @@ class Customreactions(commands.Cog):
                 conn.close()
                 time.sleep(5)
 
-            if reaction.emoji == "2️⃣":
+            if reaction.emoji == EMOJI["two"]:
                 if proposals:
                     title = "Modify a custom reaction proposal"
-                    footer = "{} is currently modifying a custom reaction proposal. \n" \
+                    footer = "{} is currently modifying a " \
+                             "custom reaction proposal. \n" \
                              "Write 'stop' to cancel.".format(user)
                 else:
                     title = "Modify a custom reaction"
-                    footer = "{} is currently modifying a custom reaction. \n" \
-                             "Write 'stop' to cancel.".format(user)
+                    footer = "{} is currently modifying a custom reaction. " \
+                             "\nWrite 'stop' to cancel.".format(user)
                 description = "Please enter the new response"
                 embed = discord.Embed(title=title, description=description)
                 embed.set_footer(text=footer, icon_url=user.avatar_url)
@@ -643,10 +727,12 @@ class Customreactions(commands.Cog):
 
                 except asyncio.TimeoutError:
                     if proposals:
-                        title = 'The modification of the custom reaction proposal timed out. ' \
+                        title = 'The modification of the custom reaction ' \
+                                'proposal timed out. ' \
                                 'Returning to list of reaction proposals...'
                     else:
-                        title = 'The modification of the custom reaction timed out. ' \
+                        title = 'The modification of the custom reaction ' \
+                                'timed out. ' \
                                 'Returning to list of current reactions...'
                     embed = discord.Embed(title=title)
                     await message.edit(embed=embed)
@@ -662,14 +748,16 @@ class Customreactions(commands.Cog):
 
                 t = (response, custom_react_id)
                 c.execute(
-                    'UPDATE CustomReactions SET Response = ? WHERE CustomReactionID = ?',
-                    t)
+                    'UPDATE CustomReactions SET Response = ? '
+                    'WHERE CustomReactionID = ?', t)
                 conn.commit()
                 self.rebuild_lists()
                 if proposals:
-                    title = "Response successfully modified! Returning to list of reaction proposals..."
+                    title = "Response successfully modified! " \
+                            "Returning to list of reaction proposals..."
                 else:
-                    title = "Response successfully modified! Returning to list of current reactions..."
+                    title = "Response successfully modified! " \
+                            "Returning to list of current reactions..."
                 embed = discord.Embed(title=title)
                 embed.set_footer(text="Modified by {}.".format(user),
                                  icon_url=user.avatar_url)
@@ -677,28 +765,33 @@ class Customreactions(commands.Cog):
                 conn.close()
                 time.sleep(5)
 
-            if reaction.emoji == "3️⃣":
+            if reaction.emoji == EMOJI["three"]:
                 embed = discord.Embed(title="Loading...")
                 await message.edit(embed=embed)
                 if proposals:
-                    title = "Modify a custom reaction proposal. React with the option you want"
-                    footer = "{} is currently modifying a custom reaction proposal. \n".format(
-                        user)
+                    title = "Modify a custom reaction proposal. " \
+                            "React with the option you want"
+                    footer = "{} is currently modifying a " \
+                             "custom reaction proposal. \n".format(user)
                 else:
-                    title = "Modify a custom reaction. React with the option you want"
-                    footer = "{} is currently modifying a custom reaction. \n".format(
+                    title = "Modify a custom reaction. React with the " \
+                            "option you want"
+                    footer = "{} is currently modifying a " \
+                             "custom reaction. \n".format(
                         user)
-                description = "Should the message that calls the reaction be deleted?\n" \
-                              "0️⃣ No\n" \
-                              "1️⃣ Yes"
+                description = "Should the message that calls the " \
+                              "reaction be deleted?\n" \
+                              "{} No\n" \
+                              "{} Yes".format(EMOJI["zero"], EMOJI["one"])
                 embed = discord.Embed(title=title, description=description)
                 embed.set_footer(text=footer, icon_url=user.avatar_url)
                 current_options.clear()
                 await message.clear_reactions()
-                current_options.extend(["0️⃣", "1️⃣", "⏹"])
-                await message.add_reaction("0️⃣")
-                await message.add_reaction("1️⃣")
-                await message.add_reaction("⏹")
+                current_options.extend(
+                    [EMOJI["zero"], EMOJI["one"], EMOJI["stop_button"]])
+                await message.add_reaction(EMOJI["zero"])
+                await message.add_reaction(EMOJI["one"])
+                await message.add_reaction(EMOJI["stop_button"])
                 await message.edit(embed=embed)
                 reaction = None
                 try:
@@ -717,10 +810,12 @@ class Customreactions(commands.Cog):
 
                 except asyncio.TimeoutError:
                     if proposals:
-                        title = 'The modification of the custom reaction proposal timed out. ' \
+                        title = 'The modification of the custom reaction ' \
+                                'proposal timed out. ' \
                                 'Returning to list of reaction proposals...'
                     else:
-                        title = 'The modification of the custom reaction timed out. ' \
+                        title = 'The modification of the custom reaction ' \
+                                'timed out. ' \
                                 'Returning to list of current reactions...'
                     embed = discord.Embed(title=title)
                     await message.edit(embed=embed)
@@ -734,12 +829,16 @@ class Customreactions(commands.Cog):
                 await message.clear_reactions()
                 if reaction is None:
                     return
-                elif reaction.emoji == "0️⃣":
+                elif reaction.emoji == EMOJI["zero"]:
                     if delete == 0:
                         if proposals:
-                            title = "Successfully kept current option! Returning to list of reaction proposals..."
+                            title = "Successfully kept current option! " \
+                                    "Returning to list of reaction " \
+                                    "proposals..."
                         else:
-                            title = "Successfully kept current option! Returning to list of current reactions..."
+                            title = "Successfully kept current option! " \
+                                    "Returning to list of current " \
+                                    "reactions..."
                         embed = discord.Embed(title=title)
                         embed.set_footer(text="Modified by {}.".format(user),
                                          icon_url=user.avatar_url)
@@ -749,14 +848,18 @@ class Customreactions(commands.Cog):
                     else:
                         t = (0, custom_react_id)
                         c.execute(
-                            'UPDATE CustomReactions SET DeletePrompt = ? WHERE CustomReactionID = ?',
-                            t)
+                            'UPDATE CustomReactions SET DeletePrompt = ? '
+                            'WHERE CustomReactionID = ?', t)
                         conn.commit()
                         self.rebuild_lists()
                         if proposals:
-                            title = "Option successfully modified! Returning to list of current reaction proposals..."
+                            title = "Option successfully modified! " \
+                                    "Returning to list of current " \
+                                    "reaction proposals..."
                         else:
-                            title = "Option successfully modified! Returning to list of current reactions..."
+                            title = "Option successfully modified! " \
+                                    "Returning to list of current " \
+                                    "reactions..."
                         embed = discord.Embed(title=title)
                         embed.set_footer(text="Modified by {}.".format(user),
                                          icon_url=user.avatar_url)
@@ -764,12 +867,16 @@ class Customreactions(commands.Cog):
                         conn.close()
                         time.sleep(5)
 
-                elif reaction.emoji == "1️⃣":
+                elif reaction.emoji == EMOJI["one"]:
                     if delete == 1:
                         if proposals:
-                            title = "Successfully kept current option! Returning to list of reaction proposals..."
+                            title = "Successfully kept current option! " \
+                                    "Returning to list of " \
+                                    "reaction proposals..."
                         else:
-                            title = "Successfully kept current option! Returning to list of current reactions..."
+                            title = "Successfully kept current option! " \
+                                    "Returning to list of " \
+                                    "current reactions..."
                         embed = discord.Embed(title=title)
                         embed.set_footer(text="Modified by {}.".format(user),
                                          icon_url=user.avatar_url)
@@ -779,46 +886,54 @@ class Customreactions(commands.Cog):
                     else:
                         t = (1, custom_react_id)
                         c.execute(
-                            'UPDATE CustomReactions SET DeletePrompt = ? WHERE CustomReactionID = ?',
-                            t)
+                            'UPDATE CustomReactions SET DeletePrompt = ? '
+                            'WHERE CustomReactionID = ?', t)
                         conn.commit()
                         self.rebuild_lists()
                         if proposals:
-                            title = "Option successfully modified! Returning to list of current reaction proposals..."
+                            title = "Option successfully modified! " \
+                                    "Returning to list of current " \
+                                    "reaction proposals..."
                         else:
-                            title = "Option successfully modified! Returning to list of current reactions..."
+                            title = "Option successfully modified! " \
+                                    "Returning to list of current " \
+                                    "reactions..."
                         embed = discord.Embed(title=title)
                         embed.set_footer(text="Modified by {}.".format(user),
                                          icon_url=user.avatar_url)
                         await message.edit(embed=embed)
                         conn.close()
                         time.sleep(5)
-                elif reaction.emoji == "⏹":
+                elif reaction.emoji == EMOJI["stop_button"]:
                     await leave(message)
                     return
 
-            if reaction.emoji == "4️⃣":
+            if reaction.emoji == EMOJI["four"]:
                 embed = discord.Embed(title="Loading...")
                 await message.edit(embed=embed)
                 if proposals:
-                    title = "Modify a custom reaction proposal. React with the option you want"
-                    footer = "{} is currently modifying a custom reaction proposal. \n".format(
-                        user)
+                    title = "Modify a custom reaction proposal. " \
+                            "React with the option you want"
+                    footer = "{} is currently modifying a custom " \
+                             "reaction proposal. \n".format(user)
                 else:
-                    title = "Modify a custom reaction. React with the option you want"
-                    footer = "{} is currently modifying a custom reaction. \n".format(
-                        user)
-                description = "Should the custom reaction be activated if the prompt is anywhere in a message?\n" \
-                              "0️⃣ No\n" \
-                              "1️⃣ Yes"
+                    title = "Modify a custom reaction. " \
+                            "React with the option you want"
+                    footer = "{} is currently modifying a custom " \
+                             "reaction. \n".format(user)
+                description = "Should the custom reaction be activated " \
+                              "if the prompt is anywhere in a message?\n" \
+                              "{} No\n" \
+                              "{} Yes".format(EMOJI["zero"], EMOJI["one"])
                 embed = discord.Embed(title=title, description=description)
                 embed.set_footer(text=footer, icon_url=user.avatar_url)
                 current_options.clear()
                 await message.clear_reactions()
-                current_options.extend(["0️⃣", "1️⃣", "⏹"])
-                await message.add_reaction("0️⃣")
-                await message.add_reaction("1️⃣")
-                await message.add_reaction("⏹")
+                current_options.extend(
+                    [EMOJI["zero"], EMOJI["one"], EMOJI["stop_button"]])
+                await message.add_reaction(EMOJI["zero"])
+                await message.add_reaction(EMOJI["one"])
+                await message.add_reaction(EMOJI["stop_button"])
                 await message.edit(embed=embed)
                 reaction = None
                 try:
@@ -837,10 +952,12 @@ class Customreactions(commands.Cog):
 
                 except asyncio.TimeoutError:
                     if proposals:
-                        title = 'The modification of the custom reaction proposal timed out. ' \
+                        title = 'The modification of the custom reaction ' \
+                                'proposal timed out. ' \
                                 'Returning to list of reaction proposals...'
                     else:
-                        title = 'The modification of the custom reaction timed out. ' \
+                        title = 'The modification of the custom reaction ' \
+                                'timed out. ' \
                                 'Returning to list of current reactions...'
                     embed = discord.Embed(title=title)
                     await message.edit(embed=embed)
@@ -854,12 +971,15 @@ class Customreactions(commands.Cog):
                 await message.clear_reactions()
                 if reaction is None:
                     return
-                elif reaction.emoji == "0️⃣":
+                elif reaction.emoji == EMOJI["zero"]:
                     if anywhere == 0:
                         if proposals:
-                            title = "Successfully kept current option! Returning to list of reaction proposals..."
+                            title = "Successfully kept current option! " \
+                                    "Returning to list of " \
+                                    "reaction proposals..."
                         else:
-                            title = "Successfully kept current option! Returning to list of current reactions..."
+                            title = "Successfully kept current option! " \
+                                    "Returning to list of current reactions..."
                         embed = discord.Embed(title=title)
                         embed.set_footer(text="Modified by {}.".format(user),
                                          icon_url=user.avatar_url)
@@ -869,14 +989,17 @@ class Customreactions(commands.Cog):
                     else:
                         t = (0, custom_react_id)
                         c.execute(
-                            'UPDATE CustomReactions SET Anywhere = ? WHERE CustomReactionID = ?',
-                            t)
+                            'UPDATE CustomReactions SET Anywhere = ? '
+                            'WHERE CustomReactionID = ?', t)
                         conn.commit()
                         self.rebuild_lists()
                         if proposals:
-                            title = "Option successfully modified! Returning to list of current reaction proposals..."
+                            title = "Option successfully modified! " \
+                                    "Returning to list of current " \
+                                    "reaction proposals..."
                         else:
-                            title = "Option successfully modified! Returning to list of current reactions..."
+                            title = "Option successfully modified! " \
+                                    "Returning to list of current reactions..."
                         embed = discord.Embed(title=title)
                         embed.set_footer(text="Modified by {}.".format(user),
                                          icon_url=user.avatar_url)
@@ -884,12 +1007,15 @@ class Customreactions(commands.Cog):
                         conn.close()
                         time.sleep(5)
 
-                elif reaction.emoji == "1️⃣":
+                elif reaction.emoji == EMOJI["one"]:
                     if anywhere == 1:
                         if proposals:
-                            title = "Successfully kept current option! Returning to list of reaction proposals..."
+                            title = "Successfully kept current option! " \
+                                    "Returning to list of " \
+                                    "reaction proposals..."
                         else:
-                            title = "Successfully kept current option! Returning to list of current reactions..."
+                            title = "Successfully kept current option! " \
+                                    "Returning to list of current reactions..."
                         embed = discord.Embed(title=title)
                         embed.set_footer(text="Modified by {}.".format(user),
                                          icon_url=user.avatar_url)
@@ -899,47 +1025,55 @@ class Customreactions(commands.Cog):
                     else:
                         t = (1, custom_react_id)
                         c.execute(
-                            'UPDATE CustomReactions SET Anywhere = ? WHERE CustomReactionID = ?',
-                            t)
+                            'UPDATE CustomReactions SET Anywhere = ? '
+                            'WHERE CustomReactionID = ?', t)
                         conn.commit()
                         self.rebuild_lists()
                         if proposals:
-                            title = "Option successfully modified! Returning to list of current reaction proposals..."
+                            title = "Option successfully modified! " \
+                                    "Returning to list of current " \
+                                    "reaction proposals..."
                         else:
-                            title = "Option successfully modified! Returning to list of current reactions..."
+                            title = "Option successfully modified! " \
+                                    "Returning to list of current reactions..."
                         embed = discord.Embed(title=title)
                         embed.set_footer(text="Modified by {}.".format(user),
                                          icon_url=user.avatar_url)
                         await message.edit(embed=embed)
                         conn.close()
                         time.sleep(5)
-                elif reaction.emoji == "⏹":
+                elif reaction.emoji == EMOJI["stop_button"]:
                     await leave(message)
                     return
 
-            if reaction.emoji == "5️⃣":
+            if reaction.emoji == EMOJI["five"]:
                 embed = discord.Embed(title="Loading...")
                 await message.edit(embed=embed)
                 if proposals:
-                    title = "Modify a custom reaction proposal. React with the option you want"
-                    footer = "{} is currently modifying a custom reaction proposal. \n".format(
+                    title = "Modify a custom reaction proposal. " \
+                            "React with the option you want"
+                    footer = "{} is currently modifying a custom reaction " \
+                             "proposal. \n".format(
                         user)
                 else:
-                    title = "Modify a custom reaction. React with the option you want"
-                    footer = "{} is currently modifying a custom reaction. \n".format(
-                        user)
-                description = "Should the reaction be sent in the DMs of the user who called the reaction " \
+                    title = "Modify a custom reaction. React with the " \
+                            "option you want"
+                    footer = "{} is currently modifying a custom reaction. \n"\
+                             .format(user)
+                description = "Should the reaction be sent in the DMs of " \
+                              "the user who called the reaction " \
                               "instead of the channel?\n" \
-                              "0️⃣ No\n" \
-                              "1️⃣ Yes"
+                              "{} No\n" \
+                              "{} Yes".format(EMOJI["zero"], EMOJI["one"])
                 embed = discord.Embed(title=title, description=description)
                 embed.set_footer(text=footer, icon_url=user.avatar_url)
                 current_options.clear()
                 await message.clear_reactions()
-                current_options.extend(["0️⃣", "1️⃣", "⏹"])
-                await message.add_reaction("0️⃣")
-                await message.add_reaction("1️⃣")
-                await message.add_reaction("⏹")
+                current_options.extend(
+                    [EMOJI["zero"], EMOJI["one"], EMOJI["stop_button"]])
+                await message.add_reaction(EMOJI["zero"])
+                await message.add_reaction(EMOJI["one"])
+                await message.add_reaction(EMOJI["stop_button"])
                 await message.edit(embed=embed)
                 reaction = None
                 try:
@@ -958,10 +1092,12 @@ class Customreactions(commands.Cog):
 
                 except asyncio.TimeoutError:
                     if proposals:
-                        title = 'The modification of the custom reaction proposal timed out. ' \
+                        title = 'The modification of the custom reaction ' \
+                                'proposal timed out. ' \
                                 'Returning to list of reaction proposals...'
                     else:
-                        title = 'The modification of the custom reaction timed out. ' \
+                        title = 'The modification of the custom reaction ' \
+                                'timed out. ' \
                                 'Returning to list of current reactions...'
                     embed = discord.Embed(title=title)
                     await message.edit(embed=embed)
@@ -975,12 +1111,15 @@ class Customreactions(commands.Cog):
                 await message.clear_reactions()
                 if reaction is None:
                     return
-                elif reaction.emoji == "0️⃣":
+                elif reaction.emoji == EMOJI["zero"]:
                     if dm == 0:
                         if proposals:
-                            title = "Successfully kept current option! Returning to list of reaction proposals..."
+                            title = "Successfully kept current option! " \
+                                    "Returning to list of " \
+                                    "reaction proposals..."
                         else:
-                            title = "Successfully kept current option! Returning to list of current reactions..."
+                            title = "Successfully kept current option! " \
+                                    "Returning to list of current reactions..."
                         embed = discord.Embed(title=title)
                         embed.set_footer(text="Modified by {}.".format(user),
                                          icon_url=user.avatar_url)
@@ -990,14 +1129,17 @@ class Customreactions(commands.Cog):
                     else:
                         t = (0, custom_react_id)
                         c.execute(
-                            'UPDATE CustomReactions SET DM = ? WHERE CustomReactionID = ?',
-                            t)
+                            'UPDATE CustomReactions SET DM = ? '
+                            'WHERE CustomReactionID = ?', t)
                         conn.commit()
                         self.rebuild_lists()
                         if proposals:
-                            title = "Option successfully modified! Returning to list of current reaction proposals..."
+                            title = "Option successfully modified! " \
+                                    "Returning to list of current " \
+                                    "reaction proposals..."
                         else:
-                            title = "Option successfully modified! Returning to list of current reactions..."
+                            title = "Option successfully modified! " \
+                                    "Returning to list of current reactions..."
                         embed = discord.Embed(title=title)
                         embed.set_footer(text="Modified by {}.".format(user),
                                          icon_url=user.avatar_url)
@@ -1005,12 +1147,15 @@ class Customreactions(commands.Cog):
                         conn.close()
                         time.sleep(5)
 
-                elif reaction.emoji == "1️⃣":
+                elif reaction.emoji == EMOJI["one"]:
                     if dm == 1:
                         if proposals:
-                            title = "Successfully kept current option! Returning to list of reaction proposals..."
+                            title = "Successfully kept current option! " \
+                                    "Returning to list of " \
+                                    "reaction proposals..."
                         else:
-                            title = "Successfully kept current option! Returning to list of current reactions..."
+                            title = "Successfully kept current option! " \
+                                    "Returning to list of current reactions..."
                         embed = discord.Embed(title=title)
                         embed.set_footer(text="Modified by {}.".format(user),
                                          icon_url=user.avatar_url)
@@ -1020,29 +1165,32 @@ class Customreactions(commands.Cog):
                     else:
                         t = (1, custom_react_id)
                         c.execute(
-                            'UPDATE CustomReactions SET DM = ? WHERE CustomReactionID = ?',
-                            t)
+                            'UPDATE CustomReactions SET DM = ? '
+                            'WHERE CustomReactionID = ?', t)
                         conn.commit()
                         self.rebuild_lists()
                         if proposals:
-                            title = "Option successfully modified! Returning to list of current reaction proposals..."
+                            title = "Option successfully modified! " \
+                                    "Returning to list of current " \
+                                    "reaction proposals..."
                         else:
-                            title = "Option successfully modified! Returning to list of current reactions..."
+                            title = "Option successfully modified! " \
+                                    "Returning to list of current reactions..."
                         embed = discord.Embed(title=title)
                         embed.set_footer(text="Modified by {}.".format(user),
                                          icon_url=user.avatar_url)
                         await message.edit(embed=embed)
                         conn.close()
                         time.sleep(5)
-                elif reaction.emoji == "⏹":
+                elif reaction.emoji == EMOJI["stop_button"]:
                     await leave(message)
                     return
 
-            if reaction.emoji == "✅":
+            if reaction.emoji == EMOJI["white_check_mark"]:
                 t = (0, custom_react_id)
                 c.execute(
-                    'UPDATE CustomReactions SET Proposal = ? WHERE CustomReactionID = ?',
-                    t)
+                    'UPDATE CustomReactions SET Proposal = ? '
+                    'WHERE CustomReactionID = ?', t)
                 conn.commit()
                 self.rebuild_lists()
                 title = "Custom reaction proposal successfully approved! " \
@@ -1054,18 +1202,21 @@ class Customreactions(commands.Cog):
                 conn.close()
                 time.sleep(5)
 
-            if reaction.emoji == "🚮" or reaction.emoji == "❌":
+            if reaction.emoji == EMOJI[
+                    "put_litter_in_its_place"] or reaction.emoji == EMOJI["x"]:
                 t = (custom_react_id, )
                 c.execute(
                     'DELETE FROM CustomReactions WHERE CustomReactionID = ?',
                     t)
                 conn.commit()
                 if proposals:
-                    title = "Custom reaction proposal successfully rejected! " \
-                            "Returning to list of current reaction proposals..."
+                    title = "Custom reaction proposal successfully " \
+                            "rejected! Returning to list of current " \
+                            "reaction proposals..."
                     footer = "Rejected by {}.".format(user)
                 else:
-                    title = "Custom reaction successfully deleted! Returning to list of current reactions..."
+                    title = "Custom reaction successfully deleted! " \
+                            "Returning to list of current reactions..."
                     footer = "Deleted by {}.".format(user)
                 embed = discord.Embed(title=title)
                 embed.set_footer(text=footer, icon_url=user.avatar_url)
@@ -1074,7 +1225,7 @@ class Customreactions(commands.Cog):
                 self.rebuild_lists()
                 time.sleep(5)
 
-            if reaction.emoji == "⏹":
+            if reaction.emoji == EMOJI["stop_button"]:
                 await leave(message)
                 return
 
@@ -1090,4 +1241,4 @@ class Customreactions(commands.Cog):
 
 
 def setup(bot):
-    bot.add_cog(Customreactions(bot))
+    bot.add_cog(CustomReactions(bot))
