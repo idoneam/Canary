@@ -115,8 +115,8 @@ class Customreactions(commands.Cog):
 
         def reaction_check_moderators(reaction, user):
             return all(
-                (reaction.emoji in current_options,
-                 reaction.message.id == initial_message.id,
+                (reaction.emoji
+                 in current_options, reaction.message.id == initial_message.id,
                  discord.utils.get(user.roles,
                                    name=self.bot.config.moderator_role)))
 
@@ -1083,8 +1083,9 @@ class Customreactions(commands.Cog):
 
         initial_message = await ctx.send(embed=discord.Embed(
             title="Loading..."))
-        is_moderator = (discord.utils.get(
-            ctx.author.roles, name=self.bot.config.moderator_role) is not None)
+        is_moderator = (discord.utils.get(ctx.author.roles,
+                                          name=self.bot.config.moderator_role)
+                        is not None)
         await create_assistant(initial_message, is_moderator)
 
 

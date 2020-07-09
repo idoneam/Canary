@@ -242,9 +242,8 @@ class Reminder(commands.Cog):
             5. Lastly: save beginning of "reminder quote" and end loop
         """
 
-        if len(input_segments) > 0 and (input_segments[0] in ("daily",
-                                                              "weekly",
-                                                              "monthly")):
+        if len(input_segments) > 0 and (input_segments[0]
+                                        in ("daily", "weekly", "monthly")):
             await self.__remindme_repeating(
                 ctx,
                 input_segments[0],
