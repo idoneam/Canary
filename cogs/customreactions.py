@@ -1221,8 +1221,7 @@ class CustomReactions(commands.Cog):
         async def leave(message):
             await message.delete()
 
-        initial_message = await ctx.send(embed=discord.Embed(
-            title=LOADING))
+        initial_message = await ctx.send(embed=discord.Embed(title=LOADING))
         is_moderator = (discord.utils.get(ctx.author.roles,
                                           name=self.bot.config.moderator_role)
                         is not None)
