@@ -600,7 +600,7 @@ class CustomReactions(commands.Cog):
             if proposals:
                 await add_multiple_reactions(
                     message, NUMBERS[1:6] + (EMOJI["white_check_mark"],
-                                             EMOJI["x"], MOJI["stop_button"]))
+                                             EMOJI["x"], EMOJI["stop_button"]))
             else:
                 await add_multiple_reactions(
                     message, NUMBERS[1:6] +
