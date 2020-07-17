@@ -655,9 +655,8 @@ class CustomReactions(commands.Cog):
                             prompt = msg.content
                             msg_sent_by_user_modifying = True
                             await msg.delete()
-                        else:
-                            if time.time() > manual_timeout:
-                                raise asyncio.TimeoutError
+                        elif time.time() > manual_timeout:
+                            raise asyncio.TimeoutError
 
                 except asyncio.TimeoutError:
                     if proposals:
