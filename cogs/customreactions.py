@@ -233,12 +233,15 @@ class CustomReactions(commands.Cog):
             if reaction.emoji == EMOJI["new"]:
                 await addcustomreact(message, is_moderator)
                 return
+            # List custom reactions
             if reaction.emoji == EMOJI["mag"]:
                 await listcustomreacts(message, proposals=False)
                 return
+            # List proposals
             if reaction.emoji == EMOJI["pencil"]:
                 await listcustomreacts(message, proposals=True)
                 return
+            # Stop
             if reaction.emoji == EMOJI["stop_button"]:
                 await leave(message)
                 return
@@ -297,6 +300,7 @@ class CustomReactions(commands.Cog):
             except TypeError:
                 return
 
+            # If the user clicked OK, check if delete/anywhere/dm are checked
             if reaction.emoji == EMOJI["ok"]:
                 delete = False
                 anywhere = False
@@ -305,12 +309,9 @@ class CustomReactions(commands.Cog):
                 for reaction in cache_msg.reactions:
                     users_who_reacted = await reaction.users().flatten()
                     if author in users_who_reacted:
-                        if reaction.emoji == EMOJI["one"]:
-                            delete = True
-                        if reaction.emoji == EMOJI["two"]:
-                            anywhere = True
-                        if reaction.emoji == EMOJI["three"]:
-                            dm = True
+                        delete = delete or reaction.emoji == EMOJI["one"]
+                        anywhere = anywhere or reaction.emoji == EMOJI["two"]
+                        dm = dm or reaction.emoji == EMOJI["three"]
 
                 current_options.clear()
                 await message.clear_reactions()
@@ -352,6 +353,7 @@ class CustomReactions(commands.Cog):
 
                 return
 
+            # Stop
             if reaction.emoji == EMOJI["stop_button"]:
                 await leave(message)
                 return
@@ -436,9 +438,8 @@ class CustomReactions(commands.Cog):
                             number = int(msg.content)
                             number_sent_by_user_modifying = True
                             await msg.delete()
-                        else:
-                            if time.time() > manual_timeout:
-                                raise asyncio.TimeoutError
+                        elif time.time() > manual_timeout:
+                            raise asyncio.TimeoutError
 
                 except asyncio.TimeoutError:
                     pass
@@ -629,6 +630,7 @@ class CustomReactions(commands.Cog):
             conn = sqlite3.connect(self.bot.config.db_path)
             c = conn.cursor()
 
+            # Edit the prompt
             if reaction.emoji == EMOJI["one"]:
                 if proposals:
                     title = "Modify a custom reaction proposal"
@@ -697,6 +699,7 @@ class CustomReactions(commands.Cog):
                 conn.close()
                 time.sleep(5)
 
+            # Edit the response
             if reaction.emoji == EMOJI["two"]:
                 if proposals:
                     title = "Modify a custom reaction proposal"
@@ -721,9 +724,8 @@ class CustomReactions(commands.Cog):
                             response = msg.content
                             msg_sent_by_user_modifying = True
                             await msg.delete()
-                        else:
-                            if time.time() > manual_timeout:
-                                raise asyncio.TimeoutError
+                        elif time.time() > manual_timeout:
+                            raise asyncio.TimeoutError
 
                 except asyncio.TimeoutError:
                     if proposals:
@@ -765,6 +767,7 @@ class CustomReactions(commands.Cog):
                 conn.close()
                 time.sleep(5)
 
+            # Edit the "delete" option
             if reaction.emoji == EMOJI["three"]:
                 embed = discord.Embed(title=LOADING)
                 await message.edit(embed=embed)
@@ -800,9 +803,8 @@ class CustomReactions(commands.Cog):
                             timeout=60)
                         if reaction_user == user:
                             react_sent_by_user_modifying = True
-                        else:
-                            if time.time() > manual_timeout:
-                                raise asyncio.TimeoutError
+                        elif time.time() > manual_timeout:
+                            raise asyncio.TimeoutError
 
                 except asyncio.TimeoutError:
                     if proposals:
@@ -825,6 +827,7 @@ class CustomReactions(commands.Cog):
                 await message.clear_reactions()
                 if reaction is None:
                     return
+                # Deactivate the "delete" option
                 elif reaction.emoji == EMOJI["zero"]:
                     if delete == 0:
                         if proposals:
@@ -863,6 +866,7 @@ class CustomReactions(commands.Cog):
                         conn.close()
                         time.sleep(5)
 
+                # Activate the "delete" option
                 elif reaction.emoji == EMOJI["one"]:
                     if delete == 1:
                         if proposals:
@@ -900,10 +904,12 @@ class CustomReactions(commands.Cog):
                         await message.edit(embed=embed)
                         conn.close()
                         time.sleep(5)
+                # Stop
                 elif reaction.emoji == EMOJI["stop_button"]:
                     await leave(message)
                     return
 
+            # Edit the "anywhere" option
             if reaction.emoji == EMOJI["four"]:
                 embed = discord.Embed(title=LOADING)
                 await message.edit(embed=embed)
@@ -939,9 +945,8 @@ class CustomReactions(commands.Cog):
                             timeout=60)
                         if reaction_user == user:
                             react_sent_by_user_modifying = True
-                        else:
-                            if time.time() > manual_timeout:
-                                raise asyncio.TimeoutError
+                        elif time.time() > manual_timeout:
+                            raise asyncio.TimeoutError
 
                 except asyncio.TimeoutError:
                     if proposals:
@@ -964,6 +969,7 @@ class CustomReactions(commands.Cog):
                 await message.clear_reactions()
                 if reaction is None:
                     return
+                # Deactivate "anywhere" option
                 elif reaction.emoji == EMOJI["zero"]:
                     if anywhere == 0:
                         if proposals:
@@ -1000,6 +1006,7 @@ class CustomReactions(commands.Cog):
                         conn.close()
                         time.sleep(5)
 
+                # Activate "anywhere" option
                 elif reaction.emoji == EMOJI["one"]:
                     if anywhere == 1:
                         if proposals:
@@ -1035,10 +1042,12 @@ class CustomReactions(commands.Cog):
                         await message.edit(embed=embed)
                         conn.close()
                         time.sleep(5)
+                # Stop
                 elif reaction.emoji == EMOJI["stop_button"]:
                     await leave(message)
                     return
 
+            # Edit "dm" option
             if reaction.emoji == EMOJI["five"]:
                 embed = discord.Embed(title=LOADING)
                 await message.edit(embed=embed)
@@ -1100,6 +1109,7 @@ class CustomReactions(commands.Cog):
                 await message.clear_reactions()
                 if reaction is None:
                     return
+                # Deactivate "dm" option
                 elif reaction.emoji == EMOJI["zero"]:
                     if dm == 0:
                         if proposals:
@@ -1135,7 +1145,7 @@ class CustomReactions(commands.Cog):
                         await message.edit(embed=embed)
                         conn.close()
                         time.sleep(5)
-
+                # Activate "dm" option
                 elif reaction.emoji == EMOJI["one"]:
                     if dm == 1:
                         if proposals:
@@ -1171,10 +1181,12 @@ class CustomReactions(commands.Cog):
                         await message.edit(embed=embed)
                         conn.close()
                         time.sleep(5)
+                # Stop
                 elif reaction.emoji == EMOJI["stop_button"]:
                     await leave(message)
                     return
 
+            # Approve a custom reaction proposal
             if reaction.emoji == EMOJI["white_check_mark"]:
                 t = (0, custom_react_id)
                 c.execute(
@@ -1191,6 +1203,7 @@ class CustomReactions(commands.Cog):
                 conn.close()
                 time.sleep(5)
 
+            # Delete a custom reaction or proposal
             if reaction.emoji == EMOJI[
                     "put_litter_in_its_place"] or reaction.emoji == EMOJI["x"]:
                 t = (custom_react_id, )
@@ -1214,6 +1227,7 @@ class CustomReactions(commands.Cog):
                 self.rebuild_lists()
                 time.sleep(5)
 
+            # Stop
             if reaction.emoji == EMOJI["stop_button"]:
                 await leave(message)
                 return
