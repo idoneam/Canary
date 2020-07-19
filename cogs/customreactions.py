@@ -467,7 +467,7 @@ class CustomReactions(commands.Cog):
                     left = await information_on_react(message, current_list,
                                                       number, proposals)
                     if left:
-                        return
+                        return True
                     if proposals:
                         title = "Current custom reaction proposals\n" \
                                 "Click on {} to approve, reject, edit, or " \
