@@ -109,6 +109,10 @@ class CustomReactions(commands.Cog):
                     or reaction[5] == 1)
             ]
 
+            # return if no reactions were kept
+            if len(reactions) == 0:
+                return
+
             # choose a random one of these
             reaction = random.choice(reactions)
 
@@ -293,7 +297,7 @@ class CustomReactions(commands.Cog):
             embed.set_footer(text=footer, icon_url=author.avatar_url)
             current_options.extend((EMOJI["ok"], EMOJI["stop_button"]))
             await add_multiple_reactions(
-                message, NUMBERS[1:4] + (EMOJI["ok"], EMOJI["stop_button"]))
+                message, (*NUMBERS[1:4], EMOJI["ok"], EMOJI["stop_button"]))
             await message.edit(embed=embed)
             try:
                 reaction, user = await wait_for_reaction(message)
@@ -592,21 +596,21 @@ class CustomReactions(commands.Cog):
             current_options.clear()
             await message.clear_reactions()
             if proposals:
-                current_options.extend(NUMBERS[1:6] +
-                                       (EMOJI["white_check_mark"], EMOJI["x"],
-                                        EMOJI["stop_button"]))
+                current_options.extend(
+                    (*NUMBERS[1:6], EMOJI["white_check_mark"], EMOJI["x"],
+                     EMOJI["stop_button"]))
             else:
-                current_options.extend(NUMBERS[1:6] +
-                                       (EMOJI["put_litter_in_its_place"],
-                                        EMOJI["stop_button"]))
+                current_options.extend(
+                    (*NUMBERS[1:6], EMOJI["put_litter_in_its_place"],
+                     EMOJI["stop_button"]))
             if proposals:
                 await add_multiple_reactions(
-                    message, NUMBERS[1:6] + (EMOJI["white_check_mark"],
-                                             EMOJI["x"], EMOJI["stop_button"]))
+                    message, (*NUMBERS[1:6], EMOJI["white_check_mark"],
+                              EMOJI["x"], EMOJI["stop_button"]))
             else:
                 await add_multiple_reactions(
-                    message, NUMBERS[1:6] +
-                    (EMOJI["put_litter_in_its_place"], EMOJI["stop_button"]))
+                    message, (*NUMBERS[1:6], EMOJI["put_litter_in_its_place"],
+                              EMOJI["stop_button"]))
             await message.edit(embed=embed)
 
             try:
@@ -792,7 +796,7 @@ class CustomReactions(commands.Cog):
                 embed.set_footer(text=footer, icon_url=user.avatar_url)
                 current_options.clear()
                 await message.clear_reactions()
-                current_options.extend((NUMBERS[0:2], EMOJI["stop_button"]))
+                current_options.extend((*NUMBERS[0:2], EMOJI["stop_button"]))
                 await add_yes_or_no_reactions(message)
                 await message.edit(embed=embed)
                 reaction = None
@@ -934,7 +938,7 @@ class CustomReactions(commands.Cog):
                 embed.set_footer(text=footer, icon_url=user.avatar_url)
                 current_options.clear()
                 await message.clear_reactions()
-                current_options.extend((NUMBERS[0:2], EMOJI["stop_button"]))
+                current_options.extend((*NUMBERS[0:2], EMOJI["stop_button"]))
                 await add_yes_or_no_reactions(message)
                 await message.edit(embed=embed)
                 reaction = None
@@ -1073,7 +1077,7 @@ class CustomReactions(commands.Cog):
                 embed.set_footer(text=footer, icon_url=user.avatar_url)
                 current_options.clear()
                 await message.clear_reactions()
-                current_options.extend((NUMBERS[0:2], EMOJI["stop_button"]))
+                current_options.extend((*NUMBERS[0:2], EMOJI["stop_button"]))
                 await add_yes_or_no_reactions(message)
                 await message.edit(embed=embed)
                 reaction = None
