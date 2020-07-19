@@ -244,7 +244,7 @@ class CustomReactions(commands.Cog):
             # Stop
             if reaction.emoji == EMOJI["stop_button"]:
                 await leave(message)
-                return
+                return True
 
         async def addcustomreact(message, is_moderator):
             if is_moderator:
@@ -264,7 +264,7 @@ class CustomReactions(commands.Cog):
                 return
             elif prompt_message.lower() == STOP_TEXT:
                 await leave(message)
-                return
+                return True
             description = "Prompt: {}\nWrite the response the bot will send"\
                 .format(prompt_message)
             embed = discord.Embed(title=title, description=description)
@@ -275,7 +275,7 @@ class CustomReactions(commands.Cog):
                 return
             elif response.lower() == STOP_TEXT:
                 await leave(message)
-                return
+                return True
             embed = discord.Embed(title=LOADING)
             await message.edit(embed=embed)
             description = "Prompt: {}\nResponse: {}\nReact with the options " \
@@ -356,7 +356,7 @@ class CustomReactions(commands.Cog):
             # Stop
             if reaction.emoji == EMOJI["stop_button"]:
                 await leave(message)
-                return
+                return True
 
         async def listcustomreacts(message, proposals):
             if proposals:
@@ -464,8 +464,10 @@ class CustomReactions(commands.Cog):
                               editable_content_emoji=EMOJI["ok"],
                               return_user_on_edit=True)
                 else:
-                    await information_on_react(message, current_list, number,
-                                               proposals)
+                    left = await information_on_react(message, current_list,
+                                                      number, proposals)
+                    if left:
+                        return
                     if proposals:
                         title = "Current custom reaction proposals\n" \
                                 "Click on {} to approve, reject, edit, or " \
@@ -612,8 +614,10 @@ class CustomReactions(commands.Cog):
                     'reaction_add',
                     check=reaction_check_moderators,
                     timeout=40)
-                await edit_custom_react(message, reaction, user, custom_react,
-                                        proposals)
+                left = await edit_custom_react(message, reaction, user,
+                                               custom_react, proposals)
+                if left:
+                    return True
             except asyncio.TimeoutError:
                 pass
             current_options.clear()
@@ -677,7 +681,7 @@ class CustomReactions(commands.Cog):
                     return
                 elif prompt.lower() == STOP_TEXT:
                     await leave(message)
-                    return
+                    return True
 
                 t = (prompt, custom_react_id)
                 c.execute(
@@ -745,7 +749,7 @@ class CustomReactions(commands.Cog):
                     return
                 elif response.lower() == STOP_TEXT:
                     await leave(message)
-                    return
+                    return True
 
                 t = (response, custom_react_id)
                 c.execute(
@@ -906,7 +910,7 @@ class CustomReactions(commands.Cog):
                 # Stop
                 elif reaction.emoji == EMOJI["stop_button"]:
                     await leave(message)
-                    return
+                    return True
 
             # Edit the "anywhere" option
             if reaction.emoji == EMOJI["four"]:
@@ -1044,7 +1048,7 @@ class CustomReactions(commands.Cog):
                 # Stop
                 elif reaction.emoji == EMOJI["stop_button"]:
                     await leave(message)
-                    return
+                    return True
 
             # Edit "dm" option
             if reaction.emoji == EMOJI["five"]:
@@ -1183,7 +1187,7 @@ class CustomReactions(commands.Cog):
                 # Stop
                 elif reaction.emoji == EMOJI["stop_button"]:
                     await leave(message)
-                    return
+                    return True
 
             # Approve a custom reaction proposal
             if reaction.emoji == EMOJI["white_check_mark"]:
@@ -1229,7 +1233,7 @@ class CustomReactions(commands.Cog):
             # Stop
             if reaction.emoji == EMOJI["stop_button"]:
                 await leave(message)
-                return
+                return True
 
         async def leave(message):
             await message.delete()
