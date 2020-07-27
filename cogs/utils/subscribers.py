@@ -19,7 +19,6 @@ import asyncio
 import functools
 from typing import Callable
 
-
 __all__ = [
     "CanarySubscriberException",
     "canary_subscriber",
@@ -53,5 +52,7 @@ def canary_subscriber(sleep_time: int):
                     bot.logger.error("Subscriber encountered error:")
                     bot.log_traceback(e)
                 await asyncio.sleep(sleep_time)
+
         return wrapper
+
     return _canary_subscriber
