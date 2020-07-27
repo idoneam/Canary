@@ -24,6 +24,7 @@ from discord import utils
 from bs4 import BeautifulSoup
 
 # Other utilities
+import json.decoder
 import os
 import re
 import pickle
@@ -138,14 +139,14 @@ class Subscribers(commands.Cog):
                 pickle.dump(recalls, id_pickle)
 
     @staticmethod
-    def _check_metro_status(line_number, response):
+    def _check_metro_status(line_number, response_data):
         # Helper function to return line name and status.
         # - `line_number` must be a string containing the number of the
         # metro line
         # - `response` must be a JSON response object from a GET request to
         # the metro status API.
-        line_name = response.json()["metro"][line_number]["name"]
-        status = response.json()["metro"][line_number]["data"]["text"]
+        line_name = response_data["metro"][line_number]["name"]
+        status = response_data["metro"][line_number]["data"]["text"]
         return line_name, status
 
     @canary_subscriber(60)    # Run every 60 seconds
@@ -156,11 +157,16 @@ class Subscribers(commands.Cog):
         outages.
         """
 
-        response = requests.get(METRO_STATUS_API)
+        try:
+            response = requests.get(METRO_STATUS_API)
+            response_data = response.json()
+        except json.decoder.JSONDecodeError:
+            # STM API sometimes returns non-JSON responses
+            return
 
         for line_number, cached_status in self._metro_statuses.items():
             line_name, current_status = Subscribers._check_metro_status(
-                line_number, response)
+                line_number, response_data)
             if current_status in (cached_status, METRO_INTERIM_STATUS):
                 # Don't send message if the status hasn't changed or the status
                 # is currently in the middle of changing on the API side.
