@@ -68,7 +68,7 @@ class Currency(commands.Cog):
     async def fetch_all_balances(self) -> List[Tuple[str, str, Decimal]]:
         conn = sqlite3.connect(self.bot.config.db_path)
         c = conn.cursor()
-        c.execute("SELECT BT.UserID, M.DisplayName, IFNULL(SUM(BT.Amount), 0) "
+        c.execute("SELECT BT.UserID, M.Name, IFNULL(SUM(BT.Amount), 0) "
                   "FROM BankTransactions AS BT, Members as M "
                   "WHERE BT.UserID = M.ID GROUP BY UserID")
 
