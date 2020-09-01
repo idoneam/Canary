@@ -40,6 +40,7 @@ import datetime
 import random
 from .utils.paginator import Pages
 from .utils.requests import fetch
+import sqlite3
 
 MCGILL_EXAM_URL = "https://www.mcgill.ca/exams/dates"
 
@@ -562,6 +563,94 @@ class Helpers(commands.Cog):
         buffer = BytesIO(buffer)
         fn = "{}.{}".format(match.group(1), ext)
         await ctx.send(file=discord.File(fp=buffer, filename=fn))
+
+    @commands.Cog.listener()
+    async def on_member_remove(self, member):
+        roles_id = []
+        for role in member.roles:
+            if role.name != "@everyone":
+                roles_id.append(role.id)
+        if len(roles_id) > 0:
+            conn = sqlite3.connect(self.bot.config.db_path)
+            c = conn.cursor()
+            t = (member.id, ' '.join(str(e) for e in roles_id))
+            c.execute('REPLACE INTO PreviousRoles VALUES (?, ?)', t)
+            conn.commit()
+            conn.close()
+
+    @commands.command(aliases=['previousroles', 'giverolesback', 'rolesback'])
+    async def previous_roles(self, ctx, user: discord.Member):
+        """Show the list of roles that a user had before leaving, if possible.
+        A moderator can click the OK react on the message to give these roles back
+        """
+        conn = sqlite3.connect(self.bot.config.db_path)
+        c = conn.cursor()
+        roles_id_string = c.execute(
+            'SELECT Roles FROM PreviousRoles WHERE ID = ?',
+            (user.id, )).fetchall()
+        if len(roles_id_string) > 0:
+            roles_id = list(roles_id_string[0][0].split(" "))
+
+            valid_roles = []
+            for role in roles_id:
+                try:
+                    valid_roles.append(
+                        self.bot.get_guild(self.bot.config.server_id).get_role(
+                            int(role)))
+                except AttributeError:
+                    pass
+
+            roles_name = [
+                "[{}] {}\n".format(i + 1, role.name)
+                for i, role in zip(range(len(valid_roles)), valid_roles)
+            ]
+
+            embed = discord.Embed(title="Loading...")
+            message = await ctx.send(embed=embed)
+
+            if len(valid_roles) > 20:
+                await message.add_reaction("◀")
+                await message.add_reaction("▶")
+            await message.add_reaction("🆗")
+
+            p = Pages(
+                ctx,
+                item_list=roles_name,
+                title="{} had the following roles before leaving.\n"
+                "A {} can add these roles back by reacting with 🆗".format(
+                    user.display_name, self.bot.config.moderator_role),
+                msg=message,
+                display_option=(3, 20),
+                editable_content=True,
+                editable_content_emoji="🆗",
+                return_user_on_edit=True)
+            ok_user = await p.paginate()
+
+            while p.edit_mode:
+                if discord.utils.get(ok_user.roles,
+                                     name=self.bot.config.moderator_role):
+                    await user.add_roles(
+                        *valid_roles,
+                        reason="{} used the previous_roles command".format(
+                            ok_user.name))
+                    embed = discord.Embed(
+                        title="{}'s previous roles were successfully "
+                        "added back by {}".format(user.display_name,
+                                                  ok_user.display_name))
+                    await message.edit(embed=embed)
+                    await message.clear_reaction("◀")
+                    await message.clear_reaction("▶")
+                    await message.clear_reaction("🆗")
+                    return
+                else:
+                    ok_user = await p.paginate()
+
+        else:
+            embed = discord.Embed(
+                title="Could not find any roles for this user")
+            await ctx.send(embed=embed)
+
+        conn.close()
 
 
 def setup(bot):
