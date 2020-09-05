@@ -135,7 +135,7 @@ class Roles(commands.Cog):
             await ctx.send("Role removed.")
 
         else:
-            await ctx.send(f"Must `add` or `remove` a role")
+            await ctx.send("Must `add` or `remove` a role")
 
     @commands.command()
     async def pronoun(self, ctx, *, pronoun: Optional[str] = None):
