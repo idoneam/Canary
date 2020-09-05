@@ -42,7 +42,7 @@ class Roles(commands.Cog):
 
     CATEGORY_LIMITS = {
         "pronouns": None,
-        "fields": 2,
+        "fields": 3,
         "faculties": 1,
         "years": 1,
         "generics": None,
