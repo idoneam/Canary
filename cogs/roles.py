@@ -61,9 +61,7 @@ class Roles(commands.Cog):
                   editable_content=False)
         await p.paginate()
 
-    async def toggle_role(self,
-                          ctx,
-                          transaction: RoleTransaction,
+    async def toggle_role(self, ctx, transaction: RoleTransaction,
                           requested_role: Optional[str],
                           categories: Tuple[str, ...]):
         """
@@ -73,7 +71,7 @@ class Roles(commands.Cog):
         if not requested_role:
             roles = []
             for c in categories:
-                roles += self.roles[c]  # All roles in the category
+                roles += self.roles[c]    # All roles in the category
 
             # If no role is specified, list what is available in all possible
             # categories for the command.
@@ -86,8 +84,9 @@ class Roles(commands.Cog):
         # If a role is specified, narrow the category down to the one with the
         # role in it to impose a proper limit.
         category = next(
-            (c for c in categories if requested_role.lower() in {
-                r.lower() for r in self.roles[c]}),
+            (c for c in categories
+             if requested_role.lower() in {r.lower()
+                                           for r in self.roles[c]}),
             "generics")
         roles = self.roles[category]
 
@@ -116,7 +115,7 @@ class Roles(commands.Cog):
                 if rr is not None
             ]
 
-            if limit == 1:  # Treat as exclusive, simply replace roles
+            if limit == 1:    # Treat as exclusive, simply replace roles
                 # For roles defined as "exclusive" only one in that category
                 # may be applied at a time.
                 for old_role in existing_roles:
@@ -145,15 +144,14 @@ class Roles(commands.Cog):
         """
 
         await self.toggle_role(ctx, RoleTransaction.ADD, pronoun,
-                               ("pronouns",))
+                               ("pronouns", ))
 
     @commands.command()
     async def field(self, ctx, *, field: Optional[str] = None):
         """
         Self-assign a field of study role to a user. 
         """
-        await self.toggle_role(ctx, RoleTransaction.ADD, field,
-                               ("fields",))
+        await self.toggle_role(ctx, RoleTransaction.ADD, field, ("fields", ))
 
     @commands.command()
     async def faculty(self, ctx, *, faculty: Optional[str] = None):
@@ -161,7 +159,7 @@ class Roles(commands.Cog):
         Self-assign a faculty of study role to a user. 
         """
         await self.toggle_role(ctx, RoleTransaction.ADD, faculty,
-                               ("faculties",))
+                               ("faculties", ))
 
     @commands.command()
     async def year(self, ctx, year: Optional[str] = None):
@@ -169,7 +167,7 @@ class Roles(commands.Cog):
         Self-assign a year of study role to a user. 
         """
         await Roles.toggle_role(self, ctx, RoleTransaction.ADD, year,
-                                ("years",))
+                                ("years", ))
 
     @commands.command(aliases=["iam"])
     async def i_am(self, ctx, *, role: Optional[str]):
@@ -192,19 +190,16 @@ class Roles(commands.Cog):
         """Returns list of all roles in server"""
         role_names = [role.name for role in ctx.guild.roles]
         role_names.reverse()
-        await Roles.paginate_roles(
-            ctx,
-            role_names,
-            title="All roles in server")
+        await Roles.paginate_roles(ctx,
+                                   role_names,
+                                   title="All roles in server")
 
     @commands.command()
     async def inrole(self, ctx, *, query_role):
         """Returns list of users in the specified role"""
 
-        role = next((
-            role for role in ctx.guild.roles
-            if role.name.lower() == query_role.lower()
-        ), None)
+        role = next((role for role in ctx.guild.roles
+                     if role.name.lower() == query_role.lower()), None)
 
         if role is None:
             return
