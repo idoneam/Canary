@@ -51,6 +51,7 @@ class Roles(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.roles = self.bot.config.roles
+        self.mod_role = self.bot.config.moderator_role
 
     @staticmethod
     async def paginate_roles(ctx, roles, title="All roles in server"):
@@ -105,7 +106,7 @@ class Roles(commands.Cog):
 
         if not role:
             await ctx.send(f"Error: Role `{requested_role}` does not exist... "
-                           f"please contact your local Discord moderator")
+                           f"please contact your local `{self.mod_role}`")
             return
 
         if transaction == RoleTransaction.ADD:
