@@ -226,6 +226,22 @@ class Roles(commands.Cog):
                       editable_content=False)
         await pages.paginate()
 
+    @commands.command(aliases=["cr", "createrole"])
+    @is_moderator()
+    async def create_role(self, ctx, *, role: Optional[str] = None):
+        role = (role or "").strip()
+        if not role:
+            await ctx.send("Please specify a role name.")
+            return
+
+        role_obj = utils.get(ctx.guild.roles, name=role)
+        if role_obj is not None:
+            await ctx.send(f"Role `{role}` already exists!")
+            return
+
+        await ctx.guild.create_role(name=role, reason="Created with Canary")
+        await ctx.send("Role created successfully.")
+
 
 def setup(bot):
     bot.add_cog(Roles(bot))
