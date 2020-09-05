@@ -30,7 +30,9 @@ class Pages:
                  item_list=[],
                  title='Paginator',
                  display_option=(1, 0),
-                 editable_content=True):
+                 editable_content=True,
+                 editable_content_emoji='🚮',
+                 return_user_on_edit=False):
         """Creates a paginator.
 
         Parameters
@@ -40,7 +42,7 @@ class Pages:
         current_page: int
             Specify which page to display.
         msg: discord.Message
-            This is helpful for delete function. Specify which message the bot needs to update if an element in the original message is modified.
+            This is helpful for edit function. Specify which message the bot needs to update if an element in the original message is modified.
         item_list: list or dictionary
             List of items to paginate. Using a dictionary is only useful for embeds option where there is a need for field names and values.
         title: str
@@ -79,9 +81,10 @@ class Pages:
             ('⏹', self._halt),
         ]
         if editable_content:
-            self.actions.append(('🚮', self._del))
+            self.actions.append((editable_content_emoji, self._edit))
         self.currentPage = current_page
-        self.delete = False
+        self.edit_mode = False
+        self.return_user_on_edit = return_user_on_edit
 
     def _organize(self):
         organize_helper_map = {
@@ -221,8 +224,8 @@ class Pages:
     async def _halt(self):
         await self._show_page(0)
 
-    async def _del(self):
-        self.delete = True
+    async def _edit(self):
+        self.edit_mode = True
         await self._show_page(self.currentPage)
 
     def _react_check(self, reaction, user):
@@ -239,11 +242,11 @@ class Pages:
         return False
 
     async def paginate(self):
-        if self.delete:
-            self.delete = False
+        if self.edit_mode:
+            self.edit_mode = False
             self._organize()
         await self._show_page(self.currentPage)
-        while not self.delete and self.message:
+        while not self.edit_mode and self.message:
             try:
                 reaction, user = await self.bot.wait_for(
                     'reaction_add', check=self._react_check)
@@ -259,3 +262,5 @@ class Pages:
                 await self.message.remove_reaction(reaction, user)
             except:
                 pass
+            if self.edit_mode and self.return_user_on_edit:
+                return user

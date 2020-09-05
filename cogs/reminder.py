@@ -242,9 +242,8 @@ class Reminder(commands.Cog):
             5. Lastly: save beginning of "reminder quote" and end loop
         """
 
-        if len(input_segments) > 0 and (input_segments[0] in ("daily",
-                                                              "weekly",
-                                                              "monthly")):
+        if len(input_segments) > 0 and (input_segments[0]
+                                        in ("daily", "weekly", "monthly")):
             await self.__remindme_repeating(
                 ctx,
                 input_segments[0],
@@ -455,7 +454,7 @@ class Reminder(commands.Cog):
             except ValueError:
                 return False
 
-        while p.delete:
+        while p.edit_mode:
             await ctx.send(
                 'Delete option selected. Enter a number to specify which '
                 'reminder you want to delete, or enter 0 to return.',

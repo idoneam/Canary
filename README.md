@@ -5,9 +5,9 @@ Canary is a Python3 bot designed for the McGill University Community Discord Ser
 
 ## Build Statuses
 
-| Master |  [![Build Status](https://travis-ci.org/idoneam/Canary.svg?branch=master)](https://travis-ci.org/idoneam/Canary)  |
-|--------|---|
-| **Dev**    |  [![Build Status](https://travis-ci.org/idoneam/Canary.svg?branch=dev)](https://travis-ci.org/idoneam/Canary) |
+| Master  | [![Build Status](https://travis-ci.org/idoneam/Canary.svg?branch=master)](https://travis-ci.org/idoneam/Canary) |
+| ------- | --------------------------------------------------------------------------------------------------------------- |
+| **Dev** | [![Build Status](https://travis-ci.org/idoneam/Canary.svg?branch=dev)](https://travis-ci.org/idoneam/Canary)    |
 
 ## Installation
 
@@ -53,6 +53,8 @@ You must set certain values in the `config.ini` file, in particular your Discor
     * `ModeratorRole`: The name of the role that your moderators have (for functions like DMing users).
     * `DeveloperRole`: The name of the role that your developers have (for functions like restarting the bot). This could be the same role than moderator.
     * `ReceptionChannelID`: The ID of a channel that will receive messages sent to the bot through the `answer` command (and where messages sent by mods to users with the `dm` command will be logged)
+* `[Meta]`
+    * `Repository`: The HTTPS remote for this repository, used by the `update` command as the remote when pulling.
 * `[Logging]`
     * `LogLevel`: [See this for a list of levels](https://docs.python.org/3/library/logging.html#levels). Logs from exceptions and commands like `mix` and `bac` are at the `info` level. Logging messages from the level selected *and* from more severe levels will be sent to your logging file. For example, setting the level to `info` also sends logs from `warning`, `error` and `critical`, but not  from `debug`.
     * `LogFile`: The file where the logging output will be sent (will be created there by the bot if it doesn't exist).
@@ -88,6 +90,12 @@ You must set certain values in the `config.ini` file, in particular your Discor
     * `RollReturns`: The multiplier return for each interval. For example, a value of `0, 2, 4, 10` with the intervals
       described above gives a 0x return for `random <= 66`, a 2x return for `66 < random <= 90`, a 4x return for
       `90 < random <= 99`, and a 10x return for `random == 100`.
+* `[Roles]`:
+    * `Pronouns`: Comma seperated list of pronoun roles in server.
+    * `Fields`: Comma seperated list of field of study roles in server.
+    * `Faculties`: Comma seperated list of faculty roles in server.
+    * `Years`: Comma seperated list of year roles in server.
+    * `Generics`: Comma seperated list of generic or meme roles in server.
 </p>
 </details>
 
@@ -96,6 +104,32 @@ If you installed all dev dependencies, you can run tests with `poetry run pytest
 
 ## Running the bot
 Run `poetry run python Main.py` in your shell. Ensure that your Discord token is set in the `config.ini` file within the `config` directory.
+### Docker Container
+A Docker Container is provided for easier development. 
+#### Building the Image
+Freeze requirements to a requirements.txt 
+
+```
+$ poetry export -f requirements.txt > requirements.txt
+```
+
+From within the root of the repository:
+
+```
+$ docker build -t canary:latest .
+```
+
+#### Running the Container
+From within the root of the repository:
+
+```
+$ docker run -v $(pwd):/mnt/canary canary:latest
+```
+
+Optionally provide the `-d` flag to run the container in detached state.
+
+Note that the current host directory is mounted into the container, any changes to log files, pickles, configuration are reflected 
+across the host and the container. 
 
 ## Code Linting
 We format our code using Google's [YAPF](https://github.com/google/yapf). Our builds will reject code that do not conform to the standards defined in [`.style.yapf`](https://github.com/idoneam/Canary/blob/master/.style.yapf) . You may format your code using :

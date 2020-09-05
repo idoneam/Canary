@@ -34,6 +34,7 @@ from cogs.utils.checks import is_developer, is_moderator
 # List the extensions (modules) that should be loaded on startup.
 startup = [
     "cogs.currency",
+    "cogs.games",
     "cogs.helpers",
     "cogs.images",
     "cogs.info",
@@ -41,9 +42,9 @@ startup = [
     "cogs.mod",
     "cogs.quotes",
     "cogs.reminder",
+    "cogs.roles",
     "cogs.score",
     "cogs.subscribers",
-    "cogs.games",
 ]
 
 # TODO: SHOULD BE DB
@@ -127,7 +128,9 @@ async def update(ctx):
     Update the bot by pulling changes from the git repository
     """
     bot.logger.info('Update Git repository')
-    shell_output = subprocess.check_output("git pull", shell=True)
+    shell_output = subprocess.check_output("git pull {}".format(
+        bot.config.repository),
+                                           shell=True)
     status_message = shell_output.decode("unicode_escape")
     await ctx.send('`{}`'.format(status_message))
 

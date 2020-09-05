@@ -55,6 +55,8 @@ class Parser:
         self.developer_role = config['Server']['DeveloperRole']
         self.reception_channel = config['Server']['ReceptionChannel']
 
+        self.repository = config['Meta']['Repository']
+
         # Logging
         self.log_file = config['Logging']['LogFile']
         loglevel = config['Logging']['LogLevel'].lower()
@@ -123,3 +125,16 @@ class Parser:
             sorted([(int(c), decimal.Decimal(a)) for c, a in br_cases],
                    key=lambda c: c[0])
         }
+
+        roles = {
+            "pronouns": config["Roles"]["Pronouns"],
+            "fields": config["Roles"]["Fields"],
+            "faculties": config["Roles"]["Faculties"],
+            "years": config["Roles"]["Years"],
+            "generics": config["Roles"]["Generics"]
+        }
+
+        for rc in roles:
+            roles[rc] = [r.strip() for r in roles[rc].split(",")]
+
+        self.roles = roles
