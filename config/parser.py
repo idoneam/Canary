@@ -126,10 +126,15 @@ class Parser:
                    key=lambda c: c[0])
         }
 
-        self.roles = {
+        roles = {
             "pronouns": config["Roles"]["Pronouns"],
             "fields": config["Roles"]["Fields"],
             "faculties": config["Roles"]["Faculties"],
             "years": config["Roles"]["Years"],
             "generics": config["Roles"]["Generics"]
         }
+
+        for rc in roles:
+            roles[rc] = [r.strip() for r in roles[rc].split(",")]
+
+        self.roles = roles
