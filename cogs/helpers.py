@@ -566,13 +566,13 @@ class Helpers(commands.Cog):
 
     @commands.Cog.listener()
     async def on_member_remove(self, member):
-        roles_id = []
-        for role in member.roles:
-            if role.name != "@everyone":
-                roles_id.append(role.id)
-        if len(roles_id) > 0:
+        roles_id = [
+            role.id for role in member.roles if role.name != "@everyone"
+        ]
+        if roles_id:
             conn = sqlite3.connect(self.bot.config.db_path)
             c = conn.cursor()
+            # store roles as a string of IDs separated by spaces
             t = (member.id, ' '.join(str(e) for e in roles_id))
             c.execute('REPLACE INTO PreviousRoles VALUES (?, ?)', t)
             conn.commit()
@@ -585,12 +585,12 @@ class Helpers(commands.Cog):
         """
         conn = sqlite3.connect(self.bot.config.db_path)
         c = conn.cursor()
-        roles_id_string = c.execute(
+        fetched_roles = c.execute(
             'SELECT Roles FROM PreviousRoles WHERE ID = ?',
-            (user.id, )).fetchall()
-        if len(roles_id_string) > 0:
-            roles_id = list(roles_id_string[0][0].split(" "))
-
+            (user.id, )).fetchone()
+        # the above returns a tuple with a string of IDs # separated by spaces
+        if fetched_roles is not None:
+            roles_id = list(fetched_roles[0].split(" "))
             valid_roles = []
             for role in roles_id:
                 try:
@@ -602,7 +602,7 @@ class Helpers(commands.Cog):
 
             roles_name = [
                 "[{}] {}\n".format(i + 1, role.name)
-                for i, role in zip(range(len(valid_roles)), valid_roles)
+                for i, role in enumerate(valid_roles)
             ]
 
             embed = discord.Embed(title="Loading...")
