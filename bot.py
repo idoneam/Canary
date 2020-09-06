@@ -25,6 +25,10 @@ import logging
 import sqlite3
 import traceback
 
+# For log webhook
+import requests
+from discord import Webhook, RequestsWebhookAdapter
+
 __all__ = ['bot', 'developer_role', 'moderator_role']
 
 _parser = parser.Parser()
@@ -32,12 +36,32 @@ command_prefix = _parser.command_prefix
 
 _logger = logging.getLogger('Canary')
 _logger.setLevel(_parser.log_level)
-_handler = logging.FileHandler(filename=_parser.log_file,
-                               encoding='utf-8',
-                               mode='a')
-_handler.setFormatter(
+_file_handler = logging.FileHandler(filename=_parser.log_file,
+                                    encoding='utf-8',
+                                    mode='a')
+_file_handler.setFormatter(
     logging.Formatter('[%(levelname)s] %(asctime)s: %(message)s'))
-_logger.addHandler(_handler)
+_logger.addHandler(_file_handler)
+
+
+class _WebhookHandler(logging.Handler):
+    def __init__(self):
+        logging.Handler.__init__(self)
+        self.webhook = Webhook.partial(_parser.log_webhook_id,
+                                       _parser.log_webhook_token,
+                                       adapter=RequestsWebhookAdapter())
+
+    def emit(self, record):
+        msg = self.format(record)
+        self.webhook.send(f"```\n{msg}```",
+                          username=f"{_parser.bot_name} Logs")
+
+
+if _parser.log_webhook_id and _parser.log_webhook_token:
+    _webhook_handler = _WebhookHandler()
+    _webhook_handler.setFormatter(
+        logging.Formatter('[%(levelname)s] %(asctime)s:\n%(message)s'))
+    _logger.addHandler(_webhook_handler)
 
 
 class Canary(commands.Bot):

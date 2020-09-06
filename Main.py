@@ -62,8 +62,12 @@ MARTY_RESPONSES = {
 
 @bot.event
 async def on_ready():
-    sys.stdout.write(
-        'Bot is ready, program output will be written to a log file.\n')
+    if bot.config.log_webhook_id and bot.config.log_webhook_token:
+        webhook_string = " and to the log webhook"
+    else:
+        webhook_string = ""
+    sys.stdout.write(f'Bot is ready, program output will be written to a '
+                     f'log file{webhook_string}.\n')
     sys.stdout.flush()
     bot.logger.info('Logged in as {} ({})'.format(bot.user.name, bot.user.id))
 
