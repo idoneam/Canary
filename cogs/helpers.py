@@ -588,7 +588,7 @@ class Helpers(commands.Cog):
         fetched_roles = c.execute(
             'SELECT Roles FROM PreviousRoles WHERE ID = ?',
             (user.id, )).fetchone()
-        # the above returns a tuple with a string of IDs # separated by spaces
+        # the above returns a tuple with a string of IDs separated by spaces
         if fetched_roles is not None:
             roles_id = list(fetched_roles[0].split(" "))
             valid_roles = []
