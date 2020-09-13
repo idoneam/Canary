@@ -15,4 +15,3 @@ else
 	kill $PID
 	exit 1
 fi
-

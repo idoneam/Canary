@@ -9,25 +9,17 @@ python:
 services:
   - docker
 
-env:
- global:
-  - POETRY_VIRTUALENVS_IN_PROJECT=true
-
 before_install:
  - sed -i "s/KEY/$DISCORD_TOKEN/g" config/config.ini
-
-install:
- - pip install poetry
- - poetry install
 
 jobs:
   include:
    - stage: Build
      script: docker build -t canary:latest .
    - stage: Test
-     script: bash ./test.sh
+     script: docker run -v $(pwd):/mnt/canary canary:latest "bash ./test.sh"
    - stage: Lint
-     script: poetry run yapf --diff --recursive .
+     script: docker run -v $(pwd):/mnt/canary canary:latest "poetry run yapf --diff --recursive ."
 
 notifications:
  email: false
