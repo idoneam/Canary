@@ -6,6 +6,9 @@ dist: xenial
 python:
  - "3.6"
 
+services:
+  - docker
+
 env:
  global:
   - POETRY_VIRTUALENVS_IN_PROJECT=true
@@ -20,7 +23,10 @@ install:
 jobs:
   include:
    - stage: Build
+     script: docker build -t canary:latest .
+   - stage: Test
      script: bash ./test.sh
+   - stage: Lint
      script: poetry run yapf --diff --recursive .
 
 notifications:
