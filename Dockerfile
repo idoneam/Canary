@@ -1,6 +1,16 @@
 FROM python:3.6-slim-buster
 
-RUN apt update && apt install -y git
+# Install base apt dependencies
+RUN apt-get update && apt-get install -y git
+
+# Install auxiliary dependencies (for GL, Tex, etc.)
+RUN apt-get install -y \
+  libgl1-mesa-glx \
+  texlive-latex-extra \
+  texlive-lang-greek \
+  dvipng
+
+# Install Poetry (Python dependency manager)
 RUN pip install poetry
 
 # Configure Git settings for update command
