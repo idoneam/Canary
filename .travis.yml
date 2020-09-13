@@ -12,10 +12,14 @@ services:
 before_install:
  - sed -i "s/KEY/$DISCORD_TOKEN/g" config/config.ini
 
+install:
+ - pip install poetry
+ - poetry install
+
 jobs:
   include:
    - stage: Build
-     script: docker build -t canary:latest .
+     script: pip freeze > requirements.txt && docker build -t canary:latest .
    - stage: Test
      script: docker run -v $(pwd):/mnt/canary canary:latest "bash ./test.sh"
    - stage: Lint
