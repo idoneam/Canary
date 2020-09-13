@@ -16,14 +16,11 @@ install:
  - pip install poetry
  - poetry install
 
-jobs:
-  include:
-   - stage: Build
-     script: pip freeze > requirements.txt && docker build -t canary:latest .
-   - stage: Test
-     script: docker run -v $(pwd):/mnt/canary canary:latest "bash ./test.sh"
-   - stage: Lint
-     script: docker run -v $(pwd):/mnt/canary canary:latest "poetry run yapf --diff --recursive ."
+script:
+  - pip freeze > requirements.txt
+  - docker build -t canary:latest .
+  - docker run -v $(pwd):/mnt/canary canary:latest "bash ./test.sh"
+  - docker run -v $(pwd):/mnt/canary canary:latest "poetry run yapf --diff --recursive ."
 
 notifications:
  email: false
