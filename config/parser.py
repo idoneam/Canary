@@ -61,13 +61,22 @@ class Parser:
         self.log_file = config['Logging']['LogFile']
         loglevel = config['Logging']['LogLevel'].lower()
         self.log_level = LOG_LEVELS.get(loglevel, logging.WARNING)
-        if config['Logging']['LogWebhookID'] \
-                and config['Logging']['LogWebhookToken']:
-            self.log_webhook_id = int(config['Logging']['LogWebhookID'])
-            self.log_webhook_token = config['Logging']['LogWebhookToken']
+        if config['Logging']['DevLogWebhookID'] \
+                and config['Logging']['DevLogWebhookToken']:
+            self.dev_log_webhook_id = int(config['Logging']['DevLogWebhookID'])
+            self.dev_log_webhook_token = config['Logging'][
+                'DevLogWebhookToken']
         else:
-            self.log_webhook_id = None
-            self.log_webhook_token = None
+            self.dev_log_webhook_id = None
+            self.dev_log_webhook_token = None
+        if config['Logging']['ModLogWebhookID'] \
+                and config['Logging']['ModLogWebhookToken']:
+            self.mod_log_webhook_id = int(config['Logging']['ModLogWebhookID'])
+            self.mod_log_webhook_token = config['Logging'][
+                'ModLogWebhookToken']
+        else:
+            self.mod_log_webhook_id = None
+            self.mod_log_webhook_token = None
 
         # Welcome + Farewell messages
         self.welcome = config['Greetings']['Welcome'].split('\n')

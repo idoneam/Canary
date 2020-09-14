@@ -62,14 +62,15 @@ MARTY_RESPONSES = {
 
 @bot.event
 async def on_ready():
-    if bot.config.log_webhook_id and bot.config.log_webhook_token:
+    if bot.config.dev_log_webhook_id and bot.config.dev_log_webhook_token:
         webhook_string = " and to the log webhook"
     else:
         webhook_string = ""
     sys.stdout.write(f'Bot is ready, program output will be written to a '
                      f'log file{webhook_string}.\n')
     sys.stdout.flush()
-    bot.logger.info('Logged in as {} ({})'.format(bot.user.name, bot.user.id))
+    bot.dev_logger.info('Logged in as {} ({})'.format(bot.user.name,
+                                                      bot.user.id))
 
 
 @bot.command()
@@ -108,7 +109,7 @@ async def restart(ctx):
     """
     Restart the bot
     """
-    bot.logger.info('Bot restart')
+    bot.dev_logger.info('Bot restart')
     await ctx.send('https://streamable.com/dli1')
     python = sys.executable
     os.execl(python, python, *sys.argv)
@@ -120,7 +121,7 @@ async def sleep(ctx):
     """
     Shut down the bot
     """
-    bot.logger.info('Received sleep command. Shutting down bot')
+    bot.dev_logger.info('Received sleep command. Shutting down bot')
     await ctx.send('Bye')
     await bot.logout()
 
@@ -131,7 +132,7 @@ async def update(ctx):
     """
     Update the bot by pulling changes from the git repository
     """
-    bot.logger.info('Update Git repository')
+    bot.dev_logger.info('Update Git repository')
     shell_output = subprocess.check_output("git pull {}".format(
         bot.config.repository),
                                            shell=True)
@@ -164,7 +165,7 @@ async def backup(ctx):
     await ctx.send(content='Here you go',
                    file=discord.File(fp=bot.config.db_path,
                                      filename=backup_filename))
-    bot.logger.info('Database backup')
+    bot.dev_logger.info('Database backup')
 
 
 if __name__ == "__main__":
@@ -172,7 +173,8 @@ if __name__ == "__main__":
         try:
             bot.load_extension(extension)
         except Exception as e:
-            bot.logger.warning('Failed to load extension {}\n{}: {}'.format(
-                extension,
-                type(e).__name__, e))
+            bot.dev_logger.warning(
+                'Failed to load extension {}\n{}: {}'.format(
+                    extension,
+                    type(e).__name__, e))
     bot.run(bot.config.discord_key)
