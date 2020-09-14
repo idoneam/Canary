@@ -22,7 +22,7 @@ script:
   - docker run -d -v $(pwd):/mnt/canary canary:latest > ./container.tmp
   - sleep 5
   - docker stop $(cat ./container.tmp)
-  - docker run -v $(pwd):/mnt/canary canary:latest poetry run yapf --diff --recursive
+  - docker run -v $(pwd):/mnt/canary canary:latest yapf --diff --recursive
 
 notifications:
  email: false
