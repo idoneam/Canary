@@ -19,8 +19,8 @@ install:
 script:
   - pip freeze > requirements.txt
   - docker build -t canary:latest .
-  - docker run -v $(pwd):/mnt/canary canary:latest "bash ./test.sh"
-  - docker run -v $(pwd):/mnt/canary canary:latest "poetry run yapf --diff --recursive ."
+  - docker run -v $(pwd):/mnt/canary canary:latest bash ./test.sh
+  - docker run -v $(pwd):/mnt/canary canary:latest poetry run yapf --diff --recursive
 
 notifications:
  email: false

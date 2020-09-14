@@ -22,4 +22,4 @@ COPY requirements.txt /mnt/
 RUN pip3 install -r /mnt/requirements.txt
 
 WORKDIR /mnt/canary
-CMD  python Main.py
+CMD ["python", "Main.py"]

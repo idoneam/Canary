@@ -1,6 +1,6 @@
 #!/bin/bash
 
-poetry run python Main.py &
+python Main.py &
 
 sleep 10
 
