@@ -20,6 +20,7 @@ script:
   - pip freeze > requirements.txt
   - docker build -t canary:latest .
   - docker run -d -v $(pwd):/mnt/canary canary:latest > ./container.tmp
+  - sleep 5
   - docker stop $(cat ./container.tmp)
   - docker run -v $(pwd):/mnt/canary canary:latest poetry run yapf --diff --recursive
 
