@@ -155,7 +155,7 @@ class Roles(commands.Cog):
     async def pronoun(self, ctx, *, pronoun: Optional[str] = None):
         """
         Self-assign a pronoun role to a user.
-        If no argument is given, returns a list of roles that can be used with this command
+        If no argument is given, returns a list of roles that can be used with this command.
         """
 
         await self.toggle_role(ctx, RoleTransaction.ADD, pronoun,
@@ -166,7 +166,7 @@ class Roles(commands.Cog):
     async def field(self, ctx, *, field: Optional[str] = None):
         """
         Self-assign a field of study role to a user.
-        If no argument is given, returns a list of roles that can be used with this command
+        If no argument is given, returns a list of roles that can be used with this command.
         """
         await self.toggle_role(ctx, RoleTransaction.ADD, field, ("fields", ))
 
@@ -192,7 +192,7 @@ class Roles(commands.Cog):
     async def i_am(self, ctx, *, role: Optional[str]):
         """
         Self-assign a generic role to a user.
-        If no argument is given, returns a list of roles that can be used with this command
+        If no argument is given, returns a list of roles that can be used with this command.
         """
         await self.toggle_role(ctx, RoleTransaction.ADD, role,
                                Roles.ALL_CATEGORIES)
