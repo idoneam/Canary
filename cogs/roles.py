@@ -69,7 +69,7 @@ class Roles(commands.Cog):
         Assigns a single role to a user with no checks from a category of roles
         """
 
-        fcategory = f"{'categories' if len(categories) > 1 else 'category'}"
+        fcategory = 'categories' if len(categories) > 1 else 'category'
         if not requested_role:
             roles = []
             for c in categories:
@@ -154,7 +154,8 @@ class Roles(commands.Cog):
     @commands.command(aliases=["pronouns"])
     async def pronoun(self, ctx, *, pronoun: Optional[str] = None):
         """
-        Self-assign a pronoun role to a user. 
+        Self-assign a pronoun role to a user.
+        If no argument is given, returns a list of roles that can be used with this command
         """
 
         await self.toggle_role(ctx, RoleTransaction.ADD, pronoun,
@@ -164,14 +165,16 @@ class Roles(commands.Cog):
         aliases=["fields", "program", "programs", "major", "majors"])
     async def field(self, ctx, *, field: Optional[str] = None):
         """
-        Self-assign a field of study role to a user. 
+        Self-assign a field of study role to a user.
+        If no argument is given, returns a list of roles that can be used with this command
         """
         await self.toggle_role(ctx, RoleTransaction.ADD, field, ("fields", ))
 
     @commands.command(aliases=["faculties"])
     async def faculty(self, ctx, *, faculty: Optional[str] = None):
         """
-        Self-assign a faculty of study role to a user. 
+        Self-assign a faculty of study role to a user.
+        If no argument is given, returns a list of roles that can be used with this command.
         """
         await self.toggle_role(ctx, RoleTransaction.ADD, faculty,
                                ("faculties", ))
@@ -179,7 +182,8 @@ class Roles(commands.Cog):
     @commands.command(aliases=["years"])
     async def year(self, ctx, year: Optional[str] = None):
         """
-        Self-assign a year of study role to a user. 
+        Self-assign a year of study role to a user.
+        If no argument is given, returns a list of roles that can be used with this command.
         """
         await Roles.toggle_role(self, ctx, RoleTransaction.ADD, year,
                                 ("years", ))
@@ -187,7 +191,8 @@ class Roles(commands.Cog):
     @commands.command(aliases=["iam", "generic", "generics"])
     async def i_am(self, ctx, *, role: Optional[str]):
         """
-        Self-assign a generic role to a user. 
+        Self-assign a generic role to a user.
+        If no argument is given, returns a list of roles that can be used with this command
         """
         await self.toggle_role(ctx, RoleTransaction.ADD, role,
                                Roles.ALL_CATEGORIES)
