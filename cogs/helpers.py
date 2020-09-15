@@ -590,19 +590,17 @@ class Helpers(commands.Cog):
             (user.id, )).fetchone()
         # the above returns a tuple with a string of IDs separated by spaces
         if fetched_roles is not None:
-            roles_id = list(fetched_roles[0].split(" "))
+            roles_id = fetched_roles[0].split(" ")
             valid_roles = []
-            for role in roles_id:
-                try:
-                    valid_roles.append(
-                        self.bot.get_guild(self.bot.config.server_id).get_role(
-                            int(role)))
-                except AttributeError:
-                    pass
+            for role_id in roles_id:
+                role = self.bot.get_guild(self.bot.config.server_id).get_role(
+                    int(role_id))
+                if role:
+                    valid_roles.append(role)
 
             roles_name = [
-                "[{}] {}\n".format(i + 1, role.name)
-                for i, role in enumerate(valid_roles)
+                "[{}] {}\n".format(i, role.name)
+                for i, role in enumerate(valid_roles, 1)
             ]
 
             embed = discord.Embed(title="Loading...")
