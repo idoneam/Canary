@@ -69,8 +69,7 @@ async def on_ready():
     sys.stdout.write(f'Bot is ready, program output will be written to a '
                      f'log file{webhook_string}.\n')
     sys.stdout.flush()
-    bot.dev_logger.info('Logged in as {} ({})'.format(bot.user.name,
-                                                      bot.user.id))
+    bot.dev_logger.info(f'Logged in as {bot.user.name} ({bot.user.id})')
 
 
 @bot.command()
@@ -173,8 +172,6 @@ if __name__ == "__main__":
         try:
             bot.load_extension(extension)
         except Exception as e:
-            bot.dev_logger.warning(
-                'Failed to load extension {}\n{}: {}'.format(
-                    extension,
-                    type(e).__name__, e))
+            bot.dev_logger.warning(f'Failed to load extension {extension}\n'
+                                   f'{type(e).__name__}: {e}')
     bot.run(bot.config.discord_key)
