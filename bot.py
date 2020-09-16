@@ -117,6 +117,11 @@ class Canary(commands.Bot):
         conn.close()
         self.dev_logger.debug('Database is ready')
 
+    def log_traceback(self, exception):
+        self.dev_logger.error("".join(
+            traceback.format_exception(type(exception), exception,
+                                       exception.__traceback__)))
+
     async def on_command_error(self, ctx, error):
         """The event triggered when an error is raised while invoking a command.
         ctx   : Context
@@ -149,9 +154,7 @@ class Canary(commands.Bot):
 
         self.dev_logger.error('Ignoring exception in command {}:'.format(
             ctx.command))
-        self.dev_logger.error(''.join(
-            traceback.format_exception(type(error), error,
-                                       error.__traceback__)))
+        self.log_traceback(error)
 
 
 # predefined variables to be imported

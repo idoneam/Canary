@@ -1,7 +1,6 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
+#! /usr/bin/env python3
 #
-# Copyright (C) idoneam (2016-2019)
+# Copyright (C) idoneam (2016-2020)
 #
 # This file is part of Canary
 #
@@ -167,7 +166,7 @@ async def backup(ctx):
     bot.dev_logger.info('Database backup')
 
 
-if __name__ == "__main__":
+def main():
     for extension in startup:
         try:
             bot.load_extension(extension)
@@ -175,3 +174,7 @@ if __name__ == "__main__":
             bot.dev_logger.warning(f'Failed to load extension {extension}\n'
                                    f'{type(e).__name__}: {e}')
     bot.run(bot.config.discord_key)
+
+
+if __name__ == "__main__":
+    main()
