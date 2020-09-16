@@ -69,6 +69,7 @@ class Roles(commands.Cog):
         Assigns a single role to a user with no checks from a category of roles
         """
 
+        fcategory = 'categories' if len(categories) > 1 else 'category'
         if not requested_role:
             roles = []
             for c in categories:
@@ -79,101 +80,119 @@ class Roles(commands.Cog):
             await Roles.paginate_roles(
                 ctx,
                 roles,
-                title=f"Roles in category/ies `{', '.join(categories)}`")
+                title=f"Roles in {fcategory} `{', '.join(categories)}`")
             return
 
         # If a role is specified, narrow the category down to the one with the
         # role in it to impose a proper limit.
-        category = next(
-            (c for c in categories
-             if requested_role.lower() in {r.lower()
-                                           for r in self.roles[c]}),
-            "generics")
+        try:
+            category = next((c for c in categories if requested_role.lower() in
+                             {r.lower()
+                              for r in self.roles[c]}))
+        except StopIteration:
+            await ctx.send(
+                f"Invalid role for {fcategory} `{', '.join(categories)}`.")
+            return
+
         roles = self.roles[category]
 
-        if requested_role.lower() not in {r.lower() for r in roles}:
-            await ctx.send(f"Invalid role in category `{category}`")
-            return
+        roles_lower = [r.lower() for r in roles]
+        requested_role = roles[roles_lower.index(requested_role.lower())]
 
         limit = Roles.CATEGORY_LIMITS[category]
 
-        # TODO: Better case insensitivity
-        role = utils.get(ctx.guild.roles, name=requested_role) or \
-            utils.get(ctx.guild.roles, name=requested_role.title()) or \
-            utils.get(ctx.guild.roles, name=requested_role.upper()) or \
-            utils.get(ctx.guild.roles, name=requested_role.lower())
+        role = utils.get(ctx.guild.roles, name=requested_role)
         member = ctx.message.author
 
         if not role:
-            await ctx.send(f"Error: Role `{requested_role}` does not exist... "
-                           f"please contact your local `{self.mod_role}`")
+            await ctx.send(f"Error: Role `{requested_role}` is self-assignable"
+                           f" but does not exist on the server... "
+                           f"Please contact your local {self.mod_role}.")
             return
+
+        existing_roles = [
+            rr for rr in (utils.get(member.roles, name=r) for r in roles)
+            if rr is not None
+        ]
 
         if transaction == RoleTransaction.ADD:
             # Find existing roles in the category the user has
-            existing_roles = [
-                rr for rr in (utils.get(member.roles, name=r) for r in roles)
-                if rr is not None
-            ]
+            if role in existing_roles:
+                await ctx.send("You already have this role.")
+                return
 
-            if limit == 1:    # Treat as exclusive, simply replace roles
+            if limit == 1 and existing_roles:
+                # Treat as exclusive, simply replace roles
                 # For roles defined as "exclusive" only one in that category
                 # may be applied at a time.
                 for old_role in existing_roles:
                     await member.remove_roles(old_role,
                                               reason="Self Requested")
+                await member.add_roles(role, reason="Self Requested")
+                await ctx.send(f"Replaced role for category `{category}`.")
+                return
 
             elif limit and len(existing_roles) == limit:
-                await ctx.send(f"You have too many roles in category/ies "
-                               f"`{', '.join(categories)}`, please remove one")
+                await ctx.send(f"You have too many roles in category "
+                               f"`{category}` (limit is `{limit}`). "
+                               f"Please remove one.")
                 return
 
             await member.add_roles(role, reason="Self Requested")
             await ctx.send("Role added.")
 
         elif transaction == RoleTransaction.REMOVE:
+            if role not in existing_roles:
+                await ctx.send("You do not have this role.")
+                return
             await member.remove_roles(role, reason="Self Requested")
             await ctx.send("Role removed.")
 
         else:
-            await ctx.send("Must `add` or `remove` a role")
+            await ctx.send("Must `add` or `remove` a role.")
 
-    @commands.command()
+    @commands.command(aliases=["pronouns"])
     async def pronoun(self, ctx, *, pronoun: Optional[str] = None):
         """
-        Self-assign a pronoun role to a user. 
+        Self-assign a pronoun role to a user.
+        If no argument is given, returns a list of roles that can be used with this command.
         """
 
         await self.toggle_role(ctx, RoleTransaction.ADD, pronoun,
                                ("pronouns", ))
 
-    @commands.command()
+    @commands.command(
+        aliases=["fields", "program", "programs", "major", "majors"])
     async def field(self, ctx, *, field: Optional[str] = None):
         """
-        Self-assign a field of study role to a user. 
+        Self-assign a field of study role to a user.
+        If no argument is given, returns a list of roles that can be used with this command.
         """
         await self.toggle_role(ctx, RoleTransaction.ADD, field, ("fields", ))
 
-    @commands.command()
+    @commands.command(aliases=["faculties"])
     async def faculty(self, ctx, *, faculty: Optional[str] = None):
         """
-        Self-assign a faculty of study role to a user. 
+        Self-assign a faculty of study role to a user.
+        If no argument is given, returns a list of roles that can be used with this command.
         """
         await self.toggle_role(ctx, RoleTransaction.ADD, faculty,
                                ("faculties", ))
 
-    @commands.command()
+    @commands.command(aliases=["years"])
     async def year(self, ctx, year: Optional[str] = None):
         """
-        Self-assign a year of study role to a user. 
+        Self-assign a year of study role to a user.
+        If no argument is given, returns a list of roles that can be used with this command.
         """
         await Roles.toggle_role(self, ctx, RoleTransaction.ADD, year,
                                 ("years", ))
 
-    @commands.command(aliases=["iam"])
+    @commands.command(aliases=["iam", "generic", "generics"])
     async def i_am(self, ctx, *, role: Optional[str]):
         """
-        Self-assign a generic role to a user. 
+        Self-assign a generic role to a user.
+        If no argument is given, returns a list of roles that can be used with this command.
         """
         await self.toggle_role(ctx, RoleTransaction.ADD, role,
                                Roles.ALL_CATEGORIES)
