@@ -48,3 +48,8 @@ CREATE TABLE IF NOT EXISTS `BankTransactions` (
 
     FOREIGN KEY(`UserID`) REFERENCES `Members`(`ID`)
 );
+
+CREATE TABLE IF NOT EXISTS `PreviousRoles` (
+	`ID`	      INTEGER UNIQUE,
+	`Roles`       TEXT
+);
