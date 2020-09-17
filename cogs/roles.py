@@ -257,6 +257,22 @@ class Roles(commands.Cog):
         await ctx.guild.create_role(name=role, reason="Created with Canary")
         await ctx.send("Role created successfully.")
 
+    @commands.command()
+    async def inchannel(self, ctx):
+        """Returns list of users in current channel"""
+        channel = ctx.message.channel
+        members = channel.members
+
+        channel_users = list(map(lambda m: str(m) + "\n", members))
+        header = f"List of users in #{channel} - {len(members)}"
+
+        pages = Pages(ctx,
+                      item_list=channel_users,
+                      title=header,
+                      display_option=(3, 20),
+                      editable_content=False)
+        await pages.paginate()
+
 
 def setup(bot):
     bot.add_cog(Roles(bot))
