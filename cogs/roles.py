@@ -148,9 +148,8 @@ class Roles(commands.Cog):
         members = channel.members
 
         channel_users = list(map(lambda m: str(m) + "\n", members))
-        header = f"List of users in {channel.mention} - {len(members)}"
+        header = f"List of users in #{channel} - {len(members)}"
 
-        # TODO remove for paginator take empty list for embed
         pages = Pages(ctx,
                       item_list=channel_users,
                       title=header,
