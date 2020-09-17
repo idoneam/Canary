@@ -16,6 +16,7 @@
 # along with Canary. If not, see <https://www.gnu.org/licenses/>.
 
 import discord
+import sqlite3
 
 from discord import utils
 from discord.ext import commands
@@ -24,6 +25,9 @@ from typing import Optional, Tuple
 
 from .utils.checks import is_moderator
 from .utils.paginator import Pages
+
+
+PENALTY_ROLE_ERROR = "Mis-configured penalty role in config.ini"
 
 
 class RoleTransaction(Enum):
@@ -52,6 +56,7 @@ class Roles(commands.Cog):
         self.bot = bot
         self.roles = self.bot.config.roles
         self.mod_role = self.bot.config.moderator_role
+        self.penalty_role = self.bot.config.penalty_role
 
     @staticmethod
     async def paginate_roles(ctx, roles, title="All roles in server"):
@@ -256,6 +261,150 @@ class Roles(commands.Cog):
 
         await ctx.guild.create_role(name=role, reason="Created with Canary")
         await ctx.send("Role created successfully.")
+
+    def _save_existing_roles(self, user: discord.Member):
+        roles_id = [
+            role.id for role in user.roles if role.name != "@everyone"
+        ]
+
+        if not roles_id:
+            return
+
+        conn = sqlite3.connect(self.bot.config.db_path)
+        try:
+            c = conn.cursor()
+            # store roles as a string of IDs separated by spaces
+            t = (user.id, " ".join(str(e) for e in roles_id))
+            c.execute("REPLACE INTO PreviousRoles VALUES (?, ?)", t)
+            conn.commit()
+        finally:
+            conn.close()
+
+    def _fetch_saved_roles(self, guild, user: discord.Member) -> Optional[list]:
+        conn = sqlite3.connect(self.bot.config.db_path)
+        try:
+            c = conn.cursor()
+            fetched_roles = c.execute(
+                "SELECT Roles FROM PreviousRoles WHERE ID = ?",
+                (user.id,)).fetchone()
+            # the above returns a tuple with a string of IDs separated by spaces
+
+            # Return list of all valid roles restored from the DB
+            #  - filter(None, ...) strips false-y elements
+            return list(filter(None, (
+                guild.get_role(int(role_id))
+                for role_id in fetched_roles[0].split(" ")
+            ))) if fetched_roles else None
+
+        finally:
+            conn.close()
+
+    @commands.Cog.listener()
+    async def on_member_remove(self, member):
+        self._save_existing_roles(member)
+
+    @commands.command(aliases=["previousroles", "giverolesback", "rolesback"])
+    async def previous_roles(self, ctx, user: discord.Member):
+        """Show the list of roles that a user had before leaving, if possible.
+        A moderator can click the OK react on the message to give these roles back
+        """
+
+        valid_roles = self._fetch_saved_roles(ctx.guild, user)
+        if valid_roles is None:
+            # No row found in DB, as opposed to empty list
+            embed = discord.Embed(
+                title="Could not find any roles for this user")
+            await ctx.send(embed=embed)
+            return
+
+        roles_name = [
+            f"[{i}] {role.name}\n"
+            for i, role in enumerate(valid_roles, 1)
+        ]
+
+        embed = discord.Embed(title="Loading...")
+        message = await ctx.send(embed=embed)
+
+        if len(valid_roles) > 20:
+            await message.add_reaction("◀")
+            await message.add_reaction("▶")
+        await message.add_reaction("🆗")
+
+        p = Pages(
+            ctx,
+            item_list=roles_name,
+            title="{} had the following roles before leaving.\n"
+                  "A {} can add these roles back by reacting with 🆗".format(
+                user.display_name, self.bot.config.moderator_role),
+            msg=message,
+            display_option=(3, 20),
+            editable_content=True,
+            editable_content_emoji="🆗",
+            return_user_on_edit=True)
+        ok_user = await p.paginate()
+
+        while p.edit_mode:
+            if not discord.utils.get(ok_user.roles,
+                                     name=self.bot.config.moderator_role):
+                # User is not moderator, simply paginate and return
+                await p.paginate()
+                return
+
+            # User is a moderator, so restore the roles
+            await user.add_roles(
+                *valid_roles,
+                reason=f"{ok_user.name} used the previous_roles command")
+            embed = discord.Embed(
+                title=f"{user.display_name}'s previous roles were "
+                      f"successfully added back by {ok_user.display_name}")
+            await message.edit(embed=embed)
+            await message.clear_reaction("◀")
+            await message.clear_reaction("▶")
+            await message.clear_reaction("🆗")
+
+    @commands.command(aliases=["penalty"])
+    @is_moderator()
+    def mute(self, ctx, user: discord.Member):
+        # Save existing roles
+        self._save_existing_roles(user)
+
+        penalty_role = utils.get(ctx.guild.roles, name=self.penalty_role)
+
+        if penalty_role is None:
+            await ctx.send(PENALTY_ROLE_ERROR)
+            return
+
+        reason_message = f"{ctx.author} put {user} in the penalty box"
+
+        # Remove all roles
+        await user.remove_roles(*user.roles, reason=reason_message)
+
+        # Add the penalty role to the user
+        user.add_roles(penalty_role, reason=reason_message)
+
+        await ctx.send(reason_message)
+
+    @commands.command(aliases=["unpenalty"])
+    @is_moderator()
+    def unmute(self, ctx, user: discord.Member):
+        penalty_role = utils.get(ctx.guild.roles, name=self.penalty_role)
+        if penalty_role is None:
+            await ctx.send(PENALTY_ROLE_ERROR)
+            return
+
+        reason_message = f"{ctx.author} removed {user} from the penalty box"
+
+        # Remove the penalty role
+        await user.remove_roles(penalty_role, reason=reason_message)
+
+        # Add back original roles, if any
+
+        valid_roles = self._fetch_saved_roles(ctx.guild, user)
+        if not valid_roles:
+            return
+
+        await user.add_roles(*valid_roles, reason=reason_message)
+        await ctx.send(reason_message)
 
 
 def setup(bot):
