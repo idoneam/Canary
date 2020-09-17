@@ -49,7 +49,15 @@ CREATE TABLE IF NOT EXISTS `BankTransactions` (
     FOREIGN KEY(`UserID`) REFERENCES `Members`(`ID`)
 );
 
+-- Used for when users leave/return
 CREATE TABLE IF NOT EXISTS `PreviousRoles` (
 	`ID`	      INTEGER UNIQUE,
-	`Roles`       TEXT
+	`Roles`       TEXT -- space-separated list of role IDs
+);
+
+-- Used for when users are placed in the Penalty role; stores old roles akin to
+-- the way PreviousRoles does it.
+CREATE TABLE IF NOT EXISTS `PenaltyUsers` (
+    `ID`	      INTEGER UNIQUE,
+	`Roles`       TEXT -- space-separated list of role IDs
 );
