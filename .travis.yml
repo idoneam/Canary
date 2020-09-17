@@ -6,9 +6,8 @@ dist: xenial
 python:
  - "3.6"
 
-env:
- global:
-  - POETRY_VIRTUALENVS_IN_PROJECT=true
+services:
+  - docker
 
 before_install:
  - sed -i "s/KEY/$DISCORD_TOKEN/g" config/config.ini
@@ -17,11 +16,13 @@ install:
  - pip install poetry
  - poetry install
 
-jobs:
-  include:
-   - stage: Build
-     script: bash ./test.sh
-     script: poetry run yapf --diff --recursive .
+script:
+  - pip freeze > requirements.txt
+  - docker build -t canary:latest .
+  - docker run -d -v $(pwd):/mnt/canary canary:latest > ./container.tmp
+  - sleep 5
+  - docker stop $(cat ./container.tmp)
+  - docker run -v $(pwd):/mnt/canary canary:latest yapf --diff --recursive .
 
 notifications:
  email: false
