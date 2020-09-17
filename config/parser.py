@@ -1,6 +1,4 @@
-# -*- coding: utf-8 -*-
-#
-# Copyright (C) idoneam (2016-2019)
+# Copyright (C) idoneam (2016-2020)
 #
 # This file is part of Canary
 #
@@ -53,8 +51,10 @@ class Parser:
         self.downvote_emoji = config['Server']['DownvoteEmoji']
         self.moderator_role = config['Server']['ModeratorRole']
         self.developer_role = config['Server']['DeveloperRole']
+        self.penalty_role = config["Server"]["PenaltyRole"]
         self.reception_channel = config['Server']['ReceptionChannel']
 
+        # Meta
         self.repository = config['Meta']['Repository']
 
         # Logging
