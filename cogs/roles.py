@@ -141,6 +141,32 @@ class Roles(commands.Cog):
                           editable_content=False)
             await pages.paginate()
 
+    @commands.command()
+    async def inchannel(self, ctx):
+        """Returns list of users in current channel"""
+        members = None
+        channel = ctx.message.channel
+        members = channel.members
+
+        if members is None:
+            return
+
+        channelUsers = list(map(lambda m: str(m) + "\n", members))
+        header = f"List of users in {channel.mention} - {len(members)}"
+
+        # TODO remove for paginator take empty list for embed
+        if len(channelUsers) == 0:
+            em = discord.Embed(title=header, colour=0xDA291C)
+            em.set_footer(text="Page 01 of 01")
+            await ctx.send(embed=em)
+        else:
+            pages = Pages(ctx,
+                          item_list=channelUsers,
+                          title=header,
+                          display_option=(3, 20),
+                          editable_content=False)
+            await pages.paginate()
+
 
 def setup(bot):
     bot.add_cog(Roles(bot))
