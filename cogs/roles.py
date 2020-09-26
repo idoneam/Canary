@@ -160,8 +160,8 @@ class Roles(commands.Cog):
         """
         Wrapper for toggle_role to make calling it cleaner
         """
-        return await self.toggle_role(ctx, RoleTransaction.ADD,
-                                      requested_role, categories)
+        return await self.toggle_role(ctx, RoleTransaction.ADD, requested_role,
+                                      categories)
 
     @commands.command(aliases=["pronouns"])
     async def pronoun(self, ctx, *, pronoun: Optional[str] = None):
@@ -330,7 +330,7 @@ class Roles(commands.Cog):
         conn = sqlite3.connect(self.bot.config.db_path)
         try:
             c = conn.cursor()
-            c.execute("DELETE FROM PenaltyUsers WHERE ID = ?", (user.id,))
+            c.execute("DELETE FROM PenaltyUsers WHERE ID = ?", (user.id, ))
             conn.commit()
         finally:
             conn.close()
