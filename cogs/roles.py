@@ -26,7 +26,6 @@ from typing import Optional, Tuple
 from .utils.checks import is_moderator
 from .utils.paginator import Pages
 
-
 PENALTY_ROLE_ERROR = "Mis-configured penalty role in config.ini"
 
 
@@ -262,7 +261,8 @@ class Roles(commands.Cog):
         await ctx.guild.create_role(name=role, reason="Created with Canary")
         await ctx.send("Role created successfully.")
 
-    def _save_existing_roles(self, user: discord.Member,
+    def _save_existing_roles(self,
+                             user: discord.Member,
                              penalty: bool = False):
         table = "PenaltyUsers" if penalty else "PreviousRoles"
 
@@ -284,7 +284,9 @@ class Roles(commands.Cog):
         finally:
             conn.close()
 
-    def _fetch_saved_roles(self, guild, user: discord.Member,
+    def _fetch_saved_roles(self,
+                           guild,
+                           user: discord.Member,
                            penalty: bool = False) -> Optional[list]:
         table = "PenaltyUsers" if penalty else "PreviousRoles"
 
@@ -293,30 +295,30 @@ class Roles(commands.Cog):
             c = conn.cursor()
             fetched_roles = c.execute(
                 f"SELECT Roles FROM {table} WHERE ID = ?",
-                (user.id,)).fetchone()
+                (user.id, )).fetchone()
             # the above returns a tuple with a string of IDs separated by spaces
 
             # Return list of all valid roles restored from the DB
             #  - filter(None, ...) strips false-y elements
-            return list(filter(None, (
-                guild.get_role(int(role_id))
-                for role_id in fetched_roles[0].split(" ")
-            ))) if fetched_roles else None
+            return list(
+                filter(None, (guild.get_role(int(role_id))
+                              for role_id in fetched_roles[0].split(" ")
+                              ))) if fetched_roles else None
 
         finally:
             conn.close()
 
     def _has_penalty_role(self, user: discord.Member):
         penalty_role = utils.get(user.guild.roles, name=self.penalty_role)
-        return penalty_role and next((r for r in user.roles
-                                      if r == penalty_role), None) is None
+        return penalty_role and next(
+            (r for r in user.roles if r == penalty_role), None) is None
 
     def _is_in_penalty_table(self, user: discord.Member):
         conn = sqlite3.connect(self.bot.config.db_path)
         try:
             c = conn.cursor()
             penalty = c.execute("SELECT * FROM PenaltyUsers WHERE ID = ?",
-                                (user.id,)).fetchone()
+                                (user.id, )).fetchone()
             return penalty is None
         finally:
             conn.close()
@@ -325,8 +327,7 @@ class Roles(commands.Cog):
         conn = sqlite3.connect(self.bot.config.db_path)
         try:
             c = conn.cursor()
-            c.execute("DELETE FROM PenaltyUsers WHERE ID = ?",
-                      (user.id,))
+            c.execute("DELETE FROM PenaltyUsers WHERE ID = ?", (user.id,))
             conn.commit()
         finally:
             conn.close()
@@ -394,8 +395,8 @@ class Roles(commands.Cog):
             ctx,
             item_list=roles_name,
             title=f"{user.display_name} had the following roles before leaving."
-                  f"\nA {self.bot.config.moderator_role} can add these roles "
-                  f"back by reacting with 🆗",
+            f"\nA {self.bot.config.moderator_role} can add these roles "
+            f"back by reacting with 🆗",
             msg=message,
             display_option=(3, 20),
             editable_content=True,
@@ -412,11 +413,10 @@ class Roles(commands.Cog):
 
             # User is a moderator, so restore the roles
             await user.add_roles(
-                *roles,
-                reason=f"{ok_user} restored roles via command")
+                *roles, reason=f"{ok_user} restored roles via command")
             embed = discord.Embed(
                 title=f"{user.display_name}'s previous roles were "
-                      f"successfully added back by {ok_user.display_name}")
+                f"successfully added back by {ok_user.display_name}")
             await message.edit(embed=embed)
             await message.clear_reaction("◀")
             await message.clear_reaction("▶")
