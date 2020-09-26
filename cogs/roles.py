@@ -494,8 +494,8 @@ class Roles(commands.Cog):
 
         await ctx.send(reason_message)
 
-    @commands.command()
-    async def inchannel(self, ctx):
+    @commands.command(aliases=["inchannel"])
+    async def in_channel(self, ctx):
         """Returns list of users in current channel"""
         channel = ctx.message.channel
         members = channel.members
