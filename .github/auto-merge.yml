@@ -1,0 +1,11 @@
+- match:
+    dependency_name: discord.py
+    update_type: semver:patch
+
+- match:
+    dependency_name: opencv-python
+    update_type: semver:patch
+
+- match:
+    dependency_type: all
+    update_type: semver:minor # includes patch updates!
