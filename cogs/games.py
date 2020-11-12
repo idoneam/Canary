@@ -66,24 +66,27 @@ class Games(commands.Cog):
         incorrect_guesses = set()
         first_line = "".join(char+" " if char not in not_guessed else "_ " for char in word)
         last_line = "incorrect guesses: "
-        await ctx.send(f"starting hangman, category: {command}")
-        await ctx.send(f"```{first_line}\n{HANG_LIST[num_mistakes]}\n{last_line}```")
+        cong_msg = ""
+        hg_msg = await ctx.send(f"```{first_line}\n\n{HANG_LIST[num_mistakes]}\n\ncategory: {command}\n{last_line}```")
         while len(not_guessed) > 0 and num_mistakes < 6:
             curr_msg = await self.bot.wait_for('message', check=valid_checker, timeout=120)
+            await curr_msg.delete(delay=0.5)
             curr_guess = curr_msg.content.lower()
             if curr_guess in not_guessed:
                 not_guessed.remove(curr_guess)
                 first_line = "".join(char+" " if char not in not_guessed else "_ " for char in word)
-                await ctx.send(f"```{first_line}\n{HANG_LIST[num_mistakes]}\n{last_line}```")
+                cong_msg = f"{curr_msg.author} got a correct guess!"
+                await hg_msg.edit(content=f"```{first_line}\n\n{HANG_LIST[num_mistakes]}\n\ncategory: {command}\n{last_line}\n{cong_msg}```")
             elif curr_guess not in word and curr_guess not in incorrect_guesses:
                 num_mistakes += 1
                 incorrect_guesses.add(curr_guess)
                 last_line = f"incorrect guesses: {str(incorrect_guesses)[1:-1]}"
-                await ctx.send(f"```{first_line}\n{HANG_LIST[num_mistakes]}\n{last_line}```")
+                cong_msg = f"{curr_msg.author} got a wrong guess!"
+                await hg_msg.edit(content=f"```{first_line}\n\n{HANG_LIST[num_mistakes]}\n\ncategory: {command}\n{last_line}\n{cong_msg}```")
             elif curr_guess in word and curr_guess not in not_guessed:
-                await ctx.send(f"this letter already guessed correctly")
+                await hg_msg.edit(content=f"```{first_line}\n\n{HANG_LIST[num_mistakes]}\n\ncategory: {command}\n{last_line}\n{curr_guess} was already guessed (correct)```")
             elif curr_guess not in word and curr_guess in incorrect_guesses:
-                await ctx.send(f"this letter was already guessed incorrectly")
+                await hg_msg.edit(content=f"```{first_line}\n\n{HANG_LIST[num_mistakes]}\n\ncategory: {command}\n{last_line}\n{curr_guess} was already guessed (incorrect)```")
             else:
                 await ctx.send("woops.")
         if len(not_guessed) == 0:
