@@ -62,9 +62,9 @@ class Games(commands.Cog):
             await ctx.send(f"invalid category, here is a list of valid categories: {list(self.hangman_dict.keys())}")
             return
         num_mistakes = 0
-        not_guessed = set(word.replace(" ", "").replace("-", ""))
+        not_guessed = set(re.sub(r"[^a-z]", "", word))
         incorrect_guesses = set()
-        first_line = r"_ " * len(word)
+        first_line = "".join(char+" " if char not in not_guessed else "_ " for char in word)
         last_line = "incorrect guesses: "
         await ctx.send(f"starting hangman, category: {command}")
         await ctx.send(f"```{first_line}\n{HANG_LIST[num_mistakes]}\n{last_line}```")
