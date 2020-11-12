@@ -50,7 +50,6 @@ class Games(commands.Cog):
         Guesses must be single letters (game is non case sensitive)
         Get all categories by typing "?hangman help"
         """
-        valid_checker = lambda msg: msg.channel == ctx.message.channel and msg.content in "abcdefghijklmnopqrstuvwxyz" and len(msg.content) == 1
         if command == "help":
             await ctx.send(f"here is a list of valid categories: {list(self.hangman_dict.keys())}")
             return
@@ -61,7 +60,7 @@ class Games(commands.Cog):
         except KeyError:
             await ctx.send(f"invalid category, here is a list of valid categories: {list(self.hangman_dict.keys())}")
             return
-        num_mistakes = 0
+        valid_checker = lambda msg: msg.channel == ctx.message.channel and msg.content in "abcdefghijklmnopqrstuvwxyz" and len(msg.content) == 1 num_mistakes = 0
         not_guessed = set(re.sub(r"[^a-z]", "", word))
         incorrect_guesses = set()
         first_line = "".join(char+" " if char not in not_guessed else "_ " for char in word)
