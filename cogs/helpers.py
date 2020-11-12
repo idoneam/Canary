@@ -39,7 +39,7 @@ import time
 import datetime
 import random
 from .utils.paginator import Pages
-from .utils.requests import fetch
+from .utils.custom_requests import fetch
 import sqlite3
 
 MCGILL_EXAM_URL = "https://www.mcgill.ca/exams/dates"

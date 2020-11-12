@@ -23,15 +23,73 @@ from discord.ext import commands
 
 # Other utilities
 import re
+import os
+from pickle import load
+from random import choice
+from typing import Dict
 from .utils.dice_roll import dice_roll
 from .utils.clamp_default import clamp_default
+from .utils.hangman import HANG_LIST
+from .utils.paginator import Pages
 
 ROLL_PATTERN = re.compile(r'^(\d*)d(\d*)([+-]?\d*)$')
 
 
 class Games(commands.Cog):
-    def __init__(self, bot):
+    def __init__(self, bot, hangman_tbl_name: str):
         self.bot = bot
+        my_path = os.path.abspath(os.path.dirname(__file__))
+        hangman_path = os.path.join(my_path, f"utils/{hangman_tbl_name}")
+        with open(hangman_path, "rb") as hangman_pkl:
+            self.hangman_dict: Dict[str, str] = load(hangman_pkl)
+
+    @commands.max_concurrency(1,per=commands.BucketType.channel,wait=False)
+    @commands.command(aliases=["hg"])
+    async def hangman(self, ctx, command: str = None):
+        """Play a nice game of hangman with internet strangers!
+        Guesses must be single letters (game is non case sensitive)
+        Get all categories by typing "?hangman help"
+        """
+        valid_checker = lambda msg: msg.channel == ctx.message.channel and msg.content in "abcdefghijklmnopqrstuvwxyz" and len(msg.content) == 1
+        if command == "help":
+            await ctx.send(f"here is a list of valid categories: {list(self.hangman_dict.keys())}")
+            return
+        if command is None:
+            command = choice(list(self.hangman_dict.keys()))
+        try:
+            word = choice(self.hangman_dict[command.lower()]).lower()
+        except KeyError:
+            await ctx.send(f"invalid category, here is a list of valid categories: {list(self.hangman_dict.keys())}")
+            return
+        num_mistakes = 0
+        not_guessed = set(word.replace(" ", "").replace("-", ""))
+        incorrect_guesses = set()
+        first_line = r"_ " * len(word)
+        last_line = "incorrect guesses: "
+        await ctx.send(f"starting hangman, category: {command}")
+        await ctx.send(f"```{first_line}\n{HANG_LIST[num_mistakes]}\n{last_line}```")
+        while len(not_guessed) > 0 and num_mistakes < 6:
+            curr_msg = await self.bot.wait_for('message', check=valid_checker, timeout=120)
+            curr_guess = curr_msg.content.lower()
+            if curr_guess in not_guessed:
+                not_guessed.remove(curr_guess)
+                first_line = "".join(char+" " if char not in not_guessed else "_ " for char in word)
+                await ctx.send(f"```{first_line}\n{HANG_LIST[num_mistakes]}\n{last_line}```")
+            elif curr_guess not in word and curr_guess not in incorrect_guesses:
+                num_mistakes += 1
+                incorrect_guesses.add(curr_guess)
+                last_line = f"incorrect guesses: {str(incorrect_guesses)[1:-1]}"
+                await ctx.send(f"```{first_line}\n{HANG_LIST[num_mistakes]}\n{last_line}```")
+            elif curr_guess in word and curr_guess not in not_guessed:
+                await ctx.send(f"this letter already guessed correctly")
+            elif curr_guess not in word and curr_guess in incorrect_guesses:
+                await ctx.send(f"this letter was already guessed incorrectly")
+            else:
+                await ctx.send("woops.")
+        if len(not_guessed) == 0:
+            await ctx.send(f"congratulations everyone, hangman solved")
+        if num_mistakes == 6:
+            await ctx.send(f"sorry everyone, you lost, the right answer was `{word}`")
 
     @commands.command()
     async def roll(self, ctx, arg: str = '', mpr: str = ''):
@@ -42,7 +100,7 @@ class Games(commands.Cog):
                                 to each roll rather than the sum of all rolls.
                                 All parameters are optional.
                                 Defaults to rolling one 20-sided die.
-                                
+
                                 Dice can have 1 to 100 sides
                                 Rolls 1 to 10000 dice at once
                                 Modifier can be any int between -100 and +100
@@ -96,4 +154,4 @@ class Games(commands.Cog):
 
 
 def setup(bot):
-    bot.add_cog(Games(bot))
+    bot.add_cog(Games(bot, "hangman_dict"))
