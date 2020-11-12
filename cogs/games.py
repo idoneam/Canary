@@ -65,10 +65,11 @@ class Games(commands.Cog):
         incorrect_guesses = set()
         first_line = "".join(char+" " if char not in not_guessed else "_ " for char in word)
         last_line = "incorrect guesses: "
-        player_msg = ""
+        player_msg_list = []
         hg_msg = await ctx.send(f"```{first_line}\n\n{HANG_LIST[num_mistakes]}\n\ncategory: {command}\n{last_line}```")
         timeout_dict = {}
         invalid_msg_count = 0
+        newline = "\n"
         while len(not_guessed) > 0 and num_mistakes < 6:
             curr_msg = await self.bot.wait_for('message', timeout=120)
             if curr_msg.channel == ctx.message.channel and curr_msg.content in "abcdefghijklmnopqrstuvwxyz" and len(curr_msg.content) == 1:
@@ -78,25 +79,37 @@ class Games(commands.Cog):
                     if curr_guess in not_guessed:
                         not_guessed.remove(curr_guess)
                         first_line = "".join(char+" " if char not in not_guessed else "_ " for char in word)
-                        player_msg = f"{curr_msg.author} got a correct guess!"
-                        await hg_msg.edit(content=f"```{first_line}\n\n{HANG_LIST[num_mistakes]}\n\ncategory: {command}\n{last_line}\n{player_msg}```")
+                        player_msg_list.append(f"{curr_msg.author} got a correct guess!")
+                        if len(player_msg_list) > 3:
+                            player_msg_list = player_msg_list[-3:]
+                        await hg_msg.edit(content=f"```{first_line}\n\n{HANG_LIST[num_mistakes]}\n\ncategory: {command}\n{last_line}\n{newline.join(player_msg_list)}```")
                     elif curr_guess not in word and curr_guess not in incorrect_guesses:
                         num_mistakes += 1
                         incorrect_guesses.add(curr_guess)
                         last_line = f"incorrect guesses: {str(incorrect_guesses)[1:-1]}"
-                        player_msg = f"{curr_msg.author} got a wrong guess!"
+                        player_msg_list.append(f"{curr_msg.author} got a wrong guess! (timed out for 3 seconds)")
+                        if len(player_msg_list) > 3:
+                            player_msg_list = player_msg_list[-3:]
                         timeout_dict[curr_msg.author] = time()
-                        await hg_msg.edit(content=f"```{first_line}\n\n{HANG_LIST[num_mistakes]}\n\ncategory: {command}\n{last_line}\n{player_msg}```")
+                        await hg_msg.edit(content=f"```{first_line}\n\n{HANG_LIST[num_mistakes]}\n\ncategory: {command}\n{last_line}\n{newline.join(player_msg_list)}```")
                     elif curr_guess in word and curr_guess not in not_guessed:
-                        await hg_msg.edit(content=f"```{first_line}\n\n{HANG_LIST[num_mistakes]}\n\ncategory: {command}\n{last_line}\n{curr_guess} was already guessed (correct)```")
+                        player_msg_list.append(f"{curr_msg.author}, '{curr_guess}' was already guessed, it's correct!")
+                        if len(player_msg_list) > 3:
+                            player_msg_list = player_msg_list[-3:]
+                        await hg_msg.edit(content=f"```{first_line}\n\n{HANG_LIST[num_mistakes]}\n\ncategory: {command}\n{last_line}\n{newline.join(player_msg_list)}```")
                     elif curr_guess not in word and curr_guess in incorrect_guesses:
                         timeout_dict[curr_msg.author] = time()
-                        await hg_msg.edit(content=f"```{first_line}\n\n{HANG_LIST[num_mistakes]}\n\ncategory: {command}\n{last_line}\n{curr_guess} was already guessed (incorrect)```")
+                        player_msg_list.append(f"{curr_msg.author}, '{curr_guess}' was already guessed, it's incorrect! (timed out for 3 seconds)")
+                        if len(player_msg_list) > 3:
+                            player_msg_list = player_msg_list[-3:]
+                        await hg_msg.edit(content=f"```{first_line}\n\n{HANG_LIST[num_mistakes]}\n\ncategory: {command}\n{last_line}\n{newline.join(player_msg_list)}```")
                     else:
-                        await ctx.send("woops.")
+                        await ctx.send(content="woops.")
                 else:
-                    player_msg = f"{curr_msg.author} you cannot guess right now due to a previous incorrect guess!"
-                    await hg_msg.edit(content=f"```{first_line}\n\n{HANG_LIST[num_mistakes]}\n\ncategory: {command}\n{last_line}\n{player_msg}```")
+                    player_msg_list.append(f"{curr_msg.author} you cannot guess right now due to a previous incorrect guess!")
+                    if len(player_msg_list) > 3:
+                        player_msg_list = player_msg_list[-3:]
+                    await hg_msg.edit(content=f"```{first_line}\n\n{HANG_LIST[num_mistakes]}\n\ncategory: {command}\n{last_line}\n{newline.join(player_msg_list)}```")
             else:
                 invalid_msg_count += 1
                 if invalid_msg_count > 5:
