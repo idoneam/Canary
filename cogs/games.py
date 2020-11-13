@@ -47,7 +47,7 @@ class Games(commands.Cog):
 
     @commands.max_concurrency(1,per=commands.BucketType.channel,wait=False)
     @commands.command(aliases=["hg"])
-    async def hangman(self, ctx, command: str = None):
+    async def hangman(self, ctx, *, command: str = None):
         """Play a nice game of hangman with internet strangers!
         Guesses must be single letters (guesses must be lower case letters to be valid)
         Get all categories by typing "?hangman help"
