@@ -63,7 +63,7 @@ def mk_word_dict(file_name):
         link_name = findall(r"^/wordlist/([a-z]*)\.shtml$", link["href"])[0]
         word_list = []
         for word in BeautifulSoup(get(f"https://www.enchantedlearning.com/{link['href']}").content, "html.parser").find_all("div", {"class": "wordlist-item"}):
-            word_list.append(word.text)
+            word_list.append(word.text.lower())
         word_dict[link_name] = (word_list, sub(r"[^a-z\",'/ ]", "", link.contents[0].lower()))
         print(word_dict[link_name])
     with open(file_name, "wb") as dump_file:
