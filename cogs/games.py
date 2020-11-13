@@ -46,7 +46,7 @@ class Games(commands.Cog):
             self.hangman_dict: Dict[str, Tuple[str, str]] = load(hangman_pkl)
 
     @commands.max_concurrency(1,per=commands.BucketType.channel,wait=False)
-    @commands.command(aliases=["hg"])
+    @commands.command(aliases=["hm"])
     async def hangman(self, ctx, *, command: str = None):
         """Play a nice game of hangman with internet strangers!
         Guesses must be single letters (guesses must be lower case letters to be valid)
