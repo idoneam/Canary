@@ -82,60 +82,61 @@ class Games(commands.Cog):
             if curr_msg.channel == ctx.message.channel and curr_msg.content == word:
                 await ctx.send(f"congratulations {curr_msg.author}, you solved the hangman")
                 return
-            if curr_msg.channel == ctx.message.channel and curr_msg.content in "abcdefghijklmnopqrstuvwxyz" and len(curr_msg.content) == 1:
-                await curr_msg.delete(delay=0.5)
-                if not (curr_msg.author in timeout_dict and (time() - timeout_dict[curr_msg.author]) < 3.0):
-                    curr_guess = curr_msg.content.lower()
-                    if curr_guess in not_guessed:
-                        not_guessed.remove(curr_guess)
-                        first_line = "".join(char+" " if char not in not_guessed else "_ " for char in word)
-                        player_msg_list.append(f"{curr_msg.author} guessed '{curr_guess}' correctly!")
-                        if len(player_msg_list) > 3:
-                            player_msg_list = player_msg_list[-3:]
-                        txt_embed.set_field_at(0, name=f"hangman (category: {cat_name})", value=f"`{first_line.rstrip()}`\n```{HANG_LIST[num_mistakes]}```\n{NEWLINE.join(player_msg_list)}")
-                        await hg_msg.edit(embed=txt_embed)
-                        if len(not_guessed) == 0:
-                            await ctx.send(f"congratulations {curr_msg.author}, you solved the hangman")
-                    elif curr_guess not in word and curr_guess not in incorrect_guesses:
-                        num_mistakes += 1
-                        incorrect_guesses.add(curr_guess)
-                        last_line = f"incorrect guesses: {str(sorted(incorrect_guesses))[1:-1]}"
-                        player_msg_list.append(f"{curr_msg.author} guessed '{curr_guess}' wrong (timed out for 3 seconds)!")
-                        if len(player_msg_list) > 3:
-                            player_msg_list = player_msg_list[-3:]
-                        timeout_dict[curr_msg.author] = time()
-                        txt_embed.set_field_at(0, name=f"hangman (category: {cat_name})", value=f"`{first_line.rstrip()}`\n```{HANG_LIST[num_mistakes]}```\n{NEWLINE.join(player_msg_list)}")
-                        txt_embed.set_footer(text=last_line)
-                        await hg_msg.edit(embed=txt_embed)
-                        if num_mistakes == 6:
-                            await ctx.send(f"sorry everyone, {curr_msg.author} used your last chance, the right answer was `{word}`")
-                    elif curr_guess in word and curr_guess not in not_guessed:
-                        player_msg_list.append(f"{curr_msg.author}, '{curr_guess}' was already guessed, it's correct!")
-                        if len(player_msg_list) > 3:
-                            player_msg_list = player_msg_list[-3:]
-                        txt_embed.set_field_at(0, name=f"hangman (category: {cat_name})", value=f"`{first_line.rstrip()}`\n```{HANG_LIST[num_mistakes]}```\n{NEWLINE.join(player_msg_list)}")
-                        await hg_msg.edit(embed=txt_embed)
-                    elif curr_guess not in word and curr_guess in incorrect_guesses:
-                        timeout_dict[curr_msg.author] = time()
-                        player_msg_list.append(f"{curr_msg.author}, '{curr_guess}' was already guessed, it's incorrect! (timed out for 3 seconds)")
-                        if len(player_msg_list) > 3:
-                            player_msg_list = player_msg_list[-3:]
-                        txt_embed.set_field_at(0, name=f"hangman (category: {cat_name})", value=f"`{first_line.rstrip()}`\n```{HANG_LIST[num_mistakes]}```\n{NEWLINE.join(player_msg_list)}")
-                        await hg_msg.edit(embed=txt_embed)
+            if curr_msg.channel == ctx.message.channel:
+                if curr_msg.content in "abcdefghijklmnopqrstuvwxyz" and len(curr_msg.content) == 1:
+                    await curr_msg.delete(delay=0.5)
+                    if not (curr_msg.author in timeout_dict and (time() - timeout_dict[curr_msg.author]) < 3.0):
+                        curr_guess = curr_msg.content.lower()
+                        if curr_guess in not_guessed:
+                            not_guessed.remove(curr_guess)
+                            first_line = "".join(char+" " if char not in not_guessed else "_ " for char in word)
+                            player_msg_list.append(f"{curr_msg.author} guessed '{curr_guess}' correctly!")
+                            if len(player_msg_list) > 3:
+                                player_msg_list = player_msg_list[-3:]
+                            txt_embed.set_field_at(0, name=f"hangman (category: {cat_name})", value=f"`{first_line.rstrip()}`\n```{HANG_LIST[num_mistakes]}```\n{NEWLINE.join(player_msg_list)}")
+                            await hg_msg.edit(embed=txt_embed)
+                            if len(not_guessed) == 0:
+                                await ctx.send(f"congratulations {curr_msg.author}, you solved the hangman")
+                        elif curr_guess not in word and curr_guess not in incorrect_guesses:
+                            num_mistakes += 1
+                            incorrect_guesses.add(curr_guess)
+                            last_line = f"incorrect guesses: {str(sorted(incorrect_guesses))[1:-1]}"
+                            player_msg_list.append(f"{curr_msg.author} guessed '{curr_guess}' wrong (timed out for 3 seconds)!")
+                            if len(player_msg_list) > 3:
+                                player_msg_list = player_msg_list[-3:]
+                            timeout_dict[curr_msg.author] = time()
+                            txt_embed.set_field_at(0, name=f"hangman (category: {cat_name})", value=f"`{first_line.rstrip()}`\n```{HANG_LIST[num_mistakes]}```\n{NEWLINE.join(player_msg_list)}")
+                            txt_embed.set_footer(text=last_line)
+                            await hg_msg.edit(embed=txt_embed)
+                            if num_mistakes == 6:
+                                await ctx.send(f"sorry everyone, {curr_msg.author} used your last chance, the right answer was `{word}`")
+                        elif curr_guess in word and curr_guess not in not_guessed:
+                            player_msg_list.append(f"{curr_msg.author}, '{curr_guess}' was already guessed, it's correct!")
+                            if len(player_msg_list) > 3:
+                                player_msg_list = player_msg_list[-3:]
+                            txt_embed.set_field_at(0, name=f"hangman (category: {cat_name})", value=f"`{first_line.rstrip()}`\n```{HANG_LIST[num_mistakes]}```\n{NEWLINE.join(player_msg_list)}")
+                            await hg_msg.edit(embed=txt_embed)
+                        elif curr_guess not in word and curr_guess in incorrect_guesses:
+                            timeout_dict[curr_msg.author] = time()
+                            player_msg_list.append(f"{curr_msg.author}, '{curr_guess}' was already guessed, it's incorrect! (timed out for 3 seconds)")
+                            if len(player_msg_list) > 3:
+                                player_msg_list = player_msg_list[-3:]
+                            txt_embed.set_field_at(0, name=f"hangman (category: {cat_name})", value=f"`{first_line.rstrip()}`\n```{HANG_LIST[num_mistakes]}```\n{NEWLINE.join(player_msg_list)}")
+                            await hg_msg.edit(embed=txt_embed)
+                        else:
+                            await ctx.send(content="woops.")
                     else:
-                        await ctx.send(content="woops.")
+                        player_msg_list.append(f"{curr_msg.author} you cannot guess right now due to a previous incorrect guess!")
+                        if len(player_msg_list) > 3:
+                            player_msg_list = player_msg_list[-3:]
+                        txt_embed.set_field_at(0, name=f"hangman (category: {cat_name})", value=f"`{first_line.rstrip()}`\n```{HANG_LIST[num_mistakes]}```\n{NEWLINE.join(player_msg_list)}")
+                        await hg_msg.edit(embed=txt_embed)
                 else:
-                    player_msg_list.append(f"{curr_msg.author} you cannot guess right now due to a previous incorrect guess!")
-                    if len(player_msg_list) > 3:
-                        player_msg_list = player_msg_list[-3:]
-                    txt_embed.set_field_at(0, name=f"hangman (category: {cat_name})", value=f"`{first_line.rstrip()}`\n```{HANG_LIST[num_mistakes]}```\n{NEWLINE.join(player_msg_list)}")
-                    await hg_msg.edit(embed=txt_embed)
-            else:
-                invalid_msg_count += 1
-                if invalid_msg_count > 5:
-                    invalid_msg_count = 0
-                    await hg_msg.delete()
-                    hg_msg = await ctx.send(embed=hg_msg.embeds[0])
+                    invalid_msg_count += 1
+                    if invalid_msg_count > 5:
+                        invalid_msg_count = 0
+                        await hg_msg.delete()
+                        hg_msg = await ctx.send(embed=hg_msg.embeds[0])
 
     @commands.command()
     async def roll(self, ctx, arg: str = '', mpr: str = ''):
