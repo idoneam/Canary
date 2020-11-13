@@ -99,7 +99,7 @@ class Games(commands.Cog):
                     elif curr_guess not in word and curr_guess not in incorrect_guesses:
                         num_mistakes += 1
                         incorrect_guesses.add(curr_guess)
-                        last_line = f"incorrect guesses: {str(incorrect_guesses)[1:-1]}"
+                        last_line = f"incorrect guesses: {str(sorted(incorrect_guesses))[1:-1]}"
                         player_msg_list.append(f"{curr_msg.author} guessed '{curr_guess}' wrong (timed out for 3 seconds)!")
                         if len(player_msg_list) > 3:
                             player_msg_list = player_msg_list[-3:]
