@@ -74,8 +74,12 @@ class Games(commands.Cog):
         hg_msg = await ctx.send(embed=txt_embed)
         timeout_dict = {}
         invalid_msg_count = 0
+        print(word)
         while len(not_guessed) > 0 and num_mistakes < 6:
             curr_msg = await self.bot.wait_for('message', timeout=120)
+            if curr_msg.channel == ctx.message.channel and curr_msg.content == word:
+                await ctx.send(f"congratulations {curr_msg.author}, you solved the hangman")
+                return
             if curr_msg.channel == ctx.message.channel and curr_msg.content in "abcdefghijklmnopqrstuvwxyz" and len(curr_msg.content) == 1:
                 await curr_msg.delete(delay=0.5)
                 if not (curr_msg.author in timeout_dict and (time() - timeout_dict[curr_msg.author]) < 3.0):
