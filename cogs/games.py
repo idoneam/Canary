@@ -88,6 +88,8 @@ class Games(commands.Cog):
                             player_msg_list = player_msg_list[-3:]
                         txt_embed.set_field_at(0, name=f"hangman (category: {command})", value=f"`{first_line.rstrip()}`\n```{HANG_LIST[num_mistakes]}```\n{NEWLINE.join(player_msg_list)}")
                         await hg_msg.edit(embed=txt_embed)
+                        if len(not_guessed) == 0:
+                            await ctx.send(f"congratulations {curr_msg.author}, you solved the hangman")
                     elif curr_guess not in word and curr_guess not in incorrect_guesses:
                         num_mistakes += 1
                         incorrect_guesses.add(curr_guess)
@@ -99,6 +101,8 @@ class Games(commands.Cog):
                         txt_embed.set_field_at(0, name=f"hangman (category: {command})", value=f"`{first_line.rstrip()}`\n```{HANG_LIST[num_mistakes]}```\n{NEWLINE.join(player_msg_list)}")
                         txt_embed.set_footer(text=last_line)
                         await hg_msg.edit(embed=txt_embed)
+                        if num_mistakes == 6:
+                            await ctx.send(f"sorry everyone, {curr_msg.author} used your last chance, the right answer was `{word}`")
                     elif curr_guess in word and curr_guess not in not_guessed:
                         player_msg_list.append(f"{curr_msg.author}, '{curr_guess}' was already guessed, it's correct!")
                         if len(player_msg_list) > 3:
@@ -126,11 +130,6 @@ class Games(commands.Cog):
                     invalid_msg_count = 0
                     await hg_msg.delete()
                     hg_msg = await ctx.send(embed=hg_msg.embeds[0])
-
-        if len(not_guessed) == 0:
-            await ctx.send(f"congratulations everyone, hangman solved")
-        if num_mistakes == 6:
-            await ctx.send(f"sorry everyone, you lost, the right answer was `{word}`")
 
     @commands.command()
     async def roll(self, ctx, arg: str = '', mpr: str = ''):
