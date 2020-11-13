@@ -74,7 +74,6 @@ class Games(commands.Cog):
         hg_msg = await ctx.send(embed=txt_embed)
         timeout_dict = {}
         invalid_msg_count = 0
-        print(word)
         while len(not_guessed) > 0 and num_mistakes < 6:
             curr_msg = await self.bot.wait_for('message', timeout=120)
             if curr_msg.channel == ctx.message.channel and curr_msg.content == word:
