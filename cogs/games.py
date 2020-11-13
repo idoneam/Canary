@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) idoneam (2016-2019)
+#  Copyright (C) idoneam (2016-2019)
 #
 # This file is part of Canary
 #
@@ -42,7 +42,7 @@ class Games(commands.Cog):
                                 to each roll rather than the sum of all rolls.
                                 All parameters are optional.
                                 Defaults to rolling one 20-sided die.
-                                
+
                                 Dice can have 1 to 100 sides
                                 Rolls 1 to 10000 dice at once
                                 Modifier can be any int between -100 and +100
