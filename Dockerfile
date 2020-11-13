@@ -15,10 +15,11 @@ RUN pip install poetry
 
 # Configure Git settings for update command
 RUN git config --global user.name "Martlet"
-RUN git config --global user.email "idoneam.collective@gmail.com" 
+RUN git config --global user.email "idoneam.collective@gmail.com"
 
 # Install requirements with pip to use Docker cache independent of project metadata
 COPY requirements.txt /mnt/
+RUN pip3 install aiohttp
 RUN pip3 install -r /mnt/requirements.txt
 
 WORKDIR /mnt/canary
