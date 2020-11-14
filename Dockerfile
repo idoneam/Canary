@@ -12,7 +12,7 @@ RUN apt-get install -y \
 
 # Install Poetry (Python dependency manager)
 RUN pip install poetry
-RUN pip install aiohttp beautifulsoup4 discord.py feedparser iniconfig mpmath numpy opencv_python
+RUN pip install aiohttp beautifulsoup4 discord.py feedparser iniconfig mpmath numpy opencv_python pluggy
 
 # Configure Git settings for update command
 RUN git config --global user.name "Martlet"
