@@ -19,7 +19,7 @@ RUN git config --global user.email "idoneam.collective@gmail.com"
 
 # Install requirements with pip to use Docker cache independent of project metadata
 COPY requirements.txt /mnt/
-RUN pip install aiohttp beautifulsoup4
+RUN pip install aiohttp beautifulsoup4 discord.py
 RUN pip install -r /mnt/requirements.txt
 
 WORKDIR /mnt/canary
