@@ -17,7 +17,6 @@ install:
  - poetry install
 
 script:
-  - pip freeze > requirements.txt
   - docker build -t canary:latest .
   - docker run -d -v $(pwd):/mnt/canary canary:latest > ./container.tmp
   - sleep 5
