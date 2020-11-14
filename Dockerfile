@@ -12,6 +12,7 @@ RUN apt-get install -y \
 
 # Install Poetry (Python dependency manager)
 RUN pip install poetry
+RUN pip install aiohttp beautifulsoup4 discord.py feedparser iniconfig mpmath numpy
 
 # Configure Git settings for update command
 RUN git config --global user.name "Martlet"
@@ -19,7 +20,6 @@ RUN git config --global user.email "idoneam.collective@gmail.com"
 
 # Install requirements with pip to use Docker cache independent of project metadata
 COPY requirements.txt /mnt/
-RUN pip install aiohttp beautifulsoup4 discord.py feedparser iniconfig mpmath
 RUN pip install -r /mnt/requirements.txt
 
 WORKDIR /mnt/canary
