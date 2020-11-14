@@ -15,11 +15,9 @@ RUN pip install poetry
 
 # Trying to fix Travis CI issues
 COPY requirements.txt /mnt/
-RUN pip freeze > requirements1.txt
-COPY requirements1.txt /mnt/
+RUN pip freeze > /mnt/requirements1.txt
 RUN pip install pytest aiohttp beautifulsoup4 discord.py feedparser iniconfig mpmath numpy opencv_python pluggy py
-RUN pip freeze > requirements2.txt
-COPY requirements2.txt /mnt/
+RUN pip freeze > /mnt/requirements2.txt
 RUN diff /mnt/requirements.txt /mnt/requirements1.txt
 RUN diff /mnt/requirements1.txt /mnt/requirements2.txt
 
