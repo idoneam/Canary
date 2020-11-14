@@ -14,12 +14,8 @@ RUN apt-get install -y \
 RUN pip install poetry
 
 # Trying to fix Travis CI issues
-COPY requirements.txt /mnt/
-RUN pip freeze > /mnt/requirements1.txt
-RUN pip install pytest aiohttp beautifulsoup4 discord.py feedparser iniconfig mpmath numpy opencv_python pluggy py
-RUN pip freeze > /mnt/requirements2.txt
-RUN diff /mnt/requirements.txt /mnt/requirements1.txt
-RUN diff /mnt/requirements1.txt /mnt/requirements2.txt
+RUN pip freeze > /mnt/requirements.txt
+# RUN pip install pytest aiohttp beautifulsoup4 discord.py feedparser iniconfig mpmath numpy opencv_python pluggy py
 
 # Configure Git settings for update command
 RUN git config --global user.name "Martlet"
