@@ -11,8 +11,7 @@ RUN apt-get install -y \
   dvipng
 
 # Install Poetry (Python dependency manager)
-RUN pip install poetry
-RUN pip install aiohttp beautifulsoup4 discord.py feedparser iniconfig mpmath numpy opencv_python pluggy
+RUN pip install poetry aiohttp beautifulsoup4 discord.py feedparser iniconfig mpmath numpy opencv_python pluggy py
 
 # Configure Git settings for update command
 RUN git config --global user.name "Martlet"
