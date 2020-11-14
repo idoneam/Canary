@@ -13,7 +13,7 @@ RUN apt-get install -y \
 # Install Poetry (Python dependency manager)
 RUN pip install poetry yapf
 
-# Trying to fix Travis CI issues
+# Fixes issues with Travis CI
 RUN pip freeze > /mnt/requirements.txt
 
 # Configure Git settings for update command
@@ -21,7 +21,6 @@ RUN git config --global user.name "Martlet"
 RUN git config --global user.email "idoneam.collective@gmail.com"
 
 # Install requirements with pip to use Docker cache independent of project metadata
-# COPY requirements.txt /mnt/
 RUN pip install -r /mnt/requirements.txt
 
 WORKDIR /mnt/canary
