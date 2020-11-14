@@ -10,10 +10,10 @@ RUN apt-get install -y \
   texlive-lang-greek \
   dvipng
 
-# Install Poetry (Python dependency manager)
+# Install Poetry (Python dependency manager) and YAPF (Google's Python autoformatter)
 RUN pip install poetry yapf
 
-# Fixes issues with Travis CI
+# Fix issues with Travis CI
 RUN pip freeze > /mnt/requirements.txt
 
 # Configure Git settings for update command
