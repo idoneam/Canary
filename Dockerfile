@@ -12,10 +12,13 @@ RUN apt-get install -y \
 
 # Install Poetry (Python dependency manager)
 RUN pip install poetry
-RUN cat requirements.txt
+
+# Trying to fix Travis CI issues
+RUN pip freeze > requirements1.txt
 RUN pip install pytest aiohttp beautifulsoup4 discord.py feedparser iniconfig mpmath numpy opencv_python pluggy py
-RUN pip freeze > requirements.txt
-RUN cat requirements.txt
+RUN pip freeze > requirements2.txt
+RUN diff requirements.txt requirements1.txt
+RUN diff requirements1.txt requirements2.txt
 
 # Configure Git settings for update command
 RUN git config --global user.name "Martlet"
