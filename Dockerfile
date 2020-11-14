@@ -11,11 +11,10 @@ RUN apt-get install -y \
   dvipng
 
 # Install Poetry (Python dependency manager)
-RUN pip install poetry
+RUN pip install poetry yapf
 
 # Trying to fix Travis CI issues
 RUN pip freeze > /mnt/requirements.txt
-# RUN pip install pytest aiohttp beautifulsoup4 discord.py feedparser iniconfig mpmath numpy opencv_python pluggy py
 
 # Configure Git settings for update command
 RUN git config --global user.name "Martlet"
