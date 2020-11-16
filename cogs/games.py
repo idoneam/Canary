@@ -94,7 +94,8 @@ class Games(commands.Cog):
             curr_guess = curr_msg.content
             if not (curr_msg.author in timeout_dict and
                     (time() - timeout_dict[curr_msg.author]) < 3.0):
-                if curr_guess in "abcdefghijklmnopqrstuvwxyz" and len(curr_guess) == 1:
+                if curr_guess in "abcdefghijklmnopqrstuvwxyz" and len(
+                        curr_guess) == 1:
                     await curr_msg.delete()
                     if curr_guess in not_guessed:    # curr_guess in not_guessed => curr_guess is correct and new
                         not_guessed.remove(curr_guess)
@@ -202,7 +203,8 @@ class Games(commands.Cog):
                         invalid_msg_count = 0
                         await hg_msg.delete()
                         hg_msg = await ctx.send(embed=hg_msg.embeds[0])
-            elif curr_guess in "abcdefghijklmnopqrstuvwxyz" and len(curr_guess) == 1:
+            elif curr_guess in "abcdefghijklmnopqrstuvwxyz" and len(
+                    curr_guess) == 1:
                 await curr_msg.delete()
                 player_msg_list.append(
                     f"{curr_msg.author} you cannot guess right now due to a previous incorrect guess!"
