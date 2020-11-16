@@ -63,7 +63,7 @@ class Games(commands.Cog):
             category = command
         try:
             word_list, cat_name = self.hangman_dict[category]
-            word = choice(word_list)
+            word = choice(word_list).lower()
         except KeyError:
             await ctx.send(
                 f"invalid category, here is a list of valid categories: {list(self.hangman_dict.keys())}"
@@ -73,7 +73,7 @@ class Games(commands.Cog):
         not_guessed = set(re.sub(r"[^a-z]", "", word))
         incorrect_guesses = set()
         first_line = "".join(char + " " if char not in not_guessed else "_ "
-                             for char in word)
+                             for char in word).rstrip()
         last_line = "incorrect guesses: "
         player_msg_list = []
         timeout_dict = {}
@@ -83,7 +83,7 @@ class Games(commands.Cog):
         txt_embed.add_field(
             name=f"hangman (category: {cat_name})",
             value=
-            f"`{first_line.rstrip()}`\n```{HANG_LIST[num_mistakes]}```\n{NEWLINE.join(player_msg_list)}"
+            f"`{first_line}`\n```{HANG_LIST[num_mistakes]}```\n{NEWLINE.join(player_msg_list)}"
         )
         txt_embed.set_footer(text=last_line)
         hg_msg = await ctx.send(embed=txt_embed)
@@ -93,11 +93,10 @@ class Games(commands.Cog):
                                                timeout=120)
             if not (curr_msg.author in timeout_dict and
                     (time() - timeout_dict[curr_msg.author]) < 3.0):
-                if curr_msg.content == word:
+                curr_guess = curr_msg.content
+                if curr_guess == word:
                     not_guessed = set()
-                    first_line = "".join(
-                        char + " " if char not in not_guessed else "_ "
-                        for char in word)
+                    first_line = "".join(char + " " for char in word).rstrip()
                     player_msg_list.append(
                         f"{curr_msg.author} guessed the entire word ('{word}') correctly!"
                     )
@@ -107,22 +106,20 @@ class Games(commands.Cog):
                         0,
                         name=f"hangman (category: {cat_name})",
                         value=
-                        f"`{first_line.rstrip()}`\n```{HANG_LIST[num_mistakes]}```\n{NEWLINE.join(player_msg_list)}"
+                        f"`{first_line}`\n```{HANG_LIST[num_mistakes]}```\n{NEWLINE.join(player_msg_list)}"
                     )
                     await hg_msg.edit(embed=txt_embed)
                     await ctx.send(
                         f"congratulations {curr_msg.author}, you solved the hangman, but in a cool way"
                     )
-                elif curr_msg.content in "abcdefghijklmnopqrstuvwxyz" and len(
-                        curr_msg.content) == 1:
+                elif curr_guess in "abcdefghijklmnopqrstuvwxyz" and len(
+                        curr_guess) == 1:
                     await curr_msg.delete()
-                    curr_guess = curr_msg.content.lower()
-                    # curr_guess in not_guessed => curr_guess is correct and new
-                    if curr_guess in not_guessed:
+                    if curr_guess in not_guessed:    # curr_guess in not_guessed => curr_guess is correct and new
                         not_guessed.remove(curr_guess)
                         first_line = "".join(
                             char + " " if char not in not_guessed else "_ "
-                            for char in word)
+                            for char in word).rstrip()
                         player_msg_list.append(
                             f"{curr_msg.author} guessed '{curr_guess}' correctly!"
                         )
@@ -132,15 +129,14 @@ class Games(commands.Cog):
                             0,
                             name=f"hangman (category: {cat_name})",
                             value=
-                            f"`{first_line.rstrip()}`\n```{HANG_LIST[num_mistakes]}```\n{NEWLINE.join(player_msg_list)}"
+                            f"`{first_line}`\n```{HANG_LIST[num_mistakes]}```\n{NEWLINE.join(player_msg_list)}"
                         )
                         await hg_msg.edit(embed=txt_embed)
                         if len(not_guessed) == 0:
                             await ctx.send(
                                 f"congratulations {curr_msg.author}, you solved the hangman"
                             )
-                    # curr_guess not in not_guessed (elif) and in word => curr_guess is correct but already made
-                    elif curr_guess in word:
+                    elif curr_guess in word:    # curr_guess not in not_guessed (elif) and in word => curr_guess is correct but already made
                         player_msg_list.append(
                             f"{curr_msg.author}, '{curr_guess}' was already guessed, it's correct!"
                         )
@@ -150,11 +146,10 @@ class Games(commands.Cog):
                             0,
                             name=f"hangman (category: {cat_name})",
                             value=
-                            f"`{first_line.rstrip()}`\n```{HANG_LIST[num_mistakes]}```\n{NEWLINE.join(player_msg_list)}"
+                            f"`{first_line}`\n```{HANG_LIST[num_mistakes]}```\n{NEWLINE.join(player_msg_list)}"
                         )
                         await hg_msg.edit(embed=txt_embed)
-                    # curr_guess not in not_guessed and not in word (elif) and not in incorrect guesses => curr_guess is incorrect and new
-                    elif curr_guess not in incorrect_guesses:
+                    elif curr_guess not in incorrect_guesses:    # curr_guess not in not_guessed and not in word (elif) and not in incorrect guesses => curr_guess is incorrect and new
                         num_mistakes += 1
                         incorrect_guesses.add(curr_guess)
                         last_line = f"incorrect guesses: {str(sorted(incorrect_guesses))[1:-1]}"
@@ -168,7 +163,7 @@ class Games(commands.Cog):
                             0,
                             name=f"hangman (category: {cat_name})",
                             value=
-                            f"`{first_line.rstrip()}`\n```{HANG_LIST[num_mistakes]}```\n{NEWLINE.join(player_msg_list)}"
+                            f"`{first_line}`\n```{HANG_LIST[num_mistakes]}```\n{NEWLINE.join(player_msg_list)}"
                         )
                         txt_embed.set_footer(text=last_line)
                         await hg_msg.edit(embed=txt_embed)
@@ -176,8 +171,7 @@ class Games(commands.Cog):
                             await ctx.send(
                                 f"sorry everyone, {curr_msg.author} used your last chance, the right answer was `{word}`"
                             )
-                    # curr_guess not in not_guessed and not in word and in incorrect_guesses (else) => curr_guess is incorrect but already made
-                    else:
+                    else:    # curr_guess not in not_guessed and not in word and in incorrect_guesses (else) => curr_guess is incorrect but already made
                         timeout_dict[curr_msg.author] = time()
                         player_msg_list.append(
                             f"{curr_msg.author}, '{curr_guess}' was already guessed, it's incorrect! (timed out for 3 seconds)"
@@ -188,7 +182,7 @@ class Games(commands.Cog):
                             0,
                             name=f"hangman (category: {cat_name})",
                             value=
-                            f"`{first_line.rstrip()}`\n```{HANG_LIST[num_mistakes]}```\n{NEWLINE.join(player_msg_list)}"
+                            f"`{first_line}`\n```{HANG_LIST[num_mistakes]}```\n{NEWLINE.join(player_msg_list)}"
                         )
                         await hg_msg.edit(embed=txt_embed)
                 else:
@@ -207,7 +201,7 @@ class Games(commands.Cog):
                     0,
                     name=f"hangman (category: {cat_name})",
                     value=
-                    f"`{first_line.rstrip()}`\n```{HANG_LIST[num_mistakes]}```\n{NEWLINE.join(player_msg_list)}"
+                    f"`{first_line}`\n```{HANG_LIST[num_mistakes]}```\n{NEWLINE.join(player_msg_list)}"
                 )
                 await hg_msg.edit(embed=txt_embed)
 
