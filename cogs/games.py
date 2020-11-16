@@ -91,29 +91,10 @@ class Games(commands.Cog):
             curr_msg = await self.bot.wait_for('message',
                                                check=same_channel_check,
                                                timeout=120)
+            curr_guess = curr_msg.content
             if not (curr_msg.author in timeout_dict and
                     (time() - timeout_dict[curr_msg.author]) < 3.0):
-                curr_guess = curr_msg.content
-                if curr_guess == word:
-                    not_guessed = set()
-                    first_line = "".join(char + " " for char in word).rstrip()
-                    player_msg_list.append(
-                        f"{curr_msg.author} guessed the entire word ('{word}') correctly!"
-                    )
-                    if len(player_msg_list) > 3:
-                        player_msg_list = player_msg_list[-3:]
-                    txt_embed.set_field_at(
-                        0,
-                        name=f"hangman (category: {cat_name})",
-                        value=
-                        f"`{first_line}`\n```{HANG_LIST[num_mistakes]}```\n{NEWLINE.join(player_msg_list)}"
-                    )
-                    await hg_msg.edit(embed=txt_embed)
-                    await ctx.send(
-                        f"congratulations {curr_msg.author}, you solved the hangman, but in a cool way"
-                    )
-                elif curr_guess in "abcdefghijklmnopqrstuvwxyz" and len(
-                        curr_guess) == 1:
+                if curr_guess in "abcdefghijklmnopqrstuvwxyz" and len(curr_guess) == 1:
                     await curr_msg.delete()
                     if curr_guess in not_guessed:    # curr_guess in not_guessed => curr_guess is correct and new
                         not_guessed.remove(curr_guess)
@@ -154,7 +135,7 @@ class Games(commands.Cog):
                         incorrect_guesses.add(curr_guess)
                         last_line = f"incorrect guesses: {str(sorted(incorrect_guesses))[1:-1]}"
                         player_msg_list.append(
-                            f"{curr_msg.author} guessed '{curr_guess}' wrong (timed out for 3 seconds)!"
+                            f"{curr_msg.author} guessed '{curr_guess}' wrong! (timed out for 3 seconds)"
                         )
                         if len(player_msg_list) > 3:
                             player_msg_list = player_msg_list[-3:]
@@ -185,6 +166,24 @@ class Games(commands.Cog):
                             f"`{first_line}`\n```{HANG_LIST[num_mistakes]}```\n{NEWLINE.join(player_msg_list)}"
                         )
                         await hg_msg.edit(embed=txt_embed)
+                elif curr_guess == word:
+                    not_guessed = set()
+                    first_line = "".join(char + " " for char in word).rstrip()
+                    player_msg_list.append(
+                        f"{curr_msg.author} guessed the entire word ('{word}') correctly!"
+                    )
+                    if len(player_msg_list) > 3:
+                        player_msg_list = player_msg_list[-3:]
+                    txt_embed.set_field_at(
+                        0,
+                        name=f"hangman (category: {cat_name})",
+                        value=
+                        f"`{first_line}`\n```{HANG_LIST[num_mistakes]}```\n{NEWLINE.join(player_msg_list)}"
+                    )
+                    await hg_msg.edit(embed=txt_embed)
+                    await ctx.send(
+                        f"congratulations {curr_msg.author}, you solved the hangman, but in a cool way"
+                    )
                 elif len(curr_guess) != 0:
                     invalid_msg_count += 1
                     player_msg_list.append(
@@ -203,7 +202,8 @@ class Games(commands.Cog):
                         invalid_msg_count = 0
                         await hg_msg.delete()
                         hg_msg = await ctx.send(embed=hg_msg.embeds[0])
-            else:
+            elif curr_guess in "abcdefghijklmnopqrstuvwxyz" and len(curr_guess) == 1:
+                await curr_msg.delete()
                 player_msg_list.append(
                     f"{curr_msg.author} you cannot guess right now due to a previous incorrect guess!"
                 )
