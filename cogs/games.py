@@ -111,7 +111,7 @@ class Games(commands.Cog):
                     )
                 elif curr_msg.content in "abcdefghijklmnopqrstuvwxyz" and len(
                         curr_msg.content) == 1:
-                    await curr_msg.delete(delay=0.5)
+                    await curr_msg.delete()
                     if not (curr_msg.author in timeout_dict and
                             (time() - timeout_dict[curr_msg.author]) < 3.0):
                         curr_guess = curr_msg.content.lower()
