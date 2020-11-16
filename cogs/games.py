@@ -185,8 +185,20 @@ class Games(commands.Cog):
                             f"`{first_line}`\n```{HANG_LIST[num_mistakes]}```\n{NEWLINE.join(player_msg_list)}"
                         )
                         await hg_msg.edit(embed=txt_embed)
-                else:
+                elif len(curr_guess) != 0:
                     invalid_msg_count += 1
+                    player_msg_list.append(
+                        f"{curr_msg.author}, '{curr_guess}' is not a valid guess, guesses must be a single lowercase letter"
+                    )
+                    if len(player_msg_list) > 3:
+                        player_msg_list = player_msg_list[-3:]
+                    txt_embed.set_field_at(
+                        0,
+                        name=f"hangman (category: {cat_name})",
+                        value=
+                        f"`{first_line}`\n```{HANG_LIST[num_mistakes]}```\n{NEWLINE.join(player_msg_list)}"
+                    )
+                    await hg_msg.edit(embed=txt_embed)
                     if invalid_msg_count > 5:
                         invalid_msg_count = 0
                         await hg_msg.delete()
