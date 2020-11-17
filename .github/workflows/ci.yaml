@@ -4,20 +4,22 @@ on: [pull_request, push]
 
 jobs:
   test:
-    runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         python-version: [3.6, 3.7, 3.8]
+        poetry-version: [1.0, 1.1.2]
+        os: [ubuntu-18.04, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v1
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v1
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python-version }}
-      - name: Install Poetry
-        uses: dschep/install-poetry-action@v1.2
+      - name: Run image
+        uses: abatilo/actions-poetry@v2.0.0
         with:
-          version: 1.0.0b3
+          poetry-version: ${{ matrix.poetry-version }}
       - name: Install Python Dependencies
         run: poetry install
       - name: Test with Pytest
