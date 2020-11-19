@@ -49,12 +49,13 @@ class Games(commands.Cog):
     @commands.command(aliases=["hm"])
     async def hangman(self, ctx, *, command: str = None):
         """Play a nice game of hangman with internet strangers!
-        Guesses must be single letters (guesses must be lower case letters to be valid)
-        Get all categories by typing "?hangman help"
+        Guesses must be single letters (guesses must be lower case letters to be valid) or the entire correct word
+		Can either be called with "?{hm|hangman}" or "?{hm|hangman} x", where x is a valid category command
+        Get all categories/help by typing "?{hm|hangman} help"
         """
         if command == "help":
             await ctx.send(
-                f"here is a list of valid categories: {list(self.hangman_dict.keys())}"
+                f"rules: 6 wrong guesses are allowed, guesses must be either the entire correct word or a single lowercase letter\nhere is a list of valid category commands: {sorted(self.hangman_dict.keys())}"
             )
             return
         if command is None:
@@ -66,7 +67,7 @@ class Games(commands.Cog):
             word = choice(word_list).lower()
         except KeyError:
             await ctx.send(
-                f"invalid category, here is a list of valid categories: {list(self.hangman_dict.keys())}"
+                f"invalid category command, here is a list of valid commands: {sorted(self.hangman_dict.keys())}"
             )
             return
         num_mistakes = 0
@@ -120,7 +121,7 @@ class Games(commands.Cog):
                             )
                     elif curr_guess in word:    # curr_guess not in not_guessed (elif) and in word => curr_guess is correct but already made
                         player_msg_list.append(
-                            f"{curr_msg.author}, '{curr_guess}' was already guessed, it's correct!"
+                            f"{curr_msg.author}, '{curr_guess}' was already guessed"
                         )
                         if len(player_msg_list) > 3:
                             player_msg_list = player_msg_list[-3:]
@@ -136,8 +137,7 @@ class Games(commands.Cog):
                         incorrect_guesses.add(curr_guess)
                         last_line = f"incorrect guesses: {str(sorted(incorrect_guesses))[1:-1]}"
                         player_msg_list.append(
-                            f"{curr_msg.author} guessed '{curr_guess}' wrong! (timed out for 3 seconds)"
-                        )
+                            f"{curr_msg.author} guessed '{curr_guess}' wrong!")
                         if len(player_msg_list) > 3:
                             player_msg_list = player_msg_list[-3:]
                         timeout_dict[curr_msg.author] = time()
@@ -156,7 +156,7 @@ class Games(commands.Cog):
                     else:    # curr_guess not in not_guessed and not in word and in incorrect_guesses (else) => curr_guess is incorrect but already made
                         timeout_dict[curr_msg.author] = time()
                         player_msg_list.append(
-                            f"{curr_msg.author}, '{curr_guess}' was already guessed, it's incorrect! (timed out for 3 seconds)"
+                            f"{curr_msg.author}, '{curr_guess}' was already guessed"
                         )
                         if len(player_msg_list) > 3:
                             player_msg_list = player_msg_list[-3:]
@@ -188,7 +188,7 @@ class Games(commands.Cog):
                 elif len(curr_guess) != 0:
                     invalid_msg_count += 1
                     player_msg_list.append(
-                        f"{curr_msg.author}, '{curr_guess}' is not a valid guess, guesses must be a single lowercase letter"
+                        f"{curr_msg.author}, guesses must be a single lowercase letter"
                     )
                     if len(player_msg_list) > 3:
                         player_msg_list = player_msg_list[-3:]
@@ -207,8 +207,7 @@ class Games(commands.Cog):
                     curr_guess) == 1:
                 await curr_msg.delete()
                 player_msg_list.append(
-                    f"{curr_msg.author} you cannot guess right now due to a previous incorrect guess!"
-                )
+                    f"{curr_msg.author} you cannot guess right now!")
                 if len(player_msg_list) > 3:
                     player_msg_list = player_msg_list[-3:]
                 txt_embed.set_field_at(
