@@ -91,7 +91,7 @@ class Games(commands.Cog):
         while len(not_guessed) > 0 and num_mistakes < 6:
             curr_msg = await self.bot.wait_for('message',
                                                check=same_channel_check,
-                                               timeout=120)
+                                               timeout=300)
             curr_guess = curr_msg.content
             if not (curr_msg.author in timeout_dict and
                     (time() - timeout_dict[curr_msg.author]) < 3.0):
@@ -188,7 +188,7 @@ class Games(commands.Cog):
                 elif len(curr_guess) != 0:
                     invalid_msg_count += 1
                     player_msg_list.append(
-                        f"{curr_msg.author}, guesses must be a single lowercase letter"
+                        f"{curr_msg.author}, invalid guess"
                     )
                     if len(player_msg_list) > 3:
                         player_msg_list = player_msg_list[-3:]
