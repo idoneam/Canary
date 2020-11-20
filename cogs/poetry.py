@@ -31,7 +31,7 @@ class Poems(commands.Cog):
             await ctx.trigger_typing()
             await ctx.send("\n".join(self.poem_machine.mk_poem(
                 choice(configs))))
-
+            return
         allowed_configs: List[str] = ["haiku", "limerick", "alexandrine"]
         if command not in allowed_configs:
             await ctx.send(
