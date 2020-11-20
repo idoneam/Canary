@@ -39,22 +39,23 @@ class Poems(commands.Cog):
             return
         await ctx.trigger_typing()
         if command == "haiku":
-            await ctx.send("\n".join(
-                self.poem_machine.mk_poem(configs[0], True)))
+            await ctx.send("\n".join(self.poem_machine.mk_poem(configs[0])))
         elif command == "limerick":
-            await ctx.send("\n".join(
-                self.poem_machine.mk_poem(configs[1], True)))
+            await ctx.send("\n".join(self.poem_machine.mk_poem(configs[1])))
         elif command == "alexandrine":
-            await ctx.send("\n".join(
-                self.poem_machine.mk_poem(configs[2], True)))
+            await ctx.send("\n".join(self.poem_machine.mk_poem(configs[2])))
 
     @commands.command(aliases=["poem_custom"])
     async def poemc(self, ctx, *, config_str: str = None):
         """
         """
-        await ctx.trigger_typing()
-        await ctx.send("\n".join(
-            self.poem_machine.mk_poem(parse_poem_config(config_str, True))))
+        try:
+            poem_conf: List[Tuple[str, int]] = parse_poem_config(config_str)
+        except ValueError:
+            ctx.send("invalid config")
+        else:
+            await ctx.trigger_typing()
+            await ctx.send("\n".join(self.poem_machine.mk_poem(poem_conf)))
 
     @commands.command(aliases=["random_gen"])
     async def genr(self, ctx, *, text_len: int = None):

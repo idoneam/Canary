@@ -1,6 +1,6 @@
 from random import choice
 from typing import Dict, List, Tuple
-from re import sub, findall
+from re import sub, findall, fullmatch
 from pickle import dump
 
 
@@ -45,8 +45,10 @@ def syll_count(word_list: List[str]) -> int:
 
 
 def parse_poem_config(config_str: str) -> List[Tuple[str, int]]:
+    if fullmatch(r"(?:[A-Z][0-9] )*[A-Z][0-9]", config_str) is None:
+        raise ValueError
     config_list: List[Tuple[str, int]] = []
-    for line_config in findall(r"(\([A-Z],\s?[0-9]+\))", config_str):
+    for line_config in findall(r"[A-Z][0-9]", config_str):
         config_list.append((line_config[1], int(line_config[-2])))
     return config_list
 
@@ -61,7 +63,7 @@ class RevTextGen():
             return choice(self.word_dict[seed]), True
         return choice(self.word_list), False
 
-    def rev_gen(self, text_len: int, strict_gen: bool = False):
+    def rev_gen(self, text_len: int, strict_gen: bool = True):
         curr_word: str = choice(self.word_list)
         gen_words: List[str] = [curr_word]
         if strict_gen:
@@ -92,7 +94,7 @@ class PoetryGen(RevTextGen):
 
     def mk_poem(self,
                 poem_config: List[Tuple[str, int]],
-                strict_gen: bool = False,
+                strict_gen: bool = True,
                 max_attempts: int = 3,
                 min_rhyme_mult: int = 5) -> List[str]:
         poem_list = [""] * len(poem_config)
