@@ -20,12 +20,7 @@ class Poems(commands.Cog):
     async def poem(self, ctx, *, command: str = None):
         """
         """
-        allowed_configs: List[str] = ["haiku", "limerick", "alexandrine"]
-        if command not in allowed_configs:
-            await ctx.send(
-                f"invalid option, valid options are: {allowed_configs}")
-            return
-        await ctx.trigger_typing()
+
         configs: List[List[Tuple[str,
                                  int]]] = [[("A", 5), ("B", 7), ("C", 5)],
                                            [("A", 10), ("A", 10), ("B", 7),
@@ -33,9 +28,17 @@ class Poems(commands.Cog):
                                            [("A", 12), ("A", 12), ("A", 12),
                                             ("A", 12)]]
         if command is None:
+            await ctx.trigger_typing()
             await ctx.send("\n".join(self.poem_machine.mk_poem(
                 choice(configs))))
-        elif command == "haiku":
+
+        allowed_configs: List[str] = ["haiku", "limerick", "alexandrine"]
+        if command not in allowed_configs:
+            await ctx.send(
+                f"invalid option, valid options are: {allowed_configs}")
+            return
+        await ctx.trigger_typing()
+        if command == "haiku":
             await ctx.send("\n".join(
                 self.poem_machine.mk_poem(configs[0], True)))
         elif command == "limerick":
