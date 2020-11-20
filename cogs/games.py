@@ -187,9 +187,7 @@ class Games(commands.Cog):
                     )
                 elif len(curr_guess) != 0:
                     invalid_msg_count += 1
-                    player_msg_list.append(
-                        f"{curr_msg.author}, invalid guess"
-                    )
+                    player_msg_list.append(f"{curr_msg.author}, invalid guess")
                     if len(player_msg_list) > 3:
                         player_msg_list = player_msg_list[-3:]
                     txt_embed.set_field_at(
