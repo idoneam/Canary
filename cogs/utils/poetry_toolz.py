@@ -49,7 +49,10 @@ def parse_poem_config(config_str: str) -> List[Tuple[str, int]]:
         raise ValueError
     config_list: List[Tuple[str, int]] = []
     for line_config in findall(r"[a-zA-Z][0-9]+", config_str):
-        config_list.append((line_config[0], int(line_config[1:])))
+        line_sylls: int = int(line_config[1:])
+        if line_sylls == 0:
+            raise ValueError
+        config_list.append((line_config[0], line_sylls))
     return config_list
 
 
