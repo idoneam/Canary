@@ -45,11 +45,11 @@ def syll_count(word_list: List[str]) -> int:
 
 
 def parse_poem_config(config_str: str) -> List[Tuple[str, int]]:
-    if fullmatch(r"(?:[A-Z][0-9] )*[A-Z][0-9]", config_str) is None:
+    if fullmatch(r"(?:[a-zA-Z][0-9] )*[a-zA-Z][0-9]", config_str) is None:
         raise ValueError
     config_list: List[Tuple[str, int]] = []
-    for line_config in findall(r"[A-Z][0-9]", config_str):
-        config_list.append((line_config[1], int(line_config[-2])))
+    for line_config in findall(r"[a-zA-Z][0-9]", config_str):
+        config_list.append((line_config[0], int(line_config[1])))
     return config_list
 
 

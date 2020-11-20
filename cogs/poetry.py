@@ -52,7 +52,8 @@ class Poems(commands.Cog):
         try:
             poem_conf: List[Tuple[str, int]] = parse_poem_config(config_str)
         except ValueError:
-            ctx.send("invalid config")
+            print(f"'{config_str}'")
+            await ctx.send("invalid config")
         else:
             await ctx.trigger_typing()
             await ctx.send("\n".join(self.poem_machine.mk_poem(poem_conf)))
