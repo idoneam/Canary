@@ -32,18 +32,9 @@ from cogs.utils.checks import is_developer, is_moderator
 
 # List the extensions (modules) that should be loaded on startup.
 startup = [
-    "cogs.currency",
-    "cogs.games",
-    "cogs.helpers",
-    "cogs.images",
-    "cogs.info",
-    "cogs.memes",
-    "cogs.mod",
-    "cogs.quotes",
-    "cogs.reminder",
-    "cogs.roles",
-    "cogs.score",
-    "cogs.subscribers",
+    "cogs.currency", "cogs.games", "cogs.helpers", "cogs.images", "cogs.info",
+    "cogs.memes", "cogs.mod", "cogs.quotes", "cogs.reminder", "cogs.roles",
+    "cogs.score", "cogs.subscribers", "cogs.poetry"
 ]
 
 # TODO: SHOULD BE DB
