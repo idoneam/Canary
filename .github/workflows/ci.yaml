@@ -24,12 +24,5 @@ jobs:
       - name: Pip freeze
         run: pip3 freeze > requirements.txt
       
-      - name: Build Docker
-        run: docker build -t canary:latest .
-
-      - name: Run container
-        run: docker run -d -v $(pwd):/mnt/canary canary:latest > ./container.tmp; sleep 5; docker stop $(cat ./container.tmp)
-      
-      - name: Run YAPF in container
-        run: docker run -v $(pwd):/mnt/canary canary:latest yapf --diff --recursive .
-
+      - name: Run test
+        run: bash ./test.sh
