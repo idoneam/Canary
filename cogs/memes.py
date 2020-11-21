@@ -20,7 +20,6 @@
 # discord-py requirements
 from discord.ext import commands
 from discord import Embed
-from re import match
 
 # Other utilities
 import random
