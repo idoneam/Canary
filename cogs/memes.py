@@ -174,16 +174,26 @@ class Memes(commands.Cog):
         await ctx.send("**\n{}**".format(msg))
 
     @commands.command()
-    async def xkcd(self, ctx, xkcd_issue: int = None):
+    async def xkcd(self, ctx, xkcd_command: str = None):
         """
         Enjoy a nice xkcd comic with some strangers on the internet!
-        If no issue number is passed, returns the latest xkcd.
+        If no issue number is passed, returns a random xkcd.
+        Valid options are: nothing, 'latest' and a positive integer greater than one and at most equal to the latest issue number.
         """
         await ctx.trigger_typing()
-        if xkcd_issue is None:
+        if xkcd_command is None:
+            xkcd_req = get("https://c.xkcd.com/comic/random")
+        elif xkcd_command == "latest":
             xkcd_req = get("https://xkcd.com/")
         else:
-            xkcd_req = get(f"https://xkcd.com/{xkcd_issue}")
+            try:
+                issue_num = int(xkcd_command)
+            except ValueError:
+                await ctx.send(
+                    f"invalid input: {xkcd_command} does not parse to an integer"
+                )
+                return
+            xkcd_req = get(f"https://xkcd.com/{issue_num}")
         if xkcd_req.status_code == 200:
             xkcd_img_soup = BeautifulSoup(xkcd_req.content,
                                           "html.parser").find("div",
@@ -196,7 +206,7 @@ class Memes(commands.Cog):
             await ctx.send(embed=xkcd_embed)
         else:
             await ctx.send(
-                f"xkcd number {xkcd_issue} could not be found (request returned {xkcd_req.status_code})"
+                f"xkcd number {xkcd_command} could not be found (request returned {xkcd_req.status_code})"
             )
 
 
