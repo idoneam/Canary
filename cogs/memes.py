@@ -185,13 +185,19 @@ class Memes(commands.Cog):
         else:
             xkcd_req = get(f"https://xkcd.com/{xkcd_issue}")
         if xkcd_req.status_code == 200:
-            xkcd_img_soup = BeautifulSoup(xkcd_req.content, "html.parser").find("div", attrs={"id": "comic"}).find("img")
+            xkcd_img_soup = BeautifulSoup(xkcd_req.content,
+                                          "html.parser").find("div",
+                                                              attrs={
+                                                                  "id": "comic"
+                                                              }).find("img")
             xkcd_embed = Embed(title=xkcd_img_soup["alt"])
             xkcd_embed.set_image(url=f"https:{xkcd_img_soup['src']}")
             xkcd_embed.set_footer(text=f"hover text: {xkcd_img_soup['title']}")
             await ctx.send(embed=xkcd_embed)
         else:
-            await ctx.send(f"xkcd number {xkcd_issue} could not be found (request returned {xkcd_req.status_code})")
+            await ctx.send(
+                f"xkcd number {xkcd_issue} could not be found (request returned {xkcd_req.status_code})"
+            )
 
 
 def setup(bot):
