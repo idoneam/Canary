@@ -19,9 +19,13 @@
 
 # discord-py requirements
 from discord.ext import commands
+from discord import Embed
+from re import match
 
 # Other utilities
 import random
+from requests import get
+from bs4 import BeautifulSoup
 from .utils.auto_incorrect import auto_incorrect
 
 
@@ -168,6 +172,26 @@ class Memes(commands.Cog):
                                          abs(num) + 1)))
 
         await ctx.send("**\n{}**".format(msg))
+
+    @commands.command()
+    async def xkcd(self, ctx, xkcd_issue: int = None):
+        """
+        Enjoy a nice xkcd comic with some strangers on the internet!
+        If no issue number is passed, returns the latest xkcd.
+        """
+        await ctx.trigger_typing()
+        if xkcd_issue is None:
+            xkcd_req = get("https://xkcd.com/")
+        else:
+            xkcd_req = get(f"https://xkcd.com/{xkcd_issue}")
+        if xkcd_req.status_code == 200:
+            xkcd_img_soup = BeautifulSoup(xkcd_req.content, "html.parser").find("div", attrs={"id": "comic"}).find("img")
+            xkcd_embed = Embed(title=xkcd_img_soup["alt"])
+            xkcd_embed.set_image(url=f"https:{xkcd_img_soup['src']}")
+            xkcd_embed.set_footer(text=f"hover text: {xkcd_img_soup['title']}")
+            await ctx.send(embed=xkcd_embed)
+        else:
+            await ctx.send(f"xkcd number {xkcd_issue} could not be found (request returned {xkcd_req.status_code})")
 
 
 def setup(bot):
