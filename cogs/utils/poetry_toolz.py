@@ -5,6 +5,11 @@ from pickle import dump
 
 
 def make_rev_gen_dict(ord_word_list: List[str]) -> Dict[str, List[str]]:
+    """
+    Returns a dict containing as keys words and as values a list of words
+    that preceded instances of the key word.
+    Takes as argument an ordered list of words from some text.
+    """
     prv_word_map: Dict[str, List[str]] = {}
     for index, word in enumerate(ord_word_list):
         if word not in prv_word_map:
@@ -16,6 +21,12 @@ def make_rev_gen_dict(ord_word_list: List[str]) -> Dict[str, List[str]]:
 
 def make_rhyme_dict(word_list: List[str],
                     end_len: int = 4) -> Dict[str, List[str]]:
+    """
+    Returns a dict containing as keys word endings and as values
+    a list of words that match that ending.
+    Takes as argument a list of words from some text, as well
+    as an optional integer, indicating the length of the end slice.
+    """
     rhyme_dict: Dict[str, List[str]] = {}
     for word in word_list:
         stripped_word: str = sub("[^a-z]", "", word.lower())
@@ -28,6 +39,11 @@ def make_rhyme_dict(word_list: List[str],
 
 
 def syll_count(word_list: List[str]) -> int:
+    """
+    Returns the total amount of syllables in each word in the list of words
+    supplied as argument.
+    Takes as argument a list of strings (words).
+    """
     total_syll_count: int = 0
     for word in word_list:
         curr_word_syll_count: int = 0
@@ -45,6 +61,12 @@ def syll_count(word_list: List[str]) -> int:
 
 
 def parse_poem_config(config_str: str) -> List[Tuple[str, int]]:
+    """
+    Parses a string containing representing a poem configuration, returning
+    a valid configuration used for poem generation.
+    Raises ValueError in cases where supplied string is invalid.
+    Valid config strings match the following regex: ^(?:[a-zA-Z][0-9]+ )*[a-zA-Z][0-9]+$
+    """
     if fullmatch(r"(?:[a-zA-Z][0-9]+ )*[a-zA-Z][0-9]+", config_str) is None:
         raise ValueError
     config_list: List[Tuple[str, int]] = []

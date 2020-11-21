@@ -19,8 +19,10 @@ class Poems(commands.Cog):
     @commands.command()
     async def poem(self, ctx, *, command: str = None):
         """
+		Generate a poem from one of our prebuilt configurations using our (not) state of the poetry generator!
+		Either call "?poem" for a random configration, or call "?poem x" where x is one of the valid prebuilts.
+		Valid prebuilts are: haiku, limerick and alexandrine
         """
-
         configs: List[List[Tuple[str,
                                  int]]] = [[("A", 5), ("B", 7), ("C", 5)],
                                            [("A", 10), ("A", 10), ("B", 7),
@@ -48,6 +50,15 @@ class Poems(commands.Cog):
     @commands.command(aliases=["poem_custom"])
     async def poemc(self, ctx, *, config_str: str = None):
         """
+		Generate a poem from a custom configuration using our (not) state of the poetry generator!
+		Configurations are ordered as so: each line config is split by a space, where each line config
+		is first a letter (either capitalized or lowered), representing the rhyme of the line
+		(differently cased letters are parsed as different rhymes), and the rest
+		of the config is an integer, representing an amount of syllables for that line.
+		Examples of valid poemc calls:
+		> ?poemc A5 B7 A5 <- generates a haiku
+		> ?poemc A10 A10 B7 B7 A10 <- generates a limerick
+		> ?poemc o7 o7 o7 o7 o7 <- generates comradery
         """
         try:
             poem_conf: List[Tuple[str, int]] = parse_poem_config(config_str)
@@ -60,6 +71,8 @@ class Poems(commands.Cog):
     @commands.command(aliases=["random_gen"])
     async def genr(self, ctx, *, text_len: int = None):
         """
+		Generate a random text using our (not) state of the text generator (fun fact: it generates text in reverse)!
+		Takes one command, which must specify the length of the text to be generated.
         """
         if text_len is None:
             await ctx.send("length of text to generate must be specified")
