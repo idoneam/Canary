@@ -17,19 +17,6 @@ jobs:
       
       - name: Install poetry
         uses: dschep/install-poetry-action@v1.3
-
-      - name: Configure poetry
-        run: |
-          poetry config virtualenvs.create true
-          poetry config virtualenvs.in-project false
-          poetry config cache-dir ~/.poetry
-          poetry config virtualenvs.path ~/.poetry/venv
-
-      - name: Poetry Install
-        run: poetry install
-
-      - name: Pip freeze
-        run: pip3 freeze > requirements.txt
       
       - name: Run test
         run: bash ./test.sh
