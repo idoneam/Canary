@@ -1,26 +1,35 @@
 name: CI
 
-on: [pull_request, push]
+on: [push]
 
 jobs:
-  test:
-    strategy:
-      fail-fast: false
-      matrix:
-        python-version: [3.6, 3.7, 3.8]
-        poetry-version: [1.0, 1.1.2]
-        os: [ubuntu-18.04, macos-latest, windows-latest]
-    runs-on: ${{ matrix.os }}
+  build:
+    runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v2
-      - uses: actions/setup-python@v2
+      
+      - name: Set up Python 3.6
+        uses: actions/setup-python@v2
         with:
-          python-version: ${{ matrix.python-version }}
-      - name: Run image
+          python-version: '3.6' # Version range or exact version of a Python version to use, using SemVer's version range syntax
+          architecture: 'x64' # optional x64 or x86. Defaults to x64 if not specified
+      
+      - name: Install Poetry
         uses: abatilo/actions-poetry@v2.0.0
-        with:
-          poetry-version: ${{ matrix.poetry-version }}
-      - name: Install Python Dependencies
+
+      - name: Poetry Install
         run: poetry install
-      - name: Test with Pytest
-        run: poetry run pytest
+
+      - name: Pip freeze
+        run: pip3 freeze > requirements.txt
+      
+      - name: Build Docker
+        run: docker build -t canary:latest .
+
+      - name: Run container
+        run: docker run -d -v $(pwd):/mnt/canary canary:latest > ./container.tmp; sleep 5; docker stop $(cat ./container.tmp)
+      
+      - name: Run YAPF in container
+        run: docker run -v $(pwd):/mnt/canary canary:latest yapf --diff --recursive .
+
