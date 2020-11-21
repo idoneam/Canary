@@ -15,8 +15,15 @@ jobs:
           python-version: '3.6' # Version range or exact version of a Python version to use, using SemVer's version range syntax
           architecture: 'x64' # optional x64 or x86. Defaults to x64 if not specified
       
-      - name: Install Poetry
-        uses: abatilo/actions-poetry@v2.0.0
+      - name: Install poetry
+        uses: dschep/install-poetry-action@v1.3
+
+      - name: Configure poetry
+        run: |
+          poetry config virtualenvs.create true
+          poetry config virtualenvs.in-project false
+          poetry config cache-dir ~/.poetry
+          poetry config virtualenvs.path ~/.poetry/venv
 
       - name: Poetry Install
         run: poetry install
