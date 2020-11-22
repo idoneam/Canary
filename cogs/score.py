@@ -27,6 +27,8 @@ from tabulate import tabulate
 from .utils.paginator import Pages
 from collections import Counter
 
+from itertools import chain
+
 
 class Score(commands.Cog):
     def __init__(self, bot):
@@ -63,8 +65,7 @@ class Score(commands.Cog):
         conn = sqlite3.connect(self.bot.config.db_path)
         c = conn.cursor()
         c.execute("SELECT Name FROM Members WHERE ID = ?", (user_id, ))
-        fetch = c.fetchall()
-        if len(fetch) == 0:
+        if not c.fetchone():
             name = await self._get_name_from_id(user_id)
             c.execute('INSERT OR IGNORE INTO Members VALUES (?,?)',
                       (user_id, name))
@@ -162,17 +163,20 @@ class Score(commands.Cog):
         if not emoji:
             emoji = "total"
             c.execute(
-                "SELECT count(ReacteeID) FROM Reactions WHERE ReacteeID = ? AND ReactionName = ? AND ReacterID != ReacteeID",
+                "SELECT count(ReacteeID) FROM Reactions WHERE ReacteeID = ? "
+                "AND ReactionName = ? AND ReacterID != ReacteeID",
                 (m_id, str(self.UPMARTLET)))
             upmartlets = c.fetchone()[0]
             c.execute(
-                "SELECT count(ReacteeID) FROM Reactions WHERE ReacteeID = ? AND ReactionName = ? AND ReacterID != ReacteeID",
+                "SELECT count(ReacteeID) FROM Reactions WHERE ReacteeID = ? "
+                "AND ReactionName = ? AND ReacterID != ReacteeID",
                 (m_id, str(self.DOWNMARTLET)))
             downmartlets = c.fetchone()[0]
             react_count = upmartlets - downmartlets
         else:
             c.execute(
-                "SELECT count(ReacteeID) FROM Reactions WHERE ReacteeID = ? AND ReactionName = ? AND ReacterID != ReacteeID",
+                "SELECT count(ReacteeID) FROM Reactions WHERE ReacteeID = ? "
+                "AND ReactionName = ? AND ReacterID != ReacteeID",
                 (m_id, emoji))
             react_count = c.fetchone()[0]
 
@@ -210,13 +214,13 @@ class Score(commands.Cog):
             downmartlet_dict = dict(c.fetchall())
             total_score_dict = {
                 key: upmartlet_dict.get(key, 0) - downmartlet_dict.get(key, 0)
-                for key in list(upmartlet_dict.keys()) +
-                list(downmartlet_dict.keys())
+                for key in chain(upmartlet_dict, downmartlet_dict)
             }
+
             sorted_score_dict = dict(Counter(total_score_dict).most_common())
 
             names = list(
-                map(lambda x, y: f"{y}. {x}", sorted_score_dict.keys(),
+                map(lambda x, y: f"{y}. {x}", sorted_score_dict,
                     range(1,
                           len(sorted_score_dict) + 1)))
             values = list(sorted_score_dict.values())
@@ -236,7 +240,7 @@ class Score(commands.Cog):
                 "GROUP BY R.ReacteeID "
                 "ORDER BY count(*) DESC", (emoji, ))
             counts = list(zip(*c.fetchall()))
-            if len(counts) == 0:
+            if not counts:
                 await ctx.send(embed=discord.Embed(
                     title="This reaction was never used on this server."))
                 return
