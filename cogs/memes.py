@@ -19,7 +19,7 @@
 
 # discord-py requirements
 from discord.ext import commands
-from discord import Embed
+import discord
 
 # Other utilities
 import random
@@ -203,7 +203,7 @@ class Memes(commands.Cog):
         xkcd_img_soup = xkcd_soup.find("div", attrs={
             "id": "comic"
         }).find("img")
-        xkcd_embed = Embed(
+        xkcd_embed = discord.Embed(
             title=
             f"{xkcd_img_soup['alt']} (number: {re.findall(r'^https://xkcd.com/([1-9][0-9]*)/$', xkcd_soup.find('meta', property='og:url')['content'])[0]})"
         )
