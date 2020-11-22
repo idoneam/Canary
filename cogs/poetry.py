@@ -10,7 +10,8 @@ class Poems(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         rel_path = path.abspath(path.dirname(__file__))
-        markov_file = open(path.join(rel_path, "utils/rev_markov.pickle"), "rb")
+        markov_file = open(path.join(rel_path, "utils/rev_markov.pickle"),
+                           "rb")
         rhyme_file = open(path.join(rel_path, "utils/rhyme_dict.pickle"), "rb")
         self.poem_machine = PoetryGen(load(markov_file), load(rhyme_file))
         markov_file.close()
