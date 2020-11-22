@@ -376,16 +376,12 @@ class CustomReactions(commands.Cog):
                                    delete_after=60)
                 return
 
-            index_list = [f"[{i+1}]" for i in range(len(current_list))]
-
-            prompts_and_responses = [
-                f'Prompt: {reaction[1]}\nResponse: {reaction[2]}'
-                for reaction in current_list
-            ]
-
             reaction_dict = {
-                "names": index_list,
-                "values": prompts_and_responses
+                "names": [f"[{i+1}]" for i in range(len(current_list))],
+                "values": [
+                    f'Prompt: {reaction[1]}\nResponse: {reaction[2]}'
+                    for reaction in current_list
+                ]
             }
 
             await message.edit(embed=LOADING_EMBED)
@@ -497,18 +493,13 @@ class CustomReactions(commands.Cog):
                                            delete_after=60)
                         return
 
-                    index_list = [
-                        f"[{i + 1}]" for i in range(len(current_list))
-                    ]
-
-                    prompts_and_responses = [
-                        f"Prompt: {reaction[1]}\nResponse: {reaction[2]}"
-                        for reaction in current_list
-                    ]
-
                     reaction_dict = {
-                        "names": index_list,
-                        "values": prompts_and_responses
+                        "names":
+                        [f"[{i + 1}]" for i in range(len(current_list))],
+                        "values": [
+                            f'Prompt: {reaction[1]}\nResponse: {reaction[2]}'
+                            for reaction in current_list
+                        ]
                     }
 
                     p = Pages(ctx,
