@@ -81,9 +81,11 @@ class Games(commands.Cog):
 
         def wait_for_check(msg) -> bool:
             nonlocal invalid_msg_count
-            valid_guess = (msg.channel == ctx.message.channel and len(
-                msg.content
-            ) == 1 and msg.content in "abcdefghikklmnopqrstuvwxyzABCDEFGHIJKLMNOPRSTUVWXYZ") or msg.content.lower() == word
+            valid_guess = (
+                msg.channel == ctx.message.channel and len(msg.content) == 1
+                and msg.content
+                in "abcdefghikklmnopqrstuvwxyzABCDEFGHIJKLMNOPRSTUVWXYZ"
+            ) or msg.content.lower() == word
             if not valid_guess:
                 invalid_msg_count += 1
             return valid_guess or invalid_msg_count >= 5
