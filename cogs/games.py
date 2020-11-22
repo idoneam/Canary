@@ -20,14 +20,13 @@
 # discord-py requirements
 import discord
 from discord.ext import commands
-from discord import Embed
 
 # Other utilities
 import re
 import os
 from time import time
-from pickle import load
-from random import choice
+import pickle
+import random
 from typing import Dict, Tuple
 from .utils.dice_roll import dice_roll
 from .utils.clamp_default import clamp_default
@@ -44,7 +43,8 @@ class Games(commands.Cog):
         hangman_path = os.path.join(my_path,
                                     f"utils/{hangman_tbl_name}.pickle")
         with open(hangman_path, "rb") as hangman_pkl:
-            self.hangman_dict: Dict[str, Tuple[str, str]] = load(hangman_pkl)
+            self.hangman_dict: Dict[str, Tuple[str,
+                                               str]] = pickle.load(hangman_pkl)
 
     @commands.max_concurrency(1, per=commands.BucketType.channel, wait=False)
     @commands.command(aliases=["hm"])
@@ -59,10 +59,10 @@ class Games(commands.Cog):
                 f"rules: 6 wrong guesses are allowed, guesses must be either the entire correct word or a single lowercase letter\nhere is a list of valid category commands: {sorted(self.hangman_dict.keys())}"
             )
             return
-        category = command or choice(list(self.hangman_dict.keys()))
+        category = command or random.choice(list(self.hangman_dict.keys()))
         try:
             word_list, cat_name = self.hangman_dict[category]
-            word = choice(word_list).lower()
+            word = random.choice(word_list).lower()
         except KeyError:
             await ctx.send(
                 f"invalid category command, here is a list of valid commands: {sorted(self.hangman_dict.keys())}"
@@ -76,9 +76,17 @@ class Games(commands.Cog):
         last_line = "incorrect guesses: "
         player_msg_list = []
         timeout_dict = {}
-        invalid_msg_count = 0
-        same_channel_check = lambda msg: msg.channel == ctx.message.channel
-        txt_embed = Embed(colour=0xFF0000)
+        invalid_msg_count: int = 0
+        def invalid_inc_check(msg) -> bool:
+            nonlocal invalid_msg_count
+            if len(msg.content) > 1:
+                invalid_msg_count += 1
+            return invalid_msg_count >= 5
+        def same_channel_and_single_letter(msg) -> bool:
+            return msg.channel == ctx.message.channel and len(msg.content) == 1 and msg.content in "abcdefghikklmnopqrstuvwxyzABCDEFGHIJKLMNOPRSTUVWXYZ"
+        def wait_for_check(msg) -> bool:
+            return same_channel_and_single_letter(msg) or invalid_inc_check(msg)
+        txt_embed = discord.Embed(colour=0xFF0000)
         txt_embed.add_field(
             name=f"hangman (category: {cat_name})",
             value=
@@ -88,9 +96,9 @@ class Games(commands.Cog):
         hg_msg = await ctx.send(embed=txt_embed)
         while len(not_guessed) > 0 and num_mistakes < 6:
             curr_msg = await self.bot.wait_for('message',
-                                               check=same_channel_check,
+                                               check=wait_for_check,
                                                timeout=300)
-            curr_guess = curr_msg.content
+            curr_guess = curr_msg.content.lower()
             if not (curr_msg.author in timeout_dict and
                     (time() - timeout_dict[curr_msg.author]) < 3.0):
                 if curr_guess in "abcdefghijklmnopqrstuvwxyz" and len(
@@ -178,21 +186,10 @@ class Games(commands.Cog):
                     await ctx.send(
                         f"congratulations {curr_msg.author}, you solved the hangman, but in a cool way"
                     )
-                elif len(curr_guess) != 0:
-                    invalid_msg_count += 1
-                    player_msg_list.append(f"{curr_msg.author}, invalid guess")
-                    player_msg_list = player_msg_list[-3:]
-                    txt_embed.set_field_at(
-                        0,
-                        name=f"hangman (category: {cat_name})",
-                        value=
-                        f"`{first_line}`\n```{HANG_LIST[num_mistakes]}```\n{NEWLINE.join(player_msg_list)}"
-                    )
-                    await hg_msg.edit(embed=txt_embed)
-                    if invalid_msg_count > 5:
-                        invalid_msg_count = 0
-                        await hg_msg.delete()
-                        hg_msg = await ctx.send(embed=hg_msg.embeds[0])
+                if invalid_msg_count > 5:
+                    invalid_msg_count = 0
+                    await hg_msg.delete()
+                    hg_msg = await ctx.send(embed=hg_msg.embeds[0])
             elif curr_guess in "abcdefghijklmnopqrstuvwxyz" and len(
                     curr_guess) == 1:
                 await curr_msg.delete()
