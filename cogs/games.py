@@ -31,7 +31,7 @@ from random import choice
 from typing import Dict, Tuple
 from .utils.dice_roll import dice_roll
 from .utils.clamp_default import clamp_default
-from .utils.hangman import HANG_LIST
+from .utils.hangman import HANG_LIST, MAX_GUESSES
 
 ROLL_PATTERN = re.compile(r'^(\d*)d(\d*)([+-]?\d*)$')
 NEWLINE = "\n"
@@ -101,8 +101,7 @@ class Games(commands.Cog):
                         player_msg_list.append(
                             f"{curr_msg.author} guessed '{curr_guess}' correctly!"
                         )
-                        if len(player_msg_list) > 3:
-                            player_msg_list = player_msg_list[-3:]
+                        player_msg_list = player_msg_list[-3:]
                         txt_embed.set_field_at(
                             0,
                             name=f"hangman (category: {cat_name})",
@@ -118,8 +117,7 @@ class Games(commands.Cog):
                         player_msg_list.append(
                             f"{curr_msg.author}, '{curr_guess}' was already guessed"
                         )
-                        if len(player_msg_list) > 3:
-                            player_msg_list = player_msg_list[-3:]
+                        player_msg_list = player_msg_list[-3:]
                         txt_embed.set_field_at(
                             0,
                             name=f"hangman (category: {cat_name})",
@@ -133,8 +131,7 @@ class Games(commands.Cog):
                         last_line = f"incorrect guesses: {str(sorted(incorrect_guesses))[1:-1]}"
                         player_msg_list.append(
                             f"{curr_msg.author} guessed '{curr_guess}' wrong!")
-                        if len(player_msg_list) > 3:
-                            player_msg_list = player_msg_list[-3:]
+                        player_msg_list = player_msg_list[-3:]
                         timeout_dict[curr_msg.author] = time()
                         txt_embed.set_field_at(
                             0,
@@ -144,7 +141,7 @@ class Games(commands.Cog):
                         )
                         txt_embed.set_footer(text=last_line)
                         await hg_msg.edit(embed=txt_embed)
-                        if num_mistakes == 6:
+                        if num_mistakes == MAX_GUESSES:
                             await ctx.send(
                                 f"sorry everyone, {curr_msg.author} used your last chance, the right answer was `{word}`"
                             )
@@ -153,8 +150,7 @@ class Games(commands.Cog):
                         player_msg_list.append(
                             f"{curr_msg.author}, '{curr_guess}' was already guessed"
                         )
-                        if len(player_msg_list) > 3:
-                            player_msg_list = player_msg_list[-3:]
+                        player_msg_list = player_msg_list[-3:]
                         txt_embed.set_field_at(
                             0,
                             name=f"hangman (category: {cat_name})",
@@ -168,8 +164,7 @@ class Games(commands.Cog):
                     player_msg_list.append(
                         f"{curr_msg.author} guessed the entire word ('{word}') correctly!"
                     )
-                    if len(player_msg_list) > 3:
-                        player_msg_list = player_msg_list[-3:]
+                    player_msg_list = player_msg_list[-3:]
                     txt_embed.set_field_at(
                         0,
                         name=f"hangman (category: {cat_name})",
@@ -183,8 +178,7 @@ class Games(commands.Cog):
                 elif len(curr_guess) != 0:
                     invalid_msg_count += 1
                     player_msg_list.append(f"{curr_msg.author}, invalid guess")
-                    if len(player_msg_list) > 3:
-                        player_msg_list = player_msg_list[-3:]
+                    player_msg_list = player_msg_list[-3:]
                     txt_embed.set_field_at(
                         0,
                         name=f"hangman (category: {cat_name})",
@@ -201,8 +195,7 @@ class Games(commands.Cog):
                 await curr_msg.delete()
                 player_msg_list.append(
                     f"{curr_msg.author} you cannot guess right now!")
-                if len(player_msg_list) > 3:
-                    player_msg_list = player_msg_list[-3:]
+                player_msg_list = player_msg_list[-3:]
                 txt_embed.set_field_at(
                     0,
                     name=f"hangman (category: {cat_name})",

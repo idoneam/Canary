@@ -1,9 +1,10 @@
 from re import findall, search, sub
 from pickle import dump
+from typing import List
 from requests import get
 from bs4 import BeautifulSoup
 
-HANG_LIST = [
+HANG_LIST: List[str] = [
     r"""  +---+
   |   |
       |
@@ -50,6 +51,7 @@ HANG_LIST = [
 ========"""
 ]
 
+MAX_GUESSES: int = len(HANG_LIST)
 
 def mk_word_dict(file_name):
     link_list = [
