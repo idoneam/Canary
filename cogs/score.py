@@ -217,7 +217,7 @@ class Score(commands.Cog):
             if not total_score_dict:
                 await ctx.send(embed=discord.Embed(
                     title="The score reactions were never "
-                          "used on this server."))
+                    "used on this server."))
                 return
 
             sorted_score_dict = dict(Counter(total_score_dict).most_common())
