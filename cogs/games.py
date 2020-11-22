@@ -71,7 +71,8 @@ class Games(commands.Cog):
         num_mistakes = 0
         not_guessed = set(re.sub(r"[^a-z]", "", word))
         incorrect_guesses = set()
-        first_line = " ".join(char if char not in not_guessed else "_" for char in word)
+        first_line = " ".join(char if char not in not_guessed else "_"
+                              for char in word)
         last_line = "incorrect guesses: "
         player_msg_list = []
         timeout_dict = {}
@@ -97,7 +98,9 @@ class Games(commands.Cog):
                     await curr_msg.delete()
                     if curr_guess in not_guessed:    # curr_guess in not_guessed => curr_guess is correct and new
                         not_guessed.remove(curr_guess)
-                        first_line = " ".join(char if char not in not_guessed else "_" for char in word)
+                        first_line = " ".join(
+                            char if char not in not_guessed else "_"
+                            for char in word)
                         player_msg_list.append(
                             f"{curr_msg.author} guessed '{curr_guess}' correctly!"
                         )

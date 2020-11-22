@@ -53,6 +53,7 @@ HANG_LIST: List[str] = [
 
 MAX_GUESSES: int = len(HANG_LIST)
 
+
 def mk_word_dict(file_name):
     link_list = [
         elem for elem in BeautifulSoup(
