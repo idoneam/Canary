@@ -46,12 +46,8 @@ class Score(commands.Cog):
             self.guild.emojis, name=self.bot.config.downvote_emoji)
 
     async def _get_name_from_id(self, user_id):
-        try:
-            user = self.bot.get_user(user_id)
-            if user is None:
-                raise AttributeError
-            name = str(user)
-        except AttributeError:
+        user = self.bot.get_user(user_id)
+        if user is None:
             try:
                 user = await self.bot.fetch_user(user_id)
                 name = str(user)
@@ -59,6 +55,8 @@ class Score(commands.Cog):
                     name = str(user_id)
             except discord.errors.NotFound:
                 name = str(user_id)
+        else:
+            name = str(user)
         return name
 
     async def _add_member_if_needed(self, user_id):
@@ -216,6 +214,11 @@ class Score(commands.Cog):
                 key: upmartlet_dict.get(key, 0) - downmartlet_dict.get(key, 0)
                 for key in chain(upmartlet_dict, downmartlet_dict)
             }
+            if not total_score_dict:
+                await ctx.send(embed=discord.Embed(
+                    title="The score reactions were never "
+                          "used on this server."))
+                return
 
             sorted_score_dict = dict(Counter(total_score_dict).most_common())
 
