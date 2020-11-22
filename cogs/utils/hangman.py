@@ -51,7 +51,7 @@ HANG_LIST: List[str] = [
 ========"""
 ]
 
-MAX_GUESSES: int = len(HANG_LIST)
+MAX_GUESSES: int = len(HANG_LIST) - 1
 
 
 def mk_word_dict(file_name):

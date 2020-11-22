@@ -78,20 +78,14 @@ class Games(commands.Cog):
         timeout_dict = {}
         invalid_msg_count: int = 0
 
-        def invalid_inc_check(msg) -> bool:
+        def wait_for_check(msg) -> bool:
             nonlocal invalid_msg_count
-            if len(msg.content) > 1:
-                invalid_msg_count += 1
-            return invalid_msg_count >= 5
-
-        def same_channel_and_single_letter(msg) -> bool:
-            return msg.channel == ctx.message.channel and len(
+            let_check = msg.channel == ctx.message.channel and len(
                 msg.content
             ) == 1 and msg.content in "abcdefghikklmnopqrstuvwxyzABCDEFGHIJKLMNOPRSTUVWXYZ"
-
-        def wait_for_check(msg) -> bool:
-            return same_channel_and_single_letter(msg) or invalid_inc_check(
-                msg)
+            if not let_check:
+                invalid_msg_count += 1
+            return let_check or invalid_msg_count >= 5
 
         txt_embed = discord.Embed(colour=0xFF0000)
         txt_embed.add_field(
@@ -101,7 +95,7 @@ class Games(commands.Cog):
         )
         txt_embed.set_footer(text=last_line)
         hg_msg = await ctx.send(embed=txt_embed)
-        while len(not_guessed) > 0 and num_mistakes < 6:
+        while len(not_guessed) > 0 and num_mistakes < MAX_GUESSES:
             curr_msg = await self.bot.wait_for('message',
                                                check=wait_for_check,
                                                timeout=300)
