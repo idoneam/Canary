@@ -202,10 +202,10 @@ class CustomReactions(commands.Cog):
             if is_moderator:
                 description = (
                     f"{EMOJI['new']} Add a new custom reaction\n"
-                    f"{EMOJI['mag']} See the list of current reactions"
+                    f"{EMOJI['mag']} See the list of current reactions "
                     f"and modify them\n"
                     f"{EMOJI['pencil']} See the list of proposed reactions "
-                    f"({get_number_of_proposals()})"
+                    f"({get_number_of_proposals()}) "
                     f"and approve or reject them")
             else:
                 description = (
