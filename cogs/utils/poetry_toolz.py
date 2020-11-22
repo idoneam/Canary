@@ -32,7 +32,7 @@ def make_rhyme_dict(word_list: List[str],
         stripped_word: str = strip_non_alph_and_lower(word)
         end_slice: str = stripped_word[end_len:]
         if end_slice not in rhyme_dict:
-            rhyme_dict[end_slice] = list()
+            rhyme_dict[end_slice] = []
         if stripped_word not in rhyme_dict[end_slice]:
             rhyme_dict[end_slice].append(stripped_word)
     return rhyme_dict
