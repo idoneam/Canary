@@ -25,6 +25,7 @@ from discord import Embed
 import random
 from requests import get
 from bs4 import BeautifulSoup
+from re import findall
 from .utils.auto_incorrect import auto_incorrect
 
 
@@ -186,20 +187,21 @@ class Memes(commands.Cog):
             xkcd_req = get("https://xkcd.com/")
         else:
             try:
-                issue_num = int(xkcd_command)
+                xkcd_req = get(f"https://xkcd.com/{int(xkcd_command)}")
             except ValueError:
                 await ctx.send(
                     f"invalid input: {xkcd_command} does not parse to an integer"
                 )
                 return
-            xkcd_req = get(f"https://xkcd.com/{issue_num}")
         if xkcd_req.status_code == 200:
-            xkcd_img_soup = BeautifulSoup(xkcd_req.content,
-                                          "html.parser").find("div",
-                                                              attrs={
-                                                                  "id": "comic"
-                                                              }).find("img")
-            xkcd_embed = Embed(title=xkcd_img_soup["alt"])
+            xkcd_soup = BeautifulSoup(xkcd_req.content, "html.parser")
+            xkcd_img_soup = xkcd_soup.find("div", attrs={
+                "id": "comic"
+            }).find("img")
+            xkcd_embed = Embed(
+                title=
+                f"{xkcd_img_soup['alt']} (number: {findall(r'^https://xkcd.com/([1-9][0-9]*)/$', xkcd_soup.find('meta', property='og:url')['content'])[0]})"
+            )
             xkcd_embed.set_image(url=f"https:{xkcd_img_soup['src']}")
             xkcd_embed.set_footer(text=f"hover text: {xkcd_img_soup['title']}")
             await ctx.send(embed=xkcd_embed)
