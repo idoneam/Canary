@@ -29,13 +29,17 @@ def make_rhyme_dict(word_list: List[str],
     """
     rhyme_dict: Dict[str, List[str]] = {}
     for word in word_list:
-        stripped_word: str = sub("[^a-z]", "", word.lower())
+        stripped_word: str = strip_non_alph_and_lower(word)
         end_slice: str = stripped_word[end_len:]
         if end_slice not in rhyme_dict:
             rhyme_dict[end_slice] = list()
         if stripped_word not in rhyme_dict[end_slice]:
             rhyme_dict[end_slice].append(stripped_word)
     return rhyme_dict
+
+
+def strip_non_alph_and_lower(inp_string: str) -> str:
+    return sub("[^a-z]", "", inp_string.lower())
 
 
 def syll_count(word_list: List[str]) -> int:
@@ -47,16 +51,13 @@ def syll_count(word_list: List[str]) -> int:
     total_syll_count: int = 0
     for word in word_list:
         curr_word_syll_count: int = 0
-        stripped_word: str = sub("[^a-z]", "", word.lower())
+        stripped_word: str = strip_non_alph_and_lower(word)
         for index, char in enumerate(stripped_word):
-            len_word = len(stripped_word)
             if char in "eyouioa" and (
                     not (index > 0 and stripped_word[index - 1] in "euioa")
-            ) and (not (char == "e" and index == len_word - 1)):
+            ) and (not (char == "e" and index == len(stripped_word) - 1)):
                 curr_word_syll_count += 1
-        if curr_word_syll_count == 0:
-            curr_word_syll_count = 1
-        total_syll_count += curr_word_syll_count
+        total_syll_count += max(1, curr_word_syll_count)
     return total_syll_count
 
 
@@ -175,7 +176,7 @@ if __name__ == "__main__":
         word_arr = txt_f.read().split()
         markov, rhyme_map = make_rev_gen_dict(word_arr), make_rhyme_dict(
             word_arr)
-        with open("rev_markov", "wb") as m_file:
+        with open("rev_markov.pickle", "wb") as m_file:
             dump(markov, m_file)
-        with open("rhyme_dict", "wb") as r_file:
+        with open("rhyme_dict.pickle", "wb") as r_file:
             dump(rhyme_map, r_file)
