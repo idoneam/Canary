@@ -27,7 +27,7 @@ import re
 import os
 from time import time
 from pickle import load
-from random import choice, randint
+from random import choice
 from typing import Dict, Tuple
 from .utils.dice_roll import dice_roll
 from .utils.clamp_default import clamp_default
@@ -41,7 +41,8 @@ class Games(commands.Cog):
     def __init__(self, bot, hangman_tbl_name: str):
         self.bot = bot
         my_path = os.path.abspath(os.path.dirname(__file__))
-        hangman_path = os.path.join(my_path, f"utils/{hangman_tbl_name}")
+        hangman_path = os.path.join(my_path,
+                                    f"utils/{hangman_tbl_name}.pickle")
         with open(hangman_path, "rb") as hangman_pkl:
             self.hangman_dict: Dict[str, Tuple[str, str]] = load(hangman_pkl)
 
@@ -50,7 +51,7 @@ class Games(commands.Cog):
     async def hangman(self, ctx, *, command: str = None):
         """Play a nice game of hangman with internet strangers!
         Guesses must be single letters (guesses must be lower case letters to be valid) or the entire correct word
-		Can either be called with "?{hm|hangman}" or "?{hm|hangman} x", where x is a valid category command
+        Can either be called with "?{hm|hangman}" or "?{hm|hangman} x", where x is a valid category command
         Get all categories/help by typing "?{hm|hangman} help"
         """
         if command == "help":
@@ -58,10 +59,7 @@ class Games(commands.Cog):
                 f"rules: 6 wrong guesses are allowed, guesses must be either the entire correct word or a single lowercase letter\nhere is a list of valid category commands: {sorted(self.hangman_dict.keys())}"
             )
             return
-        if command is None:
-            category = choice(list(self.hangman_dict.keys()))
-        else:
-            category = command
+        category = command or choice(list(self.hangman_dict.keys()))
         try:
             word_list, cat_name = self.hangman_dict[category]
             word = choice(word_list).lower()
@@ -73,8 +71,7 @@ class Games(commands.Cog):
         num_mistakes = 0
         not_guessed = set(re.sub(r"[^a-z]", "", word))
         incorrect_guesses = set()
-        first_line = "".join(char + " " if char not in not_guessed else "_ "
-                             for char in word).rstrip()
+        first_line = " ".join(char if char not in not_guessed else "_" for char in word)
         last_line = "incorrect guesses: "
         player_msg_list = []
         timeout_dict = {}
@@ -100,9 +97,7 @@ class Games(commands.Cog):
                     await curr_msg.delete()
                     if curr_guess in not_guessed:    # curr_guess in not_guessed => curr_guess is correct and new
                         not_guessed.remove(curr_guess)
-                        first_line = "".join(
-                            char + " " if char not in not_guessed else "_ "
-                            for char in word).rstrip()
+                        first_line = " ".join(char if char not in not_guessed else "_" for char in word)
                         player_msg_list.append(
                             f"{curr_msg.author} guessed '{curr_guess}' correctly!"
                         )
@@ -169,7 +164,7 @@ class Games(commands.Cog):
                         await hg_msg.edit(embed=txt_embed)
                 elif curr_guess == word:
                     not_guessed = set()
-                    first_line = "".join(char + " " for char in word).rstrip()
+                    first_line = " ".join(char for char in word)
                     player_msg_list.append(
                         f"{curr_msg.author} guessed the entire word ('{word}') correctly!"
                     )
