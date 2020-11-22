@@ -27,7 +27,7 @@ import os
 from time import time
 import pickle
 import random
-from typing import Dict, Tuple
+from typing import Dict, List, Set, Tuple
 from .utils.dice_roll import dice_roll
 from .utils.clamp_default import clamp_default
 from .utils.hangman import HANG_LIST, MAX_GUESSES
@@ -59,7 +59,8 @@ class Games(commands.Cog):
                 f"rules: 6 wrong guesses are allowed, guesses must be either the entire correct word or a single lowercase letter\nhere is a list of valid category commands: {sorted(self.hangman_dict.keys())}"
             )
             return
-        category = command or random.choice(list(self.hangman_dict.keys()))
+        category: str = command or random.choice(list(
+            self.hangman_dict.keys()))
         try:
             word_list, cat_name = self.hangman_dict[category]
             word = random.choice(word_list).lower()
@@ -68,15 +69,15 @@ class Games(commands.Cog):
                 f"invalid category command, here is a list of valid commands: {sorted(self.hangman_dict.keys())}"
             )
             return
-        num_mistakes = 0
-        not_guessed = set(re.sub(r"[^a-z]", "", word))
-        incorrect_guesses = set()
-        first_line = " ".join(char if char not in not_guessed else "_"
-                              for char in word)
-        last_line = "incorrect guesses: "
-        player_msg_list = []
-        timeout_dict = {}
+        num_mistakes: int = 0
+        not_guessed: Set[str] = set(re.sub(r"[^a-z]", "", word))
+        incorrect_guesses: Set[str] = set()
+        first_line: str = " ".join(char if char not in not_guessed else "_"
+                                   for char in word)
+        last_line: str = "incorrect guesses: "
+        player_msg_list: List[str] = []
         invalid_msg_count: int = 0
+        timeout_dict = {}
 
         def wait_for_check(msg) -> bool:
             nonlocal invalid_msg_count
@@ -171,7 +172,6 @@ class Games(commands.Cog):
                         )
                         await hg_msg.edit(embed=txt_embed)
                 elif curr_guess == word:
-                    not_guessed = set()
                     first_line = " ".join(char for char in word)
                     player_msg_list.append(
                         f"{curr_msg.author} guessed the entire word ('{word}') correctly!"
@@ -185,8 +185,9 @@ class Games(commands.Cog):
                     )
                     await hg_msg.edit(embed=txt_embed)
                     await ctx.send(
-                        f"congratulations {curr_msg.author}, you solved the hangman, but in a cool way"
+                        f"congratulations {curr_msg.author}, you solved the hangman{', but in a cool way' if len(not_guessed) > len(word) // 2  else ''}"
                     )
+                    not_guessed = set()
                 if invalid_msg_count > 5:
                     invalid_msg_count = 0
                     await hg_msg.delete()
