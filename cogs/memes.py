@@ -23,9 +23,9 @@ from discord import Embed
 
 # Other utilities
 import random
-from requests import get
+import requests
+import re
 from bs4 import BeautifulSoup
-from re import findall
 from .utils.auto_incorrect import auto_incorrect
 
 
@@ -182,33 +182,34 @@ class Memes(commands.Cog):
         """
         await ctx.trigger_typing()
         if xkcd_command is None:
-            xkcd_req = get("https://c.xkcd.com/comic/random")
+            xkcd_req = requests.get("https://c.xkcd.com/comic/random")
         elif xkcd_command == "latest":
-            xkcd_req = get("https://xkcd.com/")
+            xkcd_req = requests.get("https://xkcd.com/")
         else:
             try:
-                xkcd_req = get(f"https://xkcd.com/{int(xkcd_command)}")
+                xkcd_req = requests.get(
+                    f"https://xkcd.com/{int(xkcd_command)}")
             except ValueError:
                 await ctx.send(
                     f"invalid input: {xkcd_command} does not parse to an integer"
                 )
                 return
-        if xkcd_req.status_code == 200:
-            xkcd_soup = BeautifulSoup(xkcd_req.content, "html.parser")
-            xkcd_img_soup = xkcd_soup.find("div", attrs={
-                "id": "comic"
-            }).find("img")
-            xkcd_embed = Embed(
-                title=
-                f"{xkcd_img_soup['alt']} (number: {findall(r'^https://xkcd.com/([1-9][0-9]*)/$', xkcd_soup.find('meta', property='og:url')['content'])[0]})"
-            )
-            xkcd_embed.set_image(url=f"https:{xkcd_img_soup['src']}")
-            xkcd_embed.set_footer(text=f"hover text: {xkcd_img_soup['title']}")
-            await ctx.send(embed=xkcd_embed)
-        else:
+        if xkcd_req.status_code != 200:
             await ctx.send(
                 f"xkcd number {xkcd_command} could not be found (request returned {xkcd_req.status_code})"
             )
+            return
+        xkcd_soup = BeautifulSoup(xkcd_req.content, "html.parser")
+        xkcd_img_soup = xkcd_soup.find("div", attrs={
+            "id": "comic"
+        }).find("img")
+        xkcd_embed = Embed(
+            title=
+            f"{xkcd_img_soup['alt']} (number: {re.findall(r'^https://xkcd.com/([1-9][0-9]*)/$', xkcd_soup.find('meta', property='og:url')['content'])[0]})"
+        )
+        xkcd_embed.set_image(url=f"https:{xkcd_img_soup['src']}")
+        xkcd_embed.set_footer(text=f"hover text: {xkcd_img_soup['title']}")
+        await ctx.send(embed=xkcd_embed)
 
 
 def setup(bot):
