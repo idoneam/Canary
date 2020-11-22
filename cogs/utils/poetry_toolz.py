@@ -1,7 +1,7 @@
-from random import choice
+import random
 from typing import Dict, List, Tuple
-from re import sub, findall, fullmatch
-from pickle import dump
+import re
+import pickle
 
 
 def make_rev_gen_dict(ord_word_list: List[str]) -> Dict[str, List[str]]:
@@ -39,7 +39,7 @@ def make_rhyme_dict(word_list: List[str],
 
 
 def strip_non_alph_and_lower(inp_string: str) -> str:
-    return sub("[^a-z]", "", inp_string.lower())
+    return re.sub("[^a-z]", "", inp_string.lower())
 
 
 def syll_count(word_list: List[str]) -> int:
@@ -68,10 +68,10 @@ def parse_poem_config(config_str: str) -> List[Tuple[str, int]]:
     Raises ValueError in cases where supplied string is invalid.
     Valid config strings match the following regex: ^(?:[a-zA-Z][0-9]+ )*[a-zA-Z][0-9]+$
     """
-    if fullmatch(r"(?:[a-zA-Z][0-9]+ )*[a-zA-Z][0-9]+", config_str) is None:
+    if re.fullmatch(r"(?:[a-zA-Z][0-9]+ )*[a-zA-Z][0-9]+", config_str) is None:
         raise ValueError
     config_list: List[Tuple[str, int]] = []
-    for line_config in findall(r"[a-zA-Z][0-9]+", config_str):
+    for line_config in re.findall(r"[a-zA-Z][0-9]+", config_str):
         line_sylls: int = int(line_config[1:])
         if line_sylls == 0:
             raise ValueError
@@ -86,11 +86,11 @@ class RevTextGen():
 
     def get_prev_word(self, seed: str) -> Tuple[str, bool]:
         if seed in self.word_dict:
-            return choice(self.word_dict[seed]), True
-        return choice(self.word_list), False
+            return random.choice(self.word_dict[seed]), True
+        return random.choice(self.word_list), False
 
     def rev_gen(self, text_len: int, strict_gen: bool = True):
-        curr_word: str = choice(self.word_list)
+        curr_word: str = random.choice(self.word_list)
         gen_words: List[str] = [curr_word]
         if strict_gen:
             do_loop: bool = False
@@ -136,14 +136,14 @@ class PoetryGen(RevTextGen):
             while False in gen_sucess:
                 gen_sucess = [False] * line_amount
                 group_list = []
-                group_endings = self.rhyme_dict[choice(self.rhyme_list)]
+                group_endings = self.rhyme_dict[random.choice(self.rhyme_list)]
                 if line_amount > 1:
                     while len(group_endings) < min_rhyme_mult * line_amount:
-                        group_endings = self.rhyme_dict[choice(
+                        group_endings = self.rhyme_dict[random.choice(
                             self.rhyme_list)]
                 for index, pos in enumerate(rhyme_pos_list):
                     line_sylls = poem_config[pos][1]
-                    curr_line: List[str] = [choice(group_endings)]
+                    curr_line: List[str] = [random.choice(group_endings)]
                     while syll_count(curr_line) < line_sylls:
                         curr_word, good_gen = self.get_prev_word(curr_line[-1])
                         if strict_gen and not good_gen:
@@ -155,7 +155,7 @@ class PoetryGen(RevTextGen):
                     ) != line_sylls and attempt_counter < max_attempts:
                         curr_line.pop()
                         if len(curr_line) == 0:
-                            curr_line = [choice(group_endings)]
+                            curr_line = [random.choice(group_endings)]
                         else:
                             curr_word, good_gen = self.get_prev_word(
                                 curr_line[-1])
@@ -177,6 +177,6 @@ if __name__ == "__main__":
         markov, rhyme_map = make_rev_gen_dict(word_arr), make_rhyme_dict(
             word_arr)
         with open("rev_markov.pickle", "wb") as m_file:
-            dump(markov, m_file)
+            pickle.dump(markov, m_file)
         with open("rhyme_dict.pickle", "wb") as r_file:
-            dump(rhyme_map, r_file)
+            pickle.dump(rhyme_map, r_file)

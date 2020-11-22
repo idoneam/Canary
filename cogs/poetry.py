@@ -1,7 +1,7 @@
-from os import path
-from pickle import load
+import os
+import pickle
 from typing import List, Tuple, Dict
-from random import choice
+import random
 from discord.ext import commands
 from .utils.poetry_toolz import PoetryGen, parse_poem_config
 
@@ -9,11 +9,13 @@ from .utils.poetry_toolz import PoetryGen, parse_poem_config
 class Poems(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        rel_path = path.abspath(path.dirname(__file__))
-        markov_file = open(path.join(rel_path, "utils/rev_markov.pickle"),
+        rel_path = os.path.abspath(os.path.dirname(__file__))
+        markov_file = open(os.path.join(rel_path, "utils/rev_markov.pickle"),
                            "rb")
-        rhyme_file = open(path.join(rel_path, "utils/rhyme_dict.pickle"), "rb")
-        self.poem_machine = PoetryGen(load(markov_file), load(rhyme_file))
+        rhyme_file = open(os.path.join(rel_path, "utils/rhyme_dict.pickle"),
+                          "rb")
+        self.poem_machine = PoetryGen(pickle.load(markov_file),
+                                      pickle.load(rhyme_file))
         markov_file.close()
         rhyme_file.close()
 
@@ -32,7 +34,8 @@ class Poems(commands.Cog):
         if command is None:
             await ctx.trigger_typing()
             await ctx.send("\n".join(
-                self.poem_machine.mk_poem(choice(list(conf_dict.values())))))
+                self.poem_machine.mk_poem(
+                    random.choice(list(conf_dict.values())))))
             return
         if command not in conf_dict:
             await ctx.send(
