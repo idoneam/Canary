@@ -77,15 +77,22 @@ class Games(commands.Cog):
         player_msg_list = []
         timeout_dict = {}
         invalid_msg_count: int = 0
+
         def invalid_inc_check(msg) -> bool:
             nonlocal invalid_msg_count
             if len(msg.content) > 1:
                 invalid_msg_count += 1
             return invalid_msg_count >= 5
+
         def same_channel_and_single_letter(msg) -> bool:
-            return msg.channel == ctx.message.channel and len(msg.content) == 1 and msg.content in "abcdefghikklmnopqrstuvwxyzABCDEFGHIJKLMNOPRSTUVWXYZ"
+            return msg.channel == ctx.message.channel and len(
+                msg.content
+            ) == 1 and msg.content in "abcdefghikklmnopqrstuvwxyzABCDEFGHIJKLMNOPRSTUVWXYZ"
+
         def wait_for_check(msg) -> bool:
-            return same_channel_and_single_letter(msg) or invalid_inc_check(msg)
+            return same_channel_and_single_letter(msg) or invalid_inc_check(
+                msg)
+
         txt_embed = discord.Embed(colour=0xFF0000)
         txt_embed.add_field(
             name=f"hangman (category: {cat_name})",
