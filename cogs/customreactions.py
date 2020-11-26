@@ -291,7 +291,10 @@ class CustomReactions(commands.Cog):
                            f"{EMOJI['three']} React in the DMs of "
                            f"the user who calls the "
                            f"reaction instead of the channel\n")
-            footer = f"{author} is currently proposing a custom reaction."
+            if is_moderator:
+                footer = f"{author} is currently adding a custom reaction."
+            else:
+                footer = f"{author} is currently proposing a custom reaction."
             current_options.extend((EMOJI['ok'], EMOJI['stop_button']))
             await add_multiple_reactions(
                 message, (*NUMBERS[1:4], EMOJI['ok'], EMOJI['stop_button']))
