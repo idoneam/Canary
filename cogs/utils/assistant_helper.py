@@ -16,6 +16,8 @@
 # along with Canary. If not, see <https://www.gnu.org/licenses/>.
 
 import asyncio
+from functools import wraps
+
 import discord
 import json
 
@@ -24,6 +26,9 @@ from typing import Optional, Tuple, Union
 
 from cogs.utils.paginator import Pages
 from cogs.utils.emojis import EMOJI
+
+__all__ = ["ScreenResult", "AssistantHelper", "AssistantHelperUninitialized"]
+
 
 PagesDisplayOptionT = Union[Tuple[int], Tuple[int, int]]
 
@@ -42,6 +47,51 @@ def _id(x):
 
 class AssistantHelperUninitialized(Exception):
     pass
+
+
+class ScreenResult:
+    """
+    Stores the result of an AssistantHelper screen (that is, something that
+    requires both an embed update and a user interaction.
+    """
+
+    def __init__(self, results: tuple, stop: bool):
+        self._stop = stop
+        self._results = results
+
+    @property
+    def stop(self):
+        return self._stop
+
+    def __iter__(self):
+        return iter((*self._results, self._stop))
+
+
+def screen(f):
+    """
+    Decorator to automatically clean up AssistantHelper messages/resources
+    if stop=True is passed as a result from the screen.
+    """
+    @wraps(f)
+    async def deco(self: "AssistantHelper", *args, **kwargs):
+        self._check_init()
+        r: ScreenResult = await f(self, *args, **kwargs)
+        if r.stop:
+            await self.clean_up()
+        return r
+    return deco
+
+
+def requires_init(f):
+    """
+    Decorator to automatically raise an error if a programmer mis-uses an
+    AssistantHelper instance before it's successfully initialized.
+    """
+    @wraps(f)
+    def deco(self: "AssistantHelper", *args, **kwargs):
+        self._check_init()
+        return f(*args, **kwargs)  # TODO: Do we need await?
+    return deco
 
 
 # TODO: Require initialized decorator
@@ -200,6 +250,7 @@ class AssistantHelper:
 
         return i if i == len(self._old_options) else 0
 
+    @requires_init
     async def _update_reactions_if_needed(self):
         # Do nothing if the options haven't changed
         if self._old_options == self._options:
@@ -227,11 +278,13 @@ class AssistantHelper:
              != json.dumps(self._footer, sort_keys=True))
         ))
 
+    @requires_init
     async def start_loading(self):
         if not self._is_loading:
             self._is_loading = True
             await self._message.edit(embed=AssistantHelper.LOADING_EMBED)
 
+    @requires_init
     async def update(self, delete_after: Optional[int] = None,
                      loading_screen: bool = False,
                      force_pagination_update: bool = False,
@@ -363,6 +416,7 @@ class AssistantHelper:
 
         return _inner_check
 
+    @requires_init
     async def wait_for_option(self,
                               user=None,
                               timeout_message: str = "",
@@ -390,11 +444,15 @@ class AssistantHelper:
 
         return reaction, reaction_user
 
-    async def yes_no_stop_prompt(self, title, prompt, footer, **kwargs):
+    @screen
+    async def yes_no_stop_prompt(self, title, prompt, footer, **kwargs) \
+            -> ScreenResult:
         await self.start_loading()
 
         # Update without clearing loading screen
         await self.clear_options().update()
+
+        # TODO: This can be done with menu code probably
 
         self.title = title
         self.description = f"{prompt}\n{AssistantHelper.EMOJI_NO} No\n" \
@@ -409,14 +467,10 @@ class AssistantHelper:
         await self.clear_options().update()
 
         if r is None:
-            return r, u, False
+            return ScreenResult((None, u), stop=False)
 
-        stop = r.emoji == AssistantHelper.STOP_TEXT
-
-        if stop:
-            await self.clean_up()
-
-        return r.emoji, u, stop
+        return ScreenResult(
+            (r.emoji, u), stop=r.emoji == AssistantHelper.STOP_TEXT)
 
     async def wait_for_message(self,
                                timeout_message: str = "",
@@ -462,6 +516,7 @@ class AssistantHelper:
             post_process=int,
             **kwargs)
 
+    @screen
     async def text_prompt(self, title: Optional[str] = None,
                           prompt: Optional[str] = None,
                           footer: Optional[dict] = None, **kwargs):
@@ -478,14 +533,10 @@ class AssistantHelper:
         res = await self.wait_for_message(**kwargs)
 
         if res is None:
-            return None, False
+            return ScreenResult((None,), stop=False)
 
-        stop = res.lower().strip() == AssistantHelper.STOP_TEXT
-
-        # Get outta here
-        await self.clean_up()
-
-        return res, stop
+        return ScreenResult(
+            (res,), stop=res.lower().strip() == AssistantHelper.STOP_TEXT)
 
     @staticmethod
     def _join_options(options: 'OrderedDict[str, Union[str, dict]]'):
@@ -495,6 +546,7 @@ class AssistantHelper:
                       if (isinstance(mo, str) and mo) or mo.get("text"))
             + "\n")
 
+    @screen
     async def menu(self, title, menu_options: OrderedDict,
                    user, preface: str = "", footer: Optional[dict] = None,
                    loading_screen: bool = True, **kwargs):
@@ -510,19 +562,21 @@ class AssistantHelper:
         reaction, user_ = await self.wait_for_option(user=user, **kwargs)
 
         if not reaction:
-            return None, None, False
+            return ScreenResult((None, None), stop=False)
 
         await self.clear_options().update()
 
         stop = reaction.emoji == AssistantHelper.EMOJI_STOP
 
         if stop:
-            await self.clean_up()
-            return None, user_, True
+            return ScreenResult((None, user_), stop=True)
 
-        return ((await menu_options[reaction.emoji]["callback"](self, user_)),
-                user_, False)
+        return ScreenResult(
+            (await menu_options[reaction.emoji]["callback"](self, user_),
+             user_),
+            stop=False)
 
+    @screen
     def selector(self, title, footer, select_options: OrderedDict, user,
                  preface: str = "", multi: bool = True, **kwargs):
         preface = ((preface.rstrip() + "\n") if preface else "") + \
@@ -549,7 +603,7 @@ class AssistantHelper:
             reaction, user_ = await self.wait_for_option(user=user, **kwargs)
 
             if not reaction:
-                return None, False
+                return ScreenResult((None,), stop=False)
 
             if reaction.emoji == AssistantHelper.EMOJI_OK:
                 break
@@ -567,11 +621,8 @@ class AssistantHelper:
         # Before return, clear reacts
         await self.clear_options().update()
 
-        if stop:
-            self.clean_up()
-            return None, True  # TODO: Decorator for cleaning up every time
-
-        return {**results}, False
+        return ScreenResult(
+            ({**results} if not stop else None,), stop)
 
     async def paginate(self):
         if self.pages and self._pagination_obj:
@@ -583,6 +634,7 @@ class AssistantHelper:
                     self._pagination_obj,
                     self._pagination_obj.edit_mode))
 
+    @requires_init
     async def clean_up(self):
         self._pagination_obj = None
         await self._message.delete()
