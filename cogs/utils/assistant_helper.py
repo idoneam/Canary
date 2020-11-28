@@ -294,7 +294,7 @@ class AssistantHelper:
         self._is_loading = False
 
         if sleep_after:
-            await asyncio.sleep(5)
+            await asyncio.sleep(sleep_after)
 
         return bool(delete_after)
 
