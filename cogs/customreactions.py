@@ -129,38 +129,57 @@ class CustomReactions(commands.Cog):
         aliases=['customreaction', 'customreacts', 'customreact'])
     async def customreactions(self, ctx):
         current_options = []
-        author = ctx.message.author
+        main_user = ctx.message.author
         await ctx.message.delete()
 
         def get_number_of_proposals():
             return len(self.proposal_list)
 
-        def reaction_check(reaction, user):
-            return all((reaction.emoji in current_options, user == author,
-                        reaction.message.id == initial_message.id))
+        def get_reaction_check(moderators=False, reaction_user=None):
+            def reaction_check(reaction, user):
+                return all(
+                    (reaction.emoji in current_options,
+                     reaction.message.id == initial_message.id, not moderators
+                     or discord.utils.get(user.roles,
+                                          name=self.bot.config.moderator_role),
+                     not reaction_user or user == reaction_user))
 
-        def reaction_check_any_user(reaction, user):
-            return all((reaction.emoji in current_options,
-                        reaction.message.id == initial_message.id))
+            return reaction_check
 
-        def reaction_check_moderators(reaction, user):
-            return all(
-                (reaction.emoji
-                 in current_options, reaction.message.id == initial_message.id,
-                 discord.utils.get(user.roles,
-                                   name=self.bot.config.moderator_role)))
+        def get_msg_check(msg_user=None):
+            def msg_check(msg):
+                if all(
+                    (not msg_user
+                     or msg.author == msg_user, msg.channel == ctx.channel)):
+                    if msg.attachments:
+                        # in python 3.7, rewrite as
+                        # asyncio.create_task(ctx.send([...]))
+                        # (the get_event_loop() part isn't necessary)
+                        loop = asyncio.get_event_loop()
+                        loop.create_task(
+                            ctx.send("Attachments cannot be used, "
+                                     "but you may use URLs"))
+                    else:
+                        return True
 
-        def msg_check(msg):
-            return msg.author == author
+            return msg_check
 
-        def number_check(msg):
-            return msg.content.isdigit()
+        def get_number_check(msg_user=None, number_range=None):
+            def number_check(msg):
+                if msg.content.isdigit():
+                    return all((not msg_user
+                                or msg.author == msg_user,
+                                not number_range or
+                                int(msg.content) in number_range
+                                ))
+            return number_check
 
         async def wait_for_reaction(message):
             try:
-                reaction, user = await self.bot.wait_for('reaction_add',
-                                                         check=reaction_check,
-                                                         timeout=60)
+                reaction, user = await self.bot.wait_for(
+                    'reaction_add',
+                    check=get_reaction_check(reaction_user=main_user),
+                    timeout=60)
             except asyncio.TimeoutError:
                 await message.clear_reactions()
                 await message.edit(
@@ -171,9 +190,10 @@ class CustomReactions(commands.Cog):
 
         async def wait_for_message(message):
             try:
-                msg = await self.bot.wait_for('message',
-                                              check=msg_check,
-                                              timeout=60)
+                msg = await self.bot.wait_for(
+                    'message',
+                    check=get_msg_check(msg_user=main_user),
+                    timeout=60)
             except asyncio.TimeoutError:
                 await message.clear_reactions()
                 await message.edit(
@@ -220,10 +240,10 @@ class CustomReactions(commands.Cog):
                           EMOJI['stop_button']))
             await message.edit(embed=discord.Embed(
                 title="Custom Reactions", description=description).set_footer(
-                    text=f"{author}: Click on an emoji to choose an "
+                    text=f"{main_user}: Click on an emoji to choose an "
                     f"option (If a list is chosen, all users "
                     f"will be able to interact with it)",
-                    icon_url=author.avatar_url))
+                    icon_url=main_user.avatar_url))
             try:
                 reaction, user = await wait_for_reaction(message)
             except TypeError:
@@ -250,17 +270,18 @@ class CustomReactions(commands.Cog):
         async def add_custom_react(message, is_moderator):
             if is_moderator:
                 title = "Add a custom reaction"
-                footer = (f"{author} is currently adding a custom reaction. \n"
-                          f"Write '{STOP_TEXT}' to cancel.")
+                footer = (
+                    f"{main_user} is currently adding a custom reaction. \n"
+                    f"Write '{STOP_TEXT}' to cancel.")
             else:
                 title = "Propose a custom reaction"
-                footer = (f"{author} is currently proposing a custom "
+                footer = (f"{main_user} is currently proposing a custom "
                           f"reaction. \n"
                           f"Write '{STOP_TEXT}' to cancel.")
             description = "Write the prompt the bot will react to"
             await message.edit(
                 embed=discord.Embed(title=title, description=description).
-                set_footer(text=footer, icon_url=author.avatar_url))
+                set_footer(text=footer, icon_url=main_user.avatar_url))
             prompt_message = await wait_for_message(message)
             if prompt_message is None:
                 return
@@ -271,7 +292,7 @@ class CustomReactions(commands.Cog):
                            f"the bot will send")
             await message.edit(
                 embed=discord.Embed(title=title, description=description).
-                set_footer(text=footer, icon_url=author.avatar_url))
+                set_footer(text=footer, icon_url=main_user.avatar_url))
             response = await wait_for_message(message)
             if response is None:
                 return
@@ -292,15 +313,16 @@ class CustomReactions(commands.Cog):
                            f"the user who calls the "
                            f"reaction instead of the channel\n")
             if is_moderator:
-                footer = f"{author} is currently adding a custom reaction."
+                footer = f"{main_user} is currently adding a custom reaction."
             else:
-                footer = f"{author} is currently proposing a custom reaction."
+                footer = (f"{main_user} is currently "
+                          f"proposing a custom reaction.")
             current_options.extend((EMOJI['ok'], EMOJI['stop_button']))
             await add_multiple_reactions(
                 message, (*NUMBERS[1:4], EMOJI['ok'], EMOJI['stop_button']))
             await message.edit(
                 embed=discord.Embed(title=title, description=description).
-                set_footer(text=footer, icon_url=author.avatar_url))
+                set_footer(text=footer, icon_url=main_user.avatar_url))
             try:
                 reaction, user = await wait_for_reaction(message)
             except TypeError:
@@ -314,7 +336,7 @@ class CustomReactions(commands.Cog):
                 cache_msg = await message.channel.fetch_message(message.id)
                 for reaction in cache_msg.reactions:
                     users_who_reacted = await reaction.users().flatten()
-                    if author in users_who_reacted:
+                    if main_user in users_who_reacted:
                         delete = delete or reaction.emoji == EMOJI['one']
                         anywhere = anywhere or reaction.emoji == EMOJI['two']
                         dm = dm or reaction.emoji == EMOJI['three']
@@ -323,8 +345,8 @@ class CustomReactions(commands.Cog):
                 await message.clear_reactions()
                 conn = sqlite3.connect(self.bot.config.db_path)
                 c = conn.cursor()
-                t = (prompt_message, response, author.id, delete, anywhere, dm,
-                     not is_moderator)
+                t = (prompt_message, response, main_user.id, delete, anywhere,
+                     dm, not is_moderator)
                 c.execute(
                     'INSERT INTO CustomReactions(Prompt, Response, UserID, '
                     'DeletePrompt, Anywhere, DM, Proposal) '
@@ -352,10 +374,10 @@ class CustomReactions(commands.Cog):
                                    f"who calls the reaction instead of the "
                                    f"channel")
 
-                await message.edit(embed=discord.Embed(
-                    title=title, description=description).set_footer(
-                        text=f"Added by {author}.", icon_url=author.avatar_url)
-                                   )
+                await message.edit(
+                    embed=discord.Embed(title=title, description=description).
+                    set_footer(text=f"Added by {main_user}.",
+                               icon_url=main_user.avatar_url))
 
                 return
 
@@ -427,23 +449,18 @@ class CustomReactions(commands.Cog):
                 await message.edit(embed=message.embeds[0])
                 number = 0
                 try:
-                    number_sent_by_user_modifying = False
-                    manual_timeout = time.time() + 60
-                    while not number_sent_by_user_modifying:
-                        msg = await self.bot.wait_for('message',
-                                                      check=number_check,
-                                                      timeout=60)
-                        if msg.author == user_modifying:
-                            number = int(msg.content)
-                            number_sent_by_user_modifying = True
-                            await msg.delete()
-                        elif time.time() > manual_timeout:
-                            raise asyncio.TimeoutError
-
+                    msg = await self.bot.wait_for(
+                        'message',
+                        check=get_number_check(msg_user=user_modifying,
+                                               number_range=
+                                               range(1, len(current_list)+1)),
+                        timeout=60)
+                    number = int(msg.content)
+                    await msg.delete()
                 except asyncio.TimeoutError:
                     pass
 
-                if number < 1 or number > len(current_list):
+                if number == 0:
                     if proposals:
                         title = (f"Current custom reaction proposals\n"
                                  f"Click on {EMOJI['ok']} "
@@ -601,7 +618,7 @@ class CustomReactions(commands.Cog):
             try:
                 reaction, user = await self.bot.wait_for(
                     'reaction_add',
-                    check=reaction_check_moderators,
+                    check=get_reaction_check(moderators=True),
                     timeout=40)
                 left = await edit_custom_react(message, reaction, user,
                                                custom_react, proposals)
@@ -639,18 +656,11 @@ class CustomReactions(commands.Cog):
                 await message.edit(
                     embed=discord.Embed(title=title, description=description).
                     set_footer(text=footer, icon_url=user.avatar_url))
-                prompt = None
                 try:
-                    msg_sent_by_user_modifying = False
-                    manual_timeout = time.time() + 60
-                    while not msg_sent_by_user_modifying:
-                        msg = await self.bot.wait_for('message', timeout=60)
-                        if msg.author == user:
-                            prompt = msg.content
-                            msg_sent_by_user_modifying = True
-                            await msg.delete()
-                        elif time.time() > manual_timeout:
-                            raise asyncio.TimeoutError
+                    msg = await self.bot.wait_for(
+                        'message',
+                        check=get_msg_check(msg_user=user),
+                        timeout=60)
 
                 except asyncio.TimeoutError:
                     if proposals:
@@ -666,8 +676,9 @@ class CustomReactions(commands.Cog):
                     await asyncio.sleep(5)
                     return
 
-                if prompt is None:
-                    return
+                prompt = msg.content
+                await msg.delete()
+
                 if prompt.lower() == STOP_TEXT:
                     await leave(message)
                     return True
@@ -705,18 +716,12 @@ class CustomReactions(commands.Cog):
                 await message.edit(
                     embed=discord.Embed(title=title, description=description).
                     set_footer(text=footer, icon_url=user.avatar_url))
-                response = None
+
                 try:
-                    msg_sent_by_user_modifying = False
-                    manual_timeout = time.time() + 60
-                    while not msg_sent_by_user_modifying:
-                        msg = await self.bot.wait_for('message', timeout=60)
-                        if msg.author == user:
-                            response = msg.content
-                            msg_sent_by_user_modifying = True
-                            await msg.delete()
-                        elif time.time() > manual_timeout:
-                            raise asyncio.TimeoutError
+                    msg = await self.bot.wait_for(
+                        'message',
+                        check=get_msg_check(msg_user=user),
+                        timeout=60)
 
                 except asyncio.TimeoutError:
                     if proposals:
@@ -732,8 +737,9 @@ class CustomReactions(commands.Cog):
                     await asyncio.sleep(5)
                     return
 
-                if response is None:
-                    return
+                response = msg.content
+                await msg.delete()
+
                 if response.lower() == STOP_TEXT:
                     await leave(message)
                     return True
@@ -779,19 +785,12 @@ class CustomReactions(commands.Cog):
                 await message.edit(
                     embed=discord.Embed(title=title, description=description).
                     set_footer(text=footer, icon_url=user.avatar_url))
-                reaction = None
+
                 try:
-                    react_sent_by_user_modifying = False
-                    manual_timeout = time.time() + 60
-                    while not react_sent_by_user_modifying:
-                        reaction, reaction_user = await self.bot.wait_for(
-                            'reaction_add',
-                            check=reaction_check_any_user,
-                            timeout=60)
-                        if reaction_user == user:
-                            react_sent_by_user_modifying = True
-                        elif time.time() > manual_timeout:
-                            raise asyncio.TimeoutError
+                    reaction, reaction_user = await self.bot.wait_for(
+                        'reaction_add',
+                        check=get_reaction_check(reaction_user=user),
+                        timeout=60)
 
                 except asyncio.TimeoutError:
                     if proposals:
@@ -811,8 +810,6 @@ class CustomReactions(commands.Cog):
 
                 current_options.clear()
                 await message.clear_reactions()
-                if reaction is None:
-                    return
                 # Deactivate the "delete" option
                 if reaction.emoji == EMOJI['zero']:
                     if delete == 0:
@@ -919,19 +916,11 @@ class CustomReactions(commands.Cog):
                 await message.edit(
                     embed=discord.Embed(title=title, description=description).
                     set_footer(text=footer, icon_url=user.avatar_url))
-                reaction = None
                 try:
-                    react_sent_by_user_modifying = False
-                    manual_timeout = time.time() + 60
-                    while not react_sent_by_user_modifying:
-                        reaction, reaction_user = await self.bot.wait_for(
-                            'reaction_add',
-                            check=reaction_check_any_user,
-                            timeout=60)
-                        if reaction_user == user:
-                            react_sent_by_user_modifying = True
-                        elif time.time() > manual_timeout:
-                            raise asyncio.TimeoutError
+                    reaction, reaction_user = await self.bot.wait_for(
+                        'reaction_add',
+                        check=get_reaction_check(reaction_user=user),
+                        timeout=60)
 
                 except asyncio.TimeoutError:
                     if proposals:
@@ -951,8 +940,6 @@ class CustomReactions(commands.Cog):
 
                 current_options.clear()
                 await message.clear_reactions()
-                if reaction is None:
-                    return
                 # Deactivate "anywhere" option
                 if reaction.emoji == EMOJI['zero']:
                     if anywhere == 0:
@@ -1061,20 +1048,11 @@ class CustomReactions(commands.Cog):
                 await message.edit(
                     embed=discord.Embed(title=title, description=description).
                     set_footer(text=footer, icon_url=user.avatar_url))
-                reaction = None
                 try:
-                    react_sent_by_user_modifying = False
-                    manual_timeout = time.time() + 60
-                    while not react_sent_by_user_modifying:
-                        reaction, reaction_user = await self.bot.wait_for(
-                            'reaction_add',
-                            check=reaction_check_any_user,
-                            timeout=60)
-                        if reaction_user == user:
-                            react_sent_by_user_modifying = True
-                        else:
-                            if time.time() > manual_timeout:
-                                raise asyncio.TimeoutError
+                    reaction, reaction_user = await self.bot.wait_for(
+                        'reaction_add',
+                        check=get_reaction_check(reaction_user=user),
+                        timeout=60)
 
                 except asyncio.TimeoutError:
                     if proposals:
@@ -1094,8 +1072,6 @@ class CustomReactions(commands.Cog):
 
                 current_options.clear()
                 await message.clear_reactions()
-                if reaction is None:
-                    return
                 # Deactivate "dm" option
                 if reaction.emoji == EMOJI['zero']:
                     if dm == 0:
@@ -1225,7 +1201,7 @@ class CustomReactions(commands.Cog):
             await message.delete()
 
         initial_message = await ctx.send(embed=LOADING_EMBED)
-        is_moderator = (discord.utils.get(ctx.author.roles,
+        is_moderator = (discord.utils.get(main_user.roles,
                                           name=self.bot.config.moderator_role)
                         is not None)
         await create_assistant(initial_message, is_moderator)
