@@ -168,10 +168,9 @@ class CustomReactions(commands.Cog):
             def number_check(msg):
                 if msg.content.isdigit():
                     return all((not msg_user
-                                or msg.author == msg_user,
-                                not number_range or
-                                int(msg.content) in number_range
-                                ))
+                                or msg.author == msg_user, not number_range
+                                or int(msg.content) in number_range))
+
             return number_check
 
         async def wait_for_reaction(message):
@@ -452,8 +451,9 @@ class CustomReactions(commands.Cog):
                     msg = await self.bot.wait_for(
                         'message',
                         check=get_number_check(msg_user=user_modifying,
-                                               number_range=
-                                               range(1, len(current_list)+1)),
+                                               number_range=range(
+                                                   1,
+                                                   len(current_list) + 1)),
                         timeout=60)
                     number = int(msg.content)
                     await msg.delete()
