@@ -232,22 +232,22 @@ class CustomReactions(commands.Cog):
             await message.clear_reactions()
             # Add/Propose a new custom reaction
             if reaction.emoji == EMOJI['new']:
-                await addcustomreact(message, is_moderator)
+                await add_custom_react(message, is_moderator)
                 return
             # List custom reactions
             if reaction.emoji == EMOJI['mag']:
-                await listcustomreacts(message, proposals=False)
+                await list_custom_reacts(message, proposals=False)
                 return
             # List proposals
             if reaction.emoji == EMOJI['pencil']:
-                await listcustomreacts(message, proposals=True)
+                await list_custom_reacts(message, proposals=True)
                 return
             # Stop
             if reaction.emoji == EMOJI['stop_button']:
                 await leave(message)
                 return True
 
-        async def addcustomreact(message, is_moderator):
+        async def add_custom_react(message, is_moderator):
             if is_moderator:
                 title = "Add a custom reaction"
                 footer = (f"{author} is currently adding a custom reaction. \n"
@@ -364,7 +364,7 @@ class CustomReactions(commands.Cog):
                 await leave(message)
                 return True
 
-        async def listcustomreacts(message, proposals):
+        async def list_custom_reacts(message, proposals):
             current_list = (self.proposal_list
                             if proposals else self.reaction_list)
 
