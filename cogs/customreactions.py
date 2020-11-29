@@ -663,7 +663,7 @@ class CustomReactions(commands.Cog):
                                  "Returning to list of current reactions...")
                     await message.edit(embed=discord.Embed(title=title))
                     conn.close()
-                    time.sleep(5)
+                    await asyncio.sleep(5)
                     return
 
                 if prompt is None:
@@ -687,7 +687,7 @@ class CustomReactions(commands.Cog):
                 await message.edit(embed=discord.Embed(title=title).set_footer(
                     text=f"Modified by {user}.", icon_url=user.avatar_url))
                 conn.close()
-                time.sleep(5)
+                await asyncio.sleep(5)
 
             # Edit the response
             if reaction.emoji == EMOJI['two']:
@@ -729,7 +729,7 @@ class CustomReactions(commands.Cog):
                                  "Returning to list of current reactions...")
                     await message.edit(embed=discord.Embed(title=title))
                     conn.close()
-                    time.sleep(5)
+                    await asyncio.sleep(5)
                     return
 
                 if response is None:
@@ -753,7 +753,7 @@ class CustomReactions(commands.Cog):
                 await message.edit(embed=discord.Embed(title=title).set_footer(
                     text=f"Modified by {user}.", icon_url=user.avatar_url))
                 conn.close()
-                time.sleep(5)
+                await asyncio.sleep(5)
 
             # Edit the "delete" option
             if reaction.emoji == EMOJI['three']:
@@ -804,7 +804,7 @@ class CustomReactions(commands.Cog):
                                  "Returning to list of current reactions...")
                     await message.edit(embed=discord.Embed(title=title))
                     conn.close()
-                    time.sleep(5)
+                    await asyncio.sleep(5)
                     current_options.clear()
                     await message.clear_reactions()
                     return
@@ -829,7 +829,7 @@ class CustomReactions(commands.Cog):
                                 text=f"Modified by {user}.",
                                 icon_url=user.avatar_url))
                         conn.close()
-                        time.sleep(5)
+                        await asyncio.sleep(5)
                     else:
                         t = (0, custom_react_id)
                         c.execute(
@@ -850,7 +850,7 @@ class CustomReactions(commands.Cog):
                                 text=f"Modified by {user}.",
                                 icon_url=user.avatar_url))
                         conn.close()
-                        time.sleep(5)
+                        await asyncio.sleep(5)
 
                 # Activate the "delete" option
                 elif reaction.emoji == EMOJI['one']:
@@ -868,7 +868,7 @@ class CustomReactions(commands.Cog):
                                 text=f"Modified by {user}.",
                                 icon_url=user.avatar_url))
                         conn.close()
-                        time.sleep(5)
+                        await asyncio.sleep(5)
                     else:
                         t = (1, custom_react_id)
                         c.execute(
@@ -889,7 +889,7 @@ class CustomReactions(commands.Cog):
                                 text=f"Modified by {user}.",
                                 icon_url=user.avatar_url))
                         conn.close()
-                        time.sleep(5)
+                        await asyncio.sleep(5)
                 # Stop
                 elif reaction.emoji == EMOJI['stop_button']:
                     await leave(message)
@@ -944,7 +944,7 @@ class CustomReactions(commands.Cog):
                                  "Returning to list of current reactions...")
                     await message.edit(embed=discord.Embed(title=title))
                     conn.close()
-                    time.sleep(5)
+                    await asyncio.sleep(5)
                     current_options.clear()
                     await message.clear_reactions()
                     return
@@ -969,7 +969,7 @@ class CustomReactions(commands.Cog):
                                 text=f"Modified by {user}.",
                                 icon_url=user.avatar_url))
                         conn.close()
-                        time.sleep(5)
+                        await asyncio.sleep(5)
                     else:
                         t = (0, custom_react_id)
                         c.execute(
@@ -990,7 +990,7 @@ class CustomReactions(commands.Cog):
                                 text=f"Modified by {user}.",
                                 icon_url=user.avatar_url))
                         conn.close()
-                        time.sleep(5)
+                        await asyncio.sleep(5)
 
                 # Activate "anywhere" option
                 elif reaction.emoji == EMOJI['one']:
@@ -1008,7 +1008,7 @@ class CustomReactions(commands.Cog):
                                 text=f"Modified by {user}.",
                                 icon_url=user.avatar_url))
                         conn.close()
-                        time.sleep(5)
+                        await asyncio.sleep(5)
                     else:
                         t = (1, custom_react_id)
                         c.execute(
@@ -1029,7 +1029,7 @@ class CustomReactions(commands.Cog):
                                 text=f"Modified by {user}.",
                                 icon_url=user.avatar_url))
                         conn.close()
-                        time.sleep(5)
+                        await asyncio.sleep(5)
                 # Stop
                 elif reaction.emoji == EMOJI['stop_button']:
                     await leave(message)
@@ -1087,7 +1087,7 @@ class CustomReactions(commands.Cog):
                                  "Returning to list of current reactions...")
                     await message.edit(embed=discord.Embed(title=title))
                     conn.close()
-                    time.sleep(5)
+                    await asyncio.sleep(5)
                     current_options.clear()
                     await message.clear_reactions()
                     return
@@ -1112,7 +1112,7 @@ class CustomReactions(commands.Cog):
                                 text=f"Modified by {user}.",
                                 icon_url=user.avatar_url))
                         conn.close()
-                        time.sleep(5)
+                        await asyncio.sleep(5)
                     else:
                         t = (0, custom_react_id)
                         c.execute(
@@ -1133,7 +1133,7 @@ class CustomReactions(commands.Cog):
                                 text=f"Modified by {user}.",
                                 icon_url=user.avatar_url))
                         conn.close()
-                        time.sleep(5)
+                        await asyncio.sleep(5)
                 # Activate "dm" option
                 elif reaction.emoji == EMOJI['one']:
                     if dm == 1:
@@ -1150,7 +1150,7 @@ class CustomReactions(commands.Cog):
                                 text=f"Modified by {user}.",
                                 icon_url=user.avatar_url))
                         conn.close()
-                        time.sleep(5)
+                        await asyncio.sleep(5)
                     else:
                         t = (1, custom_react_id)
                         c.execute(
@@ -1171,7 +1171,7 @@ class CustomReactions(commands.Cog):
                                 text=f"Modified by {user}.",
                                 icon_url=user.avatar_url))
                         conn.close()
-                        time.sleep(5)
+                        await asyncio.sleep(5)
                 # Stop
                 elif reaction.emoji == EMOJI['stop_button']:
                     await leave(message)
@@ -1191,7 +1191,7 @@ class CustomReactions(commands.Cog):
                 await message.edit(embed=discord.Embed(title=title).set_footer(
                     text=footer, icon_url=user.avatar_url))
                 conn.close()
-                time.sleep(5)
+                await asyncio.sleep(5)
 
             # Delete a custom reaction or proposal
             if reaction.emoji == EMOJI[
@@ -1214,7 +1214,7 @@ class CustomReactions(commands.Cog):
                     text=footer, icon_url=user.avatar_url))
                 conn.close()
                 self.rebuild_lists()
-                time.sleep(5)
+                await asyncio.sleep(5)
 
             # Stop
             if reaction.emoji == EMOJI['stop_button']:
