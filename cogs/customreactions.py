@@ -140,18 +140,18 @@ class CustomReactions(commands.Cog):
                     "icon_url": author.avatar_url
                 },
                 menu_options=OrderedDict((
-                    (EMOJI['new'], {
+                    (EMOJI["new"], {
                         "text": f"{'Add' if is_mod else 'Propose'} a new "
                                 f"custom reaction",
                         "callback": lambda a, _u: add_custom_react(a, is_mod)
                     }),
-                    (EMOJI['mag'], {
+                    (EMOJI["mag"], {
                         "text": f"See the list of current reactions"
                                 f"{' and modify them' if is_mod else ''}",
                         "callback": lambda a, _u: list_custom_reacts(
                             a, proposals=False)
                     }),
-                    (EMOJI['pencil'], {
+                    (EMOJI["pencil"], {
                         "text": (
                             f"See the list of proposed reactions "
                             f"({get_number_of_proposals()})" +
@@ -494,21 +494,21 @@ class CustomReactions(commands.Cog):
                 dm_str = "Reacts directly into the channel"
 
             edit_menu_items = OrderedDict((
-                (EMOJI['one'], {  # Edit the prompt
+                (EMOJI["one"], {  # Edit the prompt
                     "text": f"Prompt: {prompt}",
                     "callback": lambda a, u: set_text_value(
                         a, u, custom_react_id,
                         question_prompt="Please enter the new prompt",
                         flag="Prompt")
                 }),
-                (EMOJI['two'], {  # Edit the response
+                (EMOJI["two"], {  # Edit the response
                     "text": f"Response: {response},",
                     "callback": lambda a, u: set_text_value(
                         a, u, custom_react_id,
                         question_prompt="Please enter the new response",
                         flag="Response")
                 }),
-                (EMOJI['three'], {  # Toggle prompt deletion
+                (EMOJI["three"], {  # Toggle prompt deletion
                     "text": delete_str,
                     "callback": lambda a, u: toggle_flag(
                         a, u, custom_react_id,
@@ -518,7 +518,7 @@ class CustomReactions(commands.Cog):
                         flag="DeletePrompt",
                         old_val=delete)
                 }),
-                (EMOJI['four'], {  # Toggle 'anywhere' flag
+                (EMOJI["four"], {  # Toggle 'anywhere' flag
                     "text": anywhere_str,
                     "callback": lambda a, u: toggle_flag(
                         a, u, custom_react_id,
@@ -528,7 +528,7 @@ class CustomReactions(commands.Cog):
                         flag="Anywhere",
                         old_val=anywhere)
                 }),
-                (EMOJI['five'], {  # Toggle the DM-response flag
+                (EMOJI["five"], {  # Toggle the DM-response flag
                     "text": dm_str,
                     "callback": lambda a, u: toggle_flag(
                         a, u, custom_react_id,
@@ -541,7 +541,7 @@ class CustomReactions(commands.Cog):
                 }),
 
                 *((
-                      (EMOJI['white_check_mark'], {
+                      (EMOJI["white_check_mark"], {
                           "text": "Approve this proposal",
                           "callback": lambda a, u: cb_approve_proposal_cb(
                               a, u, custom_react_id)
