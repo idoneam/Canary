@@ -20,9 +20,9 @@
 
 CREATE TABLE IF NOT EXISTS "Quotes" (
     `ID`    INTEGER,
-    `Name`    TEXT,
-    `Quote`    TEXT,
-    `Date`    TEXT
+    `Name`  TEXT,
+    `Quote` TEXT,
+    `Date`  TEXT
 );
 CREATE TABLE IF NOT EXISTS `Members` (
     `ID`          INTEGER UNIQUE,
