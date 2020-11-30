@@ -52,8 +52,8 @@ You must set certain values in the `config.ini` file, in particular your Discor
     * `DownvoteEmoji`: The name of your downvote emoji.
     * `ModeratorRole`: The name of the role that your moderators have (for functions like DMing users).
     * `DeveloperRole`: The name of the role that your developers have (for functions like restarting the bot). This could be the same role than moderator.
-    * `PenaltyRole`: The name of the role used for placing users in a "penalty box" (which presumably removes some 
-       permissions; exact role implementation is up to the server's administrators.)
+    * `PenaltyRole`: **(Optional)** The name of the role used for placing users in a "penalty box" (which presumably 
+       removes some permissions; exact role implementation is up to the server's administrators.) 
     * `ReceptionChannelID`: The ID of a channel that will receive messages sent to the bot through the `answer` command (and where messages sent by mods to users with the `dm` command will be logged)
 * `[Meta]`
     * `Repository`: The HTTPS remote for this repository, used by the `update` command as the remote when pulling.

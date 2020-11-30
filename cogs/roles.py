@@ -346,29 +346,25 @@ class Roles(commands.Cog):
         if penalty_role:
             await user.add_roles(penalty_role,
                                  reason="Restored penalty status")
-        else:
-            self.bot.mod_logger.error(
-                f"{PENALTY_ROLE_ERROR}; could not restore penalty status to "
-                f"{user}")
 
     @commands.Cog.listener()
     async def on_member_remove(self, user: discord.Member):
         penalty_role = utils.get(user.guild.roles, name=self.penalty_role)
 
-        if penalty_role:
-            if not self._has_penalty_role(user):
-                # Check if user has penalty entry but no penalty role. If so,
-                # remove their penalty entry. This can occur if a mod manually
-                # removed the penalty role instead of using ?unmute.
-                self._remove_from_penalty_table(user)
+        if not penalty_role:
+            return
 
-            elif not self._is_in_penalty_table(user):
-                # Check if the user has no penalty entry but the penalty role.
-                # If so, save all roles BUT the penalty role into the
-                # PreviousRoles table, and add a penalty entry to the database.
-                self._save_existing_roles(user, penalty=True)
-        else:
-            self.bot.mod_logger.error(PENALTY_ROLE_ERROR)
+        if not self._has_penalty_role(user):
+            # Check if user has penalty entry but no penalty role. If so,
+            # remove their penalty entry. This can occur if a mod manually
+            # removed the penalty role instead of using ?unmute.
+            self._remove_from_penalty_table(user)
+
+        elif not self._is_in_penalty_table(user):
+            # Check if the user has no penalty entry but the penalty role.
+            # If so, save all roles BUT the penalty role into the
+            # PreviousRoles table, and add a penalty entry to the database.
+            self._save_existing_roles(user, penalty=True)
 
         # Save existing roles
         self._save_existing_roles(user)
