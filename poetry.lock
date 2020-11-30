@@ -296,11 +296,11 @@ python-versions = "*"
 
 [[package]]
 name = "sympy"
-version = "1.6.1"
+version = "1.7"
 description = "Computer algebra system (CAS) in Python"
 category = "main"
 optional = false
-python-versions = ">=3.5"
+python-versions = ">=3.6"
 
 [package.dependencies]
 mpmath = ">=0.19"
@@ -389,7 +389,7 @@ testing = ["jaraco.itertools", "func-timeout"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.6.0"
-content-hash = "b287a762fbab3c0fbd95f833c824f326f401e32f5030099db2fce71fedffd262"
+content-hash = "7a9d861693b585aa591085fb6745913f7e79b798bfcd12b176a51c84fb9763c2"
 
 [metadata.files]
 aiohttp = [
@@ -578,8 +578,8 @@ soupsieve = [
     {file = "soupsieve-1.9.6.tar.gz", hash = "sha256:7985bacc98c34923a439967c1a602dc4f1e15f923b6fcf02344184f86cc7efaa"},
 ]
 sympy = [
-    {file = "sympy-1.6.1-py3-none-any.whl", hash = "sha256:7f50d922bf055560429777447ac827620fd86d39d1de4ea057422e7552c65f3b"},
-    {file = "sympy-1.6.1.tar.gz", hash = "sha256:7386dba4f7e162e90766b5ea7cab5938c2fe3c620b310518c8ff504b283cb15b"},
+    {file = "sympy-1.7-py3-none-any.whl", hash = "sha256:09aa4b3075e505108cb84785ba358e58a53d9596c8c71f07b613958b9150c481"},
+    {file = "sympy-1.7.tar.gz", hash = "sha256:9104004669cda847f38cfd8cd16dd174952c537349dbae740fea5331d2b3a51b"},
 ]
 tabulate = [
     {file = "tabulate-0.8.7-py3-none-any.whl", hash = "sha256:ac64cb76d53b1231d364babcd72abbb16855adac7de6665122f97b593f1eb2ba"},
