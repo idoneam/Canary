@@ -177,7 +177,7 @@ class AssistantHelper:
 
     @description.setter
     def description(self, description):
-        self.clear_pages_if_set()
+        self._clear_pages_if_set()
         self._old_description = self._description
         self._description = description or None
         # TODO: Batch updates
@@ -188,7 +188,7 @@ class AssistantHelper:
 
     @footer.setter
     def footer(self, footer):
-        self.clear_pages_if_set()
+        self._clear_pages_if_set()
         self._old_footer = self._footer
         self._footer = footer or None
         # TODO: Batch updates
@@ -199,7 +199,7 @@ class AssistantHelper:
 
     @options.setter
     def options(self, options: Optional[Tuple[str]]):
-        self.clear_pages_if_set()
+        self._clear_pages_if_set()
         self._old_options = self._options
         self._options = options or ()
 
@@ -207,7 +207,7 @@ class AssistantHelper:
         self.options = ()
         return self
 
-    def add_yes_no_stop_options(self):
+    def _add_yes_no_stop_options(self):
         self.options = (
             *self._options,
             AssistantHelper.EMOJI_NO,
@@ -240,7 +240,7 @@ class AssistantHelper:
 
         return self
 
-    def clear_pages_if_set(self):
+    def _clear_pages_if_set(self):
         if self.pages:
             self.pages = None
 
@@ -268,17 +268,19 @@ class AssistantHelper:
         for reaction in self._options[r_ext:]:
             await self._message.add_reaction(reaction)
 
+    @staticmethod
+    def _json_compare(a, b):
+        return json.dumps(a, sort_keys=True) == json.dumps(b, sort_keys=True)
+
     def _should_update_pages(self):
-        return self._pages and (
-                json.dumps(self._old_pages, sort_keys=True) !=
-                json.dumps(self._pages, sort_keys=True))
+        return self._pages and not AssistantHelper._json_compare(
+            self._old_pages, self._pages)
 
     def _should_update_embed(self):
         return not self._pages and any((
             self._old_title != self._title,
             self._old_description != self._description,
-            (json.dumps(self._old_footer, sort_keys=True)
-             != json.dumps(self._footer, sort_keys=True))
+            not AssistantHelper._json_compare(self._old_footer, self._footer)
         ))
 
     @requires_init
@@ -429,20 +431,20 @@ class AssistantHelper:
                               timeout: int = 60,
                               additional_check=None):
         if user is None:
-            user = self._author
+            user = self.author
 
         try:
             reaction, reaction_user = await self._ctx.bot.wait_for(
                 'reaction_add',
-                check=self._reaction_check(only_user=user,
-                                           additional_check=additional_check),
+                check=self._reaction_check(
+                    only_user=user, additional_check=additional_check),
                 timeout=timeout)
 
         except asyncio.TimeoutError:
             if timeout_error:
-                await self._timeout_update(timeout_message,
-                                           timeout_error_delete,
-                                           timeout_error_sleep)
+                await self._timeout_update(
+                    timeout_message,  timeout_error_delete,
+                    timeout_error_sleep)
             return None, None
 
         return reaction, reaction_user
@@ -461,14 +463,12 @@ class AssistantHelper:
         await self.clear_options().update()
 
         # TODO: This can be done with menu code probably
-
-        self.title = title
-        self.description = f"{prompt}\n{AssistantHelper.EMOJI_NO} No\n" \
-                           f"{AssistantHelper.EMOJI_YES} Yes"
-        self.footer = footer
-
-        await self.add_yes_no_stop_options()\
-            .update(loading_screen=True)
+        await self.set(
+            title=title,
+            description=f"{prompt}\n{AssistantHelper.EMOJI_NO} No\n"
+                        f"{AssistantHelper.EMOJI_YES} Yes",
+            footer=footer
+        )._add_yes_no_stop_options().update(loading_screen=True)
 
         r, u = await self.wait_for_option(**kwargs)
 
@@ -477,8 +477,12 @@ class AssistantHelper:
         if r is None:
             return ScreenResult((None, u), stop=False)
 
+        r2: Optional[bool] = (
+            (r.emoji == AssistantHelper.EMOJI_OK)
+            if r.emoji != AssistantHelper.STOP_TEXT else None)
+
         return ScreenResult(
-            (r.emoji, u), stop=r.emoji == AssistantHelper.STOP_TEXT)
+            (r2, u), stop=r2 is None)
 
     async def wait_for_message(self,
                                timeout_message: str = "",
@@ -490,7 +494,7 @@ class AssistantHelper:
                                user=None,
                                additional_check=None):
         if user is None:
-            user = self._author
+            user = self.author
 
         if additional_check is None:
             additional_check = _const_true

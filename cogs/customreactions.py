@@ -430,16 +430,15 @@ class CustomReactions(commands.Cog):
                     timeout_error_sleep=5,
                 )
 
-                if res is None or stop_:
+                if res is None:
                     return stop_
 
                 # Other current valid options are 0 or 1, the new delete values
 
-                new_val = res == assistant.EMOJI_YES
-                will_update = old_val == new_val
+                will_update = old_val == res
 
                 if will_update:
-                    set_reaction_key(reaction_id, flag, new_val)
+                    set_reaction_key(reaction_id, flag, res)
 
                 return await assistant_.clear_description().set(
                     title=(
