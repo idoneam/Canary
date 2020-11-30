@@ -447,6 +447,11 @@ class AssistantHelper:
     @screen
     async def yes_no_stop_prompt(self, title, prompt, footer, **kwargs) \
             -> ScreenResult:
+        """
+        Displays a yes/no question on screen and returns the result as an
+        optional boolean (True=yes, False=no, None=stop/other)
+        """
+
         await self.start_loading()
 
         # Update without clearing loading screen
@@ -519,7 +524,8 @@ class AssistantHelper:
     @screen
     async def text_prompt(self, title: Optional[str] = None,
                           prompt: Optional[str] = None,
-                          footer: Optional[dict] = None, **kwargs):
+                          footer: Optional[dict] = None, **kwargs)\
+            -> ScreenResult:
         self.clear_options()
         if title is not None:
             self.title = title
@@ -549,7 +555,7 @@ class AssistantHelper:
     @screen
     async def menu(self, title, menu_options: OrderedDict,
                    user, preface: str = "", footer: Optional[dict] = None,
-                   loading_screen: bool = True, **kwargs):
+                   loading_screen: bool = True, **kwargs) -> ScreenResult:
         await self.set(
             title=title,
             description=(
