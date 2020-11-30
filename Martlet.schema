@@ -19,23 +19,23 @@
 
 
 CREATE TABLE IF NOT EXISTS "Quotes" (
-	`ID`	INTEGER,
-	`Name`	TEXT,
-	`Quote`	TEXT,
-	`Date`	TEXT
+    `ID`    INTEGER,
+    `Name`    TEXT,
+    `Quote`    TEXT,
+    `Date`    TEXT
 );
 CREATE TABLE IF NOT EXISTS `Members` (
-	`ID`	      INTEGER UNIQUE,
-	`DisplayName` TEXT,
-	`Score`	      INTEGER
+    `ID`          INTEGER UNIQUE,
+    `DisplayName` TEXT,
+    `Score`       INTEGER
 );
 CREATE TABLE IF NOT EXISTS 'Reminders' (
-	'ID'           INTEGER,
-	'Name'         TEXT,
-	'Reminder'     TEXT,
-	'Frequency'    TEXT,
-	'Date'         TEXT,
-	'LastReminder' TEXT
+    'ID'           INTEGER,
+    'Name'         TEXT,
+    'Reminder'     TEXT,
+    'Frequency'    TEXT,
+    'Date'         TEXT,
+    'LastReminder' TEXT
 );
 
 CREATE TABLE IF NOT EXISTS `BankTransactions` (
@@ -51,13 +51,13 @@ CREATE TABLE IF NOT EXISTS `BankTransactions` (
 
 -- Used for when users leave/return
 CREATE TABLE IF NOT EXISTS `PreviousRoles` (
-	`ID`	      INTEGER UNIQUE,
-	`Roles`       TEXT -- space-separated list of role IDs
+    `ID`          INTEGER UNIQUE,
+    `Roles`       TEXT -- space-separated list of role IDs
 );
 
 -- Used for when users are placed in the Penalty role; stores old roles akin to
 -- the way PreviousRoles does it.
 CREATE TABLE IF NOT EXISTS `PenaltyUsers` (
-    `ID`	      INTEGER UNIQUE,
-	`Roles`       TEXT -- space-separated list of role IDs
+    `ID`          INTEGER UNIQUE,
+    `Roles`       TEXT -- space-separated list of role IDs
 );
