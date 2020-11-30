@@ -322,7 +322,7 @@ class Roles(commands.Cog):
             c = conn.cursor()
             penalty = c.execute("SELECT * FROM PenaltyUsers WHERE ID = ?",
                                 (user.id, )).fetchone()
-            return penalty is None
+            return penalty is not None
         finally:
             conn.close()
 
