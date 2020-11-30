@@ -125,6 +125,7 @@ class CustomReactions(commands.Cog):
             else:
                 await message.channel.send(reaction[2])
 
+    @commands.max_concurrency(1, per=commands.BucketType.channel, wait=False)
     @commands.command(
         aliases=['customreaction', 'customreacts', 'customreact'])
     async def customreactions(self, ctx):
