@@ -124,7 +124,6 @@ class CustomReactions(commands.Cog):
         async def create_assistant(is_mod):
             assistant = await AssistantHelper(
                 ctx,
-                author=author,
                 page_display=(2, 10),
                 page_editable_content_emoji=EMOJI["ok"],
                 page_return_user_on_edit=True,

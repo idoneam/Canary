@@ -113,15 +113,13 @@ class AssistantHelper:
     STOP_TEXT = "stop"
 
     def __init__(self, ctx, title=None, description=None, footer=None,
-                 options=(), author=None,
-                 page_display: PagesDisplayOptionT = (2, 10),
-                 page_editable_content_emoji: str = EMOJI["ok"],
-                 page_return_user_on_edit: bool = True):
+                 options=(),
+                 page_display: PagesDisplayOptionT = (1, 0),
+                 page_editable_content_emoji: str = EMOJI[
+                     "put_litter_in_its_place"],
+                 page_return_user_on_edit: bool = False):
         self._ctx = ctx
         self._message = None
-
-        # Original author of the message that triggered the assistant
-        self._author = author
 
         self._title: Optional[str] = title or None
         self._description: Optional[str] = description or None
@@ -153,6 +151,11 @@ class AssistantHelper:
     def _check_init(self):
         if not self._message:
             raise AssistantHelperUninitialized()
+
+    @property
+    def author(self):
+        """Original author of the message that triggered the assistant"""
+        return self._ctx.message.author  # TODO: Do we need to cache this?
 
     @property
     def title(self):
