@@ -274,7 +274,7 @@ class Roles(commands.Cog):
             if role.name not in ("@everyone", self.penalty_role)
         ]
 
-        if not roles_id:
+        if not roles_id and not penalty:
             return
 
         conn = sqlite3.connect(self.bot.config.db_path)
