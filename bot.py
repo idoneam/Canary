@@ -152,6 +152,12 @@ class Canary(commands.Bot):
                 return await ctx.send(
                     'I could not find that member. Please try again.')
 
+        elif isinstance(error, commands.MaxConcurrencyReached):
+            return await ctx.send(f"You cannot use the {ctx.command} command "
+                                  f"more than {error.number} "
+                                  f"time{'s' if error.number != 1 else ''} "
+                                  f"in the same channel!")
+
         self.dev_logger.error('Ignoring exception in command {}:'.format(
             ctx.command))
         self.log_traceback(error)
