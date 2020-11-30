@@ -450,9 +450,9 @@ class Roles(commands.Cog):
         reason_message = f"{ctx.author} put {user} in the penalty box"
 
         # Remove all roles
-        await user.remove_roles(
-            *(r for r in user.roles if r.name != "@everyone"),
-            reason=reason_message)
+        await user.remove_roles(*(r for r in user.roles
+                                  if r.name != "@everyone"),
+                                reason=reason_message)
 
         # Add the penalty role to the user
         await user.add_roles(penalty_role, reason=reason_message)
