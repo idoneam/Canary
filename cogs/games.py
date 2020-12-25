@@ -81,10 +81,12 @@ class Games(commands.Cog):
         invalid_msg_count: int = 0
         timeout_dict = {}
         curr_msg_valid = True
+
         def check_valid(msg) -> bool:
             return (len(msg.content) == 1 and msg.content
-                in "abcdefghikklmnopqrstuvwxyzABCDEFGHIJKLMNOPRSTUVWXYZ"
-            ) or msg.content.lower() == word
+                    in "abcdefghikklmnopqrstuvwxyzABCDEFGHIJKLMNOPRSTUVWXYZ"
+                    ) or msg.content.lower() == word
+
         def wait_for_check(msg) -> bool:
             if msg.channel != ctx.message.channel:
                 return False
@@ -95,6 +97,7 @@ class Games(commands.Cog):
                 curr_msg_valid = False
                 invalid_msg_count += 1
             return valid_guess or invalid_msg_count >= 5
+
         txt_embed = discord.Embed(colour=0xFF0000)
         txt_embed.add_field(
             name=f"hangman (category: {cat_name})",
@@ -106,7 +109,7 @@ class Games(commands.Cog):
         winner = None
         counter = 0
         while True:
-            if counter > 7: # so that users who see deleted messages still see the hangman
+            if counter > 7:    # so that users who see deleted messages still see the hangman
                 await hg_msg.delete()
                 hg_msg = await ctx.send(embed=hg_msg.embeds[0])
                 counter = 0
@@ -238,7 +241,8 @@ class Games(commands.Cog):
             curr_msg_valid = True
             counter += 1
         if winner is not None:
-            pass # placeholder for when currency function is completed
+            pass    # placeholder for when currency function is completed
+
     @commands.command()
     async def roll(self, ctx, arg: str = '', mpr: str = ''):
         """
