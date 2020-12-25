@@ -27,6 +27,7 @@ import os
 from time import time
 import pickle
 import random
+from asyncio import TimeoutError
 from typing import Dict, List, Set, Tuple
 from .utils.dice_roll import dice_roll
 from .utils.clamp_default import clamp_default
@@ -49,7 +50,8 @@ class Games(commands.Cog):
     @commands.max_concurrency(1, per=commands.BucketType.channel, wait=False)
     @commands.command(aliases=["hm"])
     async def hangman(self, ctx, *, command: str = None):
-        """Play a nice game of hangman with internet strangers!
+        """
+        Play a nice game of hangman with internet strangers!
         Guesses must be single letters (guesses must be lower case letters to be valid) or the entire correct word
         Can either be called with "?{hm|hangman}" or "?{hm|hangman} x", where x is a valid category command
         Get all categories/help by typing "?{hm|hangman} help"
@@ -78,18 +80,21 @@ class Games(commands.Cog):
         player_msg_list: List[str] = []
         invalid_msg_count: int = 0
         timeout_dict = {}
-
-        def wait_for_check(msg) -> bool:
-            nonlocal invalid_msg_count
-            valid_guess = (
-                msg.channel == ctx.message.channel and len(msg.content) == 1
-                and msg.content
+        curr_msg_valid = True
+        def check_valid(msg) -> bool:
+            return (len(msg.content) == 1 and msg.content
                 in "abcdefghikklmnopqrstuvwxyzABCDEFGHIJKLMNOPRSTUVWXYZ"
             ) or msg.content.lower() == word
+        def wait_for_check(msg) -> bool:
+            if msg.channel != ctx.message.channel:
+                return False
+            valid_guess = check_valid(msg)
             if not valid_guess:
+                nonlocal invalid_msg_count
+                nonlocal curr_msg_valid
+                curr_msg_valid = False
                 invalid_msg_count += 1
             return valid_guess or invalid_msg_count >= 5
-
         txt_embed = discord.Embed(colour=0xFF0000)
         txt_embed.add_field(
             name=f"hangman (category: {cat_name})",
@@ -98,15 +103,53 @@ class Games(commands.Cog):
         )
         txt_embed.set_footer(text=last_line)
         hg_msg = await ctx.send(embed=txt_embed)
-        while len(not_guessed) > 0 and num_mistakes < MAX_GUESSES:
-            curr_msg = await self.bot.wait_for('message',
-                                               check=wait_for_check,
-                                               timeout=300)
+        winner = None
+        counter = 0
+        while True:
+            if counter > 7: # so that users who see deleted messages still see the hangman
+                await hg_msg.delete()
+                hg_msg = await ctx.send(embed=hg_msg.embeds[0])
+                counter = 0
+            try:
+                curr_msg = await self.bot.wait_for('message',
+                                                   check=wait_for_check,
+                                                   timeout=600)
+            except TimeoutError:
+                player_msg_list.append("the game has timed out")
+                player_msg_list = player_msg_list[-3:]
+                txt_embed.set_field_at(
+                    0,
+                    name=f"hangman (category: {cat_name})",
+                    value=
+                    f"`{first_line}`\n```{HANG_LIST[num_mistakes]}```\n{NEWLINE.join(player_msg_list)}"
+                )
+                await hg_msg.edit(embed=txt_embed)
+                await ctx.send(
+                    f"sorry everyone, no one has interacted with the hangman in 10 minutes, the game has timed out"
+                )
+                return
             curr_guess = curr_msg.content.lower()
             if not (curr_msg.author in timeout_dict and
                     (time() - timeout_dict[curr_msg.author]) < 3.0):
-                if curr_guess in "abcdefghijklmnopqrstuvwxyz" and len(
-                        curr_guess) == 1:
+                if curr_guess == word:
+                    winner = curr_msg.author
+                    first_line = " ".join(char for char in word)
+                    player_msg_list.append(
+                        f"{winner} guessed the entire word ('{word}') correctly!"
+                    )
+                    player_msg_list = player_msg_list[-3:]
+                    txt_embed.set_field_at(
+                        0,
+                        name=f"hangman (category: {cat_name})",
+                        value=
+                        f"`{first_line}`\n```{HANG_LIST[num_mistakes]}```\n{NEWLINE.join(player_msg_list)}"
+                    )
+                    await hg_msg.edit(embed=txt_embed)
+                    await ctx.send(
+                        f"congratulations {winner}, you solved the hangman{', but in a cool way' if len(not_guessed) > len(word) // 2  else ''}"
+                    )
+                    break
+                if curr_msg_valid:
                     await curr_msg.delete()
                     if curr_guess in not_guessed:    # curr_guess in not_guessed => curr_guess is correct and new
                         not_guessed.remove(curr_guess)
@@ -125,9 +168,11 @@ class Games(commands.Cog):
                         )
                         await hg_msg.edit(embed=txt_embed)
                         if len(not_guessed) == 0:
+                            winner = curr_msg.author
                             await ctx.send(
-                                f"congratulations {curr_msg.author}, you solved the hangman"
+                                f"congratulations {winner}, you solved the hangman"
                             )
+                            break
                     elif curr_guess in word:    # curr_guess not in not_guessed (elif) and in word => curr_guess is correct but already made
                         player_msg_list.append(
                             f"{curr_msg.author}, '{curr_guess}' was already guessed"
@@ -160,6 +205,7 @@ class Games(commands.Cog):
                             await ctx.send(
                                 f"sorry everyone, {curr_msg.author} used your last chance, the right answer was `{word}`"
                             )
+                            break
                     else:    # curr_guess not in not_guessed and not in word and in incorrect_guesses (else) => curr_guess is incorrect but already made
                         timeout_dict[curr_msg.author] = time()
                         player_msg_list.append(
@@ -173,29 +219,11 @@ class Games(commands.Cog):
                             f"`{first_line}`\n```{HANG_LIST[num_mistakes]}```\n{NEWLINE.join(player_msg_list)}"
                         )
                         await hg_msg.edit(embed=txt_embed)
-                elif curr_guess == word:
-                    first_line = " ".join(char for char in word)
-                    player_msg_list.append(
-                        f"{curr_msg.author} guessed the entire word ('{word}') correctly!"
-                    )
-                    player_msg_list = player_msg_list[-3:]
-                    txt_embed.set_field_at(
-                        0,
-                        name=f"hangman (category: {cat_name})",
-                        value=
-                        f"`{first_line}`\n```{HANG_LIST[num_mistakes]}```\n{NEWLINE.join(player_msg_list)}"
-                    )
-                    await hg_msg.edit(embed=txt_embed)
-                    await ctx.send(
-                        f"congratulations {curr_msg.author}, you solved the hangman{', but in a cool way' if len(not_guessed) > len(word) // 2  else ''}"
-                    )
-                    not_guessed = set()
-                if invalid_msg_count > 5:
+                elif invalid_msg_count > 5:
                     invalid_msg_count = 0
                     await hg_msg.delete()
                     hg_msg = await ctx.send(embed=hg_msg.embeds[0])
-            elif curr_guess in "abcdefghijklmnopqrstuvwxyz" and len(
-                    curr_guess) == 1:
+            elif curr_msg_valid:
                 await curr_msg.delete()
                 player_msg_list.append(
                     f"{curr_msg.author} you cannot guess right now!")
@@ -207,7 +235,10 @@ class Games(commands.Cog):
                     f"`{first_line}`\n```{HANG_LIST[num_mistakes]}```\n{NEWLINE.join(player_msg_list)}"
                 )
                 await hg_msg.edit(embed=txt_embed)
-
+            curr_msg_valid = True
+            counter += 1
+        if winner is not None:
+            pass # placeholder for when currency function is completed
     @commands.command()
     async def roll(self, ctx, arg: str = '', mpr: str = ''):
         """
