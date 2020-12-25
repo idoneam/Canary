@@ -149,7 +149,7 @@ class Games(commands.Cog):
                     )
                     await hg_msg.edit(embed=txt_embed)
                     await ctx.send(
-                        f"congratulations {winner}, you solved the hangman{', but in a cool way' if len(not_guessed) > len(word) // 2  else ''}"
+                        f"congratulations {winner}, you solved the hangman{', but in a cool way' if len(not_guessed) > len(word) // 2.5  else ''}"
                     )
                     break
                 if curr_msg_valid:
