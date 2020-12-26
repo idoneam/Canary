@@ -35,6 +35,8 @@ from .utils.hangman import HANG_LIST, MAX_GUESSES
 
 ROLL_PATTERN = re.compile(r'^(\d*)d(\d*)([+-]?\d*)$')
 NEWLINE = "\n"
+HM_WIN_CHEEPS = 1024
+HM_COOL_WIN_CHEEPS = 2048
 
 
 class Games(commands.Cog):
@@ -107,7 +109,8 @@ class Games(commands.Cog):
         txt_embed.set_footer(text=last_line)
         hg_msg = await ctx.send(embed=txt_embed)
         winner = None
-        counter = 0
+        cool_win: bool = False
+        counter: int = 0
         while True:
             if counter > 7:    # so that users who see deleted messages still see the hangman
                 await hg_msg.delete()
@@ -136,10 +139,10 @@ class Games(commands.Cog):
                     (time() - timeout_dict[curr_msg.author]) < 3.0):
                 if curr_guess == word:
                     winner = curr_msg.author
+                    cool_win = True
                     first_line = " ".join(char for char in word)
                     player_msg_list.append(
-                        f"{winner} guessed the entire word ('{word}') correctly!"
-                    )
+                        f"{winner} guessed the entire word!")
                     player_msg_list = player_msg_list[-3:]
                     txt_embed.set_field_at(
                         0,
@@ -172,6 +175,16 @@ class Games(commands.Cog):
                         await hg_msg.edit(embed=txt_embed)
                         if len(not_guessed) == 0:
                             winner = curr_msg.author
+                            player_msg_list.append(
+                                f"{winner} finished solving the hangman!")
+                            player_msg_list = player_msg_list[-3:]
+                            txt_embed.set_field_at(
+                                0,
+                                name=f"hangman (category: {cat_name})",
+                                value=
+                                f"`{first_line}`\n```{HANG_LIST[num_mistakes]}```\n{NEWLINE.join(player_msg_list)}"
+                            )
+                            await hg_msg.edit(embed=txt_embed)
                             await ctx.send(
                                 f"congratulations {winner}, you solved the hangman"
                             )
@@ -205,6 +218,16 @@ class Games(commands.Cog):
                         txt_embed.set_footer(text=last_line)
                         await hg_msg.edit(embed=txt_embed)
                         if num_mistakes == MAX_GUESSES:
+                            player_msg_list.append(
+                                f"{curr_msg.author} used your last chance!")
+                            player_msg_list = player_msg_list[-3:]
+                            txt_embed.set_field_at(
+                                0,
+                                name=f"hangman (category: {cat_name})",
+                                value=
+                                f"`{first_line}`\n```{HANG_LIST[num_mistakes]}```\n{NEWLINE.join(player_msg_list)}"
+                            )
+                            await hg_msg.edit(embed=txt_embed)
                             await ctx.send(
                                 f"sorry everyone, {curr_msg.author} used your last chance, the right answer was `{word}`"
                             )
