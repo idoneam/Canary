@@ -73,22 +73,6 @@ class Games(commands.Cog):
             )
             return
 
-        def check_valid(msg) -> bool:
-            return (len(msg.content) == 1 and msg.content
-                    in "abcdefghikklmnopqrstuvwxyzABCDEFGHIJKLMNOPRSTUVWXYZ"
-                    ) or msg.content.lower() == hm_word
-
-        def wait_for_check(msg) -> bool:
-            if msg.channel != ctx.message.channel:
-                return False
-            valid_guess = check_valid(msg)
-            if not valid_guess:
-                nonlocal invalid_msg_count
-                nonlocal curr_msg_valid
-                curr_msg_valid = False
-                invalid_msg_count += 1
-            return valid_guess or invalid_msg_count >= 5
-
         newline = "\n"
         hang_list = HANG_LIST
         max_guesses = MAX_GUESSES
@@ -105,6 +89,20 @@ class Games(commands.Cog):
         winner = None
         cool_win: bool = False
         counter: int = 0
+
+        def wait_for_check(msg) -> bool:
+            if msg.channel != ctx.message.channel:
+                return False
+            nonlocal curr_msg_valid
+            curr_msg_valid = (
+                len(msg.content) == 1 and msg.content
+                in "abcdefghikklmnopqrstuvwxyzABCDEFGHIJKLMNOPRSTUVWXYZ"
+            ) or msg.content.lower() == hm_word
+            if not curr_msg_valid:
+                nonlocal invalid_msg_count
+                invalid_msg_count += 1
+            return curr_msg_valid or invalid_msg_count >= 3
+
         hm_embed = discord.Embed(colour=0xFF0000)
         hm_embed.add_field(
             name=f"hangman (category: {pretty_name})",
@@ -119,6 +117,7 @@ class Games(commands.Cog):
                 await hm_msg.delete()
                 hm_msg = await ctx.send(embed=hm_msg.embeds[0])
                 counter = 0
+
             try:
                 curr_msg = await self.bot.wait_for('message',
                                                    check=wait_for_check,
@@ -137,6 +136,7 @@ class Games(commands.Cog):
                     f"sorry everyone, no one has interacted with the hangman in 10 minutes, the game has timed out"
                 )
                 return
+
             curr_guess = curr_msg.content.lower()
             if not (curr_msg.author in timeout_dict and
                     (time() - timeout_dict[curr_msg.author]) < 3.0):
@@ -252,7 +252,7 @@ class Games(commands.Cog):
                             f"`{first_line}`\n```{hang_list[num_mistakes]}```\n{newline.join(player_msg_list)}"
                         )
                         await hm_msg.edit(embed=hm_embed)
-                elif invalid_msg_count > 5:
+                else:
                     invalid_msg_count = 0
                     await hm_msg.delete()
                     hm_msg = await ctx.send(embed=hm_msg.embeds[0])
@@ -268,7 +268,6 @@ class Games(commands.Cog):
                     f"`{first_line}`\n```{hang_list[num_mistakes]}```\n{newline.join(player_msg_list)}"
                 )
                 await hm_msg.edit(embed=hm_embed)
-            curr_msg_valid = True
             counter += 1
         if winner is not None:    # placeholder for when currency function is completed
             if cool_win:
