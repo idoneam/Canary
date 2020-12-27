@@ -54,15 +54,15 @@ HANG_LIST: List[str] = [
 MAX_GUESSES: int = len(HANG_LIST) - 1
 
 
-def mk_animal_list() -> Dict[str, Tuple[str, str]]:
+def mk_animal_list() -> List[Tuple[str, str]]:
     return None
 
 
-def mk_mythical_list() -> Dict[str, Tuple[str, str]]:
+def mk_mythical_list() -> List[Tuple[str, str]]:
     return None
 
 
-def mk_country_list() -> Dict[str, Tuple[str, str]]:
+def mk_country_list() -> List[Tuple[str, str]]:
     elem_list_soup = BeautifulSoup(
         requests.get(
             "https://en.wikipedia.org/wiki/List_of_sovereign_states").content,
@@ -88,7 +88,7 @@ def mk_country_list() -> Dict[str, Tuple[str, str]]:
     return country_list
 
 
-def mk_element_list() -> Dict[str, Tuple[str, str]]:
+def mk_element_list() -> List[Tuple[str, str]]:
     elem_list_soup = BeautifulSoup(
         requests.get(
             "https://en.wikipedia.org/wiki/List_of_chemical_elements").content,
@@ -112,11 +112,11 @@ def mk_element_list() -> Dict[str, Tuple[str, str]]:
     return elem_list
 
 
-def mk_movie_list() -> Dict[str, Tuple[str, str]]:
+def mk_movie_list() -> List[Tuple[str, str]]:
     return None
 
 
-def mk_hangman_dict(file_name):
+def mk_hangman_dict(file_name) -> Dict[str, List[Tuple[str, str]]]:
     with open(f"pickles/premade/{file_name}.obj", "wb") as dump_file:
         pickle.dump(
             {
