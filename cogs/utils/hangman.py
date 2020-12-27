@@ -79,16 +79,14 @@ def mk_country_list() -> List[Tuple[str, str]]:
         if "," in country_name:
             comma_index = country_name.index(",")
             country_name = f"{country_name[comma_index+2:]} {country_name[:comma_index]}"
-        country_list.append(
-            (country_name,
-             "https:" + BeautifulSoup(
-                 requests.get(
-                     f"https://en.wikipedia.org{country_name_entry['href']}").
-                 content, "html.parser").find("table", {
-                     "class": "infobox"
-                 }).find("a", {
-                     "class": "image"
-                 }).find("img")["src"]))
+        country_list.append((country_name, "https:" + BeautifulSoup(
+            requests.get(
+                f"https://en.wikipedia.org{country_name_entry['href']}").
+            content, "html.parser").find("table", {
+                "class": "infobox"
+            }).find("a", {
+                "class": "image"
+            }).find("img")["src"]))
     return country_list
 
 
@@ -127,13 +125,13 @@ def mk_movie_list() -> List[Tuple[str, str]]:
         if kino_elem:
             try:
                 kino_img = "https:" + BeautifulSoup(
-                        requests.get(f"https://en.wikipedia.org{kino_elem['href']}"
-                                    ).content, "html.parser").find(
-                                        "table", {
-                                            "class": "infobox"
-                                        }).find("a", {
-                                            "class": "image"
-                                        }).find("img")["src"]
+                    requests.get(f"https://en.wikipedia.org{kino_elem['href']}"
+                                 ).content, "html.parser").find(
+                                     "table", {
+                                         "class": "infobox"
+                                     }).find("a", {
+                                         "class": "image"
+                                     }).find("img")["src"]
             except AttributeError:
                 continue
             kino_list.append((str(kino_elem.contents[0]).lower(), kino_img))
@@ -144,12 +142,13 @@ def mk_hangman_dict(file_name) -> Dict[str, List[Tuple[str, str]]]:
     with open(f"pickles/premade/{file_name}.obj", "wb") as dump_file:
         pickle.dump(
             {
-                #"animal": (mk_animal_list(), "animals"),
-                #"myth": (mk_mythical_list(), "mythical creatures"),
+        #"animal": (mk_animal_list(), "animals"),
+        #"myth": (mk_mythical_list(), "mythical creatures"),
                 "country": (mk_country_list(), "country names"),
                 "element": (mk_element_list(), "elements"),
                 "movie": (mk_movie_list(), "movies")
-            }, dump_file)
+            },
+            dump_file)
 
 
 if __name__ == "__main__":
