@@ -54,9 +54,11 @@ ACTION_BET_FLIP = "bet_flip"
 ACTION_BET_ROLL = "bet_roll"
 ACTION_GIFTER = "gifter"
 ACTION_GIFTEE = "giftee"
+HANGMAN_REWARD = "hangman_reward"
 
 TRANSACTION_ACTIONS = (ACTION_INITIAL_CLAIM, ACTION_CLAIM, ACTION_BET_FLIP,
-                       ACTION_BET_ROLL, ACTION_GIFTER, ACTION_GIFTEE)
+                       ACTION_BET_ROLL, ACTION_GIFTER, ACTION_GIFTEE,
+                       HANGMAN_REWARD)
 
 
 class Currency(commands.Cog):
@@ -111,6 +113,15 @@ class Currency(commands.Cog):
         c.execute(
             "INSERT INTO BankTransactions(UserID, Amount, Action, "
             "Metadata, Date) VALUES(?, ?, ?, ?, ?)", t)
+
+    async def give_user_cheeps(self, ctx, amount: Decimal, action: str,
+                               metadata: Dict):
+        """Give a user some cheeps"""
+        conn = sqlite3.connect(self.bot.config.db_path)
+        c = conn.cursor()
+        await self.create_bank_transaction(c, ctx.message.author, amount,
+                                           action, metadata)
+        conn.commit()
 
     def parse_currency(self, amount: str, balance: Decimal):
         if amount.lower().strip() in CURRENCY_ALL:

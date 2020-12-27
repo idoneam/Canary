@@ -32,10 +32,11 @@ from typing import Dict, List, Set, Tuple
 from .utils.dice_roll import dice_roll
 from .utils.clamp_default import clamp_default
 from .utils.hangman import MAX_GUESSES, mk_hangman_str
+from .currency import HANGMAN_REWARD
 
 ROLL_PATTERN = re.compile(r'^(\d*)d(\d*)([+-]?\d*)$')
-HM_WIN_CHEEPS = 1024
-HM_COOL_WIN_CHEEPS = 2048
+HM_WIN_CHEEPS = 10
+HM_COOL_WIN_CHEEPS = 20
 TIMEOUT_TIME = 600
 
 
@@ -236,10 +237,15 @@ class Games(commands.Cog):
                                          "\n".join(player_msg_list)))
                 await ctx.send(embed=hm_embed)
         if winner is not None:    # placeholder for when currency function is completed
+            currency_cog = self.bot.get_cog('Currency')
             if cool_win:
-                pass
+                await currency_cog.give_user_cheeps(ctx, HM_COOL_WIN_CHEEPS,
+                                                    HANGMAN_REWARD,
+                                                    {"cool": cool_win})
             else:
-                pass
+                await currency_cog.give_user_cheeps(ctx, HM_WIN_CHEEPS,
+                                                    HANGMAN_REWARD,
+                                                    {"cool": cool_win})
 
     @commands.command()
     async def roll(self, ctx, arg: str = '', mpr: str = ''):
