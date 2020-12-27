@@ -31,11 +31,12 @@ from asyncio import TimeoutError
 from typing import Dict, List, Set, Tuple
 from .utils.dice_roll import dice_roll
 from .utils.clamp_default import clamp_default
-from .utils.hangman import HANG_LIST, MAX_GUESSES, mk_hangman_str
+from .utils.hangman import MAX_GUESSES, mk_hangman_str
 
 ROLL_PATTERN = re.compile(r'^(\d*)d(\d*)([+-]?\d*)$')
 HM_WIN_CHEEPS = 1024
 HM_COOL_WIN_CHEEPS = 2048
+TIMEOUT_TIME = 600
 
 
 class Games(commands.Cog):
@@ -59,7 +60,7 @@ class Games(commands.Cog):
 
         if command == "help":
             await ctx.send(
-                f"rules: 5 wrong guesses are allowed, guesses must be either the entire correct word or a single letter (interpreted in a case insensitive manner)\nhere is a list of valid category commands: {sorted(self.hangman_dict.keys())}"
+                f"rules: {MAX_GUESSES - 1} wrong guesses are allowed, guesses must be either the entire correct word or a single letter (interpreted in a case insensitive manner)\nhere is a list of valid category commands: {sorted(self.hangman_dict.keys())}"
             )
             return
         category: str = command or random.choice(list(
@@ -110,7 +111,7 @@ class Games(commands.Cog):
             try:
                 curr_msg = await self.bot.wait_for('message',
                                                    check=wait_for_check,
-                                                   timeout=600)
+                                                   timeout=TIMEOUT_TIME)
             except TimeoutError:
                 player_msg_list.append("the game has timed out")
                 player_msg_list = player_msg_list[-3:]
@@ -121,13 +122,14 @@ class Games(commands.Cog):
                                          "\n".join(player_msg_list)))
                 await ctx.send(embed=hm_embed)
                 await ctx.send(
-                    f"sorry everyone, no one has interacted with the hangman in 10 minutes, the game has timed out"
+                    f"sorry everyone, no one has interacted with the hangman in {TIMEOUT_TIME//60} minutes, the game has timed out"
                 )
                 return
 
             curr_guess = curr_msg.content.lower()
             if not (curr_msg.author in timeout_dict and
-                    (time() - timeout_dict[curr_msg.author]) < 3.0):
+                    (time() - timeout_dict[curr_msg.author]) < 3.0
+                    ):    # check that user isn't time'd out
                 if curr_guess == lowered_word:
                     winner = curr_msg.author
                     cool_win = True
@@ -224,7 +226,7 @@ class Games(commands.Cog):
                         value=mk_hangman_str(first_line, num_mistakes,
                                              "\n".join(player_msg_list)))
                     await ctx.send(embed=hm_embed)
-            else:
+            else:    # message from a time'd out user
                 append_and_slice(
                     f"{curr_msg.author} you cannot guess right now!")
                 hm_embed.set_field_at(
