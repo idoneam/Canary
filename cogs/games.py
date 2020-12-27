@@ -66,21 +66,24 @@ class Games(commands.Cog):
             self.hangman_dict.keys()))
         try:
             word_list, pretty_name = self.hangman_dict[category]
-            hm_word, hm_img = random.choice(word_list)
         except KeyError:
             await ctx.send(
                 f"invalid category command, here is a list of valid commands: {sorted(self.hangman_dict.keys())}"
             )
             return
 
+        hm_word, hm_img = random.choice(word_list)
+        lowered_word = hm_word.lower()
+
         newline = "\n"
         hang_list = HANG_LIST
         max_guesses = MAX_GUESSES
         num_mistakes: int = 0
-        not_guessed: Set[str] = set(re.sub(r"[^a-z]", "", hm_word.lower()))
+        not_guessed: Set[str] = set(re.sub(r"[^a-z]", "", lowered_word))
         incorrect_guesses: Set[str] = set()
-        first_line: str = " ".join(char if char.lower() not in not_guessed else "_"
-                                   for char in hm_word)
+        first_line: str = " ".join(
+            char if lowered_char not in not_guessed else "_"
+            for char, lowered_char in zip(hm_word, lowered_word))
         last_line: str = "incorrect guesses: "
         player_msg_list: List[str] = []
         invalid_msg_count: int = 0
@@ -97,7 +100,7 @@ class Games(commands.Cog):
             curr_msg_valid = (
                 len(msg.content) == 1 and msg.content
                 in "abcdefghikklmnopqrstuvwxyzABCDEFGHIJKLMNOPRSTUVWXYZ"
-            ) or msg.content.lower() == hm_word
+            ) or msg.content.lower() == lowered_word
             if not curr_msg_valid:
                 nonlocal invalid_msg_count
                 invalid_msg_count += 1
@@ -140,7 +143,7 @@ class Games(commands.Cog):
             curr_guess = curr_msg.content.lower()
             if not (curr_msg.author in timeout_dict and
                     (time() - timeout_dict[curr_msg.author]) < 3.0):
-                if curr_guess == hm_word:
+                if curr_guess == lowered_word:
                     winner = curr_msg.author
                     cool_win = True
                     first_line = " ".join(char for char in hm_word)
@@ -157,7 +160,7 @@ class Games(commands.Cog):
                         hm_embed.set_image(url=hm_img)
                     await hm_msg.edit(embed=hm_embed)
                     await ctx.send(
-                        f"congratulations {winner}, you solved the hangman{', but in a cool way' if len(not_guessed) > (len(set(hm_word)) // 2.5)  else ''}"
+                        f"congratulations {winner}, you solved the hangman{', but in a cool way' if len(not_guessed) > (len(set(lowered_word)) // 2.5)  else ''}"
                     )
                     break
                 if curr_msg_valid:
@@ -165,8 +168,9 @@ class Games(commands.Cog):
                     if curr_guess in not_guessed:    # curr_guess in not_guessed => curr_guess is correct and new
                         not_guessed.remove(curr_guess)
                         first_line = " ".join(
-                            char if char.lower() not in not_guessed else "_"
-                            for char in hm_word)
+                            char if lowered_char not in not_guessed else "_"
+                            for char, lowered_char in zip(
+                                hm_word, lowered_word))
                         player_msg_list.append(
                             f"{curr_msg.author} guessed '{curr_guess}' correctly!"
                         )
@@ -196,7 +200,7 @@ class Games(commands.Cog):
                                 f"congratulations {winner}, you solved the hangman"
                             )
                             break
-                    elif curr_guess in hm_word:    # curr_guess not in not_guessed (elif) and in word => curr_guess is correct but already made
+                    elif curr_guess in lowered_word:    # curr_guess not in not_guessed (elif) and in word => curr_guess is correct but already made
                         player_msg_list.append(
                             f"{curr_msg.author}, '{curr_guess}' was already guessed"
                         )

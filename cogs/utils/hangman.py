@@ -109,7 +109,8 @@ def mk_element_list() -> List[Tuple[str, str]]:
         except TypeError:
             elem_img = None
         elem_list.append(
-            (f"{elem_name_entry.contents[0]} ({curr_table[1].contents[0]})", elem_img))
+            (f"{elem_name_entry.contents[0]} ({curr_table[1].contents[0]})",
+             elem_img))
     return elem_list
 
 
