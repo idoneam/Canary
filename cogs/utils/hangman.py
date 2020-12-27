@@ -146,7 +146,7 @@ def mk_hangman_str(first, num_mistakes, last) -> str:
 
 def append_and_slice(inp_list, elem, max_len=3):
     inp_list.append(elem)
-    inp_list = inp_list[-3:]
+    inp_list = inp_list[-max_len:]
 
 
 def mk_hangman_dict(file_name) -> Dict[str, List[Tuple[str, str]]]:
