@@ -85,8 +85,8 @@ class Games(commands.Cog):
             for char, lowered_char in zip(hm_word, lowered_word))
         last_line: str = "incorrect guesses: "
         player_msg_list: List[str] = []
-        timeout_dict = {}
-        winner = None
+        timeout_dict: Dict[discord.Member, float] = {}
+        winner: discord.Member = None
         cool_win: bool = False
 
         def append_and_slice(new_msg):
@@ -133,7 +133,8 @@ class Games(commands.Cog):
                     ):    # check that user isn't time'd out
                 if curr_guess == lowered_word:
                     winner = curr_msg.author
-                    cool_win = True
+                    cool_win = len(not_guessed) > (len(set(lowered_word)) //
+                                                   2.5)
                     first_line = " ".join(hm_word)
                     append_and_slice(f"{winner} guessed the entire word!")
                     hm_embed.set_field_at(
@@ -145,7 +146,7 @@ class Games(commands.Cog):
                         hm_embed.set_image(url=hm_img)
                     await ctx.send(embed=hm_embed)
                     await ctx.send(
-                        f"congratulations {winner}, you solved the hangman{', but in a cool way' if len(not_guessed) > (len(set(lowered_word)) // 2.5)  else ''}"
+                        f"congratulations {winner}, you solved the hangman{', but in a cool way' if  cool_win else ''}, earning you {HM_COOL_WIN_CHEEPS if cool_win else HM_WIN_CHEEPS} cheeps"
                     )
                     break
                 if curr_guess in not_guessed:    # curr_guess in not_guessed => curr_guess is correct and new
@@ -175,7 +176,7 @@ class Games(commands.Cog):
                             hm_embed.set_image(url=hm_img)
                         await ctx.send(embed=hm_embed)
                         await ctx.send(
-                            f"congratulations {winner}, you solved the hangman"
+                            f"congratulations {winner}, you solved the hangman, earning you {HM_WIN_CHEEPS} cheeps"
                         )
                         break
                 elif curr_guess in lowered_word:    # curr_guess not in not_guessed (elif) and in word => curr_guess is correct but already made
