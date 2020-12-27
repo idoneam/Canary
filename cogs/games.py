@@ -59,7 +59,7 @@ class Games(commands.Cog):
 
         if command == "help":
             await ctx.send(
-                f"rules: 6 wrong guesses are allowed, guesses must be either the entire correct word or a single letter (interpreted in a case insensitive manner)\nhere is a list of valid category commands: {sorted(self.hangman_dict.keys())}"
+                f"rules: 5 wrong guesses are allowed, guesses must be either the entire correct word or a single letter (interpreted in a case insensitive manner)\nhere is a list of valid category commands: {sorted(self.hangman_dict.keys())}"
             )
             return
         category: str = command or random.choice(list(
