@@ -36,7 +36,7 @@ from .utils.hangman import HANG_LIST, MAX_GUESSES
 ROLL_PATTERN = re.compile(r'^(\d*)d(\d*)([+-]?\d*)$')
 HM_WIN_CHEEPS = 1024
 HM_COOL_WIN_CHEEPS = 2048
-DEFAULT_IMG_LINK = "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e0/Wikimedia_error_404.png/1920px-Wikimedia_error_404.png"
+
 
 class Games(commands.Cog):
     def __init__(self, bot, hangman_tbl_name: str):
@@ -153,7 +153,8 @@ class Games(commands.Cog):
                         value=
                         f"`{first_line}`\n```{hang_list[num_mistakes]}```\n{newline.join(player_msg_list)}"
                     )
-                    hm_embed.set_image(url=hm_img if hm_img else DEFAULT_IMG_LINK)
+                    if hm_img is not None:
+                        hm_embed.set_image(url=hm_img)
                     await hm_msg.edit(embed=hm_embed)
                     await ctx.send(
                         f"congratulations {winner}, you solved the hangman{', but in a cool way' if len(not_guessed) > (len(set(hm_word)) // 2.5)  else ''}"
@@ -188,7 +189,8 @@ class Games(commands.Cog):
                                 value=
                                 f"`{first_line}`\n```{hang_list[num_mistakes]}```\n{newline.join(player_msg_list)}"
                             )
-                            hm_embed.set_image(url=hm_img if hm_img else DEFAULT_IMG_LINK)
+                            if hm_img is not None:
+                                hm_embed.set_image(url=hm_img)
                             await hm_msg.edit(embed=hm_embed)
                             await ctx.send(
                                 f"congratulations {winner}, you solved the hangman"
