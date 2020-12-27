@@ -1,10 +1,7 @@
-import re
 import pickle
 from typing import List, Tuple, Dict
 import requests
 from bs4 import BeautifulSoup
-
-NEWLINE = "\n"
 
 HANG_LIST: List[str] = [
     r"""  +---+
@@ -140,8 +137,8 @@ def mk_movie_list() -> List[Tuple[str, str]]:
     return kino_list
 
 
-def mk_hangman_str(first, num_mistakes, last) -> str:
-    return f"`{first}`\n```{HANG_LIST[num_mistakes]}```\n{NEWLINE.join(last)}"
+def mk_hangman_str(first, num_mistakes, mid) -> str:
+    return f"`{first}`\n```{HANG_LIST[num_mistakes]}```\n{mid}"
 
 
 def mk_hangman_dict(file_name) -> Dict[str, List[Tuple[str, str]]]:
