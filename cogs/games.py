@@ -41,7 +41,7 @@ HM_COOL_WIN_CHEEPS = 2048
 class Games(commands.Cog):
     def __init__(self, bot, hangman_tbl_name: str):
         self.bot = bot
-        with open(f"{os.getcwd()}/pickles/premade/hangman_dict.obj",
+        with open(f"{os.getcwd()}/pickles/premade/{hangman_tbl_name}.obj",
                   "rb") as hangman_pkl:
             self.hangman_dict: Dict[str, Tuple[str,
                                                str]] = pickle.load(hangman_pkl)
