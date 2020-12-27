@@ -63,7 +63,29 @@ def mk_mythical_list() -> Dict[str, Tuple[str, str]]:
 
 
 def mk_country_list() -> Dict[str, Tuple[str, str]]:
-    return None
+    elem_list_soup = BeautifulSoup(
+        requests.get(
+            "https://en.wikipedia.org/wiki/List_of_sovereign_states").content,
+        "html.parser").find("table", {
+            "class": "sortable wikitable"
+        }).find_all("tr")
+    country_list: List[Tuple[str, str]] = []
+    for i in range(4, 241):
+        curr_table = elem_list_soup[i].find_all("td")
+        if len(curr_table) != 4 or i in (227, 228, 229):
+            continue
+        country_name_entry = curr_table[0].find("a")
+        country_list.append(
+            (str(country_name_entry.contents[0]).lower(),
+             "https:" + BeautifulSoup(
+                 requests.get(
+                     f"https://en.wikipedia.org{country_name_entry['href']}").
+                 content, "html.parser").find("table", {
+                     "class": "infobox"
+                 }).find("a", {
+                     "class": "image"
+                 }).find("img")["src"]))
+    return country_list
 
 
 def mk_element_list() -> Dict[str, Tuple[str, str]]:
@@ -71,22 +93,22 @@ def mk_element_list() -> Dict[str, Tuple[str, str]]:
         requests.get(
             "https://en.wikipedia.org/wiki/List_of_chemical_elements").content,
         "html.parser").find_all("tr")
-    elem_list: Tuple[str, str] = []
+    elem_list: List[Tuple[str, str]] = []
     for i in range(4, 118):
         curr_table = elem_list_soup[i].find_all("td")
-        elem_name_entry = curr_table[2]
+        elem_name_entry = curr_table[2].find("a")
         try:
             elem_img = "https:" + BeautifulSoup(
                 requests.get(
-                    f"https://en.wikipedia.org{elem_name_entry.find('a')['href']}"
-                ).content, "html.parser").find("table", {
+                    f"https://en.wikipedia.org{elem_name_entry['href']}").
+                content, "html.parser").find("table", {
                     "class": "infobox"
                 }).find("a").find("img")["src"]
         except TypeError:
             elem_img = None
-        elem_list.append((
-            f"{elem_name_entry.find('a').contents[0]} ({curr_table[1].contents[0]})"
-            .lower(), elem_img))
+        elem_list.append(
+            (f"{elem_name_entry.contents[0]} ({curr_table[1].contents[0]})".
+             lower(), elem_img))
     return elem_list
 
 
