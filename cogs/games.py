@@ -51,7 +51,7 @@ class Games(commands.Cog):
     async def hangman(self, ctx, *, command: str = None):
         """
         Play a nice game of hangman with internet strangers!
-        Guesses must be single letters (guesses must be lower case letters to be valid) or the entire correct word
+        Guesses must be single letters (interpreted in a case insensitive manner) or the entire correct word
         Can either be called with "?{hm|hangman}" or "?{hm|hangman} x", where x is a valid category command
         Get all categories/help by typing "?{hm|hangman} help"
         """
@@ -59,7 +59,7 @@ class Games(commands.Cog):
 
         if command == "help":
             await ctx.send(
-                f"rules: 6 wrong guesses are allowed, guesses must be either the entire correct word or a single lowercase letter\nhere is a list of valid category commands: {sorted(self.hangman_dict.keys())}"
+                f"rules: 6 wrong guesses are allowed, guesses must be either the entire correct word or a single letter (interpreted in a case insensitive manner)\nhere is a list of valid category commands: {sorted(self.hangman_dict.keys())}"
             )
             return
         category: str = command or random.choice(list(
@@ -77,9 +77,9 @@ class Games(commands.Cog):
         hang_list = HANG_LIST
         max_guesses = MAX_GUESSES
         num_mistakes: int = 0
-        not_guessed: Set[str] = set(re.sub(r"[^a-z]", "", hm_word))
+        not_guessed: Set[str] = set(re.sub(r"[^a-z]", "", hm_word.lower()))
         incorrect_guesses: Set[str] = set()
-        first_line: str = " ".join(char if char not in not_guessed else "_"
+        first_line: str = " ".join(char if char.lower() not in not_guessed else "_"
                                    for char in hm_word)
         last_line: str = "incorrect guesses: "
         player_msg_list: List[str] = []
@@ -165,7 +165,7 @@ class Games(commands.Cog):
                     if curr_guess in not_guessed:    # curr_guess in not_guessed => curr_guess is correct and new
                         not_guessed.remove(curr_guess)
                         first_line = " ".join(
-                            char if char not in not_guessed else "_"
+                            char if char.lower() not in not_guessed else "_"
                             for char in hm_word)
                         player_msg_list.append(
                             f"{curr_msg.author} guessed '{curr_guess}' correctly!"

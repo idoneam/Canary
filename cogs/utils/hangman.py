@@ -75,7 +75,7 @@ def mk_country_list() -> List[Tuple[str, str]]:
         if len(curr_table) != 4 or i in (227, 228, 229):
             continue
         country_name_entry = curr_table[0].find("a")
-        country_name = str(country_name_entry.contents[0]).lower()
+        country_name = str(country_name_entry.contents[0])
         if "," in country_name:
             comma_index = country_name.index(",")
             country_name = f"{country_name[comma_index+2:]} {country_name[:comma_index]}"
@@ -109,8 +109,7 @@ def mk_element_list() -> List[Tuple[str, str]]:
         except TypeError:
             elem_img = None
         elem_list.append(
-            (f"{elem_name_entry.contents[0]} ({curr_table[1].contents[0]})".
-             lower(), elem_img))
+            (f"{elem_name_entry.contents[0]} ({curr_table[1].contents[0]})", elem_img))
     return elem_list
 
 
@@ -134,7 +133,7 @@ def mk_movie_list() -> List[Tuple[str, str]]:
                                      }).find("img")["src"]
             except AttributeError:
                 continue
-            kino_list.append((str(kino_elem.contents[0]).lower(), kino_img))
+            kino_list.append((str(kino_elem.contents[0]), kino_img))
     return kino_list
 
 
