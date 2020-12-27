@@ -1,6 +1,6 @@
 import re
 import pickle
-from typing import List
+from typing import List, Tuple, Dict
 import requests
 from bs4 import BeautifulSoup
 
@@ -54,30 +54,57 @@ HANG_LIST: List[str] = [
 MAX_GUESSES: int = len(HANG_LIST) - 1
 
 
-def mk_word_dict(file_name):
-    link_list = [
-        elem for elem in BeautifulSoup(
-            requests.get("https://www.enchantedlearning.com/wordlist/").
-            content, "html.parser").find_all("table")[-6].find_all(
-                "a", {"target": "_top"})
-        if re.search(r"^/wordlist/([a-z]*)\.shtml$", elem["href"])
-    ]
-    word_dict = {}
-    for link in link_list:
-        link_name = re.findall(r"^/wordlist/([a-z]*)\.shtml$", link["href"])[0]
-        word_list = [
-            word.text.lower() for word in BeautifulSoup(
+def mk_animal_list() -> Dict[str, Tuple[str, str]]:
+    return None
+
+
+def mk_mythical_list() -> Dict[str, Tuple[str, str]]:
+    return None
+
+
+def mk_country_list() -> Dict[str, Tuple[str, str]]:
+    return None
+
+
+def mk_element_list() -> Dict[str, Tuple[str, str]]:
+    elem_list_soup = BeautifulSoup(
+        requests.get(
+            "https://en.wikipedia.org/wiki/List_of_chemical_elements").content,
+        "html.parser").find_all("tr")
+    elem_list: Tuple[str, str] = []
+    for i in range(4, 118):
+        curr_table = elem_list_soup[i].find_all("td")
+        elem_name_entry = curr_table[2]
+        try:
+            elem_img = "https:" + BeautifulSoup(
                 requests.get(
-                    f"https://www.enchantedlearning.com/{link['href']}").
-                content, "html.parser").find_all("div",
-                                                 {"class": "wordlist-item"})
-        ]
-        word_dict[link_name] = (word_list,
-                                re.sub(r"[^a-z\",'/ ]", "",
-                                       link.contents[0].lower()))
-    with open(f"{file_name}.pickle", "wb") as dump_file:
-        pickle.dump(word_dict, dump_file)
+                    f"https://en.wikipedia.org{elem_name_entry.find('a')['href']}"
+                ).content, "html.parser").find("table", {
+                    "class": "infobox"
+                }).find("a").find("img")["src"]
+        except TypeError:
+            elem_img = None
+        elem_list.append((
+            f"{elem_name_entry.find('a').contents[0]} ({curr_table[1].contents[0]})"
+            .lower(), elem_img))
+    return elem_list
+
+
+def mk_movie_list() -> Dict[str, Tuple[str, str]]:
+    return None
+
+
+def mk_hangman_dict(file_name):
+    with open(f"pickles/premade/{file_name}.obj", "wb") as dump_file:
+        pickle.dump(
+            {
+                "animal": (mk_animal_list(), "animals"),
+                "myth": (mk_mythical_list(), "mythical creatures"),
+                "country": (mk_country_list(), "country names"),
+                "element": (mk_element_list(), "elements"),
+                "movie": (mk_movie_list(), "movies")
+            }, dump_file)
 
 
 if __name__ == "__main__":
-    mk_word_dict("hangman_dict")
+    mk_hangman_dict("hangman_dict")
