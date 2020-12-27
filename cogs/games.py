@@ -31,7 +31,7 @@ from asyncio import TimeoutError
 from typing import Dict, List, Set, Tuple
 from .utils.dice_roll import dice_roll
 from .utils.clamp_default import clamp_default
-from .utils.hangman import HANG_LIST, MAX_GUESSES, mk_hangman_str, append_and_slice
+from .utils.hangman import HANG_LIST, MAX_GUESSES, mk_hangman_str
 
 ROLL_PATTERN = re.compile(r'^(\d*)d(\d*)([+-]?\d*)$')
 HM_WIN_CHEEPS = 1024
@@ -90,6 +90,11 @@ class Games(commands.Cog):
         cool_win: bool = False
         counter: int = 0
 
+        def append_and_slice(new_msg):
+            nonlocal player_msg_list
+            player_msg_list.append(new_msg)
+            player_msg_list = player_msg_list[-3:]
+
         def wait_for_check(msg) -> bool:
             if msg.channel != ctx.message.channel:
                 return False
@@ -138,8 +143,7 @@ class Games(commands.Cog):
                     winner = curr_msg.author
                     cool_win = True
                     first_line = " ".join(hm_word)
-                    append_and_slice(player_msg_list,
-                                     f"{winner} guessed the entire word!")
+                    append_and_slice(f"{winner} guessed the entire word!")
                     hm_embed.set_field_at(
                         0,
                         name=f"hangman (category: {pretty_name})",
@@ -160,10 +164,7 @@ class Games(commands.Cog):
                             char if lowered_char not in not_guessed else "_"
                             for char, lowered_char in zip(
                                 hm_word, lowered_word))
-                        append_and_slice(
-                            player_msg_list,
-                            f"{curr_msg.author} guessed '{curr_guess}' correctly!"
-                        )
+                        append_and_slice(f"{curr_msg.author} guessed '{curr_guess}' correctly!")
                         hm_embed.set_field_at(
                             0,
                             name=f"hangman (category: {pretty_name})",
@@ -188,10 +189,7 @@ class Games(commands.Cog):
                             )
                             break
                     elif curr_guess in lowered_word:    # curr_guess not in not_guessed (elif) and in word => curr_guess is correct but already made
-                        append_and_slice(
-                            player_msg_list,
-                            f"{curr_msg.author}, '{curr_guess}' was already guessed"
-                        )
+                        append_and_slice(f"{curr_msg.author}, '{curr_guess}' was already guessed")
                         hm_embed.set_field_at(
                             0,
                             name=f"hangman (category: {pretty_name})",
@@ -202,9 +200,7 @@ class Games(commands.Cog):
                         num_mistakes += 1
                         incorrect_guesses.add(curr_guess)
                         last_line = f"incorrect guesses: {str(sorted(incorrect_guesses))[1:-1]}"
-                        append_and_slice(
-                            player_msg_list,
-                            f"{curr_msg.author} guessed '{curr_guess}' wrong!")
+                        append_and_slice(f"{curr_msg.author} guessed '{curr_guess}' wrong!")
                         timeout_dict[curr_msg.author] = time()
                         hm_embed.set_field_at(
                             0,
@@ -214,9 +210,7 @@ class Games(commands.Cog):
                                 last_line)).set_footer(text=last_line)
                         await hm_msg.edit(embed=hm_embed)
                         if num_mistakes == MAX_GUESSES:
-                            append_and_slice(
-                                player_msg_list,
-                                f"{curr_msg.author} used your last chance!")
+                            append_and_slice(f"{curr_msg.author} used your last chance!")
                             hm_embed.set_field_at(
                                 0,
                                 name=f"hangman (category: {pretty_name})",
@@ -229,10 +223,7 @@ class Games(commands.Cog):
                             break
                     else:    # curr_guess not in not_guessed and not in word and in incorrect_guesses (else) => curr_guess is incorrect but already made
                         timeout_dict[curr_msg.author] = time()
-                        append_and_slice(
-                            player_msg_list,
-                            f"{curr_msg.author}, '{curr_guess}' was already guessed"
-                        )
+                        append_and_slice(f"{curr_msg.author}, '{curr_guess}' was already guessed")
                         hm_embed.set_field_at(
                             0,
                             name=f"hangman (category: {pretty_name})",
@@ -245,9 +236,7 @@ class Games(commands.Cog):
                     hm_msg = await ctx.send(embed=hm_msg.embeds[0])
             elif curr_msg_valid:
                 await curr_msg.delete()
-                append_and_slice(
-                    player_msg_list,
-                    f"{curr_msg.author} you cannot guess right now!")
+                append_and_slice(f"{curr_msg.author} you cannot guess right now!")
                 hm_embed.set_field_at(
                     0,
                     name=f"hangman (category: {pretty_name})",

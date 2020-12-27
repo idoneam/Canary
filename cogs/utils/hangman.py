@@ -144,11 +144,6 @@ def mk_hangman_str(first, num_mistakes, last) -> str:
     return f"`{first}`\n```{HANG_LIST[num_mistakes]}```\n{NEWLINE.join(last)}"
 
 
-def append_and_slice(inp_list, elem, max_len=3):
-    inp_list.append(elem)
-    inp_list = inp_list[-max_len:]
-
-
 def mk_hangman_dict(file_name) -> Dict[str, List[Tuple[str, str]]]:
     with open(f"pickles/premade/{file_name}.obj", "wb") as dump_file:
         pickle.dump(
