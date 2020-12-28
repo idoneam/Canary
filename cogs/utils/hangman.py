@@ -63,10 +63,11 @@ def mk_animal_list() -> List[Tuple[str, str]]:
         curr_entry = animal_list_soup[i].find("td")
         if curr_entry:
             animal_name = curr_entry.find("a")
-            animal_list.append((animal_name["title"].split(
-            )[0], "https:" + BeautifulSoup(
-                requests.get(f"https://en.wikipedia.org{animal_name['href']}").
-                content, "html.parser").find("img")["src"]))
+            animal_list.append(
+                (animal_name["title"].split(' (')[0], "https:" + BeautifulSoup(
+                    requests.get(
+                        f"https://en.wikipedia.org{animal_name['href']}").
+                    content, "html.parser").find("img")["src"]))
     return animal_list
 
 
