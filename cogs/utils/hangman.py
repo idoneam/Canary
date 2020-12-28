@@ -50,15 +50,24 @@ HANG_LIST: List[str] = [
 ========"""
 ]
 
-MAX_GUESSES: int = len(HANG_LIST) - 1
+LOSS_MISTAKES: int = len(HANG_LIST) - 1
 
 
 def mk_animal_list() -> List[Tuple[str, str]]:
-    return None
-
-
-def mk_mythical_list() -> List[Tuple[str, str]]:
-    return None
+    animal_list_soup = BeautifulSoup(
+        requests.get(
+            "https://en.wikipedia.org/wiki/List_of_animal_names").content,
+        "html.parser").find_all("tr")
+    animal_list: List[Tuple[str, str]] = []
+    for i in range(16, len(animal_list_soup)):
+        curr_entry = animal_list_soup[i].find("td")
+        if curr_entry:
+            animal_name = curr_entry.find("a")
+            animal_list.append((animal_name["title"].split(
+            )[0], "https:" + BeautifulSoup(
+                requests.get(f"https://en.wikipedia.org{animal_name['href']}").
+                content, "html.parser").find("img")["src"]))
+    return animal_list
 
 
 def mk_country_list() -> List[Tuple[str, str]]:
@@ -70,10 +79,10 @@ def mk_country_list() -> List[Tuple[str, str]]:
         }).find_all("tr")
     country_list: List[Tuple[str, str]] = []
     for i in range(4, 241):
-        curr_table = elem_list_soup[i].find_all("td")
-        if len(curr_table) != 4 or i in (227, 228, 229):
+        curr_entry = elem_list_soup[i].find_all("td")
+        if len(curr_entry) != 4 or i in (227, 228, 229):
             continue
-        country_name_entry = curr_table[0].find("a")
+        country_name_entry = curr_entry[0].find("a")
         country_name = str(country_name_entry.contents[0])
         if "," in country_name:
             comma_index = country_name.index(",")
@@ -96,8 +105,8 @@ def mk_element_list() -> List[Tuple[str, str]]:
         "html.parser").find_all("tr")
     elem_list: List[Tuple[str, str]] = []
     for i in range(4, 118):
-        curr_table = elem_list_soup[i].find_all("td")
-        elem_name_entry = curr_table[2].find("a")
+        curr_entry = elem_list_soup[i].find_all("td")
+        elem_name_entry = curr_entry[2].find("a")
         try:
             elem_img = "https:" + BeautifulSoup(
                 requests.get(
@@ -108,7 +117,7 @@ def mk_element_list() -> List[Tuple[str, str]]:
         except TypeError:
             elem_img = None
         elem_list.append(
-            (f"{elem_name_entry.contents[0]} ({curr_table[1].contents[0]})",
+            (f"{elem_name_entry.contents[0]} ({curr_entry[1].contents[0]})",
              elem_img))
     return elem_list
 
@@ -145,13 +154,11 @@ def mk_hangman_dict(file_name) -> Dict[str, List[Tuple[str, str]]]:
     with open(f"pickles/premade/{file_name}.obj", "wb") as dump_file:
         pickle.dump(
             {
-        #"animal": (mk_animal_list(), "animals"),
-        #"myth": (mk_mythical_list(), "mythical creatures"),
+                "animal": (mk_animal_list(), "animals"),
                 "country": (mk_country_list(), "country names"),
                 "element": (mk_element_list(), "elements"),
                 "movie": (mk_movie_list(), "movies")
-            },
-            dump_file)
+            }, dump_file)
 
 
 if __name__ == "__main__":

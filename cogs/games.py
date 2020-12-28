@@ -31,7 +31,7 @@ from asyncio import TimeoutError
 from typing import Dict, List, Set, Tuple
 from .utils.dice_roll import dice_roll
 from .utils.clamp_default import clamp_default
-from .utils.hangman import MAX_GUESSES, mk_hangman_str
+from .utils.hangman import LOSS_MISTAKES, mk_hangman_str
 from .currency import HANGMAN_REWARD
 
 ROLL_PATTERN = re.compile(r'^(\d*)d(\d*)([+-]?\d*)$')
@@ -61,7 +61,7 @@ class Games(commands.Cog):
 
         if command == "help":
             await ctx.send(
-                f"rules: {MAX_GUESSES - 1} wrong guesses are allowed, guesses must be either the entire correct word or a single letter (interpreted in a case insensitive manner)\nhere is a list of valid category commands: {sorted(self.hangman_dict.keys())}"
+                f"rules: {LOSS_MISTAKES - 1} wrong guesses are allowed, guesses must be either the entire correct word or a single letter (interpreted in a case insensitive manner)\nhere is a list of valid category commands: {', '.join('`' + hm_cat + '` (length: '+str(len(self.hangman_dict[hm_cat][0])) + ')' for hm_cat in sorted(self.hangman_dict.keys()))}"
             )
             return
         category: str = command or random.choice(list(
@@ -204,7 +204,7 @@ class Games(commands.Cog):
                             "\n".join(player_msg_list))).set_footer(
                                 text=last_line)
                     await ctx.send(embed=hm_embed)
-                    if num_mistakes == MAX_GUESSES:
+                    if num_mistakes == LOSS_MISTAKES:
                         append_and_slice(
                             f"{curr_msg.author} used your last chance!")
                         hm_embed.set_field_at(
