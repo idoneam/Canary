@@ -1,6 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-#
 # Copyright (C) idoneam (2016-2020)
 #
 # This file is part of Canary
@@ -50,8 +47,8 @@ import regex as re
 # and a list of output "strings with placeholders" (see PStringEncodings
 # docstring). Calling PStringEncodings.parser on the content of a message will
 # then detect if the message corresponds to some input
-# "strings with placeholders", choose a random one, and create an output
-# p-string with its corresponding output string.
+# "strings with placeholders", choose a random one, and create a filled
+# output p-string with its corresponding output "string with placeholders".
 
 
 def _convert_choice_list(choice_list_string, to_pattern_str=False, level=0):
