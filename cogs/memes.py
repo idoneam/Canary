@@ -220,9 +220,9 @@ class Memes(commands.Cog):
         }).find("img")
         xkcd_embed = discord.Embed(
             title=f"{xkcd_img_soup['alt']} (#{xkcd_title_num})",
-            url=xkcd_req.url)
-        xkcd_embed.set_image(url=f"https:{xkcd_img_soup['src']}")
-        xkcd_embed.set_footer(text=str(xkcd_img_soup['title']))
+            url=xkcd_req.url).set_image(
+                url=f"https:{xkcd_img_soup['src']}").set_footer(
+                    text=str(xkcd_img_soup['title']))
         await ctx.send(embed=xkcd_embed)
 
 
