@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) idoneam (2016-2019)
+# Copyright (C) idoneam (2016-2020)
 #
 # This file is part of Canary
 #
@@ -24,10 +24,8 @@ from config import parser
 import logging
 import sqlite3
 import traceback
-
-# For log webhook
 import requests
-from discord import Webhook, RequestsWebhookAdapter
+from discord import Webhook, RequestsWebhookAdapter, Intents
 
 __all__ = ['bot', 'developer_role', 'moderator_role']
 
@@ -164,6 +162,9 @@ class Canary(commands.Bot):
 
 
 # predefined variables to be imported
-bot = Canary(case_insensitive=True)
+intents = Intents.default()
+intents.members = True
+intents.presences = True
+bot = Canary(case_insensitive=True, intents=intents)
 moderator_role = bot.config.moderator_role
 developer_role = bot.config.developer_role
