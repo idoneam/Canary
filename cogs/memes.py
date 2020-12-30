@@ -178,7 +178,7 @@ class Memes(commands.Cog):
         """
         Enjoy a nice xkcd comic with some strangers on the internet!
         If no issue number is passed, returns a random xkcd.
-        Valid options are: nothing, 'latest' and a positive integer greater than one and at most equal to the latest issue number.
+        Valid options are: nothing, 'latest' or a positive integer greater than one and at most equal to the latest issue number.
         """
         await ctx.trigger_typing()
         if xkcd_command is None:
