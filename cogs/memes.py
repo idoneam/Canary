@@ -174,56 +174,56 @@ class Memes(commands.Cog):
         await ctx.send("**\n{}**".format(msg))
 
     @commands.command()
-    async def xkcd(self, ctx, xkcd_command: str = None):
+    async def xkcd(self, ctx, command: str = None):
         """
         Enjoy a nice xkcd comic with some strangers on the internet!
         If no issue number is passed, returns a random xkcd.
         Valid options are: nothing, 'latest' or a positive integer greater than one and at most equal to the latest issue number.
         """
         await ctx.trigger_typing()
-        xkcd_num = None
-        if xkcd_command is None:
-            xkcd_req = requests.get("https://c.xkcd.com/comic/random")
-        elif xkcd_command == "latest":
-            xkcd_req = requests.get("https://xkcd.com/")
+        num = None
+        if command is None:
+            req = requests.get("https://c.xkcd.com/comic/random")
+        elif command == "latest":
+            req = requests.get("https://xkcd.com/")
         else:
             try:
-                xkcd_num = int(xkcd_command)
+                num = int(command)
             except ValueError:
                 await ctx.send(
-                    f"invalid input: `{xkcd_command}` does not parse to an integer"
+                    f"invalid input: `{command}` does not parse to an integer"
                 )
                 return
-            xkcd_req = requests.get(f"https://xkcd.com/{xkcd_num}")
-            if xkcd_num < 1:
+            req = requests.get(f"https://xkcd.com/{num}")
+            if num < 1:
                 await ctx.send(
-                    f"the number `{xkcd_num}` is less than one, such an xkcd issue cannot exist"
+                    f"the number `{num}` is less than one, such an xkcd issue cannot exist"
                 )
                 return
-        if xkcd_req.status_code == 404:
-            xkcd_num = None
-            xkcd_req = requests.get("https://xkcd.com/")
-        if xkcd_req.status_code != 200:
+        if req.status_code == 404:
+            num = None
+            req = requests.get("https://xkcd.com/")
+        if req.status_code != 200:
             await ctx.send(
-                f"xkcd number `{xkcd_command}` could not be found (request returned `{xkcd_req.status_code}`)"
+                f"xkcd number `{command}` could not be found (request returned `{req.status_code}`)"
             )
             return
-        xkcd_soup = BeautifulSoup(xkcd_req.content, "html.parser")
-        if xkcd_num is None:
-            xkcd_title_num = re.findall(
+        soup = BeautifulSoup(req.content, "html.parser")
+        if num is None:
+            title_num = re.findall(
                 r'^https://xkcd.com/([1-9][0-9]*)/$',
-                xkcd_soup.find('meta', property='og:url')['content'])[0]
+                soup.find('meta', property='og:url')['content'])[0]
         else:
-            xkcd_title_num = str(xkcd_num)
-        xkcd_img_soup = xkcd_soup.find("div", attrs={
+            title_num = str(num)
+        img_soup = soup.find("div", attrs={
             "id": "comic"
         }).find("img")
-        xkcd_embed = discord.Embed(
-            title=f"{xkcd_img_soup['alt']} (#{xkcd_title_num})",
-            url=xkcd_req.url).set_image(
-                url=f"https:{xkcd_img_soup['src']}").set_footer(
-                    text=str(xkcd_img_soup['title']))
-        await ctx.send(embed=xkcd_embed)
+        embd = discord.Embed(
+            title=f"{img_soup['alt']} (#{title_num})",
+            url=req.url).set_image(
+                url=f"https:{img_soup['src']}").set_footer(
+                    text=str(img_soup['title']))
+        await ctx.send(embed=embd)
 
 
 def setup(bot):
