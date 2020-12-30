@@ -191,8 +191,7 @@ class Memes(commands.Cog):
                 num = int(command)
             except ValueError:
                 await ctx.send(
-                    f"invalid input: `{command}` does not parse to an integer"
-                )
+                    f"invalid input: `{command}` does not parse to an integer")
                 return
             req = requests.get(f"https://xkcd.com/{num}")
             if num < 1:
@@ -215,14 +214,11 @@ class Memes(commands.Cog):
                 soup.find('meta', property='og:url')['content'])[0]
         else:
             title_num = str(num)
-        img_soup = soup.find("div", attrs={
-            "id": "comic"
-        }).find("img")
+        img_soup = soup.find("div", attrs={"id": "comic"}).find("img")
         embd = discord.Embed(
             title=f"{img_soup['alt']} (#{title_num})",
-            url=req.url).set_image(
-                url=f"https:{img_soup['src']}").set_footer(
-                    text=str(img_soup['title']))
+            url=req.url).set_image(url=f"https:{img_soup['src']}").set_footer(
+                text=str(img_soup['title']))
         await ctx.send(embed=embd)
 
 
