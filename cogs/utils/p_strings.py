@@ -51,7 +51,7 @@ import regex as re
 # output p-string with its corresponding output "string with placeholders".
 
 
-def _convert_choice_list(choice_list_string, to_pattern_str=False, level=0):
+def _convert_choice_list(choice_list_string, to_pattern_str=False):
     """
     Takes a string with choice list placeholders and converts them to
     either a string where the choices are made (default)
@@ -91,7 +91,7 @@ def _convert_choice_list(choice_list_string, to_pattern_str=False, level=0):
     # might still be pairs of %[ and ]% remaining
     choice_list_string = (choice_list_string[:last_start_pos] + choice +
                           choice_list_string[first_end_pos_after + 2:])
-    return _convert_choice_list(choice_list_string, level=level + 1)
+    return _convert_choice_list(choice_list_string)
 
 
 def _get_pattern_from_string(string, anywhere=False):
@@ -170,9 +170,8 @@ class PString:
         if self.groups:
             for i, group in enumerate(self.groups, 1):
                 filled_string = re.sub(f"%{i}%", group, filled_string)
-        # convert the choice lists
-        filled_string = _convert_choice_list(filled_string)
-        return filled_string
+        # convert the choice lists and return
+        return _convert_choice_list(filled_string)
 
 
 class PStringEncodings:
