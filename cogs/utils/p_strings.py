@@ -50,6 +50,9 @@ import regex as re
 # "strings with placeholders", choose a random one, and create a filled
 # output p-string with its corresponding output "string with placeholders".
 
+PLACEHOLDERS_ARGS = ("user", "channel", *list(map(str, (range(1, 10)))))
+PLACEHOLDERS_PATTERNS = (re.compile(f"%{arg}%") for arg in PLACEHOLDERS_ARGS)
+
 
 def _convert_choice_list(choice_list_string, to_pattern_str=False):
     """
@@ -159,17 +162,18 @@ class PString:
         self.groups = groups
         self.additional_info = additional_info
 
+    @property
+    def patterns_and_values(self):
+        return dict(
+            zip(PLACEHOLDERS_PATTERNS,
+                (self.user, self.channel, *self.groups)))
+
     def __str__(self):
         filled_string = self.string
-        # replace the %user% and %channel% placeholders by their values
-        if self.user:
-            filled_string = re.sub("%user%", self.user, filled_string)
-        if self.channel:
-            filled_string = re.sub("%channel%", self.user, filled_string)
-        # for every group placeholder, replace them by their value
-        if self.groups:
-            for i, group in enumerate(self.groups, 1):
-                filled_string = re.sub(f"%{i}%", group, filled_string)
+        # replace the placeholder arguments by their values
+        for pattern, value in self.patterns_and_values.items():
+            if value:
+                filled_string = pattern.sub(value, filled_string)
         # convert the choice lists and return
         return _convert_choice_list(filled_string)
 
