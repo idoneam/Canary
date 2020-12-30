@@ -35,8 +35,8 @@ import regex as re
 # to be one of "bye @someone" or "ciao @someone". They would thus set the
 # goodbye_message to "%[bye, ciao]% %user%" from the server.
 # Then, when a user leaves,
-# `await ctx.send(PString(goodbye_message, user=ctx.author))` would be used,
-# which will send "bye @someone" or "ciao @someone"
+# `await ctx.send(PString(goodbye_message, user=ctx.author.mention))`
+# would be used, which will send "bye @someone" or "ciao @someone"
 
 # Another, more complex use is groups placeholders, which is most often used
 # as part of input/output patterns. For example, there could be
@@ -118,7 +118,12 @@ def _get_pattern_from_string(string, anywhere=False):
 
 
 class PString:
-    def __init__(self, string, user=None, channel=None, groups=None):
+    def __init__(self,
+                 string,
+                 user=None,
+                 channel=None,
+                 groups=None,
+                 additional_info=None):
         """
         A p-string is composed of a string with placeholders in it,
         and values for these placeholders. Printing a p-string will
@@ -138,6 +143,10 @@ class PString:
          groups=["He", "apples"], printing the p-string will return
          "He likes apples"
 
+         - additional_info: to give more control to users, a p-string can store
+         additional information(this might be useful if a certain option is
+         selected when this p-string is called, etc.)
+
         Other placeholder (not an argument):
         - choice list (%[a,b]%): a random value will be chosen from the list
         (here, either a or b). The values themselves can be choice lists
@@ -148,6 +157,7 @@ class PString:
         self.user = user
         self.channel = channel
         self.groups = groups
+        self.additional_info = additional_info
 
     def __str__(self):
         filled_string = self.string
@@ -166,7 +176,11 @@ class PString:
 
 
 class PStringEncodings:
-    def __init__(self, input_strings, output_strings, anywhere_values):
+    def __init__(self,
+                 input_strings,
+                 output_strings,
+                 anywhere_values,
+                 additional_info_list=None):
         """
         Used to encode a list of input strings with placeholders
         and a list of output strings with placeholders to
@@ -193,6 +207,9 @@ class PStringEncodings:
         be included anywhere in the content or not depending on if the
         corresponding anywhere value at this index is True or False.
         Must be the same length as input_strings
+
+        -additional_info_list: a list with additional information for
+        each p-string. Must be the same length as input_strings
         """
         # if a boolean is given for anywhere_values, then for every
         # input/output pair the anywhere value is this boolean,
@@ -200,11 +217,14 @@ class PStringEncodings:
         # length filled with this bool
         if isinstance(anywhere_values, bool):
             anywhere_values = [anywhere_values] * len(input_strings)
+        if not additional_info_list:
+            additional_info_list = [None] * len(input_strings)
         # the lists must all be the same length
         if not (len(input_strings) == len(output_strings) ==
-                len(anywhere_values)):
+                len(anywhere_values) == len(additional_info_list)):
             raise ValueError("input_strings, output_strings, "
-                             "and anywhere_values (if not bool) "
+                             "anywhere_values (if not bool) and"
+                             "additional_info_list (if provided)"
                              "should be the same length")
         # get the list of input regex patterns
         self.patterns = [
@@ -218,8 +238,9 @@ class PStringEncodings:
         self.patterns_string = f"({'|'.join(patterns_strings_list)})"
         # get the list of pairings of input regex pattern and output p-strings
         self.patterns_and_p_strings = [
-            (pattern, PString(output_string))
-            for output_string, pattern in zip(output_strings, self.patterns)
+            (pattern, PString(output_string, additional_info=additional_info))
+            for output_string, pattern, additional_info in zip(
+                output_strings, self.patterns, additional_info_list)
         ]
 
     def parser(self, content, user=None, channel=None):
@@ -239,7 +260,9 @@ class PStringEncodings:
         something like ctx.channel but can be used with any string
         """
         # first search the big patterns_string to see if anything matches
-        if re.search(self.patterns_string, content):
+        # (also check is the patterns_string is not just the parens)
+        if (re.search(self.patterns_string, content)
+                and len(self.patterns_string) > 2):
             # choose a random iterator of match objects from those of all
             # the matching input regex pattern (i.e. we are choosing
             # which corresponding pattern to use)
