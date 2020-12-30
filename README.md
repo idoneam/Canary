@@ -38,6 +38,8 @@ $ poetry install
 
 7. In order to run bots on Discord, you need to [create a bot account](https://github.com/reactiflux/discord-irc/wiki/Creating-a-discord-bot-&-getting-a-token).
 
+8. In the Discord Developer Portal, you must enable the "Presence" and "Server Members" Privileged Gateway Intents (In the Bot tab of your application)
+
 You must set certain values in the `config.ini` file, in particular your Discord bot token (which you get in the previous link) and the values in the `[Server]` section.
 <details><summary>Click here to see descriptions for a few of those values</summary><p>
  
