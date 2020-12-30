@@ -50,7 +50,7 @@ CREATE TABLE IF NOT EXISTS `BankTransactions` (
 );
 
 CREATE TABLE IF NOT EXISTS `CustomReactions` (
-	`CustomReactionID`	INTEGER PRIMARY KEY,
+	  `CustomReactionID`  INTEGER PRIMARY KEY,
     `Prompt`            TEXT,
     `Response`          TEXT,
     `UserID`            INTEGER,
@@ -58,4 +58,9 @@ CREATE TABLE IF NOT EXISTS `CustomReactions` (
     `Anywhere`          INTEGER,
     `DM`                INTEGER,
     `Proposal`          INTEGER
+);
+
+CREATE TABLE IF NOT EXISTS `PreviousRoles` (
+	`ID`	      INTEGER UNIQUE,
+	`Roles`       TEXT
 );

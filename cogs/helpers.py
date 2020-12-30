@@ -40,6 +40,7 @@ import datetime
 import random
 from .utils.paginator import Pages
 from .utils.requests import fetch
+import sqlite3
 
 MCGILL_EXAM_URL = "https://www.mcgill.ca/exams/dates"
 
@@ -300,33 +301,29 @@ class Helpers(commands.Cog):
 
         headers = []
         sections = []
-        subsection = []
 
         if term == 'Fall':
             node = text[0].find_all('h2')[0].next_sibling
         else:
             node = text[0].find_all('h2')[1].next_sibling
 
-        # Iterate through the tags and gather h3 headings in one list and the
-        # text between them in another.
+        # Iterate through the tags and find unordered lists.
+        # The content of each list will become the body of each section
+        # while the contents of the <p> above it will become the headers.
         while node:
             if hasattr(node, 'name'):
                 if node.name == 'h2' and term == 'Fall':
                     break
-                elif node.name == 'h3':
-                    headers.append(node.get_text())
-                    if subsection:
-                        sections.append(subsection)
-                    subsection = []
-                else:
-                    nodestr = str(node)
-                    if nodestr[0] != '\n' and nodestr and nodestr != ' ':
-                        subsection.append(node.get_text().replace('\xa0', ' '))
+                elif node.name == 'ul':
+                    sections.append(node.get_text())
+                    previous = node.previous_sibling.previous_sibling
+                    if previous.name == 'p':
+                        headers.append(previous.get_text())
+                    else:
+                        # just in case the layout changes again, at least the whole thing won't break
+                        headers.append("...")
 
             node = node.next_sibling
-
-        if subsection:
-            sections.append(subsection)
 
         em = discord.Embed(title='McGill Important Dates {0} {1}'.format(
             term, str(current_year)),
@@ -334,17 +331,7 @@ class Helpers(commands.Cog):
                            colour=0xDA291C)
 
         for i in range(len(headers)):
-            if i == 2:
-                continue
-
-            if i == 1:
-                value = ' '.join(sections[i][1:-1])
-            elif i == 3:
-                value = ' '.join(sections[i][1:-2])
-            else:
-                value = ' '.join(sections[i][1:])
-
-            em.add_field(name=headers[i], value=value, inline=False)
+            em.add_field(name=headers[i], value=sections[i], inline=False)
 
         await ctx.send(embed=em)
 
@@ -578,6 +565,92 @@ class Helpers(commands.Cog):
         buffer = BytesIO(buffer)
         fn = "{}.{}".format(match.group(1), ext)
         await ctx.send(file=discord.File(fp=buffer, filename=fn))
+
+    @commands.Cog.listener()
+    async def on_member_remove(self, member):
+        roles_id = [
+            role.id for role in member.roles if role.name != "@everyone"
+        ]
+        if roles_id:
+            conn = sqlite3.connect(self.bot.config.db_path)
+            c = conn.cursor()
+            # store roles as a string of IDs separated by spaces
+            t = (member.id, ' '.join(str(e) for e in roles_id))
+            c.execute('REPLACE INTO PreviousRoles VALUES (?, ?)', t)
+            conn.commit()
+            conn.close()
+
+    @commands.command(aliases=['previousroles', 'giverolesback', 'rolesback'])
+    async def previous_roles(self, ctx, user: discord.Member):
+        """Show the list of roles that a user had before leaving, if possible.
+        A moderator can click the OK react on the message to give these roles back
+        """
+        conn = sqlite3.connect(self.bot.config.db_path)
+        c = conn.cursor()
+        fetched_roles = c.execute(
+            'SELECT Roles FROM PreviousRoles WHERE ID = ?',
+            (user.id, )).fetchone()
+        # the above returns a tuple with a string of IDs separated by spaces
+        if fetched_roles is not None:
+            roles_id = fetched_roles[0].split(" ")
+            valid_roles = []
+            for role_id in roles_id:
+                role = self.bot.get_guild(self.bot.config.server_id).get_role(
+                    int(role_id))
+                if role:
+                    valid_roles.append(role)
+
+            roles_name = [
+                "[{}] {}\n".format(i, role.name)
+                for i, role in enumerate(valid_roles, 1)
+            ]
+
+            embed = discord.Embed(title="Loading...")
+            message = await ctx.send(embed=embed)
+
+            if len(valid_roles) > 20:
+                await message.add_reaction("◀")
+                await message.add_reaction("▶")
+            await message.add_reaction("🆗")
+
+            p = Pages(
+                ctx,
+                item_list=roles_name,
+                title="{} had the following roles before leaving.\n"
+                "A {} can add these roles back by reacting with 🆗".format(
+                    user.display_name, self.bot.config.moderator_role),
+                msg=message,
+                display_option=(3, 20),
+                editable_content=True,
+                editable_content_emoji="🆗",
+                return_user_on_edit=True)
+            ok_user = await p.paginate()
+
+            while p.edit_mode:
+                if discord.utils.get(ok_user.roles,
+                                     name=self.bot.config.moderator_role):
+                    await user.add_roles(
+                        *valid_roles,
+                        reason="{} used the previous_roles command".format(
+                            ok_user.name))
+                    embed = discord.Embed(
+                        title="{}'s previous roles were successfully "
+                        "added back by {}".format(user.display_name,
+                                                  ok_user.display_name))
+                    await message.edit(embed=embed)
+                    await message.clear_reaction("◀")
+                    await message.clear_reaction("▶")
+                    await message.clear_reaction("🆗")
+                    return
+                else:
+                    ok_user = await p.paginate()
+
+        else:
+            embed = discord.Embed(
+                title="Could not find any roles for this user")
+            await ctx.send(embed=embed)
+
+        conn.close()
 
 
 def setup(bot):

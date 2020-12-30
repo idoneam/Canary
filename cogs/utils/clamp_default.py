@@ -17,26 +17,15 @@
 # You should have received a copy of the GNU General Public License
 # along with Canary. If not, see <https://www.gnu.org/licenses/>.
 
-# discord-py requirements
-import discord
-import subprocess
-from discord.ext import commands
 
-
-class Info(commands.Cog):
-    def __init__(self, bot):
-        self.bot = bot
-
-    @commands.command()
-    async def version(self, ctx):
-        version = subprocess.check_output(("git", "describe", "--tags"),
-                                          universal_newlines=True).strip()
-        commit, authored = subprocess.check_output(
-            ("git", "log", "-1", "--pretty=format:%h %aI"),
-            universal_newlines=True).strip().split(" ")
-        await ctx.send("Version: `{}`\nCommit: `{}` authored `{}`".format(
-            version, commit, authored))
-
-
-def setup(bot):
-    bot.add_cog(Info(bot))
+def clamp_default(val, min_val, max_val, default):
+    """
+    Enforces a minimum and maximum (closed) bound on an integer.
+    Returns a default value if val is not an integer or false-y.
+    """
+    try:
+        if val or isinstance(val, int):
+            return min(max(min_val, int(val)), max_val)
+    except ValueError:
+        pass
+    return default

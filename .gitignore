@@ -24,6 +24,7 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+requirements.txt
 
 # PyInstaller
 #  Usually these files are written by a python script from a template
@@ -114,3 +115,4 @@ marty_env
 .idea/
 tmp/
 pickles/*
+.vscode/settings.json

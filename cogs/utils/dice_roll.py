@@ -17,26 +17,16 @@
 # You should have received a copy of the GNU General Public License
 # along with Canary. If not, see <https://www.gnu.org/licenses/>.
 
-# discord-py requirements
-import discord
-import subprocess
-from discord.ext import commands
+from random import randint
 
 
-class Info(commands.Cog):
-    def __init__(self, bot):
-        self.bot = bot
-
-    @commands.command()
-    async def version(self, ctx):
-        version = subprocess.check_output(("git", "describe", "--tags"),
-                                          universal_newlines=True).strip()
-        commit, authored = subprocess.check_output(
-            ("git", "log", "-1", "--pretty=format:%h %aI"),
-            universal_newlines=True).strip().split(" ")
-        await ctx.send("Version: `{}`\nCommit: `{}` authored `{}`".format(
-            version, commit, authored))
-
-
-def setup(bot):
-    bot.add_cog(Info(bot))
+def dice_roll(sides=20, n=1, modifier=0, mpr=False):
+    """
+    Rolls a die with given parameters
+    Set mpr to True to mod each roll, otherwise, only the sum is modified
+    """
+    roll_mod = modifier if mpr else 0
+    total_mod = 0 if mpr else modifier
+    roll_list = [randint(1, sides) + roll_mod for _ in range(n)]
+    return roll_list, sum(roll_list) + total_mod, max(roll_list), min(
+        roll_list)
