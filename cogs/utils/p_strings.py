@@ -163,7 +163,7 @@ class PString:
         self.additional_info = additional_info
 
     @property
-    def patterns_and_values(self):
+    def _patterns_and_values(self):
         return dict(
             zip(PLACEHOLDERS_PATTERNS,
                 (self.user, self.channel, *self.groups)))
@@ -171,7 +171,7 @@ class PString:
     def __str__(self):
         filled_string = self.string
         # replace the placeholder arguments by their values
-        for pattern, value in self.patterns_and_values.items():
+        for pattern, value in self._patterns_and_values.items():
             if value:
                 filled_string = pattern.sub(value, filled_string)
         # convert the choice lists and return
@@ -191,6 +191,7 @@ class PStringEncodings:
         The parser method is then used with any string to return either
         None if it matches no input pattern, or a random corresponding filled
         output p-string if it matches some input patterns.
+        Note that the parser is case sensitive
 
         Arguments:
         -input_strings: a list of input strings with placeholders. Note that
