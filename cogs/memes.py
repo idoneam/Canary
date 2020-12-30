@@ -195,17 +195,15 @@ class Memes(commands.Cog):
                 return
             req = requests.get(f"https://xkcd.com/{num}")
             if num < 1:
-                await ctx.send(
-                    f"the number `{num}` is less than one, such an xkcd issue cannot exist"
-                )
+                await ctx.send(f"the number `{num}` is less than one, "
+                               f"such an xkcd issue cannot exist")
                 return
         if req.status_code == 404:
             num = None
             req = requests.get("https://xkcd.com/")
         if req.status_code != 200:
-            await ctx.send(
-                f"xkcd number `{command}` could not be found (request returned `{req.status_code}`)"
-            )
+            await ctx.send(f"xkcd number `{command}` could not be found "
+                           f"(request returned `{req.status_code}`)")
             return
         soup = BeautifulSoup(req.content, "html.parser")
         if num is None:
