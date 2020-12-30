@@ -195,7 +195,7 @@ class Memes(commands.Cog):
                 )
                 return
             xkcd_req = requests.get(f"https://xkcd.com/{xkcd_num}")
-            if xkcd_num < 0:
+            if xkcd_num < 1:
                 await ctx.send(
                     f"the number `{xkcd_num}` is less than one, such an xkcd issue cannot exist"
                 )
