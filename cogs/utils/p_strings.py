@@ -72,8 +72,13 @@ def _convert_choice_list(choice_list_string, to_pattern_str=False, level=0):
     if last_start_pos == -1 or first_end_pos_after == -1:
         return choice_list_string
     # otherwise, split the content between %[ and ]% to get the list of choices
-    choice_list = choice_list_string[last_start_pos +
-                                     2:first_end_pos_after].split(", ")
+    # content is separated by commas, except when they are inside quotes
+    choice_list_matches_iter = re.finditer(
+        r'(?:^"?|, ?"?)\K(?:(?<=").+?(?=")|[^ ,][^,]*)',
+        choice_list_string[last_start_pos + 2:first_end_pos_after])
+    choice_list = [
+        choice_match.group() for choice_match in choice_list_matches_iter
+    ]
     # if to_pattern_str, any of these choices can match, thus this is
     # a regex pattern string of alternatives
     if to_pattern_str:
