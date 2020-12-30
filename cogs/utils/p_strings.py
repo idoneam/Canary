@@ -35,7 +35,7 @@ import regex as re
 # to be one of "bye @someone" or "ciao @someone". They would thus set the
 # goodbye_message to "%[bye, ciao]% %user%" from the server.
 # Then, when a user leaves,
-# `await ctx.send PString(goodbye_message, user=ctx.author)` would be used,
+# `await ctx.send(PString(goodbye_message, user=ctx.author))` would be used,
 # which will send "bye @someone" or "ciao @someone"
 
 # Another, more complex use is groups placeholders, which is most often used
