@@ -186,6 +186,10 @@ class Memes(commands.Cog):
         elif xkcd_command == "latest":
             xkcd_req = requests.get("https://xkcd.com/")
         else:
+            xkcd_command_num: int = int(xkcd_command)
+            if xkcd_command_num > 0:
+                await ctx.send(f"xkcd number {xkcd_command_num} is less than one, such an issue cannot exist")
+                return
             try:
                 xkcd_req = requests.get(
                     f"https://xkcd.com/{int(xkcd_command)}")
@@ -194,6 +198,8 @@ class Memes(commands.Cog):
                     f"invalid input: {xkcd_command} does not parse to an integer"
                 )
                 return
+        if xkcd_req.status_code == 404:
+            xkcd_req = requests.get("https://xkcd.com/")
         if xkcd_req.status_code != 200:
             await ctx.send(
                 f"xkcd number {xkcd_command} could not be found (request returned {xkcd_req.status_code})"
@@ -205,10 +211,11 @@ class Memes(commands.Cog):
         }).find("img")
         xkcd_embed = discord.Embed(
             title=
-            f"{xkcd_img_soup['alt']} (number: {re.findall(r'^https://xkcd.com/([1-9][0-9]*)/$', xkcd_soup.find('meta', property='og:url')['content'])[0]})"
+            f"{xkcd_img_soup['alt']} (#{re.findall(r'^https://xkcd.com/([1-9][0-9]*)/$', xkcd_soup.find('meta', property='og:url')['content'])[0]})",
+            url=xkcd_req.url
         )
         xkcd_embed.set_image(url=f"https:{xkcd_img_soup['src']}")
-        xkcd_embed.set_footer(text=f"hover text: {xkcd_img_soup['title']}")
+        xkcd_embed.set_footer(text=f"{xkcd_img_soup['title']}")
         await ctx.send(embed=xkcd_embed)
 
 
