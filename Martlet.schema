@@ -58,3 +58,8 @@ CREATE TABLE IF NOT EXISTS `Reactions` (
     FOREIGN KEY(`ReacteeID`) REFERENCES `Members`(`ID`)
 );
 CREATE UNIQUE INDEX IF NOT EXISTS `unique_reaction` ON `Reactions` (`ReacterID`, `ReacteeID`, `ReactionName`, `MessageID`);
+
+CREATE TABLE IF NOT EXISTS `PreviousRoles` (
+	`ID`	      INTEGER UNIQUE,
+	`Roles`       TEXT
+);

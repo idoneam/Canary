@@ -38,6 +38,8 @@ $ poetry install
 
 7. In order to run bots on Discord, you need to [create a bot account](https://github.com/reactiflux/discord-irc/wiki/Creating-a-discord-bot-&-getting-a-token).
 
+8. In the Discord Developer Portal, you must enable the "Presence" and "Server Members" Privileged Gateway Intents (In the Bot tab of your application)
+
 You must set certain values in the `config.ini` file, in particular your Discord bot token (which you get in the previous link) and the values in the `[Server]` section.
 <details><summary>Click here to see descriptions for a few of those values</summary><p>
  
@@ -57,7 +59,11 @@ You must set certain values in the `config.ini` file, in particular your Discor
     * `Repository`: The HTTPS remote for this repository, used by the `update` command as the remote when pulling.
 * `[Logging]`
     * `LogLevel`: [See this for a list of levels](https://docs.python.org/3/library/logging.html#levels). Logs from exceptions and commands like `mix` and `bac` are at the `info` level. Logging messages from the level selected *and* from more severe levels will be sent to your logging file. For example, setting the level to `info` also sends logs from `warning`, `error` and `critical`, but not  from `debug`.
-    * `LogFile`: The file where the logging output will be sent (will be created there by the bot if it doesn't exist).
+    * `LogFile`: The file where the logging output will be sent (will be created there by the bot if it doesn't exist). Note that all logs are sent there, including those destined for devs and those destined for mods.
+    * `DevLogWebhookID`: Optional. If the ID of a webhook is input (and it's token below), logs destined for devs will also be sent to it. These values are contained in the discord webhook url: [discordapp.com/api/webhooks/WEBHOOK_ID/WEBHOOK_TOKEN](discordapp.com/api/webhooks/WEBHOOK_ID/WEBHOOK_TOKEN)
+    * `DevLogWebhookToken`: Optional. See above. 
+    * `ModLogWebhookID`: Optional. If the ID of a webhook is input (and it's token below), logs destined for mods will also be sent to it. See the URL above to see how to find those values.
+    * `ModLogWebhookToken`: Optional. See above. 
 * `[DB]`
     * `Schema`: Location of the Schema file that creates tables in the database (This file already exists so you shouldn't have to change this unless you rename it or change its location).
     * `Path`: Your database file path (will be created there by the bot if it doesn't exist).
