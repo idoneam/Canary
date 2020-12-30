@@ -188,7 +188,9 @@ class Memes(commands.Cog):
         else:
             xkcd_command_num: int = int(xkcd_command)
             if xkcd_command_num > 0:
-                await ctx.send(f"xkcd number {xkcd_command_num} is less than one, such an issue cannot exist")
+                await ctx.send(
+                    f"xkcd number {xkcd_command_num} is less than one, such an issue cannot exist"
+                )
                 return
             try:
                 xkcd_req = requests.get(
@@ -212,8 +214,7 @@ class Memes(commands.Cog):
         xkcd_embed = discord.Embed(
             title=
             f"{xkcd_img_soup['alt']} (#{re.findall(r'^https://xkcd.com/([1-9][0-9]*)/$', xkcd_soup.find('meta', property='og:url')['content'])[0]})",
-            url=xkcd_req.url
-        )
+            url=xkcd_req.url)
         xkcd_embed.set_image(url=f"https:{xkcd_img_soup['src']}")
         xkcd_embed.set_footer(text=f"{xkcd_img_soup['title']}")
         await ctx.send(embed=xkcd_embed)
