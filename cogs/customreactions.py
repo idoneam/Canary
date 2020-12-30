@@ -25,6 +25,7 @@ import random
 import sqlite3
 from .utils.paginator import Pages
 import time
+from .utils.p_strings import PStringEncodings
 
 EMOJI = {
     "new": "🆕",
@@ -39,6 +40,7 @@ EMOJI = {
     "arrow_backward": "◀",
     "arrow_forward": "▶",
     "fast_forward": "⏩",
+    "grey_question": "❔",
     "zero": "0️⃣",
     "one": "1️⃣",
     "two": "2️⃣",
@@ -61,8 +63,8 @@ class CustomReactions(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.reaction_list = []
-        self.reaction_list_prompts = []
         self.proposal_list = []
+        self.p_strings = None
         self.rebuild_lists()
 
     def rebuild_lists(self):
@@ -74,8 +76,15 @@ class CustomReactions(commands.Cog):
         c = conn.cursor()
         c.execute('SELECT * FROM CustomReactions WHERE Proposal = 0')
         self.reaction_list = c.fetchall()
-        # get list of the Prompt column only
-        self.reaction_list_prompts = [row[1] for row in self.reaction_list]
+        prompts = [row[1].lower() for row in self.reaction_list]
+        responses = [row[2].lower() for row in self.reaction_list]
+        anywhere_values = [row[5] for row in self.reaction_list]
+        additional_info_list = [(row[4], row[6]) for row in self.reaction_list]
+        self.p_strings = PStringEncodings(
+            prompts,
+            responses,
+            anywhere_values,
+            additional_info_list=additional_info_list)
         conn.close()
 
     def rebuild_proposal_list(self):
@@ -90,42 +99,22 @@ class CustomReactions(commands.Cog):
         if message.author == self.bot.user:
             return
 
-        if any(s.lower() in message.content.lower()
-               for s in self.reaction_list_prompts):
-            # get indices of every prompt that contains the message.
-            # Done this way to not compute it every time a message is sent
-            indices = [
-                i for i, x in enumerate(self.reaction_list_prompts)
-                if x.lower() in message.content.lower()
-            ]
-            # only keep the ones that are exactly the message, or that are
-            # contained in the message AND have the anywhere option activated
-            reactions_at_indices = [self.reaction_list[i] for i in indices]
-            reactions = [
-                reaction for reaction in reactions_at_indices
-                if (reaction[1].lower() == message.content.lower()
-                    or reaction[5] == 1)
-            ]
-
-            # return if no reactions were kept
-            if not reactions:
-                return
-
-            # choose a random one of these
-            reaction = random.choice(reactions)
-
+        response = self.p_strings.parser(message.content,
+                                         user=message.author.mention,
+                                         channel=str(message.channel))
+        if response:
             # delete the prompt if DeletePrompt option is activated
-            if reaction[4] == 1:
+            if response.additional_info[0] == 1:
                 await message.delete()
 
             # send the response if DM option selected,
             # send in the DM of the user who wrote the prompt
-            if reaction[6] == 1:
-                await message.author.send(reaction[2])
+            if response.additional_info[1] == 1:
+                await message.author.send(str(response))
             else:
-                await message.channel.send(reaction[2])
+                await message.channel.send(str(response))
 
-    @commands.max_concurrency(1, per=commands.BucketType.channel, wait=False)
+    @commands.max_concurrency(1, per=commands.BucketType.user, wait=False)
     @commands.command(
         aliases=['customreaction', 'customreacts', 'customreact'])
     async def customreactions(self, ctx):
@@ -170,7 +159,8 @@ class CustomReactions(commands.Cog):
                 if msg.content.isdigit():
                     return all((not msg_user
                                 or msg.author == msg_user, not number_range
-                                or int(msg.content) in number_range))
+                                or int(msg.content) in number_range,
+                                msg.channel == ctx.channel))
 
             return number_check
 
@@ -226,18 +216,21 @@ class CustomReactions(commands.Cog):
                     f"and modify them\n"
                     f"{EMOJI['pencil']} See the list of proposed reactions "
                     f"({get_number_of_proposals()}) "
-                    f"and approve or reject them")
+                    f"and approve or reject them\n"
+                    f"{EMOJI['grey_question']} List of placeholders")
             else:
                 description = (
                     f"{EMOJI['new']} Propose a new custom reaction\n"
                     f"{EMOJI['mag']} See the list of current reactions\n"
                     f"{EMOJI['pencil']} See the list of proposed reactions "
-                    f"({get_number_of_proposals()})")
-            current_options.extend((EMOJI['new'], EMOJI['mag'],
-                                    EMOJI['pencil'], EMOJI['stop_button']))
+                    f"({get_number_of_proposals()})\n"
+                    f"{EMOJI['grey_question']} List of placeholders")
+            current_options.extend(
+                (EMOJI['new'], EMOJI['mag'], EMOJI['pencil'],
+                 EMOJI['grey_question'], EMOJI['stop_button']))
             await add_multiple_reactions(
                 message, (EMOJI['new'], EMOJI['mag'], EMOJI['pencil'],
-                          EMOJI['stop_button']))
+                          EMOJI['grey_question'], EMOJI['stop_button']))
             await message.edit(embed=discord.Embed(
                 title="Custom Reactions", description=description).set_footer(
                     text=f"{main_user}: Click on an emoji to choose an "
@@ -261,6 +254,10 @@ class CustomReactions(commands.Cog):
             # List proposals
             if reaction.emoji == EMOJI['pencil']:
                 await list_custom_reacts(message, proposals=True)
+                return
+            # List placeholders
+            if reaction.emoji == EMOJI['grey_question']:
+                await list_placeholders(message)
                 return
             # Stop
             if reaction.emoji == EMOJI['stop_button']:
@@ -402,9 +399,14 @@ class CustomReactions(commands.Cog):
                 return
 
             reaction_dict = {
-                "names": [f"[{i+1}]" for i in range(len(current_list))],
+                "names": [f"[{i + 1}]" for i in range(len(current_list))],
                 "values": [
-                    f'Prompt: {reaction[1]}\nResponse: {reaction[2]}'
+                    f'Prompt: '
+                    f'{reaction[1][:min(len(reaction[1]), 287)]}'
+                    f'{"..." if len(reaction[1]) > 287 else ""}'
+                    f'\nResponse: '
+                    f'{reaction[2][:min(len(reaction[2]), 287)]}'
+                    f'{"..." if len(reaction[2]) > 287 else ""}'
                     for reaction in current_list
                 ]
             }
@@ -518,7 +520,12 @@ class CustomReactions(commands.Cog):
                         "names":
                         [f"[{i + 1}]" for i in range(len(current_list))],
                         "values": [
-                            f'Prompt: {reaction[1]}\nResponse: {reaction[2]}'
+                            f'Prompt: '
+                            f'{reaction[1][:min(len(reaction[1]), 287)]}'
+                            f'{"..." if len(reaction[1]) > 287 else ""}'
+                            f'\nResponse: '
+                            f'{reaction[2][:min(len(reaction[2]), 287)]}'
+                            f'{"..." if len(reaction[2]) > 287 else ""}'
                             for reaction in current_list
                         ]
                     }
@@ -1197,6 +1204,42 @@ class CustomReactions(commands.Cog):
             if reaction.emoji == EMOJI['stop_button']:
                 await leave(message)
                 return True
+
+        async def list_placeholders(message):
+            title = ("The following placeholders can be used in "
+                     "prompts and responses:")
+            description = ("-%user%: the user who called "
+                           "the prompt (can only be used in a response)\n"
+                           "-%channel%: the name of "
+                           "the channel where the prompt was called "
+                           "(can only be used in a response) \n"
+                           "-%1%, %2%, etc. up to %9%: Groups. When a "
+                           "prompt uses this, anything will match. For "
+                           "example, the prompt \"i %1% apples\" will work "
+                           "for any message that starts with \"i\" and ends "
+                           "with \"apples\", such as \"i really like "
+                           "apples\". Then, the words that match to this "
+                           "group can be used in the response. For example, "
+                           "keeping the same prompt and using the response "
+                           "\"i %1% pears\" will send "
+                           "\"i really like pears\"\n"
+                           "-%[]%: a comma-separated choice list. There are "
+                           "two uses for this. The first is that when it is "
+                           "used in a prompt, the prompt will accept either "
+                           "of the choices. For example, the prompt "
+                           "\"%[hello, hi, hey]% world\" will work if someone "
+                           "writes \"hello world\", \"hi world\" or "
+                           "\"hey world\". The second use is that when it is "
+                           "used in a response, a random choice will be "
+                           "chosen from the list. For example, the response "
+                           "\"i %[like, hate]% you\" will either send \"i "
+                           "like you\" or \"i hate you\". All placeholders "
+                           "can be used in choice lists (including choice "
+                           "lists themselves). If a choice contains commas, "
+                           "it can be surrounded by \"\" to not be split into "
+                           "different choices")
+            await message.edit(
+                embed=discord.Embed(title=title, description=description))
 
         async def leave(message):
             await message.delete()
