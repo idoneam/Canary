@@ -21,6 +21,7 @@ numpy = "*"
 aiohttp = "*"
 urllib3 = ">=1.25.3"
 feedparser = "*"
+regex = "^2020.11.13"
 
 [tool.poetry.dev-dependencies]
 yapf = "==0.30.0"
