@@ -5,9 +5,9 @@ Canary is a Python3 bot designed for the McGill University Community Discord Ser
 
 ## Build Statuses
 
-| Master  | [![Build Status](https://travis-ci.org/idoneam/Canary.svg?branch=master)](https://travis-ci.org/idoneam/Canary) |
+| Master  | [![Build Status](https://github.com/Idoneam/Canary/workflows/YAPF%20Formatting%20Check/badge.svg?branch=master)](https://github.com/Idoneam/Canary/actions?query=branch%3Amaster) |
 | ------- | --------------------------------------------------------------------------------------------------------------- |
-| **Dev** | [![Build Status](https://travis-ci.org/idoneam/Canary.svg?branch=dev)](https://travis-ci.org/idoneam/Canary)    |
+| **Dev** | [![Build Status](https://github.com/Idoneam/Canary/workflows/YAPF%20Formatting%20Check/badge.svg?branch=dev)](https://github.com/Idoneam/Canary/actions?query=branch%3Adev)  |
 
 ## Installation
 
