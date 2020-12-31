@@ -175,7 +175,7 @@ class Games(commands.Cog):
                         value=mk_hangman_str(first_line, num_mistakes,
                                              "\n".join(player_msg_list)))
                     await ctx.send(embed=hm_embed)
-                    if len(not_guessed) == 0:
+                    if not not_guessed:
                         winner = curr_msg.author
                         player_msg_list.append(
                             f"{winner} finished solving the hangman!")
