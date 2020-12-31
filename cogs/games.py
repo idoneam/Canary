@@ -24,6 +24,7 @@ from discord.ext import commands
 # Other utilities
 import re
 import os
+import sqlite3
 from time import time
 import pickle
 import random
@@ -261,15 +262,12 @@ class Games(commands.Cog):
                                          "\n".join(player_msg_list)))
                 await ctx.send(embed=hm_embed)
         if winner is not None:
-            currency_cog = self.bot.get_cog('Currency')
-            if cool_win:
-                await currency_cog.give_user_cheeps(ctx, self.hm_cool_win,
-                                                    HANGMAN_REWARD,
-                                                    {"cool": cool_win})
-            else:
-                await currency_cog.give_user_cheeps(ctx, self.hm_norm_win,
-                                                    HANGMAN_REWARD,
-                                                    {"cool": cool_win})
+            conn = sqlite3.connect(self.bot.config.db_path)
+            await self.bot.get_cog("Currency").create_bank_transaction(
+                conn.cursor(), ctx.message.author,
+                self.hm_cool_win if cool_win else self.hm_norm_win,
+                HANGMAN_REWARD, {"cool": cool_win})
+            conn.commit()
 
     @commands.command()
     async def roll(self, ctx, arg: str = '', mpr: str = ''):
