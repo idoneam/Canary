@@ -60,18 +60,24 @@ class Games(commands.Cog):
         await ctx.trigger_typing()
 
         if command == "help":
+            cat_list: str = ', '.join(
+                '`' + hm_cat + '` (length: ' +
+                str(len(self.hangman_dict[hm_cat][0])) + ')'
+                for hm_cat in sorted(self.hangman_dict.keys()))
             await ctx.send(
-                f"rules: {LOSS_MISTAKES - 1} wrong guesses are allowed, guesses must be either the entire correct word or a single letter (interpreted in a case insensitive manner)\nhere is a list of valid category commands: {', '.join('`' + hm_cat + '` (length: '+str(len(self.hangman_dict[hm_cat][0])) + ')' for hm_cat in sorted(self.hangman_dict.keys()))}"
-            )
+                f"rules: {LOSS_MISTAKES - 1} wrong guesses are allowed, "
+                f"guesses must be either the entire correct word or a "
+                f"single letter (interpreted in a case insensitive manner)\n"
+                f"here is a list of valid category commands: {cat_list}")
             return
         category: str = command or random.choice(list(
             self.hangman_dict.keys()))
         try:
             word_list, pretty_name = self.hangman_dict[category]
         except KeyError:
-            await ctx.send(
-                f"invalid category command, here is a list of valid commands: {sorted(self.hangman_dict.keys())}"
-            )
+            await ctx.send(f"invalid category command, "
+                           f"here is a list of valid commands: "
+                           f"{sorted(self.hangman_dict.keys())}")
             return
 
         hm_word, hm_img = random.choice(word_list)
@@ -123,8 +129,9 @@ class Games(commands.Cog):
                                          "\n".join(player_msg_list)))
                 await ctx.send(embed=hm_embed)
                 await ctx.send(
-                    f"sorry everyone, no one has interacted with the hangman in {TIMEOUT_TIME//60} minutes, the game has timed out"
-                )
+                    f"sorry everyone, no one has interacted with the "
+                    f"hangman in {TIMEOUT_TIME//60} minutes, "
+                    f"the game has timed out")
                 return
 
             curr_guess = curr_msg.content.lower()
@@ -146,10 +153,15 @@ class Games(commands.Cog):
                         hm_embed.set_image(url=hm_img)
                     await ctx.send(embed=hm_embed)
                     await ctx.send(
-                        f"congratulations {winner}, you solved the hangman{', but in a cool way' if  cool_win else ''}, earning you {HM_COOL_WIN_CHEEPS if cool_win else HM_WIN_CHEEPS} cheeps"
-                    )
+                        f"congratulations {winner}, you solved the hangman"
+                        f"{', but in a cool way' if  cool_win else ''}, "
+                        f"earning you "
+                        f"{HM_COOL_WIN_CHEEPS if cool_win else HM_WIN_CHEEPS}"
+                        f" cheeps")
                     break
-                if curr_guess in not_guessed:    # curr_guess in not_guessed => curr_guess is correct and new
+                if curr_guess in not_guessed:
+                    # curr_guess in not_guessed
+                    # => curr_guess is correct and new
                     not_guessed.remove(curr_guess)
                     first_line = " ".join(
                         char if lowered_char not in not_guessed else "_"
@@ -176,10 +188,12 @@ class Games(commands.Cog):
                             hm_embed.set_image(url=hm_img)
                         await ctx.send(embed=hm_embed)
                         await ctx.send(
-                            f"congratulations {winner}, you solved the hangman, earning you {HM_WIN_CHEEPS} cheeps"
-                        )
+                            f"congratulations {winner}, you solved the hangman, "
+                            f"earning you {HM_WIN_CHEEPS} cheeps")
                         break
-                elif curr_guess in lowered_word:    # curr_guess not in not_guessed (elif) and in word => curr_guess is correct but already made
+                elif curr_guess in lowered_word:
+                    # curr_guess not in not_guessed (elif) and in word
+                    # => curr_guess is correct but already made
                     append_and_slice(
                         f"{curr_msg.author}, '{curr_guess}' was already guessed"
                     )
@@ -189,7 +203,11 @@ class Games(commands.Cog):
                         value=mk_hangman_str(first_line, num_mistakes,
                                              "\n".join(player_msg_list)))
                     await ctx.send(embed=hm_embed)
-                elif curr_guess not in incorrect_guesses:    # curr_guess not in not_guessed and not in word (elif) and not in incorrect guesses => curr_guess is incorrect and new
+                elif curr_guess not in incorrect_guesses:
+                    # curr_guess not in not_guessed
+                    # and not in word (elif) and
+                    # not in incorrect guesses
+                    # => curr_guess is incorrect and new
                     num_mistakes += 1
                     incorrect_guesses.add(curr_guess)
                     last_line = f"incorrect guesses: {str(sorted(incorrect_guesses))[1:-1]}"
@@ -214,10 +232,13 @@ class Games(commands.Cog):
                                                  "\n".join(player_msg_list)))
                         await ctx.send(embed=hm_embed)
                         await ctx.send(
-                            f"sorry everyone, {curr_msg.author} used your last chance, the right answer was `{hm_word}`"
-                        )
+                            f"sorry everyone, {curr_msg.author} used your "
+                            f"last chance, the right answer was `{hm_word}`")
                         break
-                else:    # curr_guess not in not_guessed and not in word and in incorrect_guesses (else) => curr_guess is incorrect but already made
+                else:
+                    # curr_guess not in not_guessed and
+                    # not in word and in incorrect_guesses (else)
+                    # => curr_guess is incorrect but already made
                     timeout_dict[curr_msg.author] = time()
                     append_and_slice(
                         f"{curr_msg.author}, '{curr_guess}' was already guessed"
@@ -228,7 +249,8 @@ class Games(commands.Cog):
                         value=mk_hangman_str(first_line, num_mistakes,
                                              "\n".join(player_msg_list)))
                     await ctx.send(embed=hm_embed)
-            else:    # message from a time'd out user
+            else:
+                # message from a user in time out
                 append_and_slice(
                     f"{curr_msg.author} you cannot guess right now!")
                 hm_embed.set_field_at(
@@ -237,7 +259,7 @@ class Games(commands.Cog):
                     value=mk_hangman_str(first_line, num_mistakes,
                                          "\n".join(player_msg_list)))
                 await ctx.send(embed=hm_embed)
-        if winner is not None:    # placeholder for when currency function is completed
+        if winner is not None:
             currency_cog = self.bot.get_cog('Currency')
             if cool_win:
                 await currency_cog.give_user_cheeps(ctx, HM_COOL_WIN_CHEEPS,
