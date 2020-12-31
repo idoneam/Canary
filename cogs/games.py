@@ -35,14 +35,14 @@ from .utils.hangman import LOSS_MISTAKES, mk_hangman_str
 from .currency import HANGMAN_REWARD
 
 ROLL_PATTERN = re.compile(r'^(\d*)d(\d*)([+-]?\d*)$')
-HM_WIN_CHEEPS = 10
-HM_COOL_WIN_CHEEPS = 20
-TIMEOUT_TIME = 600
 
 
 class Games(commands.Cog):
     def __init__(self, bot, hangman_tbl_name: str):
         self.bot = bot
+        self.hm_cool_win = bot.config.games["hm_cool_win"]
+        self.hm_norm_win = bot.config.games["hm_norm_win"]
+        self.hm_timeout = bot.config.games["hm_timeout"]
         with open(f"{os.getcwd()}/pickles/premade/{hangman_tbl_name}.obj",
                   "rb") as hangman_pkl:
             self.hangman_dict: Dict[str, Tuple[str,
@@ -118,7 +118,7 @@ class Games(commands.Cog):
             try:
                 curr_msg = await self.bot.wait_for('message',
                                                    check=wait_for_check,
-                                                   timeout=TIMEOUT_TIME)
+                                                   timeout=self.hm_timeout)
             except TimeoutError:
                 player_msg_list.append("the game has timed out")
                 player_msg_list = player_msg_list[-3:]
@@ -130,7 +130,7 @@ class Games(commands.Cog):
                 await ctx.send(embed=hm_embed)
                 await ctx.send(
                     f"sorry everyone, no one has interacted with the "
-                    f"hangman in {TIMEOUT_TIME//60} minutes, "
+                    f"hangman in {self.hm_timeout//60} minutes, "
                     f"the game has timed out")
                 return
 
@@ -156,7 +156,7 @@ class Games(commands.Cog):
                         f"congratulations {winner}, you solved the hangman"
                         f"{', but in a cool way' if  cool_win else ''}, "
                         f"earning you "
-                        f"{HM_COOL_WIN_CHEEPS if cool_win else HM_WIN_CHEEPS}"
+                        f"{self.hm_cool_win if cool_win else self.hm_norm_win}"
                         f" cheeps")
                     break
                 if curr_guess in not_guessed:
@@ -189,7 +189,7 @@ class Games(commands.Cog):
                         await ctx.send(embed=hm_embed)
                         await ctx.send(
                             f"congratulations {winner}, you solved the hangman, "
-                            f"earning you {HM_WIN_CHEEPS} cheeps")
+                            f"earning you {self.hm_norm_win} cheeps")
                         break
                 elif curr_guess in lowered_word:
                     # curr_guess not in not_guessed (elif) and in word
@@ -210,7 +210,9 @@ class Games(commands.Cog):
                     # => curr_guess is incorrect and new
                     num_mistakes += 1
                     incorrect_guesses.add(curr_guess)
-                    last_line = f"incorrect guesses: {str(sorted(incorrect_guesses))[1:-1]}"
+                    list_of_guesses = ", ".join(
+                        f"'{char}'" for char in sorted(incorrect_guesses))
+                    last_line = f"incorrect guesses: {list_of_guesses}"
                     append_and_slice(
                         f"{curr_msg.author} guessed '{curr_guess}' wrong!")
                     timeout_dict[curr_msg.author] = time()
@@ -240,9 +242,8 @@ class Games(commands.Cog):
                     # not in word and in incorrect_guesses (else)
                     # => curr_guess is incorrect but already made
                     timeout_dict[curr_msg.author] = time()
-                    append_and_slice(
-                        f"{curr_msg.author}, '{curr_guess}' was already guessed"
-                    )
+                    append_and_slice(f"{curr_msg.author}, '{curr_guess}'"
+                                     f" was already guessed")
                     hm_embed.set_field_at(
                         0,
                         name=f"hangman (category: {pretty_name})",
@@ -262,11 +263,11 @@ class Games(commands.Cog):
         if winner is not None:
             currency_cog = self.bot.get_cog('Currency')
             if cool_win:
-                await currency_cog.give_user_cheeps(ctx, HM_COOL_WIN_CHEEPS,
+                await currency_cog.give_user_cheeps(ctx, self.hm_cool_win,
                                                     HANGMAN_REWARD,
                                                     {"cool": cool_win})
             else:
-                await currency_cog.give_user_cheeps(ctx, HM_WIN_CHEEPS,
+                await currency_cog.give_user_cheeps(ctx, self.hm_norm_win,
                                                     HANGMAN_REWARD,
                                                     {"cool": cool_win})
 
