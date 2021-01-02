@@ -1,4 +1,4 @@
-# Copyright (C) idoneam (2016-2020)
+# Copyright (C) idoneam (2016-2021)
 #
 # This file is part of Canary
 #
@@ -1245,10 +1245,10 @@ class CustomReactions(commands.Cog):
             await message.delete()
 
         initial_message = await ctx.send(embed=LOADING_EMBED)
-        is_moderator = (discord.utils.get(main_user.roles,
-                                          name=self.bot.config.moderator_role)
-                        is not None)
-        await create_assistant(initial_message, is_moderator)
+        is_mod = (discord.utils.get(main_user.roles,
+                                    name=self.bot.config.moderator_role)
+                  is not None)
+        await create_assistant(initial_message, is_mod)
 
 
 def setup(bot):
