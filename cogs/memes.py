@@ -80,62 +80,6 @@ class Memes(commands.Cog):
         await ctx.message.delete()
 
     @commands.command()
-    async def gohere(self, ctx):
-        """
-        for future mcgillians
-        """
-        await ctx.send("http://gph.is/1cN9wO1")
-        await ctx.message.delete()
-
-    @commands.command()
-    async def tunak(self, ctx):
-        """
-        bitch pls
-        """
-        await ctx.send("http://i.imgur.com/rNNLyjK.gif")
-        await ctx.message.delete()
-
-    @commands.command()
-    async def bb8(self, ctx):
-        """
-        nice job bb8
-        """
-        await ctx.send("http://i.imgur.com/SUvaUM2.gif")
-        await ctx.message.delete()
-
-    @commands.command()
-    async def longtime(self, ctx):
-        """
-        That's a name I've not heard in a long time
-        """
-        await ctx.send("http://i.imgur.com/e1T1xcq.mp4")
-        await ctx.message.delete()
-
-    @commands.command()
-    async def thonk(self, ctx):
-        """
-        when thonking consumes you
-        """
-        await ctx.send("https://i.imgur.com/VADGUwj.gifv")
-        await ctx.message.delete()
-
-    @commands.command()
-    async def dealwithit(self, ctx):
-        """
-        deal with it trump
-        """
-        await ctx.send("http://i.imgur.com/5jzN8zV.mp4")
-        await ctx.message.delete()
-
-    @commands.command()
-    async def lmao(self, ctx):
-        """
-        that's hilarious
-        """
-        await ctx.send("http://i.imgur.com/o5Cc3i2.mp4")
-        await ctx.message.delete()
-
-    @commands.command()
     async def cheep(self, ctx):
         """:^)"""
         await ctx.send('CHEEP CHEEP')

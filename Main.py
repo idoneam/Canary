@@ -44,19 +44,8 @@ startup = [
     "cogs.roles",
     "cogs.score",
     "cogs.subscribers",
+    "cogs.customreactions",    # Do not remove this terminating comma.
 ]
-
-# TODO: SHOULD BE DB
-MARTY_RESPONSES = {
-    "dammit marty":
-    ":c",
-    "worm":
-    "walk without rhythm, and it won't attract the worm.",
-    "hey":
-    "whats going on?",
-    "this is so sad, marty play despacito":
-    "`Now playing:` https://www.youtube.com/watch?v=kJQP7kiw5Fk"
-}
 
 
 @bot.event
@@ -136,19 +125,6 @@ async def update(ctx):
                                            shell=True)
     status_message = shell_output.decode("unicode_escape")
     await ctx.send('`{}`'.format(status_message))
-
-
-@bot.event
-async def on_message(message):
-    if message.author == bot.user:
-        return
-
-    key = message.content.lower()
-    if key in MARTY_RESPONSES:
-        await message.channel.send(MARTY_RESPONSES[key])
-        return
-
-    await bot.process_commands(message)
 
 
 @bot.command()

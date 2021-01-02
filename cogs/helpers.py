@@ -117,6 +117,7 @@ class Helpers(commands.Cog):
         # and more (or the normal temperature if it is higher), and a linear
         # roll-off of the wind chill between 10°C and 14°C
         # (https://blog.metservice.com/FeelsLikeTemp)
+        # Written by @le-potate
         temperature = float(
             re.search(r"-?\d+\.\d", temperature_string).group())
         wind_speed_kph = float(re.search(r"\d+", wind_string).group())
@@ -499,6 +500,7 @@ class Helpers(commands.Cog):
     @commands.command(
         aliases=['foodspot', 'fs', 'food', 'foodspotting', 'food_spotting'])
     async def food_spot(self, ctx, *args):
+        # Written by @le-potate
         """Posts a food sale in #foodspotting.
         Use: `?foodspot Samosas in leacock`
         You can also attach one picture to your message (Write the command in
