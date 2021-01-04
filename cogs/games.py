@@ -165,6 +165,7 @@ class Games(commands.Cog):
                     # and not in word (elif) and
                     # not in incorrect guesses
                     # => curr_guess is incorrect and new
+                    timeout_dict[curr_msg.author] = time()
                     incorrect_guesses.add(curr_guess)
                     continue_game = update_embed(
                         f"{curr_msg.author} guessed '{curr_guess}' wrong!",
