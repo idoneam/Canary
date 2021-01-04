@@ -170,12 +170,17 @@ def mk_hm_embed_up_fn(category_name, word, lowered_word, not_guessed,
         value=f"`{first_line}`\n```{HANG_LIST[num_mistakes]}```").set_footer(
             text=last_line)
 
-    def heupf(new_msg,
+    def heuf(new_msg,
               *,
               incorrect_guess=False,
               correct_guess=False,
               img_url=None):
         nonlocal embed
+        nonlocal player_msg_list
+
+        player_msg_list.append(new_msg)
+        player_msg_list = player_msg_list[-3:]
+
         ret_val: bool = True
         if incorrect_guess:
             nonlocal last_line
@@ -190,19 +195,19 @@ def mk_hm_embed_up_fn(category_name, word, lowered_word, not_guessed,
                 char if lowered_char not in not_guessed else "_"
                 for char, lowered_char in zip(word, lowered_word))
             ret_val = bool(not_guessed)
-        nonlocal player_msg_list
-        player_msg_list.append(new_msg)
-        player_msg_list = player_msg_list[-3:]
+
+        if img_url:
+            embed.set_image(url=img_url)
+
         embed.set_field_at(0,
                            name=field_name,
                            value="`{0}`\n```{1}```\n{2}".format(
                                first_line, HANG_LIST[num_mistakes],
                                "\n".join(player_msg_list)))
-        if img_url:
-            embed.set_image(url=img_url)
+
         return ret_val
 
-    return heupf, embed
+    return heuf, embed
 
 
 def mk_hangman_dict(file_name) -> Dict[str, List[Tuple[str, str]]]:
