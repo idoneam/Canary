@@ -334,7 +334,7 @@ class Helpers(commands.Cog):
             if len(headers[i]) <= 256:
                 em.add_field(name=headers[i], value=sections[i], inline=False)
             else:
-                em.add_field(name=f"{headers[i][:253]}...",
+                em.add_field(name=f"{headers[i][:255]}\u2026",
                              value=sections[i],
                              inline=False)
 
