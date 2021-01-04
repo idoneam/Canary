@@ -1,6 +1,7 @@
 import pickle
 from typing import List, Tuple, Dict
 import requests
+import discord
 from bs4 import BeautifulSoup
 
 HANG_LIST: List[str] = [
@@ -63,11 +64,17 @@ def mk_animal_list() -> List[Tuple[str, str]]:
         curr_entry = animal_list_soup[i].find("td")
         if curr_entry:
             animal_name = curr_entry.find("a")
-            animal_list.append(
-                (animal_name["title"].split(' (')[0], "https:" + BeautifulSoup(
+            img = BeautifulSoup(
+                requests.get(
+                    f"https://en.wikipedia.org{animal_name['href']}").content,
+                "html.parser").find("img")
+            if str(img["alt"]) == "Page semi-protected":
+                img = BeautifulSoup(
                     requests.get(
                         f"https://en.wikipedia.org{animal_name['href']}").
-                    content, "html.parser").find("img")["src"]))
+                    content, "html.parser").find_all("img")[1]
+            animal_list.append(
+                (animal_name["title"].split(' (')[0], "https:" + img["src"]))
     return animal_list
 
 
@@ -147,8 +154,54 @@ def mk_movie_list() -> List[Tuple[str, str]]:
     return kino_list
 
 
-def mk_hangman_str(first, num_mistakes, mid) -> str:
-    return f"`{first}`\n```{HANG_LIST[num_mistakes]}```\n{mid}"
+def mk_hm_embed_up_fn(category_name, word, lowered_word, not_guessed,
+                      incorrect_guesses):
+    field_name: str = f"hangman (category: {category_name})"
+    first_line: str = " ".join(
+        char if lowered_char not in not_guessed else "_"
+        for char, lowered_char in zip(word, lowered_word))
+    last_line: str = "incorrect guesses: "
+    player_msg_list: List[str] = []
+    num_mistakes: int = 0
+    embed = discord.Embed(colour=0xFF0000)
+    embed.add_field(
+        name=field_name,
+        value=f"`{first_line}`\n```{HANG_LIST[num_mistakes]}```").set_footer(
+            text=last_line)
+
+    def heupf(new_msg,
+              *,
+              incorrect_guess=False,
+              correct_guess=False,
+              img_url=None):
+        nonlocal embed
+        ret_val = True
+        if incorrect_guess:
+            nonlocal last_line
+            nonlocal num_mistakes
+            last_line = f"""incorrect guesses: {", ".join("'"+char+"'" for char in sorted(incorrect_guesses))}"""
+            num_mistakes += 1
+            embed.set_footer(text=last_line)
+            ret_val = num_mistakes < LOSS_MISTAKES
+        if correct_guess:
+            nonlocal first_line
+            first_line = " ".join(
+                char if lowered_char not in not_guessed else "_"
+                for char, lowered_char in zip(word, lowered_word))
+            ret_val = bool(not_guessed)
+        nonlocal player_msg_list
+        player_msg_list.append(new_msg)
+        player_msg_list = player_msg_list[-3:]
+        embed.set_field_at(0,
+                           name=field_name,
+                           value="`{0}`\n```{1}```\n{2}".format(
+                               first_line, HANG_LIST[num_mistakes],
+                               "\n".join(player_msg_list)))
+        if img_url:
+            embed.set_image(url=img_url)
+        return ret_val
+
+    return heupf, embed
 
 
 def mk_hangman_dict(file_name) -> Dict[str, List[Tuple[str, str]]]:
