@@ -171,10 +171,10 @@ def mk_hm_embed_up_fn(category_name, word, lowered_word, not_guessed,
             text=last_line)
 
     def heuf(new_msg,
-              *,
-              incorrect_guess=False,
-              correct_guess=False,
-              img_url=None):
+             *,
+             incorrect_guess=False,
+             correct_guess=False,
+             img_url=None):
         nonlocal embed
         nonlocal player_msg_list
 
