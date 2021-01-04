@@ -2,6 +2,7 @@ import pickle
 from typing import List, Tuple, Dict
 import requests
 import discord
+import random
 from bs4 import BeautifulSoup
 
 HANG_LIST: List[str] = [
@@ -163,7 +164,7 @@ def mk_hm_embed_up_fn(category_name, word, lowered_word, not_guessed,
     last_line: str = "incorrect guesses: "
     player_msg_list: List[str] = []
     num_mistakes: int = 0
-    embed = discord.Embed(colour=0xFF0000)
+    embed = discord.Embed(colour=random.randint(0, 16777215))
     embed.add_field(
         name=field_name,
         value=f"`{first_line}`\n```{HANG_LIST[num_mistakes]}```").set_footer(
@@ -175,7 +176,7 @@ def mk_hm_embed_up_fn(category_name, word, lowered_word, not_guessed,
               correct_guess=False,
               img_url=None):
         nonlocal embed
-        ret_val = True
+        ret_val: bool = True
         if incorrect_guess:
             nonlocal last_line
             nonlocal num_mistakes
