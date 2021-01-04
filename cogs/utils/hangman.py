@@ -164,7 +164,6 @@ def mk_hm_embed_up_fn(category_name, word, lowered_word, not_guessed,
     last_line: str = "incorrect guesses: "
     player_msg_list: List[str] = []
     num_mistakes: int = 0
-    heuf_ret: bool = True
     embed = discord.Embed(colour=random.randint(0, 16777215))
     embed.add_field(
         name=field_name,
@@ -185,18 +184,14 @@ def mk_hm_embed_up_fn(category_name, word, lowered_word, not_guessed,
         if incorrect_guess:
             nonlocal last_line
             nonlocal num_mistakes
-            nonlocal heuf_ret
             last_line = f"""incorrect guesses: {", ".join("'"+char+"'" for char in sorted(incorrect_guesses))}"""
             num_mistakes += 1
             embed.set_footer(text=last_line)
-            heuf_ret = num_mistakes < LOSS_MISTAKES
         if correct_guess:
             nonlocal first_line
-            nonlocal heuf_ret
             first_line = " ".join(
                 char if lowered_char not in not_guessed else "_"
                 for char, lowered_char in zip(word, lowered_word))
-            heuf_ret = bool(not_guessed)
 
         if img_url:
             embed.set_image(url=img_url)
@@ -207,7 +202,7 @@ def mk_hm_embed_up_fn(category_name, word, lowered_word, not_guessed,
                                first_line, HANG_LIST[num_mistakes],
                                "\n".join(player_msg_list)))
 
-        return heuf_ret
+        return bool(not_guessed) and num_mistakes < LOSS_MISTAKES
 
     return heuf, embed
 
