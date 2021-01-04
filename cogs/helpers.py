@@ -331,12 +331,10 @@ class Helpers(commands.Cog):
                            colour=0xDA291C)
 
         for i in range(len(headers)):
-            if len(headers[i]) <= 256:
-                em.add_field(name=headers[i], value=sections[i], inline=False)
-            else:
-                em.add_field(name=f"{headers[i][:255]}\u2026",
-                             value=sections[i],
-                             inline=False)
+            em.add_field(name=f"{headers[i][:255]}\u2026"
+                         if len(headers[i]) > 256 else headers[i],
+                         value=sections[i],
+                         inline=False)
 
         await ctx.send(embed=em)
 
