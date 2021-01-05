@@ -113,9 +113,8 @@ class ArgConverter:
             for key in remaining_vars:
                 try:
                     # try converting the argument
-                    converted_arguments_dict[
-                        key] = await remaining_vars[key][0].convert(
-                            ctx, arg)
+                    converted_arguments_dict[key] = await remaining_vars[key][
+                        0].convert(ctx, arg)
                     # if we did, delete the key from the converters dict
                     # as a converter
                     del remaining_vars[key]
