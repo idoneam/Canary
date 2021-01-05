@@ -660,21 +660,22 @@ class Helpers(commands.Cog):
         ui_embed = discord.Embed(colour=user.id % 16777215)
         ui_embed.add_field(
             name="name/nick",
-            value=f"name: {user.name}{', nick: '+user.nick if user.nick else ''}"
-        ).add_field(
-            name="id",
-            value=user.id,
-        ).add_field(name="joined server", value=user.joined_at,
+            value=
+            f"name: {user.name}{', nick: '+user.nick if user.nick else ''}\n",
+            inline=False).add_field(
+                name="id", value=user.id, inline=False).add_field(
+                    name="joined server",
+                    value=user.joined_at.strftime("%m/%d/%Y, %H:%M:%S"),
                     inline=False).add_field(
                         name="joined discord",
-                        value=user.created_at,
-                    ).add_field(
-                        name=f"top role",
-                        value=str(user.top_role),
+                        value=user.created_at.strftime("%m/%d/%Y, %H:%M:%S"),
                         inline=False).add_field(
-                            name="avatar url",
-                            value=user.avatar_url,
-                            inline=False).set_image(url=user.avatar_url)
+                            name=f"top role",
+                            value=str(user.top_role),
+                            inline=False).add_field(
+                                name="avatar url",
+                                value=user.avatar_url,
+                                inline=False).set_image(url=user.avatar_url)
         await ctx.send(embed=ui_embed)
 
     @commands.command()
