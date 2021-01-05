@@ -206,13 +206,19 @@ class Roles(commands.Cog):
                                Roles.ALL_CATEGORIES)
 
     @commands.command()
-    async def roles(self, ctx):
+    async def roles(self, ctx, user: discord.Member = None):
         """Returns list of all roles in server"""
-        role_names = [role.name for role in ctx.guild.roles]
+        role_names = [
+            role.name
+            for role in (ctx.guild.roles if user is None else user.roles)
+            if role != ctx.guild.default_role
+        ]
         role_names.reverse()
-        await Roles.paginate_roles(ctx,
-                                   role_names,
-                                   title="All roles in server")
+        await Roles.paginate_roles(
+            ctx,
+            role_names,
+            title=("all roles in server" if user is None else
+                   f"{user.display_name}'s roles") + f" ({len(role_names)})")
 
     @commands.command()
     async def inrole(self, ctx, *, query_role):
