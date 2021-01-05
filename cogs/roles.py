@@ -207,7 +207,8 @@ class Roles(commands.Cog):
 
     @commands.command()
     async def roles(self, ctx, user: discord.Member = None):
-        """Returns list of all roles in server"""
+        """Returns list of all roles in server or
+        the list of a specific user's roles"""
         role_names = [
             role.name
             for role in (ctx.guild.roles if user is None else user.roles)
