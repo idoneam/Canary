@@ -683,9 +683,13 @@ class Helpers(commands.Cog):
 
         await ctx.send(embed=ui_embed)
 
-    @commands.command()
-    async def roles(self, ctx, user: discord.Member = None):
-        """Show user info"""
+    @commands.command(aliases=["user_roles", "userroles", "useroles"])
+    async def uroles(self, ctx, user: discord.Member = None):
+        """
+        Show user roles
+        Defaults to displaying the roles of the user
+        that called the command, whoever another member's username
+        can be passed as an optional argument to display their roles"""
         if user is None:
             user = ctx.author
         roles_embed = discord.Embed(colour=user.id % 16777215)
