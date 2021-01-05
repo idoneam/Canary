@@ -652,6 +652,43 @@ class Helpers(commands.Cog):
 
         conn.close()
 
+    @commands.command(aliases=["ui", "av", "avi", "userinfo"])
+    async def user_info(self, ctx, user: discord.Member = None):
+        """Show user info"""
+        if user is None:
+            user = ctx.author
+        ui_embed = discord.Embed(colour=user.id % 16777215)
+        ui_embed.add_field(
+            name="name/nick",
+            value=f"name: {user.name}{', nick: '+user.nick if user.nick else ''}"
+        ).add_field(
+            name="id",
+            value=user.id,
+        ).add_field(name="joined server", value=user.joined_at,
+                    inline=False).add_field(
+                        name="joined discord",
+                        value=user.created_at,
+                    ).add_field(
+                        name=f"top role",
+                        value=str(user.top_role),
+                        inline=False).add_field(
+                            name="avatar url",
+                            value=user.avatar_url,
+                            inline=False).set_image(url=user.avatar_url)
+        await ctx.send(embed=ui_embed)
+
+    @commands.command()
+    async def roles(self, ctx, user: discord.Member = None):
+        """Show user info"""
+        if user is None:
+            user = ctx.author
+        roles_embed = discord.Embed(colour=user.id % 16777215)
+        roles_embed.add_field(name=f"roles ({len(user.roles) - 1})",
+                              value="\n".join(
+                                  str(role) for role in user.roles
+                                  if role != ctx.guild.default_role))
+        await ctx.send(embed=roles_embed)
+
 
 def setup(bot):
     bot.add_cog(Helpers(bot))
