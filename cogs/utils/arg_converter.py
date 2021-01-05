@@ -17,6 +17,8 @@
 
 from discord.ext import commands
 
+# Written by @le-potate
+
 
 class ArgConverter:
     """
@@ -27,7 +29,7 @@ class ArgConverter:
     Arg: A dictionary where keys are a string representing the variable names,
     and values are a tuple with the converter and the default value. If no
     default value is given, the variable is required.
-
+    -----------
     A converter is an object that tries to convert an argument to a certain
     class. If it can't, it raises discord.ext.commands.BadArgument. It takes
     as input a discord context and an argument.
@@ -67,7 +69,9 @@ class ArgConverter:
     except commands.BadArgument as err:
         await ctx.send(err)
         return
-    await ctx.send(f"{str(member)}, {channel}, {string_A}")
+    await ctx.send(f"{str(args_dict["member"])}, "
+                   f"{args_dict["channel"]}, "
+                   f"{args_dict["string_A"]}")
 
     Here are example inputs and what is sent in the server:
     `?example #channel`: None, #channel, hi
@@ -79,10 +83,6 @@ class ArgConverter:
     """
     def __init__(self, converters_dict):
         self.converters_dict = converters_dict
-        # get the list of variables that are required
-        self.req_vars = [
-            key for key, value in converters_dict.items() if len(value) == 1
-        ]
 
     async def convert(self, ctx, arguments):
         """
@@ -102,33 +102,25 @@ class ArgConverter:
 
         Returns a dictionary with the variables as keys, and their values.
         """
+        remaining_vars = self.converters_dict.copy()
         # initialize the converted dict with None values
-        converted_arguments_dict = dict.fromkeys(self.converters_dict)
-        # get a copy of the list of variables that are required
-        # if there are still values in this at the end, an error will be raised
-        remaining_req_vars = self.req_vars.copy()
+        converted_arguments_dict = {}
+
         for arg in arguments:
             # keep track if the argument is converted. If it is not after
             # trying every converter, an error will be raised
             arg_converted = False
-            for key in self.converters_dict:
+            for key in remaining_vars:
                 try:
-                    # if the value for that key
-                    # is still none in the converted dict
-                    if not converted_arguments_dict[key]:
-                        # try converting the argument
-                        converted_arguments_dict[
-                            key] = await self.converters_dict[key][0].convert(
-                                ctx, arg)
-                        # if we did, delete the key from the converters dict
-                        # as there can only be one value per key
-                        del self.converters_dict[key]
-                        # if this key was required, remove it from the list
-                        # of remaining required keys
-                        if key in remaining_req_vars:
-                            remaining_req_vars.remove(key)
-                        arg_converted = True
-                        break
+                    # try converting the argument
+                    converted_arguments_dict[
+                        key] = await remaining_vars[key][0].convert(
+                            ctx, arg)
+                    # if we did, delete the key from the converters dict
+                    # as a converter
+                    del remaining_vars[key]
+                    arg_converted = True
+                    break
                 except commands.BadArgument:
                     # if this converted didn't work, we try the next
                     pass
@@ -136,15 +128,12 @@ class ArgConverter:
                 raise commands.BadArgument(
                     f"Invalid input: Argument \"{arg}\" could not be converted"
                 )
-        # if there are still required variables
-        if remaining_req_vars:
-            raise commands.BadArgument(
-                f"Invalid input: Missing required argument"
-                f"{'s' if len(remaining_req_vars)>1 else ''} "
-                f"{str(remaining_req_vars)[1:-1]}")
-        # for values that are still None, replace them by their default value
-        # if applicable
-        for key, value in converted_arguments_dict.items():
-            if not value:
+        # if there are remaining variables, either set them to their default
+        # values or raise commands.BadArgument if they are required
+        for key in remaining_vars:
+            if len(self.converters_dict[key]) == 1:
+                raise commands.BadArgument(f"Invalid input: Missing required "
+                                           f"argument {key}")
+            else:
                 converted_arguments_dict[key] = self.converters_dict[key][1]
         return converted_arguments_dict
