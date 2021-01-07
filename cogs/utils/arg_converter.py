@@ -22,14 +22,33 @@ from discord.ext import commands
 
 class ArgConverter:
     """
-    The ArgConverter object is used to pseudo-typecheck and cast
-    a list of arguments using the given converters, regardless of order.
-    Matches each converters at most once.
+    The ArgConverter object holds a dictionary used by the convert function
+    to pseudo-typecheck and cast a list of arguments using the given
+    converters (see below for explanation), regardless of order
+    (except if multiple converters match an argument, see below).
+    When converting, converters are used at most once.
+    Raises commands.BadArgument if not all required arguments were given,
+    and if it was not possible to convert every given argument.
 
-    Arg: A dictionary where keys are a string representing the variable names,
-    and values are a tuple with the converter and the default value. If no
-    default value is given, the variable is required.
+    Parameter: A dictionary where keys are a string representing the variable
+    names, and values are a tuple with the converter and the default value.
+    If no default value is given, the variable is required.
+
+    The dictionary should be ordered, that is either an OrderedDict or
+    any dictionary in Python 3.7+. This is because if there are multiple
+    converters that match with the same argument during the convert function,
+    the first one in the dictionary is used. Thus, unexpected results could
+    happen in this case if the dict is unordered. If the dict is ordered,
+    carefully think about how you order the keys, as this could also lead to
+    unexpected results: for example, order doesn't matter if the two
+    converters that can match an arg are to catch two discord users, but it
+    would matter if there was a converter meant to catch any string, then a
+    converter to catch an uppercase string, as the arguments ["HI", "hello"]
+    will then raise an exception, since the "any" string converter is thes
+    one used with "HI", and then the only remaining converter is the
+    uppercase one, and so "hello" is not converted.
     -----------
+
     A converter is an object that tries to convert an argument to a certain
     class. If it can't, it raises discord.ext.commands.BadArgument. It takes
     as input a discord context and an argument.
@@ -82,7 +101,7 @@ class ArgConverter:
     Invalid input: Argument "woo" could not be converted
     """
     def __init__(self, converters_dict):
-        self.converters_dict = converters_dict
+        self._converters_dict = converters_dict
 
     async def convert(self, ctx, arguments):
         """
@@ -90,19 +109,11 @@ class ArgConverter:
         doesn't try to match it again. All required arguments must be
         given, and all arguments must be able to be converted.
 
-        Order doesn't matter, except if there are multiple converters that
-        match with the same argument, in which case the first one in the
-        dictionary is used. This could lead to unexpected results:
-        for example, it doesn't matter if this is to catch two discord users,
-        but if there was a converter meant to catch any string, then a
-        converter to catch an uppercase string, then the arguments
-        ["HI", "hello"] will raise an exception, since the "any" string
-        converter is the one used with "HI", and then the only remaining
-        converter is the uppercase one, and so "hello" is not converted.
+        See the comment about dictionary order in the ArgConverter docstring
 
         Returns a dictionary with the variables as keys, and their values.
         """
-        remaining_vars = self.converters_dict.copy()
+        remaining_vars = self._converters_dict.copy()
         # initialize the converted dict with None values
         converted_arguments_dict = {}
 
@@ -130,9 +141,9 @@ class ArgConverter:
         # if there are remaining variables, either set them to their default
         # values or raise commands.BadArgument if they are required
         for key in remaining_vars:
-            if len(self.converters_dict[key]) == 1:
+            if len(self._converters_dict[key]) == 1:
                 raise commands.BadArgument(f"Invalid input: Missing required "
                                            f"argument {key}")
             else:
-                converted_arguments_dict[key] = self.converters_dict[key][1]
+                converted_arguments_dict[key] = self._converters_dict[key][1]
         return converted_arguments_dict
