@@ -88,7 +88,7 @@ class Memes(commands.Cog):
         """Alternates upper/lower case for input string. Input message
         disappears after."""
         if input_str is None:
-            await ctx.send()
+            return
         msg = "".join([(c.upper() if random.randint(0, 1) else c.lower())
                        for c in input_str])
         self.bot.mod_logger.info(
