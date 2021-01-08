@@ -662,24 +662,27 @@ class Helpers(commands.Cog):
         if user is None:
             user = ctx.author
         ui_embed = discord.Embed(colour=user.id % 16777215)
+        ui_embed.add_field(name="username",
+                           value=f"{user.name}#{user.discriminator}",
+                           inline=True)
+        ui_embed.add_field(name="display name",
+                           value=user.display_name,
+                           inline=True)
+        ui_embed.add_field(name="id", value=user.id, inline=True)
+        ui_embed.add_field(name="joined server",
+                           value=user.joined_at.strftime("%m/%d/%Y, %H:%M:%S"),
+                           inline=True)
         ui_embed.add_field(
-            name="username",
-            value=f"{user.name}#{user.discriminator}",
-            inline=True).add_field(
-                name="display name", value=user.display_name, inline=True
-            ).add_field(name="id", value=user.id, inline=True).add_field(
-                name="joined server",
-                value=user.joined_at.strftime("%m/%d/%Y, %H:%M:%S"),
-                inline=True).add_field(
-                    name="joined discord",
-                    value=user.created_at.strftime("%m/%d/%Y, %H:%M:%S"),
-                    inline=True).add_field(
-                        name=f"top role",
-                        value=str(user.top_role),
-                        inline=True).add_field(
-                            name="avatar url",
-                            value=user.avatar_url,
-                            inline=False).set_image(url=user.avatar_url)
+            name="joined discord",
+            value=user.created_at.strftime("%m/%d/%Y, %H:%M:%S"),
+            inline=True)
+        ui_embed.add_field(name=f"top role",
+                           value=str(user.top_role),
+                           inline=True)
+        ui_embed.add_field(name="avatar url",
+                           value=user.avatar_url,
+                           inline=False)
+        ui_embed.set_image(url=user.avatar_url)
 
         await ctx.send(embed=ui_embed)
 
