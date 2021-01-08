@@ -281,40 +281,34 @@ class Helpers(commands.Cog):
 
         await ctx.trigger_typing()
 
-        r = await fetch(MCGILL_KEY_DATES_URL, "content")
-        soup = BeautifulSoup(r, 'html.parser')
+        soup = BeautifulSoup(await fetch(MCGILL_KEY_DATES_URL, "content"), 'html.parser')
 
         now = datetime.datetime.now()
-        current_year = now.year
-        current_month = now.month
-        if current_month > 4:
-            term = 'Fall'
-        else:
-            term = 'Winter'
-
-        text = soup.find_all('div', {'class': 'field-item even'})
+        current_year, current_month = now.year, now.month
+        is_fall: bool = current_month > 4
+        text = soup.find('div', {'class': 'field-item even'})
 
         # The layout is trash and the divs don't follow a pattern so
         # disintegrate all div tags.
-        for div in text[0].find_all('div'):
-            div.replaceWithChildren()
+        for div in text.find_all('div'):
+            if (div_cls := div.get("class")) and "note" in div_cls:
+                div.decompose()
+            else:
+                div.replaceWithChildren()
 
         headers = []
         sections = []
 
-        if term == 'Fall':
-            node = text[0].find_all('h2')[0].next_sibling
-        else:
-            node = text[0].find_all('h2')[1].next_sibling
+        node = text.find_all('h2')[not is_fall].next_sibling
 
         # Iterate through the tags and find unordered lists.
         # The content of each list will become the body of each section
         # while the contents of the <p> above it will become the headers.
         while node:
             if hasattr(node, 'name'):
-                if node.name == 'h2' and term == 'Fall':
+                if node.name == 'h2' and is_fall:
                     break
-                elif node.name == 'ul':
+                if node.name == 'ul':
                     sections.append(node.get_text())
                     previous = node.previous_sibling.previous_sibling
                     if previous.name == 'p':
@@ -325,8 +319,7 @@ class Helpers(commands.Cog):
 
             node = node.next_sibling
 
-        em = discord.Embed(title='McGill Important Dates {0} {1}'.format(
-            term, str(current_year)),
+        em = discord.Embed(title=f"McGill Important Dates {'Fall' if is_fall else 'Winter'} {current_year}",
                            description=MCGILL_KEY_DATES_URL,
                            colour=0xDA291C)
 
