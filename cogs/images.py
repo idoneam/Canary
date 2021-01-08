@@ -76,7 +76,14 @@ class Images(commands.Cog):
             os.mkdir('./tmp/', mode=0o755)
 
     @staticmethod
-    async def get_attachment(ctx: discord.ext.commands.Context):
+    async def get_attachment(ctx):
+        if ctx.message.reference:
+            trg_msg = ctx.message.reference.cached_message if (
+                ctx.message.reference.cached_message) else (
+                    await ctx.fetch_message(ctx.message.reference.message_id))
+            if trg_msg.attachments:
+                return trg_msg.attachments[0]
+            return None
         messages = await ctx.channel.history(limit=100).flatten()
         for msg in messages:
             if msg.attachments:
