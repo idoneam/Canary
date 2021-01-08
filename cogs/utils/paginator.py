@@ -211,8 +211,7 @@ class Pages:
 
     def _organize_embeds_list_embeds(self, pages_to_send):
         page_counter = len(self.itemList)
-        for embed in self.itemList:
-            pages_to_send.append(embed)
+        pages_to_send.extend(self.itemList)
         return pages_to_send, page_counter
 
     async def _show_page(self, page):
