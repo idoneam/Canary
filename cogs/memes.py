@@ -120,9 +120,12 @@ class Memes(commands.Cog):
         """
         Enjoy a nice xkcd comic with some strangers on the internet!
         If no issue number is passed, returns a random xkcd.
-        Valid options are: nothing, 'latest' or a positive integer greater than one and at most equal to the latest issue number.
+        Valid options are: nothing, 'latest' or a positive integer greater
+        than one and at most equal to the latest issue number.
         """
+
         await ctx.trigger_typing()
+
         num = None
         if command is None:
             req = requests.get("https://c.xkcd.com/comic/random")
@@ -140,13 +143,16 @@ class Memes(commands.Cog):
                 await ctx.send(f"the number `{num}` is less than one, "
                                f"such an xkcd issue cannot exist")
                 return
+
         if req.status_code == 404:
             num = None
             req = requests.get("https://xkcd.com/")
+
         if req.status_code != 200:
             await ctx.send(f"xkcd number `{command}` could not be found "
                            f"(request returned `{req.status_code}`)")
             return
+
         soup = BeautifulSoup(req.content, "html.parser")
         if num is None:
             title_num = re.findall(
@@ -154,6 +160,7 @@ class Memes(commands.Cog):
                 soup.find('meta', property='og:url')['content'])[0]
         else:
             title_num = str(num)
+
         img_soup = soup.find("div", attrs={"id": "comic"}).find("img")
         embd = discord.Embed(
             title=f"{img_soup['alt']} (#{title_num})",
