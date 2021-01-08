@@ -34,8 +34,7 @@ import requests
 # Subscriber decorator
 from .utils.subscribers import canary_subscriber
 
-CFIA_FEED_URL = "http://inspection.gc.ca/eng/1388422350443/1388422374046.xml"
-CFIA_RECALL_TAG_PATH = "pickles/runtime/recall_tag.obj"
+CFIA_RECALL_TAG_PATH = "data/runtime/recall_tag.obj"
 
 METRO_STATUS_API = "https://www.stm.info/en/ajax/etats-du-service"
 
