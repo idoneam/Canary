@@ -1,6 +1,4 @@
-# -*- coding: utf-8 -*-
-#
-# Copyright (C) idoneam (2016-2019)
+# Copyright (C) idoneam (2016-2021)
 #
 # This file is part of Canary
 #
@@ -34,8 +32,8 @@ class Info(commands.Cog):
         commit, authored = subprocess.check_output(
             ("git", "log", "-1", "--pretty=format:%h %aI"),
             universal_newlines=True).strip().split(" ")
-        await ctx.send("Version: `{}`\nCommit: `{}` authored `{}`".format(
-            version, commit, authored))
+        await ctx.send(f"Version: `{version}`\nCommit: `{commit}` "
+                       f"authored `{authored}`")
 
 
 def setup(bot):
