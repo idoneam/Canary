@@ -35,7 +35,10 @@ def filter_image(func):
     async def wrapper(self, ctx, *args):
         att = await Images.get_attachment(ctx)
         if att is None:
-            await ctx.send('Image not found :c', delete_after=15)
+            await ctx.send(
+                "no image could be found (only "
+                "attached image files can be detected)",
+                delete_after=15)
             return
 
         await ctx.trigger_typing()
@@ -78,9 +81,7 @@ class Images(commands.Cog):
     @staticmethod
     async def get_attachment(ctx):
         if ctx.message.reference:
-            trg_msg = ctx.message.reference.cached_message if (
-                ctx.message.reference.cached_message) else (
-                    await ctx.fetch_message(ctx.message.reference.message_id))
+            trg_msg = ctx.message.reference.resolved
             if trg_msg.attachments:
                 return trg_msg.attachments[0]
             return None
