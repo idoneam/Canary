@@ -1,6 +1,4 @@
-# -*- coding: utf-8 -*-
-#
-# Copyright (C) idoneam (2016-2019)
+# Copyright (C) idoneam (2016-2021)
 #
 # This file is part of Canary
 #
@@ -552,19 +550,21 @@ class Helpers(commands.Cog):
         if not match:
             await ctx.send("Please use a valid 6-digit hex number.")
             return
+
         await ctx.trigger_typing()
+
         c = int(match.group(1), 16)
         r = (c & 0xFF0000) >> 16
         g = (c & 0xFF00) >> 8
         b = c & 0xFF
-        SIZE = 64
-        img = np.zeros((SIZE, SIZE, 3), np.uint8)
+        size = 64
+        img = np.zeros((size, size, 3), np.uint8)
         img[:, :] = (b, g, r)
         ext = "jpg"
-        retval, buffer = cv2.imencode('.{}'.format(ext), img,
-                                      [cv2.IMWRITE_JPEG_QUALITY, 0])
+        _r, buffer = cv2.imencode(f".{ext}", img,
+                                  [cv2.IMWRITE_JPEG_QUALITY, 0])
         buffer = BytesIO(buffer)
-        fn = "{}.{}".format(match.group(1), ext)
+        fn = f"{match.group(1)}.{ext}"
         await ctx.send(file=discord.File(fp=buffer, filename=fn))
 
     @commands.Cog.listener()
