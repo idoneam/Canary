@@ -655,6 +655,40 @@ class Helpers(commands.Cog):
 
         conn.close()
 
+    @commands.command(aliases=["ui", "av", "avi", "userinfo"])
+    async def user_info(self, ctx, user: discord.Member = None):
+        """
+        Show user info and avi
+        Defaults to displaying the information of the user
+        that called the command, whoever another member's username
+        can be passed as an optional argument to display their info"""
+        if user is None:
+            user = ctx.author
+        ui_embed = discord.Embed(colour=user.id % 16777215)
+        ui_embed.add_field(name="username",
+                           value=f"{user.name}#{user.discriminator}",
+                           inline=True)
+        ui_embed.add_field(name="display name",
+                           value=user.display_name,
+                           inline=True)
+        ui_embed.add_field(name="id", value=user.id, inline=True)
+        ui_embed.add_field(name="joined server",
+                           value=user.joined_at.strftime("%m/%d/%Y, %H:%M:%S"),
+                           inline=True)
+        ui_embed.add_field(
+            name="joined discord",
+            value=user.created_at.strftime("%m/%d/%Y, %H:%M:%S"),
+            inline=True)
+        ui_embed.add_field(name=f"top role",
+                           value=str(user.top_role),
+                           inline=True)
+        ui_embed.add_field(name="avatar url",
+                           value=user.avatar_url,
+                           inline=False)
+        ui_embed.set_image(url=user.avatar_url)
+
+        await ctx.send(embed=ui_embed)
+
 
 def setup(bot):
     bot.add_cog(Helpers(bot))
