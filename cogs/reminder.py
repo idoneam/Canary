@@ -173,8 +173,8 @@ class Reminder(commands.Cog):
                     if datetime.datetime.now(
                     ) - last_date > datetime.timedelta(
                             days=self.frequencies[reminders[i][3]]):
-                        await member.send("Reminding you to {}! [{:d}]".format(
-                            reminders[i][2], i + 1))
+                        await member.send(
+                            f"Reminding you to {reminders[i][2]}! [{i + 1:d}]")
 
                         c.execute(
                             ("UPDATE 'Reminders' SET LastReminder=? WHERE " +
@@ -253,20 +253,20 @@ class Reminder(commands.Cog):
         for segment in input_segments:
             if re.match(TIME_SEPARATOR_REGEX, segment):
                 continue
-            if re.match("^{}$".format(NUMBER_REGEX), segment):
+            if re.match(f"^{NUMBER_REGEX}$", segment):
                 last_number = segment
-            elif re.match("^{}$".format(UNIT_REGEX), segment):
-                time_segments.append("{} {}".format(last_number, segment))
+            elif re.match(f"^{UNIT_REGEX}$", segment):
+                time_segments.append(f"{last_number} {segment}")
             else:
                 first_reminder_segment = segment
                 break
 
-        # They probably dont want their reminder nuked of punctuation, spaces
+        # They probably don't want their reminder nuked of punctuation, spaces
         # and formatting, so extract from original string.
         reminder = quote[quote.index(first_reminder_segment):]
 
         # Date-based reminder triggered by "at" and "on" keywords
-        if input_segments[0] in ("at", "on"):
+        if input_segments[0] in {"at", "on"}:
             # Gets YYYY-mm-dd
             date_result = re.search(YMD_REGEX, original_input_copy)
             # Gets HH:MM
@@ -391,10 +391,9 @@ class Reminder(commands.Cog):
             reminder_time).split()[1].split(":")[1]
 
         await ctx.author.send(
-            'Hi {}! \nI will remind you to {} on {} at {} unless you send me '
-            'a message to stop reminding you about it! [{:d}]'.format(
-                ctx.author.name, reminder, due_date, due_time,
-                len(reminders) + 1))
+            f"Hi {ctx.author.name}! \nI will remind you to {reminder} on "
+            f"{due_date} at {due_time} unless you send me a message to stop "
+            f"reminding you about it! [{len(reminders)+1}]")
         await ctx.send('Reminder added.')
 
         conn.commit()
