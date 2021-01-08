@@ -535,10 +535,12 @@ class Helpers(commands.Cog):
 
     @commands.command()
     async def choose(self, ctx, *, input_opts: str):
-        """Randomly chooses one of the given options delimited by semicola.
+        """
+        Randomly chooses one of the given options delimited by semicola or
+        commas.
         Usage: ?choose opt1;opt2
         """
-        opts = input_opts.split(";")
+        opts = input_opts.split(";" if ";" in input_opts else ",")
         msg = f"🤔\n{opts[random.randint(0, (len(opts) - 1))]}"
         embed = discord.Embed(colour=0xDA291C, description=msg)
         await ctx.send(embed=embed)
