@@ -1,6 +1,4 @@
-# -*- coding: utf-8 -*-
-#
-# Copyright (C) idoneam (2016-2019)
+# Copyright (C) idoneam (2016-2021)
 #
 # This file is part of Canary
 #
@@ -22,6 +20,7 @@ from discord.ext import commands
 import discord
 
 # Other utilities
+import math
 import random
 import requests
 import re
@@ -100,22 +99,21 @@ class Memes(commands.Cog):
 
     @commands.command(aliases=['boot'])
     async def pyramid(self, ctx, num: int = 2, emoji: str = "👢"):
-        """Draws a pyramid of boots, default is 2 unless user specifies an integer number of levels of boots between -8 and 8. Also accepts any other emoji, word or multiword (in quotes) string."""
+        """
+        Draws a pyramid of boots, default is 2 unless user specifies an integer
+        number of levels of boots between -8 and 8. Also accepts any other
+        emoji, word or multiword (in quotes) string.
+        """
         def pyramidy(n, m):
-            return "{spaces}{emojis}".format(spaces=" " * ((m - n) * 3),
-                                             emojis=(emoji + " ") * n)
+            # Limit emoji/string to 8 characters or Discord/potate mald
+            return f"{' ' * ((m - n) * 3)}{(emoji[:8] + ' ') * n}"
 
-        if (num > 0):
-            num = max(min(num, 8), 1)    # Above 8, herre gets angry
-            msg = "\n".join(pyramidy(ln, num) for ln in range(1, num + 1))
-        else:
-            num = min(max(num, -8), -1)    # Below -8, herre gets angry
-            msg = "\n".join(
-                pyramidy(ln, abs(num))
-                for ln in reversed(range(1,
-                                         abs(num) + 1)))
+        # Limit num to a maximum of +/- 8 or herre malds
+        abs_num = max(min(abs(num), 8), 1)
+        rng = (1, abs_num + 1) if num > 0 else (abs_num, 0, -1)
 
-        await ctx.send("**\n{}**".format(msg))
+        msg = "\n".join(pyramidy(ln, abs_num) for ln in range(*rng))
+        await ctx.send(f"**\n{msg}**")
 
     @commands.command()
     async def xkcd(self, ctx, command: str = None):
