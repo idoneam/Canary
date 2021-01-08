@@ -89,66 +89,68 @@ class Helpers(commands.Cog):
 
     @commands.command()
     async def weather(self, ctx):
-        """Retrieves current weather conditions.
-        Data taken from http://weather.gc.ca/city/pages/qc-147_metric_e.html"""
+        """
+        Retrieves current weather conditions.
+        Data taken from http://weather.gc.ca/city/pages/qc-147_metric_e.html
+        """
         def retrieve_string(label):
             return soup.find(
                 "dt", string=label).find_next_sibling().get_text().strip()
+
+        def calculate_feels_like(temp: float, humidity: float, ws_kph: float) \
+                -> str:
+            """
+            Get "Feels like" temperature using formula from MetService
+            (Meteorological Service of New Zealand), which uses the standard
+            formula for windchill from Environment Canada for temperatures of 10°C
+            and less (or the normal temperature if the wind speed is less than 5
+            km/h), the Australian apparent temperature for temperatures of 14°C
+            and more (or the normal temperature if it is higher), and a linear
+            roll-off of the wind chill between 10°C and 14°C
+            (https://blog.metservice.com/FeelsLikeTemp)
+            Written by @le-potate
+
+            temp: temperature (in degrees C)
+            humidity: relative humidity (percentage points)
+            ws_kph: wind speed (in km/h)
+            """
+
+            wind_speed_mps = ws_kph * 1000 / 3600
+            wind_chill = (13.12 + 0.6215 * temp - 11.37 * ws_kph**0.16 +
+                          0.3965 * temp * ws_kph**0.16)
+            vapour_pressure = humidity / 100 * 6.105 * math.exp(
+                (17.27 * temp) / (237.7 + temp))
+            apparent_temperature = (temp + 0.33 * vapour_pressure -
+                                    0.7 * wind_speed_mps - 4.00)
+            feels_like = temp
+            if temp <= 10:
+                if ws_kph >= 5:
+                    feels_like = wind_chill
+            elif temp >= 14:
+                if apparent_temperature > temp:
+                    feels_like = apparent_temperature
+            else:
+                if ws_kph >= 5:
+                    feels_like = temp - ((temp - wind_chill) * (14 - temp)) / 4
+
+            return f"{round(feels_like, 1)}°C"
 
         await ctx.trigger_typing()
 
         r = await fetch(self.bot.config.gc_weather_url, "content")
 
         soup = BeautifulSoup(r, "html.parser")
-        # Get date
         observed_string = retrieve_string("Date: ")
-        # Get temperature
         temperature_string = retrieve_string("Temperature:")
-        # Get condition
         condition_string = retrieve_string("Condition:")
-        # Get pressure
         pressure_string = retrieve_string("Pressure:")
-        # Get tendency
         tendency_string = retrieve_string("Tendency:")
-        # Get wind
         wind_string = retrieve_string("Wind:")
-        # Get relative humidity
         humidity_string = retrieve_string("Humidity:")
-        # Get "Feels like" temperature using formula from MetService
-        # (Meteorological Service of New Zealand), which uses the standard
-        # formula for windchill from Environment Canada for temperatures of 10°C
-        # and less (or the normal temperature if the wind speed is less than 5
-        # km/h), the Australian apparent temperature for temperatures of 14°C
-        # and more (or the normal temperature if it is higher), and a linear
-        # roll-off of the wind chill between 10°C and 14°C
-        # (https://blog.metservice.com/FeelsLikeTemp)
-        # Written by @le-potate
-        temperature = float(
-            re.search(r"-?\d+\.\d", temperature_string).group())
-        wind_speed_kph = float(re.search(r"\d+", wind_string).group())
-        wind_speed_mps = wind_speed_kph * 1000 / 3600
-        humidity = float(re.search(r"\d+", humidity_string).group())
-        wind_chill = (13.12 + 0.6215 * temperature -
-                      11.37 * wind_speed_kph**0.16 +
-                      0.3965 * temperature * wind_speed_kph**0.16)
-        vapour_pressure = humidity / 100 * 6.105 * math.exp(
-            (17.27 * temperature) / (237.7 + temperature))
-        apparent_temperature = (temperature + 0.33 * vapour_pressure -
-                                0.7 * wind_speed_mps - 4.00)
-        feels_like = temperature
-        if temperature <= 10:
-            if wind_speed_kph >= 5:
-                feels_like = wind_chill
-        elif temperature >= 14:
-            if apparent_temperature > temperature:
-                feels_like = apparent_temperature
-        else:
-            if wind_speed_kph >= 5:
-                feels_like = temperature - ((temperature - wind_chill) *
-                                            (14 - temperature)) / 4
-
-        feels_like = round(feels_like, 1)
-        feels_like_string = "{}°C".format(feels_like)
+        feels_like_string = calculate_feels_like(
+            temp=float(re.search(r"-?\d+\.\d", temperature_string).group()),
+            humidity=float(re.search(r"\d+", humidity_string).group()),
+            ws_kph=float(re.search(r"\d+", wind_string).group()))
 
         weather_now = discord.Embed(title='Current Weather',
                                     description='Conditions observed at %s' %
@@ -177,8 +179,10 @@ class Helpers(commands.Cog):
 
         r_alert = await fetch(self.bot.config.gc_weather_alert_url, "content")
         alert_soup = BeautifulSoup(r_alert, "html.parser")
-        # Exists
+
         alert_title = alert_soup.find("h1", string=re.compile("Alerts.*"))
+        alert_title_text = alert_title.get_text().strip()
+
         # Only gets first <p> of warning. Subsequent paragraphs are ignored.
         try:
             alert_category = alert_title.find_next("h2")
@@ -188,22 +192,23 @@ class Helpers(commands.Cog):
             alert_location = alert_heading.find_next(
                 string=re.compile("Montréal.*"))
             # Only gets first <p> of warning. Subsequent paragraphs are ignored
-            alert_content = alert_location.find_next("p").get_text().strip()
-            alert_content = ". ".join(alert_content.split(".")).strip()
+            alert_content = ". ".join(
+                alert_location.find_next("p").get_text().strip().split(
+                    ".")).rstrip()
 
             weather_alert = discord.Embed(
-                title=alert_title.get_text().strip(),
+                title=alert_title_text,
                 description="**{}** at {}".format(
                     alert_category.get_text().strip(),
                     alert_date.get_text().strip()),
                 colour=0xFF0000)
-            weather_alert.add_field(name=alert_heading.get_text().strip(),
-                                    value="**{}**\n{}".format(
-                                        alert_location.strip(), alert_content),
-                                    inline=True)
+            weather_alert.add_field(
+                name=alert_heading.get_text().strip(),
+                value=f"**{alert_location.strip()}**\n{alert_content}",
+                inline=True)
 
-        except Exception:
-            weather_alert = discord.Embed(title=alert_title.get_text().strip(),
+        except AttributeError:
+            weather_alert = discord.Embed(title=alert_title_text,
                                           description="No alerts in effect.",
                                           colour=0xFF0000)
 
