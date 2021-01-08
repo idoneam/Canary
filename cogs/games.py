@@ -44,7 +44,7 @@ class Games(commands.Cog):
         self.hm_cool_win = bot.config.games["hm_cool_win"]
         self.hm_norm_win = bot.config.games["hm_norm_win"]
         self.hm_timeout = bot.config.games["hm_timeout"]
-        with open(f"{os.getcwd()}/pickles/premade/{hangman_tbl_name}.obj",
+        with open(f"{os.getcwd()}/data/premade/{hangman_tbl_name}.obj",
                   "rb") as hangman_pkl:
             self.hangman_dict: Dict[str, Tuple[str,
                                                str]] = pickle.load(hangman_pkl)

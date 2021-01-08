@@ -208,7 +208,7 @@ def mk_hm_embed_up_fn(category_name, word, lowered_word, not_guessed,
 
 
 def mk_hangman_dict(file_name) -> Dict[str, List[Tuple[str, str]]]:
-    with open(f"pickles/premade/{file_name}.obj", "wb") as dump_file:
+    with open(f"data/premade/{file_name}.obj", "wb") as dump_file:
         pickle.dump(
             {
                 "animal": (mk_animal_list(), "animals"),
