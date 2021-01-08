@@ -36,10 +36,8 @@ def filter_image(func):
         att = await Images.get_attachment(ctx)
         if att is None:
             await ctx.send(
-                "no image could be found or target "
-                "message has been deleted / could not "
-                "be found (only attached image files "
-                "on still present messages can be detected)",
+                "no image could be found (only attached image files"
+                " can be detected) or message could not be found",
                 delete_after=15)
             return
 
