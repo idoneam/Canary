@@ -485,8 +485,8 @@ class Helpers(commands.Cog):
         """Retrieves the CTF printers' statuses from tepid.science.mcgill.ca"""
         data = await fetch(self.bot.config.tepid_url, "json")
         for key, value in data.items():
-            await ctx.send("At least one printer in {} is {}!".format(
-                key, "up" if value else "down"))
+            await ctx.send(f"At least one printer in {key} is up!"
+                           if value else f"Both printers in {key} are down.")
 
     @commands.command()
     async def modpow(self, ctx, a, b, m):
