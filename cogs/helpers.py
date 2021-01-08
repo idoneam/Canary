@@ -87,6 +87,45 @@ class Helpers(commands.Cog):
 
         await ctx.send(embed=exam_schedule)
 
+    @staticmethod
+    def _calculate_feels_like(temp: float, humidity: float, ws_kph: float) \
+            -> str:
+        """
+        Get "Feels like" temperature using formula from MetService
+        (Meteorological Service of New Zealand), which uses the standard
+        formula for windchill from Environment Canada for temperatures of 10°C
+        and less (or the normal temperature if the wind speed is less than 5
+        km/h), the Australian apparent temperature for temperatures of 14°C
+        and more (or the normal temperature if it is higher), and a linear
+        roll-off of the wind chill between 10°C and 14°C
+        (https://blog.metservice.com/FeelsLikeTemp)
+        Written by @le-potate
+
+        temp: temperature (in degrees C)
+        humidity: relative humidity (percentage points)
+        ws_kph: wind speed (in km/h)
+        """
+
+        wind_speed_mps = ws_kph * 1000 / 3600
+        wind_chill = (13.12 + 0.6215 * temp - 11.37 * ws_kph**0.16 +
+                      0.3965 * temp * ws_kph**0.16)
+        vapour_pressure = humidity / 100 * 6.105 * math.exp(
+            (17.27 * temp) / (237.7 + temp))
+        apparent_temperature = (temp + 0.33 * vapour_pressure -
+                                0.7 * wind_speed_mps - 4.00)
+        feels_like = temp
+        if temp <= 10:
+            if ws_kph >= 5:
+                feels_like = wind_chill
+        elif temp >= 14:
+            if apparent_temperature > temp:
+                feels_like = apparent_temperature
+        else:
+            if ws_kph >= 5:
+                feels_like = temp - ((temp - wind_chill) * (14 - temp)) / 4
+
+        return f"{round(feels_like, 1)}°C"
+
     @commands.command()
     async def weather(self, ctx):
         """
@@ -96,44 +135,6 @@ class Helpers(commands.Cog):
         def retrieve_string(label):
             return soup.find(
                 "dt", string=label).find_next_sibling().get_text().strip()
-
-        def calculate_feels_like(temp: float, humidity: float, ws_kph: float) \
-                -> str:
-            """
-            Get "Feels like" temperature using formula from MetService
-            (Meteorological Service of New Zealand), which uses the standard
-            formula for windchill from Environment Canada for temperatures of 10°C
-            and less (or the normal temperature if the wind speed is less than 5
-            km/h), the Australian apparent temperature for temperatures of 14°C
-            and more (or the normal temperature if it is higher), and a linear
-            roll-off of the wind chill between 10°C and 14°C
-            (https://blog.metservice.com/FeelsLikeTemp)
-            Written by @le-potate
-
-            temp: temperature (in degrees C)
-            humidity: relative humidity (percentage points)
-            ws_kph: wind speed (in km/h)
-            """
-
-            wind_speed_mps = ws_kph * 1000 / 3600
-            wind_chill = (13.12 + 0.6215 * temp - 11.37 * ws_kph**0.16 +
-                          0.3965 * temp * ws_kph**0.16)
-            vapour_pressure = humidity / 100 * 6.105 * math.exp(
-                (17.27 * temp) / (237.7 + temp))
-            apparent_temperature = (temp + 0.33 * vapour_pressure -
-                                    0.7 * wind_speed_mps - 4.00)
-            feels_like = temp
-            if temp <= 10:
-                if ws_kph >= 5:
-                    feels_like = wind_chill
-            elif temp >= 14:
-                if apparent_temperature > temp:
-                    feels_like = apparent_temperature
-            else:
-                if ws_kph >= 5:
-                    feels_like = temp - ((temp - wind_chill) * (14 - temp)) / 4
-
-            return f"{round(feels_like, 1)}°C"
 
         await ctx.trigger_typing()
 
@@ -147,7 +148,7 @@ class Helpers(commands.Cog):
         tendency_string = retrieve_string("Tendency:")
         wind_string = retrieve_string("Wind:")
         humidity_string = retrieve_string("Humidity:")
-        feels_like_string = calculate_feels_like(
+        feels_like_string = Helpers._calculate_feels_like(
             temp=float(re.search(r"-?\d+\.\d", temperature_string).group()),
             humidity=float(re.search(r"\d+", humidity_string).group()),
             ws_kph=float(re.search(r"\d+", wind_string).group()))
