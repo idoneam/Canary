@@ -41,8 +41,8 @@ class Memes(commands.Cog):
             return
         msg = auto_incorrect(input_str)
         self.bot.mod_logger.info(
-            '?bac invoked: Author: {}, Message: {}'.format(
-                ctx.message.author, ctx.message.content))
+            f"?bac invoked: Author: {ctx.message.author}, Message: "
+            f"{ctx.message.content}")
         await ctx.send(msg)
         await ctx.message.delete()
 
@@ -89,11 +89,11 @@ class Memes(commands.Cog):
         disappears after."""
         if input_str is None:
             return
-        msg = "".join([(c.upper() if random.randint(0, 1) else c.lower())
-                       for c in input_str])
+        msg = "".join((c.upper() if random.randint(0, 1) else c.lower())
+                      for c in input_str)
         self.bot.mod_logger.info(
-            '?mix invoked: Author: {}, Message: {}'.format(
-                ctx.message.author, ctx.message.content))
+            f"?mix invoked: Author: {ctx.message.author}, Message: "
+            f"{ctx.message.content}")
         await ctx.send(msg)
         await ctx.message.delete()
 
