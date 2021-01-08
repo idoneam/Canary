@@ -235,10 +235,11 @@ class Helpers(commands.Cog):
         Note: Bullet points without colons (':') are not parsed because I have
         yet to see one that actually has useful information.
         """
-        fac = r'([A-Za-z]{4})'
-        num = r'(\d{3}\s*(\w\d)?)'
         await ctx.trigger_typing()
-        result = re.compile(fac + r'\s*' + num,
+
+        # Course codes are in the format AAAA 000, or AAA1 000 in some rare
+        # cases. Courses across multiple semesters have a suffix like D1/D2.
+        result = re.compile(r"([A-Za-z]{3}[A-Za-z0-9])\s*(\d{3}\s*(\w\d)?)",
                             re.IGNORECASE | re.DOTALL).search(query)
         if not result:
             await ctx.send(
@@ -246,8 +247,8 @@ class Helpers(commands.Cog):
                 '<course name>`.')
             return
 
-        search_term = "{}-{}".format(result.group(1), result.group(2))
-        search_term = re.sub(r'\s+', r'', search_term)
+        search_term = re.sub(r"\s+", "",
+                             f"{result.group(1)}-{result.group(2)}")
         url = self.bot.config.course_tpl.format(search_term)
         r = await fetch(url, "content")
         soup = BeautifulSoup(r, "html.parser")
@@ -359,7 +360,7 @@ class Helpers(commands.Cog):
             await ctx.send("No definition found for **%s**." % query)
             return
 
-        markdown_url = "[{}]({})".format(definitions[0]["word"], url)
+        markdown_url = f"[{definitions[0]['word']}]({url})"
         definitions_list_text = [
             "**\n{}**\n\n{}\n\n*{}*".format(
                 markdown_url,
@@ -512,36 +513,33 @@ class Helpers(commands.Cog):
         if utils.get(ctx.author.roles,
                      name=self.bot.config.no_food_spotting_role):
             return
-        if not args:
-            message = "\u200b"
-        else:
-            message = "**{}**".format(" ".join(args))
+
+        # If no value is provided, use a zero-width space
         channel = utils.get(self.bot.get_guild(
             self.bot.config.server_id).text_channels,
                             name=self.bot.config.food_spotting_channel)
-        username = ctx.message.author
-        pfp = ctx.message.author.avatar_url
-        embed = discord.Embed()
-        try:
-            embed.set_image(url=ctx.message.attachments[0].url)
-        except Exception:
-            pass
+        embed = discord.Embed(title="Food spotted",
+                              description=" ".join(args) if args else "\u200b")
         embed.set_footer(
             text=("Added by {0} • Use '{1}foodspot' or '{1}fs' if you spot "
                   "food (See '{1}help foodspot')").format(
-                      username, self.bot.config.command_prefix[0]),
-            icon_url=pfp)
-        embed.add_field(name="`Food spotted`", value=message)
+                      ctx.message.author, self.bot.config.command_prefix[0]),
+            icon_url=ctx.message.author.avatar_url)
+
+        try:
+            embed.set_image(url=ctx.message.attachments[0].url)
+        except IndexError:    # No attachment
+            pass
+
         await channel.send(embed=embed)
 
     @commands.command()
-    async def choose(self, ctx, *, inputOpts: str):
+    async def choose(self, ctx, *, input_opts: str):
         """Randomly chooses one of the given options delimited by semicola.
         Usage: ?choose opt1;opt2
         """
-        opts = inputOpts.split(';')
-        sel = random.randint(0, (len(opts) - 1))
-        msg = "🤔\n" + opts[sel]
+        opts = input_opts.split(";")
+        msg = f"🤔\n{opts[random.randint(0, (len(opts) - 1))]}"
         embed = discord.Embed(colour=0xDA291C, description=msg)
         await ctx.send(embed=embed)
 
