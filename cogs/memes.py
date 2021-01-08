@@ -20,7 +20,6 @@ from discord.ext import commands
 import discord
 
 # Other utilities
-import math
 import random
 import requests
 import re
