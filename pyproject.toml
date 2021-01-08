@@ -8,19 +8,19 @@ readme = "README.md"
 authors = []
 
 [tool.poetry.dependencies]
-python = "^3.6.0"
+python = "^3.9.0"
 beautifulsoup4 = "==4.9.3"
 sympy = "==1.7.1"
 requests = ">=2.20.0"
 tabulate = "==0.8.7"
 "discord.py" = "==1.5.1"
-opencv-python = "*"
-pytz = "*"
-mpmath = "*"
-numpy = "*"
-aiohttp = "*"
+opencv-python = "==4.5.1.48"
+pytz = ">=2020.5"
+mpmath = ">=1.1.0"
+numpy = "^1.19.5"
+aiohttp = "~3.6.0"
 urllib3 = ">=1.25.3"
-feedparser = "*"
+feedparser = "^6.0.2"
 regex = "^2020.11.13"
 
 [tool.poetry.dev-dependencies]
