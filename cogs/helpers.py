@@ -54,6 +54,13 @@ URBAN_DICT_TEMPLATE = "http://api.urbandictionary.com/v0/define?term={}"
 
 LMGTFY_TEMPLATE = "https://lmgtfy.com/?q={}"
 
+LATEX_PREAMBLE = r"""\documentclass[varwidth,12pt]{standalone}
+\usepackage{alphabeta}
+\usepackage[utf8]{inputenc}
+\usepackage[LGR,T1]{fontenc}
+\usepackage{amsmath,amsfonts,lmodern}
+\begin{document}"""
+
 try:
     os.mkdir('./pickles')
 except Exception:
@@ -396,12 +403,6 @@ class Helpers(commands.Cog):
             tex += "\\[" + sp[2 * i + 1] + "\\]"
 
         buf = BytesIO()
-        LATEX_PREAMBLE = ("\\documentclass[varwidth,12pt]{standalone}"
-                          "\\usepackage{alphabeta}"
-                          "\\usepackage[utf8]{inputenc}"
-                          "\\usepackage[LGR,T1]{fontenc}"
-                          "\\usepackage{amsmath,amsfonts,lmodern}"
-                          "\\begin{document}")
         preview(
             tex,
             preamble=LATEX_PREAMBLE,
