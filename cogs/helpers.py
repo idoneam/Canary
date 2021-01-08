@@ -281,7 +281,8 @@ class Helpers(commands.Cog):
 
         await ctx.trigger_typing()
 
-        soup = BeautifulSoup(await fetch(MCGILL_KEY_DATES_URL, "content"), 'html.parser')
+        soup = BeautifulSoup(await fetch(MCGILL_KEY_DATES_URL, "content"),
+                             'html.parser')
 
         now = datetime.datetime.now()
         current_year, current_month = now.year, now.month
@@ -319,9 +320,11 @@ class Helpers(commands.Cog):
 
             node = node.next_sibling
 
-        em = discord.Embed(title=f"McGill Important Dates {'Fall' if is_fall else 'Winter'} {current_year}",
-                           description=MCGILL_KEY_DATES_URL,
-                           colour=0xDA291C)
+        em = discord.Embed(
+            title=
+            f"McGill Important Dates {'Fall' if is_fall else 'Winter'} {current_year}",
+            description=MCGILL_KEY_DATES_URL,
+            colour=0xDA291C)
 
         for i in range(len(headers)):
             em.add_field(name=f"{headers[i][:255]}\u2026"
