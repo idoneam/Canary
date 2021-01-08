@@ -39,7 +39,7 @@ class Memes(commands.Cog):
         Purposefully auto-incorrects inputted sentences
         """
         if input_str is None:
-            await ctx.send()
+            return
         msg = auto_incorrect(input_str)
         self.bot.mod_logger.info(
             '?bac invoked: Author: {}, Message: {}'.format(
