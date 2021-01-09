@@ -1,4 +1,4 @@
-name: Poetry Development Dependency Installation
+name: Dev Dependencies
 on:
   push:
     branches:
