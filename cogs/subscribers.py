@@ -1,4 +1,4 @@
-# Copyright (C) idoneam (2016-2020)
+# Copyright (C) idoneam (2016-2021)
 #
 # This file is part of Canary
 #
@@ -55,7 +55,7 @@ METRO_INTERIM_STATUS = "No information"
 
 METRO_NORMAL_SERVICE_MESSAGE = "Normal métro service"
 
-os.makedirs("./pickles", exist_ok=True)
+os.makedirs("./data/runtime", exist_ok=True)
 
 
 class Subscribers(commands.Cog):
