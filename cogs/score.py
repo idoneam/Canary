@@ -122,7 +122,8 @@ class SelfConverter(commands.Converter):
             return True
         if arg == "false" or arg == "0":
             return False
-        raise commands.BadArgument("`self` flag should take a boolean as input")
+        raise commands.BadArgument(
+            "`self` flag should take a boolean as input")
 
 
 class BeforeConverter(commands.Converter):
@@ -130,7 +131,8 @@ class BeforeConverter(commands.Converter):
         if "before" not in argument.lower():
             raise commands.BadArgument("No `before` flag")
         if len(argument) < 8:
-            raise commands.BadArgument("No argument specified for `before` flag")
+            raise commands.BadArgument(
+                "No argument specified for `before` flag")
         try:
             return int(argument[7:])
         except ValueError:
@@ -143,7 +145,8 @@ class AfterConverter(commands.Converter):
         if "after" not in argument.lower():
             raise commands.BadArgument("No `after` flag")
         if len(argument) < 7:
-            raise commands.BadArgument("No argument specified for `after` flag")
+            raise commands.BadArgument(
+                "No argument specified for `after` flag")
         try:
             return int(argument[6:])
         except ValueError:
