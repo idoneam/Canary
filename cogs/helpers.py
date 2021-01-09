@@ -30,7 +30,6 @@ import cv2
 import numpy as np
 
 # Other utilities
-import os
 import re
 import math
 import time
@@ -58,11 +57,6 @@ LATEX_PREAMBLE = r"""\documentclass[varwidth,12pt]{standalone}
 \usepackage[LGR,T1]{fontenc}
 \usepackage{amsmath,amsfonts,lmodern}
 \begin{document}"""
-
-try:
-    os.mkdir('./pickles')
-except Exception:
-    pass
 
 
 class Helpers(commands.Cog):
