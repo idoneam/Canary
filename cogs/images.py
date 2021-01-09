@@ -74,7 +74,7 @@ class Images(commands.Cog):
             os.mkdir("./tmp/", mode=0o755)
 
     @staticmethod
-    async def get_attachment(ctx):
+    async def get_attachment(ctx: discord.ext.commands.Context):
         if ctx.message.reference:
             trg_msg = ctx.message.reference.resolved
             if trg_msg and trg_msg.attachments:
