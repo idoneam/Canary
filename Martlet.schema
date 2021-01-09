@@ -19,22 +19,24 @@
 
 
 CREATE TABLE IF NOT EXISTS "Quotes" (
-	`ID`	INTEGER,
-	`Name`	TEXT,
-	`Quote`	TEXT,
-	`Date`	TEXT
+    `ID`    INTEGER,
+    `Name`  TEXT,
+    `Quote` TEXT,
+    `Date`  TEXT
 );
+
 CREATE TABLE IF NOT EXISTS `Members` (
-	`ID`    INTEGER UNIQUE,
-	`Name`  TEXT
+    `ID`    INTEGER PRIMARY KEY,
+    `Name`  TEXT
 );
+
 CREATE TABLE IF NOT EXISTS 'Reminders' (
-	'ID'           INTEGER,
-	'Name'         TEXT,
-	'Reminder'     TEXT,
-	'Frequency'    TEXT,
-	'Date'         TEXT,
-	'LastReminder' TEXT
+    'ID'           INTEGER,
+    'Name'         TEXT,
+    'Reminder'     TEXT,
+    'Frequency'    TEXT,
+    'Date'         TEXT,
+    'LastReminder' TEXT
 );
 
 CREATE TABLE IF NOT EXISTS `BankTransactions` (
@@ -60,7 +62,7 @@ CREATE TABLE IF NOT EXISTS `Reactions` (
 CREATE UNIQUE INDEX IF NOT EXISTS `unique_reaction` ON `Reactions` (`ReacterID`, `ReacteeID`, `ReactionName`, `MessageID`);
 
 CREATE TABLE IF NOT EXISTS `CustomReactions` (
-	  `CustomReactionID`  INTEGER PRIMARY KEY,
+    `CustomReactionID`  INTEGER PRIMARY KEY,
     `Prompt`            TEXT,
     `Response`          TEXT,
     `UserID`            INTEGER,
@@ -71,6 +73,6 @@ CREATE TABLE IF NOT EXISTS `CustomReactions` (
 );
 
 CREATE TABLE IF NOT EXISTS `PreviousRoles` (
-	`ID`	      INTEGER UNIQUE,
-	`Roles`       TEXT
+    `ID`          INTEGER UNIQUE,
+    `Roles`       TEXT
 );
