@@ -64,6 +64,8 @@ class Pages:
                 3   : Embed, autosize = False, item_list is a list of strings.
                 4   : Embed, autosize = True, item_list is a dictionary.
                 5   : Embed, autosize = True, item_list is a list of strings.
+                6   : Embed, autosize = True, item_list is a list of embeds
+                      that will be used as pages
             The second record is the user defined size of each page.
             For autosize = True, this value is ignored.
         editable_content: bool
@@ -121,6 +123,7 @@ class Pages:
             3: self._organize_embeds_list,
             4: self._organize_embeds_autosize_dict,
             5: self._organize_embeds_autosize_list,
+            6: self._organize_embeds_list_embeds,
         }
         pages_to_send = ['empty page']
         self.organize_helper = organize_helper_map[self.displayOption[0]]
@@ -205,6 +208,11 @@ class Pages:
 
     def _organize_embeds_autosize_list(self, pages_to_send):
         pass
+
+    def _organize_embeds_list_embeds(self, pages_to_send):
+        page_counter = len(self.itemList)
+        pages_to_send.extend(self.itemList)
+        return pages_to_send, page_counter
 
     async def _show_page(self, page):
         self.currentPage = max(0, min(page, self.lastPage))
