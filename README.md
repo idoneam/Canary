@@ -5,7 +5,7 @@ Canary is a Python3 bot designed for the McGill University Community Discord Ser
 
 ## Build Statuses
 
-| **Master**  | [![Prod Dependencies](https://github.com/idoneam/Canary/workflows/Poetry%20Production%20Dependency%20Installation/badge.svg)](https://github.com/Idoneam/Canary/actions?query=branch%3Amaster+workflow%3Aformatting) |
+| **Master**  | [![Prod Dependencies](https://github.com/idoneam/Canary/workflows/Poetry%20Production%20Dependency%20Installation/badge.svg)](https://github.com/idoneam/Canary/actions?query=workflow%3A%22Poetry+Production+Dependency+Installation%22+branch%3Amaster) |
 | ------- | --------------------------------------------------------------------------------------------------------------- |
 | **Dev** | [![Dev Dependencies](https://github.com/idoneam/Canary/workflows/Poetry%20Development%20Dependency%20Installation/badge.svg)](https://github.com/idoneam/Canary/actions?query=workflow%3A%22Poetry+Development+Dependency+Installation%22+branch%3Adev)  |
 
