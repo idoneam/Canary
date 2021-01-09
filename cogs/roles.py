@@ -417,6 +417,9 @@ class Roles(commands.Cog):
                 await p.paginate()
                 return
 
+            # Add a loading message until role-restoring is done
+            await message.edit(embed=discord.Embed(title="Restoring roles..."))
+
             # User is a moderator, so restore the roles
             await user.add_roles(
                 *roles, reason=f"{ok_user} restored roles via command")
