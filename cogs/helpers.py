@@ -1,6 +1,4 @@
-# -*- coding: utf-8 -*-
-#
-# Copyright (C) idoneam (2016-2019)
+# Copyright (C) idoneam (2016-2021)
 #
 # This file is part of Canary
 #
@@ -32,7 +30,6 @@ import cv2
 import numpy as np
 
 # Other utilities
-import os
 import re
 import math
 import time
@@ -53,10 +50,12 @@ URBAN_DICT_TEMPLATE = "http://api.urbandictionary.com/v0/define?term={}"
 
 LMGTFY_TEMPLATE = "https://lmgtfy.com/?q={}"
 
-try:
-    os.mkdir('./pickles')
-except Exception:
-    pass
+LATEX_PREAMBLE = r"""\documentclass[varwidth,12pt]{standalone}
+\usepackage{alphabeta}
+\usepackage[utf8]{inputenc}
+\usepackage[LGR,T1]{fontenc}
+\usepackage{amsmath,amsfonts,lmodern}
+\begin{document}"""
 
 
 class Helpers(commands.Cog):
@@ -81,10 +80,51 @@ class Helpers(commands.Cog):
 
         await ctx.send(embed=exam_schedule)
 
+    @staticmethod
+    def _calculate_feels_like(temp: float, humidity: float, ws_kph: float) \
+            -> str:
+        """
+        Get "Feels like" temperature using formula from MetService
+        (Meteorological Service of New Zealand), which uses the standard
+        formula for windchill from Environment Canada for temperatures of 10°C
+        and less (or the normal temperature if the wind speed is less than 5
+        km/h), the Australian apparent temperature for temperatures of 14°C
+        and more (or the normal temperature if it is higher), and a linear
+        roll-off of the wind chill between 10°C and 14°C
+        (https://blog.metservice.com/FeelsLikeTemp)
+        Written by @le-potate
+
+        temp: temperature (in degrees C)
+        humidity: relative humidity (percentage points)
+        ws_kph: wind speed (in km/h)
+        """
+
+        wind_speed_mps = ws_kph * 1000 / 3600
+        wind_chill = (13.12 + 0.6215 * temp - 11.37 * ws_kph**0.16 +
+                      0.3965 * temp * ws_kph**0.16)
+        vapour_pressure = humidity / 100 * 6.105 * math.exp(
+            (17.27 * temp) / (237.7 + temp))
+        apparent_temperature = (temp + 0.33 * vapour_pressure -
+                                0.7 * wind_speed_mps - 4.00)
+        feels_like = temp
+        if temp <= 10:
+            if ws_kph >= 5:
+                feels_like = wind_chill
+        elif temp >= 14:
+            if apparent_temperature > temp:
+                feels_like = apparent_temperature
+        else:
+            if ws_kph >= 5:
+                feels_like = temp - ((temp - wind_chill) * (14 - temp)) / 4
+
+        return f"{round(feels_like, 1)}°C"
+
     @commands.command()
     async def weather(self, ctx):
-        """Retrieves current weather conditions.
-        Data taken from http://weather.gc.ca/city/pages/qc-147_metric_e.html"""
+        """
+        Retrieves current weather conditions.
+        Data taken from http://weather.gc.ca/city/pages/qc-147_metric_e.html
+        """
         def retrieve_string(label):
             return soup.find(
                 "dt", string=label).find_next_sibling().get_text().strip()
@@ -94,54 +134,17 @@ class Helpers(commands.Cog):
         r = await fetch(self.bot.config.gc_weather_url, "content")
 
         soup = BeautifulSoup(r, "html.parser")
-        # Get date
         observed_string = retrieve_string("Date: ")
-        # Get temperature
         temperature_string = retrieve_string("Temperature:")
-        # Get condition
         condition_string = retrieve_string("Condition:")
-        # Get pressure
         pressure_string = retrieve_string("Pressure:")
-        # Get tendency
         tendency_string = retrieve_string("Tendency:")
-        # Get wind
         wind_string = retrieve_string("Wind:")
-        # Get relative humidity
         humidity_string = retrieve_string("Humidity:")
-        # Get "Feels like" temperature using formula from MetService
-        # (Meteorological Service of New Zealand), which uses the standard
-        # formula for windchill from Environment Canada for temperatures of 10°C
-        # and less (or the normal temperature if the wind speed is less than 5
-        # km/h), the Australian apparent temperature for temperatures of 14°C
-        # and more (or the normal temperature if it is higher), and a linear
-        # roll-off of the wind chill between 10°C and 14°C
-        # (https://blog.metservice.com/FeelsLikeTemp)
-        temperature = float(
-            re.search(r"-?\d+\.\d", temperature_string).group())
-        wind_speed_kph = float(re.search(r"\d+", wind_string).group())
-        wind_speed_mps = wind_speed_kph * 1000 / 3600
-        humidity = float(re.search(r"\d+", humidity_string).group())
-        wind_chill = (13.12 + 0.6215 * temperature -
-                      11.37 * wind_speed_kph**0.16 +
-                      0.3965 * temperature * wind_speed_kph**0.16)
-        vapour_pressure = humidity / 100 * 6.105 * math.exp(
-            (17.27 * temperature) / (237.7 + temperature))
-        apparent_temperature = (temperature + 0.33 * vapour_pressure -
-                                0.7 * wind_speed_mps - 4.00)
-        feels_like = temperature
-        if temperature <= 10:
-            if wind_speed_kph >= 5:
-                feels_like = wind_chill
-        elif temperature >= 14:
-            if apparent_temperature > temperature:
-                feels_like = apparent_temperature
-        else:
-            if wind_speed_kph >= 5:
-                feels_like = temperature - ((temperature - wind_chill) *
-                                            (14 - temperature)) / 4
-
-        feels_like = round(feels_like, 1)
-        feels_like_string = "{}°C".format(feels_like)
+        feels_like_string = Helpers._calculate_feels_like(
+            temp=float(re.search(r"-?\d+\.\d", temperature_string).group()),
+            humidity=float(re.search(r"\d+", humidity_string).group()),
+            ws_kph=float(re.search(r"\d+", wind_string).group()))
 
         weather_now = discord.Embed(title='Current Weather',
                                     description='Conditions observed at %s' %
@@ -170,8 +173,10 @@ class Helpers(commands.Cog):
 
         r_alert = await fetch(self.bot.config.gc_weather_alert_url, "content")
         alert_soup = BeautifulSoup(r_alert, "html.parser")
-        # Exists
+
         alert_title = alert_soup.find("h1", string=re.compile("Alerts.*"))
+        alert_title_text = alert_title.get_text().strip()
+
         # Only gets first <p> of warning. Subsequent paragraphs are ignored.
         try:
             alert_category = alert_title.find_next("h2")
@@ -181,22 +186,23 @@ class Helpers(commands.Cog):
             alert_location = alert_heading.find_next(
                 string=re.compile("Montréal.*"))
             # Only gets first <p> of warning. Subsequent paragraphs are ignored
-            alert_content = alert_location.find_next("p").get_text().strip()
-            alert_content = ". ".join(alert_content.split(".")).strip()
+            alert_content = ". ".join(
+                alert_location.find_next("p").get_text().strip().split(
+                    ".")).rstrip()
 
             weather_alert = discord.Embed(
-                title=alert_title.get_text().strip(),
+                title=alert_title_text,
                 description="**{}** at {}".format(
                     alert_category.get_text().strip(),
                     alert_date.get_text().strip()),
                 colour=0xFF0000)
-            weather_alert.add_field(name=alert_heading.get_text().strip(),
-                                    value="**{}**\n{}".format(
-                                        alert_location.strip(), alert_content),
-                                    inline=True)
+            weather_alert.add_field(
+                name=alert_heading.get_text().strip(),
+                value=f"**{alert_location.strip()}**\n{alert_content}",
+                inline=True)
 
-        except Exception:
-            weather_alert = discord.Embed(title=alert_title.get_text().strip(),
+        except AttributeError:
+            weather_alert = discord.Embed(title=alert_title_text,
                                           description="No alerts in effect.",
                                           colour=0xFF0000)
 
@@ -223,10 +229,11 @@ class Helpers(commands.Cog):
         Note: Bullet points without colons (':') are not parsed because I have
         yet to see one that actually has useful information.
         """
-        fac = r'([A-Za-z]{4})'
-        num = r'(\d{3}\s*(\w\d)?)'
         await ctx.trigger_typing()
-        result = re.compile(fac + r'\s*' + num,
+
+        # Course codes are in the format AAAA 000, or AAA1 000 in some rare
+        # cases. Courses across multiple semesters have a suffix like D1/D2.
+        result = re.compile(r"([A-Za-z]{3}[A-Za-z0-9])\s*(\d{3}\s*(\w\d)?)",
                             re.IGNORECASE | re.DOTALL).search(query)
         if not result:
             await ctx.send(
@@ -234,8 +241,8 @@ class Helpers(commands.Cog):
                 '<course name>`.')
             return
 
-        search_term = "{}-{}".format(result.group(1), result.group(2))
-        search_term = re.sub(r'\s+', r'', search_term)
+        search_term = re.sub(r"\s+", "",
+                             f"{result.group(1)}-{result.group(2)}")
         url = self.bot.config.course_tpl.format(search_term)
         r = await fetch(url, "content")
         soup = BeautifulSoup(r, "html.parser")
@@ -347,7 +354,7 @@ class Helpers(commands.Cog):
             await ctx.send("No definition found for **%s**." % query)
             return
 
-        markdown_url = "[{}]({})".format(definitions[0]["word"], url)
+        markdown_url = f"[{definitions[0]['word']}]({url})"
         definitions_list_text = [
             "**\n{}**\n\n{}\n\n*{}*".format(
                 markdown_url,
@@ -394,12 +401,6 @@ class Helpers(commands.Cog):
             tex += "\\[" + sp[2 * i + 1] + "\\]"
 
         buf = BytesIO()
-        LATEX_PREAMBLE = ("\\documentclass[varwidth,12pt]{standalone}"
-                          "\\usepackage{alphabeta}"
-                          "\\usepackage[utf8]{inputenc}"
-                          "\\usepackage[LGR,T1]{fontenc}"
-                          "\\usepackage{amsmath,amsfonts,lmodern}"
-                          "\\begin{document}")
         preview(
             tex,
             preamble=LATEX_PREAMBLE,
@@ -483,8 +484,8 @@ class Helpers(commands.Cog):
         """Retrieves the CTF printers' statuses from tepid.science.mcgill.ca"""
         data = await fetch(self.bot.config.tepid_url, "json")
         for key, value in data.items():
-            await ctx.send("At least one printer in {} is {}!".format(
-                key, "up" if value else "down"))
+            await ctx.send(f"At least one printer in {key} is up!"
+                           if value else f"Both printers in {key} are down.")
 
     @commands.command()
     async def modpow(self, ctx, a, b, m):
@@ -498,6 +499,7 @@ class Helpers(commands.Cog):
     @commands.command(
         aliases=['foodspot', 'fs', 'food', 'foodspotting', 'food_spotting'])
     async def food_spot(self, ctx, *args):
+        # Written by @le-potate
         """Posts a food sale in #foodspotting.
         Use: `?foodspot Samosas in leacock`
         You can also attach one picture to your message (Write the command in
@@ -505,36 +507,35 @@ class Helpers(commands.Cog):
         if utils.get(ctx.author.roles,
                      name=self.bot.config.no_food_spotting_role):
             return
-        if not args:
-            message = "\u200b"
-        else:
-            message = "**{}**".format(" ".join(args))
+
+        # If no value is provided, use a zero-width space
         channel = utils.get(self.bot.get_guild(
             self.bot.config.server_id).text_channels,
                             name=self.bot.config.food_spotting_channel)
-        username = ctx.message.author
-        pfp = ctx.message.author.avatar_url
-        embed = discord.Embed()
-        try:
-            embed.set_image(url=ctx.message.attachments[0].url)
-        except Exception:
-            pass
+        embed = discord.Embed(title="Food spotted",
+                              description=" ".join(args) if args else "\u200b")
         embed.set_footer(
             text=("Added by {0} • Use '{1}foodspot' or '{1}fs' if you spot "
                   "food (See '{1}help foodspot')").format(
-                      username, self.bot.config.command_prefix[0]),
-            icon_url=pfp)
-        embed.add_field(name="`Food spotted`", value=message)
+                      ctx.message.author, self.bot.config.command_prefix[0]),
+            icon_url=ctx.message.author.avatar_url)
+
+        try:
+            embed.set_image(url=ctx.message.attachments[0].url)
+        except IndexError:    # No attachment
+            pass
+
         await channel.send(embed=embed)
 
     @commands.command()
-    async def choose(self, ctx, *, inputOpts: str):
-        """Randomly chooses one of the given options delimited by semicola.
+    async def choose(self, ctx, *, input_opts: str):
+        """
+        Randomly chooses one of the given options delimited by semicola or
+        commas.
         Usage: ?choose opt1;opt2
         """
-        opts = inputOpts.split(';')
-        sel = random.randint(0, (len(opts) - 1))
-        msg = "🤔\n" + opts[sel]
+        opts = input_opts.split(";" if ";" in input_opts else ",")
+        msg = f"🤔\n{opts[random.randint(0, (len(opts) - 1))]}"
         embed = discord.Embed(colour=0xDA291C, description=msg)
         await ctx.send(embed=embed)
 
@@ -548,20 +549,56 @@ class Helpers(commands.Cog):
         if not match:
             await ctx.send("Please use a valid 6-digit hex number.")
             return
+
         await ctx.trigger_typing()
+
         c = int(match.group(1), 16)
         r = (c & 0xFF0000) >> 16
         g = (c & 0xFF00) >> 8
         b = c & 0xFF
-        SIZE = 64
-        img = np.zeros((SIZE, SIZE, 3), np.uint8)
+        size = 64
+        img = np.zeros((size, size, 3), np.uint8)
         img[:, :] = (b, g, r)
         ext = "jpg"
-        retval, buffer = cv2.imencode('.{}'.format(ext), img,
-                                      [cv2.IMWRITE_JPEG_QUALITY, 0])
+        _r, buffer = cv2.imencode(f".{ext}", img,
+                                  [cv2.IMWRITE_JPEG_QUALITY, 0])
         buffer = BytesIO(buffer)
-        fn = "{}.{}".format(match.group(1), ext)
+        fn = f"{match.group(1)}.{ext}"
         await ctx.send(file=discord.File(fp=buffer, filename=fn))
+
+    @commands.command(aliases=["ui", "av", "avi", "userinfo"])
+    async def user_info(self, ctx, user: discord.Member = None):
+        """
+        Show user info and avi
+        Defaults to displaying the information of the user
+        that called the command, whoever another member's username
+        can be passed as an optional argument to display their info"""
+        if user is None:
+            user = ctx.author
+        ui_embed = discord.Embed(colour=user.id % 16777215)
+        ui_embed.add_field(name="username",
+                           value=f"{user.name}#{user.discriminator}",
+                           inline=True)
+        ui_embed.add_field(name="display name",
+                           value=user.display_name,
+                           inline=True)
+        ui_embed.add_field(name="id", value=user.id, inline=True)
+        ui_embed.add_field(name="joined server",
+                           value=user.joined_at.strftime("%m/%d/%Y, %H:%M:%S"),
+                           inline=True)
+        ui_embed.add_field(
+            name="joined discord",
+            value=user.created_at.strftime("%m/%d/%Y, %H:%M:%S"),
+            inline=True)
+        ui_embed.add_field(name=f"top role",
+                           value=str(user.top_role),
+                           inline=True)
+        ui_embed.add_field(name="avatar url",
+                           value=user.avatar_url,
+                           inline=False)
+        ui_embed.set_image(url=user.avatar_url)
+
+        await ctx.send(embed=ui_embed)
 
 
 def setup(bot):

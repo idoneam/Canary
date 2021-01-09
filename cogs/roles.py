@@ -1,4 +1,4 @@
-# Copyright (C) idoneam (2016-2020)
+# Copyright (C) idoneam (2016-2021)
 #
 # This file is part of Canary
 #
@@ -213,13 +213,20 @@ class Roles(commands.Cog):
                                Roles.ALL_CATEGORIES)
 
     @commands.command()
-    async def roles(self, ctx):
-        """Returns list of all roles in server"""
-        # Return all roles in the guild, in reverse order
-        role_names = [role.name for role in ctx.guild.roles][::-1]
-        await Roles.paginate_roles(ctx,
-                                   role_names,
-                                   title="All roles in server")
+    async def roles(self, ctx, user: discord.Member = None):
+        """Returns list of all roles in server or
+        the list of a specific user's roles"""
+        role_names = [
+            role.name
+            for role in (ctx.guild.roles if user is None else user.roles)
+            if role != ctx.guild.default_role
+        ]
+        role_names.reverse()
+        await Roles.paginate_roles(
+            ctx,
+            role_names,
+            title=("all roles in server" if user is None else
+                   f"{user.display_name}'s roles") + f" ({len(role_names)})")
 
     @commands.command(aliases=["inrole"])
     async def in_role(self, ctx, *, query_role):

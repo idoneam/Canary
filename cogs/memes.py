@@ -1,6 +1,4 @@
-# -*- coding: utf-8 -*-
-#
-# Copyright (C) idoneam (2016-2019)
+# Copyright (C) idoneam (2016-2021)
 #
 # This file is part of Canary
 #
@@ -19,9 +17,13 @@
 
 # discord-py requirements
 from discord.ext import commands
+import discord
 
 # Other utilities
 import random
+import requests
+import re
+from bs4 import BeautifulSoup
 from .utils.auto_incorrect import auto_incorrect
 
 
@@ -35,11 +37,11 @@ class Memes(commands.Cog):
         Purposefully auto-incorrects inputted sentences
         """
         if input_str is None:
-            await ctx.send()
+            return
         msg = auto_incorrect(input_str)
         self.bot.mod_logger.info(
-            '?bac invoked: Author: {}, Message: {}'.format(
-                ctx.message.author, ctx.message.content))
+            f"?bac invoked: Author: {ctx.message.author}, Message: "
+            f"{ctx.message.content}")
         await ctx.send(msg)
         await ctx.message.delete()
 
@@ -76,62 +78,6 @@ class Memes(commands.Cog):
         await ctx.message.delete()
 
     @commands.command()
-    async def gohere(self, ctx):
-        """
-        for future mcgillians
-        """
-        await ctx.send("http://gph.is/1cN9wO1")
-        await ctx.message.delete()
-
-    @commands.command()
-    async def tunak(self, ctx):
-        """
-        bitch pls
-        """
-        await ctx.send("http://i.imgur.com/rNNLyjK.gif")
-        await ctx.message.delete()
-
-    @commands.command()
-    async def bb8(self, ctx):
-        """
-        nice job bb8
-        """
-        await ctx.send("http://i.imgur.com/SUvaUM2.gif")
-        await ctx.message.delete()
-
-    @commands.command()
-    async def longtime(self, ctx):
-        """
-        That's a name I've not heard in a long time
-        """
-        await ctx.send("http://i.imgur.com/e1T1xcq.mp4")
-        await ctx.message.delete()
-
-    @commands.command()
-    async def thonk(self, ctx):
-        """
-        when thonking consumes you
-        """
-        await ctx.send("https://i.imgur.com/VADGUwj.gifv")
-        await ctx.message.delete()
-
-    @commands.command()
-    async def dealwithit(self, ctx):
-        """
-        deal with it trump
-        """
-        await ctx.send("http://i.imgur.com/5jzN8zV.mp4")
-        await ctx.message.delete()
-
-    @commands.command()
-    async def lmao(self, ctx):
-        """
-        that's hilarious
-        """
-        await ctx.send("http://i.imgur.com/o5Cc3i2.mp4")
-        await ctx.message.delete()
-
-    @commands.command()
     async def cheep(self, ctx):
         """:^)"""
         await ctx.send('CHEEP CHEEP')
@@ -141,33 +87,85 @@ class Memes(commands.Cog):
         """Alternates upper/lower case for input string. Input message
         disappears after."""
         if input_str is None:
-            await ctx.send()
-        msg = "".join([(c.upper() if random.randint(0, 1) else c.lower())
-                       for c in input_str])
+            return
+        msg = "".join((c.upper() if random.randint(0, 1) else c.lower())
+                      for c in input_str)
         self.bot.mod_logger.info(
-            '?mix invoked: Author: {}, Message: {}'.format(
-                ctx.message.author, ctx.message.content))
+            f"?mix invoked: Author: {ctx.message.author}, Message: "
+            f"{ctx.message.content}")
         await ctx.send(msg)
         await ctx.message.delete()
 
     @commands.command(aliases=['boot'])
     async def pyramid(self, ctx, num: int = 2, emoji: str = "👢"):
-        """Draws a pyramid of boots, default is 2 unless user specifies an integer number of levels of boots between -8 and 8. Also accepts any other emoji, word or multiword (in quotes) string."""
+        """
+        Draws a pyramid of boots, default is 2 unless user specifies an integer
+        number of levels of boots between -8 and 8. Also accepts any other
+        emoji, word or multiword (in quotes) string.
+        """
         def pyramidy(n, m):
-            return "{spaces}{emojis}".format(spaces=" " * ((m - n) * 3),
-                                             emojis=(emoji + " ") * n)
+            # Limit emoji/string to 8 characters or Discord/potate mald
+            return f"{' ' * ((m - n) * 3)}{(emoji[:8] + ' ') * n}"
 
-        if (num > 0):
-            num = max(min(num, 8), 1)    # Above 8, herre gets angry
-            msg = "\n".join(pyramidy(ln, num) for ln in range(1, num + 1))
+        # Limit num to a maximum of +/- 8 or herre malds
+        abs_num = max(min(abs(num), 8), 1)
+        rng = (1, abs_num + 1) if num > 0 else (abs_num, 0, -1)
+
+        msg = "\n".join(pyramidy(ln, abs_num) for ln in range(*rng))
+        await ctx.send(f"**\n{msg}**")
+
+    @commands.command()
+    async def xkcd(self, ctx, command: str = None):
+        """
+        Enjoy a nice xkcd comic with some strangers on the internet!
+        If no issue number is passed, returns a random xkcd.
+        Valid options are: nothing, 'latest' or a positive integer greater
+        than one and at most equal to the latest issue number.
+        """
+
+        await ctx.trigger_typing()
+
+        num = None
+        if command is None:
+            req = requests.get("https://c.xkcd.com/comic/random")
+        elif command == "latest":
+            req = requests.get("https://xkcd.com/")
         else:
-            num = min(max(num, -8), -1)    # Below -8, herre gets angry
-            msg = "\n".join(
-                pyramidy(ln, abs(num))
-                for ln in reversed(range(1,
-                                         abs(num) + 1)))
+            try:
+                num = int(command)
+            except ValueError:
+                await ctx.send(
+                    f"invalid input: `{command}` does not parse to an integer")
+                return
+            req = requests.get(f"https://xkcd.com/{num}")
+            if num < 1:
+                await ctx.send(f"the number `{num}` is less than one, "
+                               f"such an xkcd issue cannot exist")
+                return
 
-        await ctx.send("**\n{}**".format(msg))
+        if req.status_code == 404:
+            num = None
+            req = requests.get("https://xkcd.com/")
+
+        if req.status_code != 200:
+            await ctx.send(f"xkcd number `{command}` could not be found "
+                           f"(request returned `{req.status_code}`)")
+            return
+
+        soup = BeautifulSoup(req.content, "html.parser")
+        if num is None:
+            title_num = re.findall(
+                r'^https://xkcd.com/([1-9][0-9]*)/$',
+                soup.find('meta', property='og:url')['content'])[0]
+        else:
+            title_num = str(num)
+
+        img_soup = soup.find("div", attrs={"id": "comic"}).find("img")
+        embd = discord.Embed(
+            title=f"{img_soup['alt']} (#{title_num})",
+            url=req.url).set_image(url=f"https:{img_soup['src']}").set_footer(
+                text=str(img_soup['title']))
+        await ctx.send(embed=embd)
 
 
 def setup(bot):
