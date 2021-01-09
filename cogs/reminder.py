@@ -1,6 +1,4 @@
-# -*- coding: utf-8 -*-
-#
-# Copyright (C) idoneam (2016-2019)
+# Copyright (C) idoneam (2016-2021)
 #
 # This file is part of Canary
 #
@@ -32,52 +30,24 @@ from .utils.paginator import Pages
 # For remindme functionality
 import re
 
+ONES_NAMES = ("one", "two", "three", "four", "five", "six", "seven", "eight",
+              "nine")
+# Haha English start at 20
+TENS_NAMES = ("twenty", "thirty", "forty", "fifty")
+
 REMINDER_LETTER_REPLACEMENTS = [
-    (r"twenty[-\s]one", "21"),
-    (r"twenty[-\s]two", "22"),
-    (r"twenty[-\s]three", "23"),
-    (r"twenty[-\s]four", "24"),
-    (r"twenty[-\s]five", "25"),
-    (r"twenty[-\s]six", "26"),
-    (r"twenty[-\s]seven", "27"),
-    (r"twenty[-\s]eight", "28"),
-    (r"twenty[-\s]nine", "29"),
-    (r"thirty[-\s]one", "31"),
-    (r"thirty[-\s]two", "32"),
-    (r"thirty[-\s]three", "33"),
-    (r"thirty[-\s]-four", "34"),
-    (r"thirty[-\s]four", "34"),
-    (r"thirty[-\s]five", "35"),
-    (r"thirty[-\s]six", "36"),
-    (r"thirty[-\s]seven", "37"),
-    (r"thirty[-\s]eight", "38"),
-    (r"thirty[-\s]nine", "39"),
-    (r"forty[-\s]one", "41"),
-    (r"forty[-\s]two", "42"),
-    (r"forty[-\s]three", "43"),
-    (r"forty[-\s]four", "44"),
-    (r"forty[-\s]five", "45"),
-    (r"forty[-\s]six", "46"),
-    (r"forty[-\s]seven", "47"),
-    (r"forty[-\s]eight", "48"),
-    (r"forty[-\s]nine", "49"),
+    (rf"{TENS_NAMES[t-2]}[-\s]{ONES_NAMES[o-1]}", str((t * 10) + o))
+    for t in range(2, 6) for o in range(1, 10)
+] + [(TENS_NAMES[t - 2], str(t * 10)) for t in range(2, 6)] + [
     ("tomorrow", "1 day"),
     ("next week", "1 week"),
     ("later", "6 hours"),
     ("a", "1"),
     ("an", "1"),
-    ("zero", "0"),
     ("no", "0"),
     ("none", "0"),
-    ("one", "1"),
-    ("two", "2"),
-    ("three", "3"),
-    ("four", "4"),
-    ("five", "5"),
-    ("six", "6"),
-    ("seven", "7"),
-    ("eight", "8"),
-    ("nine", "9"),
+    ("zero", "0"),
+    *(zip(ONES_NAMES, range(1, 10))),
     ("ten", "10"),
     ("eleven", "11"),
     ("twelve", "12"),
@@ -88,10 +58,6 @@ REMINDER_LETTER_REPLACEMENTS = [
     ("seventeen", "17"),
     ("eighteen", "18"),
     ("nineteen", "19"),
-    ("twenty", "20"),
-    ("thirty", "30"),
-    ("forty", "40"),
-    ("fifty", "50"),    # DO NOT remove this terminating comma.
 ]
 
 # Regex for misspellings of time units
@@ -173,8 +139,8 @@ class Reminder(commands.Cog):
                     if datetime.datetime.now(
                     ) - last_date > datetime.timedelta(
                             days=self.frequencies[reminders[i][3]]):
-                        await member.send("Reminding you to {}! [{:d}]".format(
-                            reminders[i][2], i + 1))
+                        await member.send(
+                            f"Reminding you to {reminders[i][2]}! [{i + 1:d}]")
 
                         c.execute(
                             ("UPDATE 'Reminders' SET LastReminder=? WHERE " +
@@ -253,20 +219,20 @@ class Reminder(commands.Cog):
         for segment in input_segments:
             if re.match(TIME_SEPARATOR_REGEX, segment):
                 continue
-            if re.match("^{}$".format(NUMBER_REGEX), segment):
+            if re.match(f"^{NUMBER_REGEX}$", segment):
                 last_number = segment
-            elif re.match("^{}$".format(UNIT_REGEX), segment):
-                time_segments.append("{} {}".format(last_number, segment))
+            elif re.match(f"^{UNIT_REGEX}$", segment):
+                time_segments.append(f"{last_number} {segment}")
             else:
                 first_reminder_segment = segment
                 break
 
-        # They probably dont want their reminder nuked of punctuation, spaces
+        # They probably don't want their reminder nuked of punctuation, spaces
         # and formatting, so extract from original string.
         reminder = quote[quote.index(first_reminder_segment):]
 
         # Date-based reminder triggered by "at" and "on" keywords
-        if input_segments[0] in ("at", "on"):
+        if input_segments[0] in {"at", "on"}:
             # Gets YYYY-mm-dd
             date_result = re.search(YMD_REGEX, original_input_copy)
             # Gets HH:MM
@@ -391,10 +357,9 @@ class Reminder(commands.Cog):
             reminder_time).split()[1].split(":")[1]
 
         await ctx.author.send(
-            'Hi {}! \nI will remind you to {} on {} at {} unless you send me '
-            'a message to stop reminding you about it! [{:d}]'.format(
-                ctx.author.name, reminder, due_date, due_time,
-                len(reminders) + 1))
+            f"Hi {ctx.author.name}! \nI will remind you to {reminder} on "
+            f"{due_date} at {due_time} unless you send me a message to stop "
+            f"reminding you about it! [{len(reminders)+1}]")
         await ctx.send('Reminder added.')
 
         conn.commit()
