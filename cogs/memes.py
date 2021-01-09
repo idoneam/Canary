@@ -36,6 +36,8 @@ class Memes(commands.Cog):
         """
         Purposefully auto-incorrects inputted sentences
         """
+        if ctx.message.reference and ctx.message.reference.resolved:
+            input_str = ctx.message.reference.resolved.content
         if input_str is None:
             return
         msg = auto_incorrect(input_str)
@@ -86,6 +88,8 @@ class Memes(commands.Cog):
     async def mix(self, ctx, *, input_str: str = None):
         """Alternates upper/lower case for input string. Input message
         disappears after."""
+        if ctx.message.reference and ctx.message.reference.resolved:
+            input_str = ctx.message.reference.resolved.content
         if input_str is None:
             return
         msg = "".join((c.upper() if random.randint(0, 1) else c.lower())

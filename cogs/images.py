@@ -80,11 +80,10 @@ class Images(commands.Cog):
             if trg_msg and trg_msg.attachments:
                 return trg_msg.attachments[0]
             return None
-         
-        messages = await ctx.channel.history(limit=Images.IMAGE_HISTORY_LIMIT
-                                             ).flatten()
-        return next(
-            (msg.attachments[0] for msg in messages if msg.attachments), None)
+        async for msg in ctx.channel.history(limit=Images.IMAGE_HISTORY_LIMIT):
+            if msg.attachments:
+                return msg.attachments[0]
+        return None
 
     @staticmethod
     def _cv_linear_polar(image, flags):
