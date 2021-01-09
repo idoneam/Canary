@@ -1,6 +1,4 @@
-# -*- coding: utf-8 -*-
-#
-# Copyright (C) idoneam (2016-2019)
+# Copyright (C) idoneam (2016-2021)
 #
 # This file is part of Canary
 #
@@ -61,7 +59,7 @@ class Quotes(commands.Cog):
 
         for q in c.fetchall():
             # Skip URL quotes
-            if 'http://' in q[0] or 'https://' in q[0]:
+            if re.search(r"https?://", q[0]):
                 continue
 
             # Preprocess the quote to improve chances of getting a nice
@@ -166,12 +164,11 @@ class Quotes(commands.Cog):
             # Query for either user and quote or user only (None)
             c.execute(
                 'SELECT ID, Name, Quote FROM Quotes WHERE ID = ? AND Quote '
-                'LIKE ?',
-                (u_id, "%{}%".format(str2 if str2 is not None else "")))
+                'LIKE ?', (u_id, f"%{str2 if str2 is not None else ''}%"))
             quotes = c.fetchall()
 
         else:    # query for quote only
-            query = str1 if str2 is None else str1 + ' ' + str2
+            query = str1 if str2 is None else f"{str1} {str2}"
             if query[0] == "/" and query[-1] == "/":
                 c.execute("SELECT ID, Name, Quote FROM Quotes")
                 quotes = c.fetchall()
@@ -186,7 +183,7 @@ class Quotes(commands.Cog):
             else:
                 c.execute(
                     'SELECT ID, Name, Quote FROM Quotes WHERE Quote LIKE ?',
-                    ('%{}%'.format(query), ))
+                    (f'%{query}%', ))
                 quotes = c.fetchall()
 
         if not quotes:
@@ -263,8 +260,7 @@ class Quotes(commands.Cog):
             return
 
         quote_list_text = [
-            '[{}] {}'.format(i + 1, quote[2])
-            for i, quote in zip(range(len(quote_list)), quote_list)
+            f'[{i}] {quote[2]}' for i, quote in enumerate(quote_list, 1)
         ]
 
         p = Pages(ctx,
@@ -313,8 +309,8 @@ class Quotes(commands.Cog):
                     await message.delete()
 
                     p.itemList = [
-                        '[{}] {}'.format(i + 1, quote[2])
-                        for i, quote in zip(range(len(quote_list)), quote_list)
+                        f'[{i}] {quote[2]}'
+                        for i, quote in enumerate(quote_list, 1)
                     ]
 
                 await p.paginate()
@@ -368,8 +364,8 @@ class Quotes(commands.Cog):
                 await ctx.send("Invalid regex syntax.")
                 return
         else:
-            t = ('%{}%'.format(query), )
-            c.execute('SELECT * FROM Quotes WHERE Quote LIKE ?', t)
+            c.execute('SELECT * FROM Quotes WHERE Quote LIKE ?',
+                      (f'%{query}%', ))
             quote_list = c.fetchall()
 
         if not quote_list:
@@ -377,8 +373,7 @@ class Quotes(commands.Cog):
             return
 
         quote_list_text = [
-            '[{}] {}'.format(i + 1, quote[2])
-            for i, quote in zip(range(len(quote_list)), quote_list)
+            f'[{i}] {quote[2]}' for i, quote in enumerate(quote_list, 1)
         ]
 
         p = Pages(ctx,

@@ -1,0 +1,46 @@
+name: Poetry Production Dependency Installation
+on:
+  pull_request:
+    branches:
+      - master
+    paths:
+      - 'pyproject.toml'
+      - 'poetry.lock'
+      - '.github/workflows/poetry*.yml'
+
+jobs:
+  poetry-prod-build:
+    env:
+      POETRY_VERSION: "1.1.4"
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    strategy:
+      matrix:
+        os:
+          - 'ubuntu-20.04'
+          - 'ubuntu-18.04'
+        python-version:
+          - '3.9'
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install Poetry
+        run: |
+          curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python -  --version $POETRY_VERSION
+          echo "$HOME/.poetry/bin" >> $GITHUB_PATH
+
+      - name: Get Poetry version
+        run: poetry --version
+
+      - name: Check pyproject.toml validity
+        run: poetry check --no-interaction
+
+      - name: Install Canary Production Dependencies
+        run: poetry install --no-dev --no-interaction
