@@ -1,4 +1,4 @@
-name: Poetry Development Environment Build
+name: Poetry Development Dependency Installation
 on:
   push:
     branches:
@@ -28,11 +28,9 @@ jobs:
         os:
           - 'ubuntu-20.04'
           - 'ubuntu-18.04'
-          - 'ubuntu-16.04'
           - 'macos-10.15'
           # - 'macos-11.0'
           - 'windows-2019'
-          - 'windows-2016'
         python-version:
           - '3.9'
     steps:

@@ -1,17 +1,8 @@
-name: Poetry Production Environment Build
+name: Poetry Production Dependency Installation
 on:
-  push:
-    branches:
-      - master
-      - dev
-    paths:
-      - 'pyproject.toml'
-      - 'poetry.lock'
-      - '.github/workflows/poetry*.yml'
   pull_request:
     branches:
       - master
-      - dev
     paths:
       - 'pyproject.toml'
       - 'poetry.lock'
