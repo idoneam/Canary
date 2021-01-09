@@ -1,6 +1,4 @@
-# -*- coding: utf-8 -*-
-#
-# Copyright (C) idoneam (2016-2019)
+# Copyright (C) idoneam (2016-2021)
 #
 # This file is part of Canary
 #
@@ -43,57 +41,56 @@ def filter_image(func):
         buffer = BytesIO()
         await att.save(fp=buffer)
         original_name, ext = att.filename.rsplit('.', 1)
-        fn = '{}-{}.{}'.format(original_name, func.__name__, ext)
+        fn = f"{original_name}-{func.__name__}.{ext}"
 
         try:
             img_bytes = np.asarray(bytearray(buffer.read()), dtype=np.uint8)
             result = cv2.imdecode(img_bytes, cv2.IMREAD_UNCHANGED)
-            if len(args) == 2:
-                args = (args[0], result)
-            else:
-                args = (result, )
+            args = (args[0], result) if len(args) == 2 else (result, )
             result = await func(self, ctx, *args)
-            retval, buffer = cv2.imencode('.{}'.format(ext), result,
-                                          [cv2.IMWRITE_JPEG_QUALITY, 100])
+            _r, buffer = cv2.imencode(f".{ext}", result,
+                                      [cv2.IMWRITE_JPEG_QUALITY, 100])
             await ctx.message.delete()
+            await ctx.send(file=discord.File(fp=BytesIO(buffer), filename=fn))
 
-            buffer = BytesIO(buffer)
-            await ctx.send(file=discord.File(fp=buffer, filename=fn))
-
-        except Exception:
+        except Exception:    # TODO: Narrow the exception
             await ctx.send('Error occurred.', delete_after=60)
 
     return wrapper
 
 
 class Images(commands.Cog):
+    IMAGE_HISTORY_LIMIT = 50
+
     def __init__(self, bot):
         self.bot = bot
 
     @commands.Cog.listener()
     async def on_ready(self):
-        if not os.path.exists('./tmp/'):
-            os.mkdir('./tmp/', mode=0o755)
+        if not os.path.exists("./tmp/"):
+            os.mkdir("./tmp/", mode=0o755)
 
     @staticmethod
     async def get_attachment(ctx: discord.ext.commands.Context):
-        messages = await ctx.channel.history(limit=100).flatten()
-        for msg in messages:
-            if msg.attachments:
-                return msg.attachments[0]
-        return None
+        messages = await ctx.channel.history(limit=Images.IMAGE_HISTORY_LIMIT
+                                             ).flatten()
+        return next(
+            (msg.attachments[0] for msg in messages if msg.attachments), None)
 
-    def _cv_linear_polar(self, image, flags):
+    @staticmethod
+    def _cv_linear_polar(image, flags):
         h, w = image.shape[:2]
         r = math.sqrt(w**2 + h**2) / 2
         return cv2.linearPolar(image, (w / 2, h / 2), r, flags)
 
-    def _polar(self, image):
-        return self._cv_linear_polar(image,
-                                     cv2.INTER_LINEAR + cv2.WARP_FILL_OUTLIERS)
+    @staticmethod
+    def _polar(image):
+        return Images._cv_linear_polar(
+            image, cv2.INTER_LINEAR + cv2.WARP_FILL_OUTLIERS)
 
-    def _cart(self, image):
-        return self._cv_linear_polar(
+    @staticmethod
+    def _cart(image):
+        return Images._cv_linear_polar(
             image,
             cv2.INTER_LINEAR + cv2.WARP_FILL_OUTLIERS + cv2.WARP_INVERSE_MAP)
 
@@ -115,7 +112,7 @@ class Images(commands.Cog):
         """
         Transform from polar to Cartesian coordinates.
         """
-        return self._cart(np.rot90(image))
+        return Images._cart(np.rot90(image))
 
     @commands.command()
     @filter_image
@@ -154,10 +151,10 @@ class Images(commands.Cog):
         """
         Radial blur
         """
-        radius = self._bounded_radius(radius)
-        image = self._polar(image)
+        radius = Images._bounded_radius(radius)
+        image = Images._polar(image)
         image = cv2.blur(image, (radius, 1))
-        image = self._cart(image)
+        image = Images._cart(image)
         return image
 
     @commands.command(aliases=['circle', 'circular', 'spin'])
@@ -180,7 +177,7 @@ class Images(commands.Cog):
         # normal
         image = cv2.copyMakeBorder(image, v_pad, v_pad, h_pad, h_pad,
                                    cv2.BORDER_REPLICATE)
-        image = self._polar(image)
+        image = Images._polar(image)
 
         # wrap border to avoid the sharp horizontal line when transforming
         # image back to normal
@@ -188,7 +185,7 @@ class Images(commands.Cog):
                                    half_radius, half_radius, cv2.BORDER_WRAP)
         image = cv2.blur(image, (1, radius))
         image = image[half_radius:-half_radius, half_radius:-half_radius]
-        image = self._cart(image)
+        image = Images._cart(image)
         image = image[v_pad:-v_pad, h_pad:-h_pad]
 
         return image
