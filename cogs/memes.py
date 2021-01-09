@@ -35,6 +35,10 @@ class Memes(commands.Cog):
     async def bac(self, ctx, *, input_str: str = None):
         """
         Purposefully auto-incorrects inputted sentences
+		Inputted sentence is either the message to which
+		the message invoking this is replying to or if there
+		is no such message, the content of the message after
+		the command name. Invoking message will be deleted.
         """
         if ctx.message.reference and ctx.message.reference.resolved:
             input_str = ctx.message.reference.resolved.content
@@ -86,8 +90,12 @@ class Memes(commands.Cog):
 
     @commands.command()
     async def mix(self, ctx, *, input_str: str = None):
-        """Alternates upper/lower case for input string. Input message
-        disappears after."""
+        """Alternates upper/lower case for input string.
+		Inputted sentence is either the message to which
+		the message invoking this is replying to or if there
+		is no such message, the content of the message after
+		the command name. Invoking message will be deleted.
+		"""
         if ctx.message.reference and ctx.message.reference.resolved:
             input_str = ctx.message.reference.resolved.content
         if input_str is None:
