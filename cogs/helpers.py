@@ -729,7 +729,8 @@ class Helpers(commands.Cog):
                                "not a reply, then to the rest of the invoking "
                                "message after the first argument.\n"
                                "Here is a list of all language codes: " +
-                               ", ".join(f"`{code}`" for code in googletrans.LANGUAGES))
+                               ", ".join(f"`{code}`"
+                                         for code in googletrans.LANGUAGES))
 
             elif inp_str in googletrans.LANGUAGES:
                 await ctx.send(f"Language code `{inp_str}` stands for "
@@ -738,19 +739,24 @@ class Helpers(commands.Cog):
                 await ctx.send(f"Sorry, `{inp_str}` is not a recognized "
                                f"language code.\nHere is a list of all "
                                f"language codes: " +
-                               ", ".join(f"`{code}`" for code in googletrans.LANGUAGES))
+                               ", ".join(f"`{code}`"
+                                         for code in googletrans.LANGUAGES))
         elif code_match := LANG_CODE_REGEX.match(command):
             if ctx.message.reference and ctx.message.reference.resolved:
                 inp_str = ctx.message.reference.resolved.content
             if not inp_str:
-                await ctx.send(f"Sorry, no string to translate has been detected")
+                await ctx.send(
+                    f"Sorry, no string to translate has been detected")
                 return
             src, dst = code_match.groups()
             translator = googletrans.Translator()
             if not src:
                 detected_lang = translator.detect(inp_str)
-                src = detected_lang.lang if isinstance(detected_lang.lang, str) else detected_lang.lang[0]
-                cnf = detected_lang.confidence if isinstance(detected_lang.confidence, float) else detected_lang.confidence[0]
+                src = detected_lang.lang if isinstance(
+                    detected_lang.lang, str) else detected_lang.lang[0]
+                cnf = detected_lang.confidence if isinstance(
+                    detected_lang.confidence,
+                    float) else detected_lang.confidence[0]
                 name_str = (
                     f"translated text from {googletrans.LANGUAGES[src]}"
                     f" (auto-detected with {round(cnf*100)}%"
