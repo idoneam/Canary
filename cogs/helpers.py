@@ -701,6 +701,9 @@ class Helpers(commands.Cog):
         or a language code. `dst` must be a language code (it cannot be empty). To get
         a list of all language codes, call `?translate help`. To see what a specific
         language code stands for, call `?translate help \u007bLANGUAGE CODE HERE\u007d`.
+        Second argument is the text that you want to translate. This text is either
+        taken from the message to which the invoking message was replying to, or if the
+        invoking message is not a reply, then to the rest of the message after the first argument.
         """
         if command == "help":
             if not inp_str:
@@ -718,8 +721,14 @@ class Helpers(commands.Cog):
                                "from `src` (it also cannot be empty).\n"
                                "To see what a specific language code "
                                "stands for, call `?translate help \u007b"
-                               "LANGUAGE CODE HERE\u007d`.\nHere "
-                               "is a list of all language codes: " +
+                               "LANGUAGE CODE HERE\u007d`.\n"
+                               "Second argument is the text that you want to "
+                               "translate. This text is either taken from the "
+                               "message to which the invoking message was "
+                               "replying to, or if the invoking message is "
+                               "not a reply, then to the rest of the invoking "
+                               "message after the first argument.\n"
+                               "Here is a list of all language codes: " +
                                ", ".join(f"`{code}`" for code in googletrans.LANGUAGES))
 
             elif inp_str in googletrans.LANGUAGES:
