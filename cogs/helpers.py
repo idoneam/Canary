@@ -700,11 +700,11 @@ class Helpers(commands.Cog):
         Command used to translate some text from one language to another
         Takes two arguments: the source/target languages and the text to translate
         The first argument must be under the following format `src>dst`.
-		`src` indicates the language of the source text.
-		`dst` indicates which language you want the text to be translated into.
-		`src` must be either an empty string (to indicate that you want
-		to autodetect the source language) or a language code/name.
-		`dst` must be a language code/name different from `src` (it cannot be empty).
+        `src` indicates the language of the source text.
+        `dst` indicates which language you want the text to be translated into.
+        `src` must be either an empty string (to indicate that you want
+        to autodetect the source language) or a language code/name.
+        `dst` must be a language code/name different from `src` (it cannot be empty).
         To get a list of all valid language codes and names, call `?translate codes`
         Second argument is the text that you want to translate. This text is either
         taken from the message to which the invoking message was replying to, or if the
@@ -717,14 +717,14 @@ class Helpers(commands.Cog):
                            "languages and the text to translate\n"
                            "The first argument must be under the "
                            "following format `src>dst`.\n`src` indicates "
-						   "the language of the source text.\n`dst` "
-						   "indicates which language you want the text "
-						   "to be translated into.\n`src` must "
+                           "the language of the source text.\n`dst` "
+                           "indicates which language you want the text "
+                           "to be translated into.\n`src` must "
                            "be either an empty string (to indicate "
                            "that you want to autodetect the source "
                            "language) or a language code/name.\n"
                            "`dst` must be a language code/name "
-						   "different from `src` (it cannot be empty)\n"
+                           "different from `src` (it cannot be empty)\n"
                            "Second argument is the text that you want to "
                            "translate. This text is either taken from the "
                            "message to which the invoking message was "
