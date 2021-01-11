@@ -232,8 +232,9 @@ class Score(commands.Cog):
                 args_dict["member"] = ctx.message.author
 
         if emoji:
-            if sum(map(bool, (args_dict["emoji"], args_dict["emojitype"],
-                                  args_dict["emojiname"]))) > 1:
+            if sum(
+                    map(bool, (args_dict["emoji"], args_dict["emojitype"],
+                               args_dict["emojiname"]))) > 1:
                 raise commands.BadArgument(
                     "Invalid input: Only one of either an emoji, "
                     "the emojitype flag or the emojiname flag can be used")
