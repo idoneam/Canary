@@ -22,6 +22,7 @@ aiohttp = "~3.7.3"
 urllib3 = ">=1.25.3"
 feedparser = "^6.0.2"
 regex = "^2020.11.13"
+googletrans = "==3.1.0a0"
 
 [tool.poetry.dev-dependencies]
 yapf = "==0.30.0"
