@@ -1,3 +1,21 @@
+# -*- coding: utf-8 -*-
+#
+# Copyright (C) idoneam (2016-2021)
+#
+# This file is part of Canary
+#
+# Canary is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Canary is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Canary. If not, see <https://www.gnu.org/licenses/>.
 import pickle
 from typing import List, Tuple, Dict
 import requests
@@ -164,7 +182,7 @@ def mk_hm_embed_up_fn(category_name, word, lowered_word, not_guessed,
     last_line: str = "incorrect guesses: "
     player_msg_list: List[str] = []
     num_mistakes: int = 0
-    embed = discord.Embed(colour=random.randint(0, 16777215))
+    embed = discord.Embed(colour=random.randint(0, 0xFFFFFF))
     embed.add_field(
         name=field_name,
         value=f"`{first_line}`\n```{HANG_LIST[num_mistakes]}```").set_footer(
