@@ -1,6 +1,4 @@
-# -*- coding: utf-8 -*-
-#
-# Copyright (C) idoneam (2016-2019)
+# Copyright (C) idoneam (2016-2021)
 #
 # This file is part of Canary
 #
@@ -31,15 +29,13 @@ class Mod(commands.Cog):
     @commands.command()
     async def answer(self, ctx, *args):
         if isinstance(ctx.message.channel, discord.DMChannel):
-            message = "{}".format(
-                " ".join(args)
-            )    # to work regardless of whether the person uses apostrophes
             channel_to_send = utils.get(self.bot.get_guild(
                 self.bot.config.server_id).text_channels,
                                         name=self.bot.config.reception_channel)
-            msg = '{} 📣 {}'.format(str(ctx.author.name), message)
+            # to work regardless of whether the person uses apostrophes
+            msg = f"{ctx.author.name} 📣 {' '.join(args)}"
             await channel_to_send.send(content=msg)
-            await ctx.send("`Message sent`")
+            await ctx.send("```Message sent```")
 
     @commands.command(aliases=['dm'])
     @is_moderator()
@@ -47,14 +43,13 @@ class Mod(commands.Cog):
         """
         PM a user on the server using the bot
         """
-        dest = user
-        await dest.send(
-            content='{}\n*To answer write* `{}answer "your message here"`'.
-            format(message, self.bot.config.command_prefix[0]))
+        await user.send(content=f'{message}\n*To answer write* '
+                        f'`{self.bot.config.command_prefix[0]}answer '
+                        f'"your message here"`')
         channel_to_forward = utils.get(self.bot.get_guild(
             self.bot.config.server_id).text_channels,
                                        name=self.bot.config.reception_channel)
-        msg = '🐦 ({}) to {}: {}'.format(ctx.author.name, dest.name, message)
+        msg = f'🐦 ({ctx.author.name}) to {user.name}: {message}'
         await channel_to_forward.send(msg)
         await ctx.message.delete()
 
