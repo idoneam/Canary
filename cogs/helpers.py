@@ -52,8 +52,11 @@ URBAN_DICT_TEMPLATE = "http://api.urbandictionary.com/v0/define?term={}"
 
 LMGTFY_TEMPLATE = "https://lmgtfy.com/?q={}"
 
-LANG_CODE_LIST = "|".join(googletrans.LANGUAGES.keys())
-LANG_CODE_REGEX = re.compile(f"^(|{LANG_CODE_LIST})>({LANG_CODE_LIST})$")
+LANG_CODES = "|".join(googletrans.LANGUAGES.keys())
+LANG_NAMES = "|".join(
+    lang.split(" ")[0] for lang in googletrans.LANGCODES.keys())
+TRANSLATE_REGEX = re.compile(
+    f"^(|{LANG_NAMES}|{LANG_CODES})>({LANG_NAMES}|{LANG_CODES})$")
 
 LATEX_PREAMBLE = r"""\documentclass[varwidth,12pt]{standalone}
 \usepackage{alphabeta}
@@ -699,56 +702,54 @@ class Helpers(commands.Cog):
         The first argument must be under the following format `src>dst`. `src` must be
         either an empty string (to indicate that you want to autodetect the source language)
         or a language code. `dst` must be a language code (it cannot be empty). To get
-        a list of all language codes, call `?translate help`. To see what a specific
-        language code stands for, call `?translate help \u007bLANGUAGE CODE HERE\u007d`.
+        a list of all language codes, call `?translate help`.
+        To get a list of all valid language codes and their meaning, call `?translate codes`
         Second argument is the text that you want to translate. This text is either
         taken from the message to which the invoking message was replying to, or if the
         invoking message is not a reply, then to the rest of the message after the first argument.
         """
         if command == "help":
-            if not inp_str:
-                await ctx.send("Command used to translate some text "
-                               "from one language to another\n"
-                               "Takes two arguments: the source/target "
-                               "languages and the text to translate\n"
-                               "The first argument must be under the "
-                               "following format `src>dst`.\n`src` must "
-                               "be either an empty string (to indicate "
-                               "that you want to autodetect the source "
-                               "language) or one of the language shown"
-                               "shown below.\n`dst` must be one of the "
-                               "language codes show below and be different "
-                               "from `src` (it also cannot be empty).\n"
-                               "To see what a specific language code "
-                               "stands for, call `?translate help \u007b"
-                               "LANGUAGE CODE HERE\u007d`.\n"
-                               "Second argument is the text that you want to "
-                               "translate. This text is either taken from the "
-                               "message to which the invoking message was "
-                               "replying to, or if the invoking message is "
-                               "not a reply, then to the rest of the invoking "
-                               "message after the first argument.\n"
-                               "Here is a list of all language codes: " +
-                               ", ".join(f"`{code}`"
-                                         for code in googletrans.LANGUAGES))
-
-            elif inp_str in googletrans.LANGUAGES:
-                await ctx.send(f"Language code `{inp_str}` stands for "
-                               f"`{googletrans.LANGUAGES[inp_str]}`")
-            else:
-                await ctx.send(f"Sorry, `{inp_str}` is not a recognized "
-                               f"language code.\nHere is a list of all "
-                               f"language codes: " +
-                               ", ".join(f"`{code}`"
-                                         for code in googletrans.LANGUAGES))
-        elif code_match := LANG_CODE_REGEX.match(command):
+            await ctx.send("Command used to translate some text "
+                           "from one language to another\n"
+                           "Takes two arguments: the source/target "
+                           "languages and the text to translate\n"
+                           "The first argument must be under the "
+                           "following format `src>dst`.\n`src` must "
+                           "be either an empty string (to indicate "
+                           "that you want to autodetect the source "
+                           "language) or one of the language shown"
+                           "shown below.\n`dst` must be one of the "
+                           "language codes show below and be different "
+                           "from `src` (it also cannot be empty).\n"
+                           "To see what a specific language code "
+                           "stands for, call `?translate help \u007b"
+                           "LANGUAGE CODE HERE\u007d`.\n"
+                           "Second argument is the text that you want to "
+                           "translate. This text is either taken from the "
+                           "message to which the invoking message was "
+                           "replying to, or if the invoking message is "
+                           "not a reply, then to the rest of the invoking "
+                           "message after the first argument.\n"
+                           "To get a list of all valid language codes "
+                           "and their meaning, call `?translate codes`")
+        elif command == "codes":
+            await ctx.send(
+                "Here is a list of all language "
+                "codes and their meaning:\n" +
+                ", ".join(f"`{code}`: {lang}"
+                          for code, lang in googletrans.LANGUAGES.items()))
+        elif code_match := TRANSLATE_REGEX.match(command):
             if ctx.message.reference and ctx.message.reference.resolved:
                 inp_str = ctx.message.reference.resolved.content
             if not inp_str:
                 await ctx.send(
-                    f"Sorry, no string to translate has been detected")
+                    "Sorry, no string to translate has been detected")
                 return
             src, dst = code_match.groups()
+            if src in googletrans.LANGCODES:
+                src = googletrans.LANGCODES[src]
+            if dst in googletrans.LANGCODES:
+                dst = googletrans.LANGCODES[dst]
             translator = googletrans.Translator()
             if not src:
                 detected_lang = translator.detect(inp_str)
