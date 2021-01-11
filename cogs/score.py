@@ -196,13 +196,13 @@ class Score(commands.Cog):
             "from_member": (FromConverter(), None),
             "to_member": (ToConverter(), None),
             "emojitype": (EmojiTypeConverter(), None),
-            "emojiname": (EmojiNameConverter(), None),
             "self": (SelfConverter(), False),
             "before": (BeforeConverter(), None),
             "after": (AfterConverter(), None)
         }
         if emoji:
             converters_dict["emoji"] = (TotalEmojiConverter(), None)
+            converters_dict["emojiname"] = (EmojiNameConverter(), None)
         # it's important that member is the last key as it is less restrictive
         # than the others. For example, if a user named themselves
         # "from:all", if member was placed first it would break all commands
@@ -232,8 +232,7 @@ class Score(commands.Cog):
                 args_dict["member"] = ctx.message.author
 
         if emoji:
-            if sum(
-                    filter(None, (args_dict["emoji"], args_dict["emojitype"],
+            if sum(map(bool, (args_dict["emoji"], args_dict["emojitype"],
                                   args_dict["emojiname"]))) > 1:
                 raise commands.BadArgument(
                     "Invalid input: Only one of either an emoji, "
@@ -277,7 +276,7 @@ class Score(commands.Cog):
             if args_dict["emoji"]:
                 where_list.append("ReactionName = ?")
                 values_list.append(str(args_dict["emoji"]))
-            if args_dict["emojiname"]:
+            elif args_dict["emojiname"]:
                 where_list.append("instr(ReactionName, ?) > 0")
                 values_list.append(str(args_dict["emojiname"]))
         if args_dict["emojitype"] == "unicode":
@@ -446,7 +445,6 @@ class Score(commands.Cog):
 
         # get the WHERE conditions and the values
         where_str, t = self._where_str_and_values_from_args_dict(args_dict)
-
         conn = sqlite3.connect(self.bot.config.db_path)
         c = conn.cursor()
         if args_dict["emojitype"] != "score":
