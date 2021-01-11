@@ -28,6 +28,7 @@ from io import BytesIO
 from sympy import preview
 import cv2
 import numpy as np
+import googletrans
 
 # Other utilities
 import re
@@ -50,6 +51,9 @@ WTTR_IN_MOON_URL = "http://wttr.in/moon.png"
 URBAN_DICT_TEMPLATE = "http://api.urbandictionary.com/v0/define?term={}"
 
 LMGTFY_TEMPLATE = "https://lmgtfy.com/?q={}"
+
+LANG_CODE_LIST = "|".join(googletrans.LANGUAGES.keys())
+LANG_CODE_REGEX = re.compile(f"^(|{LANG_CODE_LIST})>({LANG_CODE_LIST})$")
 
 LATEX_PREAMBLE = r"""\documentclass[varwidth,12pt]{standalone}
 \usepackage{alphabeta}
@@ -686,6 +690,83 @@ class Helpers(commands.Cog):
         ui_embed.set_image(url=user.avatar_url)
 
         await ctx.send(embed=ui_embed)
+
+    @commands.command(aliases=["trans"])
+    async def translate(self, ctx, command: str, *, inp_str: str = None):
+        """
+        Command used to translate some text from one language to another
+        Takes two arguments: the source/target languages and the text to translate
+        The first argument must be under the following format `src>dst`. `src` must be
+        either an empty string (to indicate that you want to autodetect the source language)
+        or a language code. `dst` must be a language code (it cannot be empty). To get
+        a list of all language codes, call `?translate help`. To see what a specific
+        language code stands for, call `?translate help \u007bLANGUAGE CODE HERE\u007d`.
+        """
+        if command == "help":
+            if not inp_str:
+                await ctx.send("Command used to translate some text "
+                               "from one language to another\n"
+                               "Takes two arguments: the source/target "
+                               "languages and the text to translate\n"
+                               "The first argument must be under the "
+                               "following format `src>dst`.\n`src` must "
+                               "be either an empty string (to indicate "
+                               "that you want to autodetect the source "
+                               "language) or one of the language shown"
+                               "shown below.\n`dst` must be one of the "
+                               "language codes show below and be different "
+                               "from `src` (it also cannot be empty).\n"
+                               "To see what a specific language code "
+                               "stands for, call `?translate help \u007b"
+                               "LANGUAGE CODE HERE\u007d`.\nHere "
+                               "is a list of all language codes: " +
+                               ", ".join(f"`{code}`" for code in googletrans.LANGUAGES))
+
+            elif inp_str in googletrans.LANGUAGES:
+                await ctx.send(f"Language code `{inp_str}` stands for "
+                               f"`{googletrans.LANGUAGES[inp_str]}`")
+            else:
+                await ctx.send(f"Sorry, `{inp_str}` is not a recognized "
+                               f"language code.\nHere is a list of all "
+                               f"language codes: " +
+                               ", ".join(f"`{code}`" for code in googletrans.LANGUAGES))
+        elif code_match := LANG_CODE_REGEX.match(command):
+            if ctx.message.reference and ctx.message.reference.resolved:
+                inp_str = ctx.message.reference.resolved.content
+            if not inp_str:
+                await ctx.send(f"Sorry, no string to translate has been detected")
+                return
+            src, dst = code_match.groups()
+            translator = googletrans.Translator()
+            if not src:
+                detected_lang = translator.detect(inp_str)
+                src = detected_lang.lang if isinstance(detected_lang.lang, str) else detected_lang.lang[0]
+                cnf = detected_lang.confidence if isinstance(detected_lang.confidence, float) else detected_lang.confidence[0]
+                name_str = (
+                    f"translated text from {googletrans.LANGUAGES[src]}"
+                    f" (auto-detected with {round(cnf*100)}%"
+                    f" certainty) to {googletrans.LANGUAGES[dst]}")
+            else:
+                name_str = (
+                    f"translated text from {googletrans.LANGUAGES[src]}"
+                    f" to {googletrans.LANGUAGES[dst]}")
+            if src == dst:
+                await ctx.send(
+                    f"Inputed source (`{src}`) and target (`{dst}`) "
+                    f"languages are the same, which does not make sense")
+                return
+            embed = discord.Embed(colour=random.randint(0, 0xFFFFFF))
+            embed.add_field(name=name_str,
+                            value=translator.translate(inp_str,
+                                                       src=src,
+                                                       dest=dst).text)
+
+            await ctx.send(embed=embed)
+        else:
+            await ctx.send(f"First argument `{command}` could not be parsed "
+                           f"to a proper command string for this function.\n"
+                           f"To learn more about how to use this command, "
+                           f"call `?translate help`")
 
 
 def setup(bot):
