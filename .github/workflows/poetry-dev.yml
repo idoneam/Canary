@@ -1,0 +1,56 @@
+name: Dev Dependencies
+on:
+  push:
+    branches:
+      - master
+      - dev
+    paths:
+      - 'pyproject.toml'
+      - 'poetry.lock'
+      - '.github/workflows/poetry*.yml'
+  pull_request:
+    branches:
+      - master
+      - dev
+    paths:
+      - 'pyproject.toml'
+      - 'poetry.lock'
+      - '.github/workflows/poetry*.yml'
+
+jobs:
+  poetry-dev-build:
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    strategy:
+      matrix:
+        os:
+          - 'ubuntu-20.04'
+          - 'ubuntu-18.04'
+          - 'macos-10.15'
+          # - 'macos-11.0'
+          - 'windows-2019'
+        python-version:
+          - '3.9'
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install latest version of Poetry
+        run: |
+          curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python -
+          echo "$HOME/.poetry/bin" >> $GITHUB_PATH
+
+      - name: Get Poetry version
+        run: poetry --version
+
+      - name: Check pyproject.toml validity
+        run: poetry check --no-interaction
+
+      - name: Install Canary Development Dependencies
+        run: poetry install --no-interaction
