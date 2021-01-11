@@ -75,11 +75,14 @@ class Images(commands.Cog):
 
     @staticmethod
     async def get_attachment(ctx: discord.ext.commands.Context):
-        if ctx.message.reference:
-            trg_msg = ctx.message.reference.resolved
-            if trg_msg and trg_msg.attachments:
-                return trg_msg.attachments[0]
-            return None
+        """
+        Returns either the attachment of the message to which
+        the invoking message is replying to, or, if that fails
+        the attachment of the most recent of the last 100 messages.
+        If no such message exists, returns None.
+        """
+        if ctx.message.reference and ctx.message.reference.resolved and ctx.message.reference.resolved.attachments:
+            return ctx.message.reference.resolved.attachments[0]
         async for msg in ctx.channel.history(limit=Images.IMAGE_HISTORY_LIMIT):
             if msg.attachments:
                 return msg.attachments[0]
