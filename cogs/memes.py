@@ -51,8 +51,7 @@ class Memes(commands.Cog):
         self.bot.mod_logger.info(
             f"?mix invoked: Author: '{ctx.message.author}', "
             f"Message: '{ctx.message.content}'" +
-            ((f", Used on {ctx.message.reference.resolved.author.name}"
-              f"#{ctx.message.reference.resolved.author.discriminator}"
+            ((f", Used on {str(ctx.message.reference.resolved.author)}"
               f"'s message: '{ctx.message.reference.resolved.content}'"
               ) if replying else ""))
         await ctx.send(msg,
@@ -117,8 +116,7 @@ class Memes(commands.Cog):
         self.bot.mod_logger.info(
             f"?mix invoked: Author: '{ctx.message.author}', "
             f"Message: '{ctx.message.content}'" +
-            ((f", Used on {ctx.message.reference.resolved.author.name}"
-              f"#{ctx.message.reference.resolved.author.discriminator}"
+            ((f", Used on {str(ctx.message.reference.resolved.author)}"
               f"'s message: '{ctx.message.reference.resolved.content}'"
               ) if replying else ""))
         await ctx.send(msg,
