@@ -49,7 +49,7 @@ class Memes(commands.Cog):
                 return
         msg = auto_incorrect(input_str)
         self.bot.mod_logger.info(
-            f"?mix invoked: Author: '{ctx.message.author}', "
+            f"?bac invoked: Author: '{ctx.message.author}', "
             f"Message: '{ctx.message.content}'" +
             ((f", Used on {str(ctx.message.reference.resolved.author)}"
               f"'s message: '{ctx.message.reference.resolved.content}'"
