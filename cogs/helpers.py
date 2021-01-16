@@ -658,28 +658,25 @@ class Helpers(commands.Cog):
         """
         Show user info and avi
         Defaults to displaying the information of the user
-        that called the command, whoever another member's username
-        can be passed as an optional argument to display their info"""
+        that called the command, or another member's
+        if one is passed as an optional argument"""
         if user is None:
             user = ctx.author
-        ui_embed = discord.Embed(colour=user.id % 16777215)
-        ui_embed.add_field(name="username",
-                           value=f"{user.name}#{user.discriminator}",
-                           inline=True)
-        ui_embed.add_field(name="display name",
-                           value=user.display_name,
-                           inline=True)
-        ui_embed.add_field(name="id", value=user.id, inline=True)
+        ui_embed = discord.Embed(
+            colour=(user.id - sum(ord(char) for char in user.name)) % 0xFFFFFF)
+        ui_embed.add_field(name="username", value=str(user))
+        ui_embed.add_field(name="display name", value=user.display_name)
+        ui_embed.add_field(name="id", value=user.id)
         ui_embed.add_field(name="joined server",
-                           value=user.joined_at.strftime("%m/%d/%Y, %H:%M:%S"),
-                           inline=True)
+                           value=user.joined_at.strftime("%m/%d/%Y, %H:%M:%S"))
         ui_embed.add_field(
             name="joined discord",
-            value=user.created_at.strftime("%m/%d/%Y, %H:%M:%S"),
-            inline=True)
-        ui_embed.add_field(name=f"top role",
-                           value=str(user.top_role),
-                           inline=True)
+            value=user.created_at.strftime("%m/%d/%Y, %H:%M:%S"))
+        ui_embed.add_field(
+            name="top role, colour",
+            value=f"`{user.top_role}`, " +
+            (str(user.colour).upper()
+             if user.colour != discord.Colour.default() else "default colour"))
         ui_embed.add_field(name="avatar url",
                            value=user.avatar_url,
                            inline=False)
