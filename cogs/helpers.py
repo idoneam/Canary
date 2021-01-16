@@ -656,10 +656,10 @@ class Helpers(commands.Cog):
     @commands.command(aliases=["ui", "av", "avi", "userinfo"])
     async def user_info(self, ctx, user: discord.Member = None):
         """
-        Show user info and avi
-        Defaults to displaying the information of the user
+        Show user info and avatar.
+        Displays the information of the user
         that called the command, or another member's
-        if one is passed as an optional argument"""
+        if one is passed as an optional argument."""
         if user is None:
             user = ctx.author
         ui_embed = discord.Embed(
