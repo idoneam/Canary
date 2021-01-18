@@ -100,16 +100,27 @@ class Quotes(commands.Cog):
         conn.close()
 
     @commands.command(aliases=['addq'])
-    async def add_quotes(self, ctx, member: discord.Member, *, quote: str):
+    async def add_quotes(self,
+                         ctx,
+                         member: discord.Member = None,
+                         *,
+                         quote: str = None):
         """
         Add a quote to a user's quote database.
         """
-
+        replying: bool = ctx.message.reference and ctx.message.reference.resolved
+        if quote is None:
+            if replying:
+                member = member or ctx.message.reference.resolved.author
+                quote = ctx.message.reference.resolved.content
+            else:
+                return
         conn = sqlite3.connect(self.bot.config.db_path)
         c = conn.cursor()
         t = (member.id, member.name, quote, str(ctx.message.created_at))
         c.execute('INSERT INTO Quotes VALUES (?,?,?,?)', t)
-        msg = await ctx.send('`Quote added.`')
+        msg = await ctx.send(
+            f"`{quote}` added to `{member.display_name}`'s quotes.")
 
         conn.commit()
 
