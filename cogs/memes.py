@@ -43,10 +43,9 @@ class Memes(commands.Cog):
         """
         replying: bool = ctx.message.reference and ctx.message.reference.resolved
         if input_str is None:
-            if replying:
-                input_str = ctx.message.reference.resolved.content
-            else:
+            if not replying:
                 return
+            input_str = ctx.message.reference.resolved.content
         msg = auto_incorrect(input_str)
         self.bot.mod_logger.info(
             f"?bac invoked: Author: '{ctx.message.author}', "
@@ -107,10 +106,9 @@ class Memes(commands.Cog):
         """
         replying: bool = ctx.message.reference and ctx.message.reference.resolved
         if input_str is None:
-            if replying:
-                input_str = ctx.message.reference.resolved.content
-            else:
+            if not replying:
                 return
+            input_str = ctx.message.reference.resolved.content
         msg = "".join((c.upper() if random.randint(0, 1) else c.lower())
                       for c in input_str)
         self.bot.mod_logger.info(

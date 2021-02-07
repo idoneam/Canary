@@ -110,11 +110,10 @@ class Quotes(commands.Cog):
         """
         replying: bool = ctx.message.reference and ctx.message.reference.resolved
         if quote is None:
-            if replying:
-                member = member or ctx.message.reference.resolved.author
-                quote = ctx.message.reference.resolved.content
-            else:
+            if not replying:
                 return
+            member = member or ctx.message.reference.resolved.author
+            quote = ctx.message.reference.resolved.content
         conn = sqlite3.connect(self.bot.config.db_path)
         c = conn.cursor()
         t = (member.id, member.name, quote, str(ctx.message.created_at))
