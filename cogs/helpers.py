@@ -769,7 +769,7 @@ class Helpers(commands.Cog):
                     f" to {googletrans.LANGUAGES[dst]}")
             if src == dst:
                 await ctx.send(
-                    f"Inputed source (`{src}`) and target (`{dst}`) "
+                    f"Inputted source (`{src}`) and target (`{dst}`) "
                     f"languages are the same, which does not make sense")
                 return
             embed = discord.Embed(colour=random.randint(0, 0xFFFFFF))
