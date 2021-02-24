@@ -130,11 +130,10 @@ class Games(commands.Cog):
                                  img_url=hm_img)
                     await ctx.send(embed=hm_embed)
                     await ctx.send(
-                        f"congratulations {winner}, you solved the hangman"
-                        f"{', but in a cool way' if  cool_win else ''}, "
-                        f"earning you "
-                        f"{self.hm_cool_win if cool_win else self.hm_norm_win}"
-                        f" cheeps")
+                        f"congratulations {winner}, you solved the hangman" +
+                        (f" (in a cool way), earning you {self.hm_cool_win} cheeps"
+                         if cool_win else
+                         f", earning you {self.hm_norm_win} cheeps"))
                     break
                 if curr_guess in not_guessed:
                     # curr_guess in not_guessed
