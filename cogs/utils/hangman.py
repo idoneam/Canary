@@ -91,8 +91,8 @@ def mk_animal_list() -> List[Tuple[str, str]]:
             img_index = 0
             while str(img_list[img_index]["src"]).endswith(".svg.png"):
                 img_index += 1
-            animal_list.append(
-                (animal_name["title"].split(' (')[0], "https:" + img_list[img_index]["src"]))
+            animal_list.append((animal_name["title"].split(' (')[0],
+                                "https:" + img_list[img_index]["src"]))
     return animal_list
 
 

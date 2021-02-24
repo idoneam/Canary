@@ -121,7 +121,8 @@ class Games(commands.Cog):
                     (time() - timeout_dict[curr_msg.author]) < 3.0
                     ):    # check that user isn't time'd out
                 if curr_guess == lowered_word:
-                    cool_win = len(not_guessed) > (len(set(lowered_word)) / 2.5)
+                    cool_win = len(not_guessed) > (len(set(lowered_word)) /
+                                                   2.5)
                     winner = curr_msg.author
                     update_embed(f"{winner} guessed the entire word!",
                                  correct_guess=True,
