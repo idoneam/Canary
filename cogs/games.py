@@ -121,16 +121,14 @@ class Games(commands.Cog):
                     (time() - timeout_dict[curr_msg.author]) < 3.0
                     ):    # check that user isn't time'd out
                 if curr_guess == lowered_word:
-                    not_guessed = set()
+                    cool_win = len(not_guessed) > (len(set(lowered_word)) / 2.5)
                     winner = curr_msg.author
-                    cool_win = len(not_guessed) > (len(set(lowered_word)) //
-                                                   2.5)
                     update_embed(f"{winner} guessed the entire word!",
                                  correct_guess=True,
                                  img_url=hm_img)
                     await ctx.send(embed=hm_embed)
                     await ctx.send(
-                        f"congratulations {winner}, you solved the hangman" +
+                        f"congratulations `{winner}`, you solved the hangman" +
                         (f" (in a cool way), earning you {self.hm_cool_win} cheeps"
                          if cool_win else
                          f", earning you {self.hm_norm_win} cheeps"))
@@ -149,7 +147,7 @@ class Games(commands.Cog):
                                      img_url=hm_img)
                         await ctx.send(embed=hm_embed)
                         await ctx.send(
-                            f"congratulations {winner}, you solved the hangman, "
+                            f"congratulations `{winner}`, you solved the hangman, "
                             f"earning you {self.hm_norm_win} cheeps")
                         break
                 elif curr_guess in lowered_word:
