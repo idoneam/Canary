@@ -83,17 +83,16 @@ def mk_animal_list() -> List[Tuple[str, str]]:
         curr_entry = animal_list_soup[i].find("td")
         if curr_entry:
             animal_name = curr_entry.find("a")
-            img = BeautifulSoup(
+            animal_soup = BeautifulSoup(
                 requests.get(
                     f"https://en.wikipedia.org{animal_name['href']}").content,
-                "html.parser").find("img")
-            if str(img["alt"]) == "Page semi-protected":
-                img = BeautifulSoup(
-                    requests.get(
-                        f"https://en.wikipedia.org{animal_name['href']}").
-                    content, "html.parser").find_all("img")[1]
+                "html.parser")
+            img_list = animal_soup.find_all("img")
+            img_index = 0
+            while str(img_list[img_index]["src"]).endswith(".svg.png"):
+                img_index += 1
             animal_list.append(
-                (animal_name["title"].split(' (')[0], "https:" + img["src"]))
+                (animal_name["title"].split(' (')[0], "https:" + img_list[img_index]["src"]))
     return animal_list
 
 
