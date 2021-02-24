@@ -81,7 +81,8 @@ class Images(commands.Cog):
         the attachment of the most recent of the last 100 messages.
         If no such message exists, returns None.
         """
-        if ctx.message.reference and ctx.message.reference.resolved and ctx.message.reference.resolved.attachments:
+        if (ctx.message.reference and ctx.message.reference.resolved
+                and ctx.message.reference.resolved.attachments):
             return ctx.message.reference.resolved.attachments[0]
         async for msg in ctx.channel.history(limit=Images.IMAGE_HISTORY_LIMIT):
             if msg.attachments:
