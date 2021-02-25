@@ -49,11 +49,9 @@ EMOJI = {
     "five": "5️⃣",
 }
 
-NUMBERS = (EMOJI['zero'], EMOJI['one'], EMOJI['two'], EMOJI['three'],
-           EMOJI['four'], EMOJI['five'])
+NUMBERS = (EMOJI['zero'], EMOJI['one'], EMOJI['two'], EMOJI['three'], EMOJI['four'], EMOJI['five'])
 
-CUSTOM_REACTION_TIMEOUT = ("Custom Reaction timed out. "
-                           "You may want to run the command again.")
+CUSTOM_REACTION_TIMEOUT = ("Custom Reaction timed out. " "You may want to run the command again.")
 STOP_TEXT = "stop"
 LOADING_EMBED = discord.Embed(title="Loading...")
 
@@ -80,11 +78,10 @@ class CustomReactions(commands.Cog):
         responses = [row[2].lower() for row in self.reaction_list]
         anywhere_values = [row[5] for row in self.reaction_list]
         additional_info_list = [(row[4], row[6]) for row in self.reaction_list]
-        self.p_strings = PStringEncodings(
-            prompts,
-            responses,
-            anywhere_values,
-            additional_info_list=additional_info_list)
+        self.p_strings = PStringEncodings(prompts,
+                                          responses,
+                                          anywhere_values,
+                                          additional_info_list=additional_info_list)
         conn.close()
 
     def rebuild_proposal_list(self):
@@ -99,9 +96,7 @@ class CustomReactions(commands.Cog):
         if message.author == self.bot.user:
             return
 
-        response = self.p_strings.parser(message.content,
-                                         user=message.author.mention,
-                                         channel=str(message.channel))
+        response = self.p_strings.parser(message.content, user=message.author.mention, channel=str(message.channel))
         if response:
             # delete the prompt if DeletePrompt option is activated
             if response.additional_info[0] == 1:
@@ -115,8 +110,7 @@ class CustomReactions(commands.Cog):
                 await message.channel.send(str(response))
 
     @commands.max_concurrency(1, per=commands.BucketType.user, wait=False)
-    @commands.command(
-        aliases=['customreaction', 'customreacts', 'customreact'])
+    @commands.command(aliases=['customreaction', 'customreacts', 'customreact'])
     async def customreactions(self, ctx):
         current_options = []
         main_user = ctx.message.author
@@ -127,28 +121,21 @@ class CustomReactions(commands.Cog):
 
         def get_reaction_check(moderators=False, reaction_user=None):
             def reaction_check(reaction, user):
-                return all(
-                    (reaction.emoji in current_options,
-                     reaction.message.id == initial_message.id, not moderators
-                     or discord.utils.get(user.roles,
-                                          name=self.bot.config.moderator_role),
-                     not reaction_user or user == reaction_user))
+                return all((reaction.emoji in current_options, reaction.message.id == initial_message.id, not moderators
+                            or discord.utils.get(user.roles, name=self.bot.config.moderator_role), not reaction_user
+                            or user == reaction_user))
 
             return reaction_check
 
         def get_msg_check(msg_user=None):
             def msg_check(msg):
-                if all(
-                    (not msg_user
-                     or msg.author == msg_user, msg.channel == ctx.channel)):
+                if all((not msg_user or msg.author == msg_user, msg.channel == ctx.channel)):
                     if msg.attachments:
                         # in python 3.7, rewrite as
                         # asyncio.create_task(ctx.send([...]))
                         # (the get_event_loop() part isn't necessary)
                         loop = asyncio.get_event_loop()
-                        loop.create_task(
-                            ctx.send("Attachments cannot be used, "
-                                     "but you may use URLs"))
+                        loop.create_task(ctx.send("Attachments cannot be used, " "but you may use URLs"))
                     else:
                         return True
 
@@ -157,38 +144,28 @@ class CustomReactions(commands.Cog):
         def get_number_check(msg_user=None, number_range=None):
             def number_check(msg):
                 if msg.content.isdigit():
-                    return all((not msg_user
-                                or msg.author == msg_user, not number_range
-                                or int(msg.content) in number_range,
-                                msg.channel == ctx.channel))
+                    return all((not msg_user or msg.author == msg_user, not number_range
+                                or int(msg.content) in number_range, msg.channel == ctx.channel))
 
             return number_check
 
         async def wait_for_reaction(message):
             try:
-                reaction, user = await self.bot.wait_for(
-                    'reaction_add',
-                    check=get_reaction_check(reaction_user=main_user),
-                    timeout=60)
+                reaction, user = await self.bot.wait_for('reaction_add',
+                                                         check=get_reaction_check(reaction_user=main_user),
+                                                         timeout=60)
             except asyncio.TimeoutError:
                 await message.clear_reactions()
-                await message.edit(
-                    embed=discord.Embed(title=CUSTOM_REACTION_TIMEOUT),
-                    delete_after=60)
+                await message.edit(embed=discord.Embed(title=CUSTOM_REACTION_TIMEOUT), delete_after=60)
                 return
             return reaction, user
 
         async def wait_for_message(message):
             try:
-                msg = await self.bot.wait_for(
-                    'message',
-                    check=get_msg_check(msg_user=main_user),
-                    timeout=60)
+                msg = await self.bot.wait_for('message', check=get_msg_check(msg_user=main_user), timeout=60)
             except asyncio.TimeoutError:
                 await message.clear_reactions()
-                await message.edit(
-                    embed=discord.Embed(title=CUSTOM_REACTION_TIMEOUT),
-                    delete_after=60)
+                await message.edit(embed=discord.Embed(title=CUSTOM_REACTION_TIMEOUT), delete_after=60)
                 return
             content = msg.content
             await msg.delete()
@@ -199,44 +176,36 @@ class CustomReactions(commands.Cog):
                 await message.add_reaction(reaction)
 
         async def add_yes_or_no_reactions(message):
-            await add_multiple_reactions(
-                message, (EMOJI['zero'], EMOJI['one'], EMOJI['stop_button']))
+            await add_multiple_reactions(message, (EMOJI['zero'], EMOJI['one'], EMOJI['stop_button']))
 
         async def add_control_reactions(message):
-            await add_multiple_reactions(
-                message, (EMOJI['rewind'], EMOJI['arrow_backward'],
-                          EMOJI['arrow_forward'], EMOJI['fast_forward'],
-                          EMOJI['stop_button'], EMOJI['ok']))
+            await add_multiple_reactions(message, (EMOJI['rewind'], EMOJI['arrow_backward'], EMOJI['arrow_forward'],
+                                                   EMOJI['fast_forward'], EMOJI['stop_button'], EMOJI['ok']))
 
         async def create_assistant(message, is_moderator):
             if is_moderator:
-                description = (
-                    f"{EMOJI['new']} Add a new custom reaction\n"
-                    f"{EMOJI['mag']} See the list of current reactions "
-                    f"and modify them\n"
-                    f"{EMOJI['pencil']} See the list of proposed reactions "
-                    f"({get_number_of_proposals()}) "
-                    f"and approve or reject them\n"
-                    f"{EMOJI['grey_question']} List of placeholders")
+                description = (f"{EMOJI['new']} Add a new custom reaction\n"
+                               f"{EMOJI['mag']} See the list of current reactions "
+                               f"and modify them\n"
+                               f"{EMOJI['pencil']} See the list of proposed reactions "
+                               f"({get_number_of_proposals()}) "
+                               f"and approve or reject them\n"
+                               f"{EMOJI['grey_question']} List of placeholders")
             else:
-                description = (
-                    f"{EMOJI['new']} Propose a new custom reaction\n"
-                    f"{EMOJI['mag']} See the list of current reactions\n"
-                    f"{EMOJI['pencil']} See the list of proposed reactions "
-                    f"({get_number_of_proposals()})\n"
-                    f"{EMOJI['grey_question']} List of placeholders")
+                description = (f"{EMOJI['new']} Propose a new custom reaction\n"
+                               f"{EMOJI['mag']} See the list of current reactions\n"
+                               f"{EMOJI['pencil']} See the list of proposed reactions "
+                               f"({get_number_of_proposals()})\n"
+                               f"{EMOJI['grey_question']} List of placeholders")
             current_options.extend(
-                (EMOJI['new'], EMOJI['mag'], EMOJI['pencil'],
-                 EMOJI['grey_question'], EMOJI['stop_button']))
+                (EMOJI['new'], EMOJI['mag'], EMOJI['pencil'], EMOJI['grey_question'], EMOJI['stop_button']))
             await add_multiple_reactions(
-                message, (EMOJI['new'], EMOJI['mag'], EMOJI['pencil'],
-                          EMOJI['grey_question'], EMOJI['stop_button']))
-            await message.edit(embed=discord.Embed(
-                title="Custom Reactions", description=description).set_footer(
-                    text=f"{main_user}: Click on an emoji to choose an "
-                    f"option (If a list is chosen, all users "
-                    f"will be able to interact with it)",
-                    icon_url=main_user.avatar_url))
+                message, (EMOJI['new'], EMOJI['mag'], EMOJI['pencil'], EMOJI['grey_question'], EMOJI['stop_button']))
+            await message.edit(embed=discord.Embed(title="Custom Reactions", description=description).set_footer(
+                text=f"{main_user}: Click on an emoji to choose an "
+                f"option (If a list is chosen, all users "
+                f"will be able to interact with it)",
+                icon_url=main_user.avatar_url))
             try:
                 reaction, user = await wait_for_reaction(message)
             except TypeError:
@@ -267,29 +236,24 @@ class CustomReactions(commands.Cog):
         async def add_custom_react(message, is_moderator):
             if is_moderator:
                 title = "Add a custom reaction"
-                footer = (
-                    f"{main_user} is currently adding a custom reaction. \n"
-                    f"Write '{STOP_TEXT}' to cancel.")
+                footer = (f"{main_user} is currently adding a custom reaction. \n" f"Write '{STOP_TEXT}' to cancel.")
             else:
                 title = "Propose a custom reaction"
                 footer = (f"{main_user} is currently proposing a custom "
                           f"reaction. \n"
                           f"Write '{STOP_TEXT}' to cancel.")
             description = "Write the prompt the bot will react to"
-            await message.edit(
-                embed=discord.Embed(title=title, description=description).
-                set_footer(text=footer, icon_url=main_user.avatar_url))
+            await message.edit(embed=discord.Embed(title=title, description=description).set_footer(
+                text=footer, icon_url=main_user.avatar_url))
             prompt_message = await wait_for_message(message)
             if prompt_message is None:
                 return
             if prompt_message.lower() == STOP_TEXT:
                 await leave(message)
                 return True
-            description = (f"Prompt: {prompt_message}\nWrite the response "
-                           f"the bot will send")
-            await message.edit(
-                embed=discord.Embed(title=title, description=description).
-                set_footer(text=footer, icon_url=main_user.avatar_url))
+            description = (f"Prompt: {prompt_message}\nWrite the response " f"the bot will send")
+            await message.edit(embed=discord.Embed(title=title, description=description).set_footer(
+                text=footer, icon_url=main_user.avatar_url))
             response = await wait_for_message(message)
             if response is None:
                 return
@@ -312,14 +276,11 @@ class CustomReactions(commands.Cog):
             if is_moderator:
                 footer = f"{main_user} is currently adding a custom reaction."
             else:
-                footer = (f"{main_user} is currently "
-                          f"proposing a custom reaction.")
+                footer = (f"{main_user} is currently " f"proposing a custom reaction.")
             current_options.extend((EMOJI['ok'], EMOJI['stop_button']))
-            await add_multiple_reactions(
-                message, (*NUMBERS[1:4], EMOJI['ok'], EMOJI['stop_button']))
-            await message.edit(
-                embed=discord.Embed(title=title, description=description).
-                set_footer(text=footer, icon_url=main_user.avatar_url))
+            await add_multiple_reactions(message, (*NUMBERS[1:4], EMOJI['ok'], EMOJI['stop_button']))
+            await message.edit(embed=discord.Embed(title=title, description=description).set_footer(
+                text=footer, icon_url=main_user.avatar_url))
             try:
                 reaction, user = await wait_for_reaction(message)
             except TypeError:
@@ -342,8 +303,7 @@ class CustomReactions(commands.Cog):
                 await message.clear_reactions()
                 conn = sqlite3.connect(self.bot.config.db_path)
                 c = conn.cursor()
-                t = (prompt_message, response, main_user.id, delete, anywhere,
-                     dm, not is_moderator)
+                t = (prompt_message, response, main_user.id, delete, anywhere, dm, not is_moderator)
                 c.execute(
                     'INSERT INTO CustomReactions(Prompt, Response, UserID, '
                     'DeletePrompt, Anywhere, DM, Proposal) '
@@ -356,11 +316,9 @@ class CustomReactions(commands.Cog):
                     title = "Custom reaction successfully added!"
                 else:
                     title = f"Custom reaction proposal successfully submitted!"
-                description = (f"-Prompt: {prompt_message}\n"
-                               f"-Response: {response}")
+                description = (f"-Prompt: {prompt_message}\n" f"-Response: {response}")
                 if delete:
-                    description = (f"{description}\n-Will delete the "
-                                   f"message that calls the reaction")
+                    description = (f"{description}\n-Will delete the " f"message that calls the reaction")
                 if anywhere:
                     description = (f"{description}\n"
                                    f"-Will activate the custom reaction "
@@ -371,10 +329,8 @@ class CustomReactions(commands.Cog):
                                    f"who calls the reaction instead of the "
                                    f"channel")
 
-                await message.edit(
-                    embed=discord.Embed(title=title, description=description).
-                    set_footer(text=f"Added by {main_user}.",
-                               icon_url=main_user.avatar_url))
+                await message.edit(embed=discord.Embed(title=title, description=description).set_footer(
+                    text=f"Added by {main_user}.", icon_url=main_user.avatar_url))
 
                 return
 
@@ -384,18 +340,14 @@ class CustomReactions(commands.Cog):
                 return True
 
         async def list_custom_reacts(message, proposals):
-            current_list = (self.proposal_list
-                            if proposals else self.reaction_list)
+            current_list = (self.proposal_list if proposals else self.reaction_list)
 
             if not current_list:
                 if proposals:
-                    title = ("There are currently no custom reaction "
-                             "proposals in this server")
+                    title = ("There are currently no custom reaction " "proposals in this server")
                 else:
-                    title = ("There are currently no custom reactions in "
-                             "this server")
-                await message.edit(embed=discord.Embed(title=title),
-                                   delete_after=60)
+                    title = ("There are currently no custom reactions in " "this server")
+                await message.edit(embed=discord.Embed(title=title), delete_after=60)
                 return
 
             reaction_dict = {
@@ -406,8 +358,7 @@ class CustomReactions(commands.Cog):
                     f'{"..." if len(reaction[1]) > 287 else ""}'
                     f'\nResponse: '
                     f'{reaction[2][:min(len(reaction[2]), 287)]}'
-                    f'{"..." if len(reaction[2]) > 287 else ""}'
-                    for reaction in current_list
+                    f'{"..." if len(reaction[2]) > 287 else ""}' for reaction in current_list
                 ]
             }
 
@@ -451,13 +402,11 @@ class CustomReactions(commands.Cog):
                 await message.edit(embed=message.embeds[0])
                 number = 0
                 try:
-                    msg = await self.bot.wait_for(
-                        'message',
-                        check=get_number_check(msg_user=user_modifying,
-                                               number_range=range(
-                                                   1,
-                                                   len(current_list) + 1)),
-                        timeout=60)
+                    msg = await self.bot.wait_for('message',
+                                                  check=get_number_check(msg_user=user_modifying,
+                                                                         number_range=range(1,
+                                                                                            len(current_list) + 1)),
+                                                  timeout=60)
                     number = int(msg.content)
                     await msg.delete()
                 except asyncio.TimeoutError:
@@ -485,8 +434,7 @@ class CustomReactions(commands.Cog):
                               editable_content_emoji=EMOJI['ok'],
                               return_user_on_edit=True)
                 else:
-                    left = await information_on_react(message, current_list,
-                                                      number, proposals)
+                    left = await information_on_react(message, current_list, number, proposals)
                     if left:
                         return True
                     if proposals:
@@ -502,31 +450,25 @@ class CustomReactions(commands.Cog):
 
                     # update dictionary since a custom reaction might have been
                     # modified
-                    current_list = (self.proposal_list
-                                    if proposals else self.reaction_list)
+                    current_list = (self.proposal_list if proposals else self.reaction_list)
 
                     if not current_list:
                         if proposals:
-                            title = ("There are currently no custom "
-                                     "reaction proposals in this server")
+                            title = ("There are currently no custom " "reaction proposals in this server")
                         else:
-                            title = ("There are currently no custom "
-                                     "reactions in this server")
-                        await message.edit(embed=discord.Embed(title=title),
-                                           delete_after=60)
+                            title = ("There are currently no custom " "reactions in this server")
+                        await message.edit(embed=discord.Embed(title=title), delete_after=60)
                         return
 
                     reaction_dict = {
-                        "names":
-                        [f"[{i + 1}]" for i in range(len(current_list))],
+                        "names": [f"[{i + 1}]" for i in range(len(current_list))],
                         "values": [
                             f'Prompt: '
                             f'{reaction[1][:min(len(reaction[1]), 287)]}'
                             f'{"..." if len(reaction[1]) > 287 else ""}'
                             f'\nResponse: '
                             f'{reaction[2][:min(len(reaction[2]), 287)]}'
-                            f'{"..." if len(reaction[2]) > 287 else ""}'
-                            for reaction in current_list
+                            f'{"..." if len(reaction[2]) > 287 else ""}' for reaction in current_list
                         ]
                     }
 
@@ -543,8 +485,7 @@ class CustomReactions(commands.Cog):
 
                 user_modifying = await p.paginate()
 
-        async def information_on_react(message, current_list, number,
-                                       proposals):
+        async def information_on_react(message, current_list, number, proposals):
             await message.edit(embed=LOADING_EMBED)
 
             custom_react = current_list[number - 1]
@@ -557,17 +498,13 @@ class CustomReactions(commands.Cog):
             if delete == 1:
                 delete_str = "Deletes the message that calls the reaction"
             else:
-                delete_str = ("Does not delete the message that "
-                              "calls the reaction")
+                delete_str = ("Does not delete the message that " "calls the reaction")
             if anywhere == 1:
-                anywhere_str = ("Activates the custom reaction if "
-                                "the prompt is anywhere in a message")
+                anywhere_str = ("Activates the custom reaction if " "the prompt is anywhere in a message")
             else:
-                anywhere_str = ("Only activates the custom reaction "
-                                "if the prompt is the full message")
+                anywhere_str = ("Only activates the custom reaction " "if the prompt is the full message")
             if dm == 1:
-                dm_str = ("Reacts in the DMs of the user who calls "
-                          "the reaction instead of the channel")
+                dm_str = ("Reacts in the DMs of the user who calls " "the reaction instead of the channel")
             else:
                 dm_str = "Reacts directly into the channel"
 
@@ -605,31 +542,22 @@ class CustomReactions(commands.Cog):
             current_options.clear()
             await message.clear_reactions()
             if proposals:
-                current_options.extend(
-                    (*NUMBERS[1:6], EMOJI['white_check_mark'], EMOJI['x'],
-                     EMOJI['stop_button']))
+                current_options.extend((*NUMBERS[1:6], EMOJI['white_check_mark'], EMOJI['x'], EMOJI['stop_button']))
             else:
-                current_options.extend(
-                    (*NUMBERS[1:6], EMOJI['put_litter_in_its_place'],
-                     EMOJI['stop_button']))
+                current_options.extend((*NUMBERS[1:6], EMOJI['put_litter_in_its_place'], EMOJI['stop_button']))
             if proposals:
                 await add_multiple_reactions(
-                    message, (*NUMBERS[1:6], EMOJI['white_check_mark'],
-                              EMOJI['x'], EMOJI['stop_button']))
+                    message, (*NUMBERS[1:6], EMOJI['white_check_mark'], EMOJI['x'], EMOJI['stop_button']))
             else:
-                await add_multiple_reactions(
-                    message, (*NUMBERS[1:6], EMOJI['put_litter_in_its_place'],
-                              EMOJI['stop_button']))
-            await message.edit(
-                embed=discord.Embed(title=title, description=description))
+                await add_multiple_reactions(message,
+                                             (*NUMBERS[1:6], EMOJI['put_litter_in_its_place'], EMOJI['stop_button']))
+            await message.edit(embed=discord.Embed(title=title, description=description))
 
             try:
-                reaction, user = await self.bot.wait_for(
-                    'reaction_add',
-                    check=get_reaction_check(moderators=True),
-                    timeout=40)
-                left = await edit_custom_react(message, reaction, user,
-                                               custom_react, proposals)
+                reaction, user = await self.bot.wait_for('reaction_add',
+                                                         check=get_reaction_check(moderators=True),
+                                                         timeout=40)
+                left = await edit_custom_react(message, reaction, user, custom_react, proposals)
                 if left:
                     return True
             except asyncio.TimeoutError:
@@ -637,8 +565,7 @@ class CustomReactions(commands.Cog):
             current_options.clear()
             await message.clear_reactions()
 
-        async def edit_custom_react(message, reaction, user, custom_react,
-                                    proposals):
+        async def edit_custom_react(message, reaction, user, custom_react, proposals):
             current_options.clear()
             await message.clear_reactions()
             custom_react_id = custom_react[0]
@@ -661,14 +588,10 @@ class CustomReactions(commands.Cog):
                               f"modifying a custom reaction. "
                               f"\nWrite '{STOP_TEXT}' to cancel.")
                 description = "Please enter the new prompt"
-                await message.edit(
-                    embed=discord.Embed(title=title, description=description).
-                    set_footer(text=footer, icon_url=user.avatar_url))
+                await message.edit(embed=discord.Embed(title=title, description=description).set_footer(
+                    text=footer, icon_url=user.avatar_url))
                 try:
-                    msg = await self.bot.wait_for(
-                        'message',
-                        check=get_msg_check(msg_user=user),
-                        timeout=60)
+                    msg = await self.bot.wait_for('message', check=get_msg_check(msg_user=user), timeout=60)
 
                 except asyncio.TimeoutError:
                     if proposals:
@@ -692,19 +615,15 @@ class CustomReactions(commands.Cog):
                     return True
 
                 t = (prompt, custom_react_id)
-                c.execute(
-                    'UPDATE CustomReactions SET Prompt = ? '
-                    'WHERE CustomReactionID = ?', t)
+                c.execute('UPDATE CustomReactions SET Prompt = ? ' 'WHERE CustomReactionID = ?', t)
                 conn.commit()
                 self.rebuild_lists()
                 if proposals:
-                    title = ("Prompt successfully modified! "
-                             "Returning to list of reaction proposals...")
+                    title = ("Prompt successfully modified! " "Returning to list of reaction proposals...")
                 else:
-                    title = ("Prompt successfully modified! "
-                             "Returning to list of current reactions...")
-                await message.edit(embed=discord.Embed(title=title).set_footer(
-                    text=f"Modified by {user}.", icon_url=user.avatar_url))
+                    title = ("Prompt successfully modified! " "Returning to list of current reactions...")
+                await message.edit(embed=discord.Embed(
+                    title=title).set_footer(text=f"Modified by {user}.", icon_url=user.avatar_url))
                 conn.close()
                 await asyncio.sleep(5)
 
@@ -721,15 +640,11 @@ class CustomReactions(commands.Cog):
                               f"custom reaction. "
                               f"\nWrite '{STOP_TEXT}' to cancel.")
                 description = "Please enter the new response"
-                await message.edit(
-                    embed=discord.Embed(title=title, description=description).
-                    set_footer(text=footer, icon_url=user.avatar_url))
+                await message.edit(embed=discord.Embed(title=title, description=description).set_footer(
+                    text=footer, icon_url=user.avatar_url))
 
                 try:
-                    msg = await self.bot.wait_for(
-                        'message',
-                        check=get_msg_check(msg_user=user),
-                        timeout=60)
+                    msg = await self.bot.wait_for('message', check=get_msg_check(msg_user=user), timeout=60)
 
                 except asyncio.TimeoutError:
                     if proposals:
@@ -753,19 +668,15 @@ class CustomReactions(commands.Cog):
                     return True
 
                 t = (response, custom_react_id)
-                c.execute(
-                    'UPDATE CustomReactions SET Response = ? '
-                    'WHERE CustomReactionID = ?', t)
+                c.execute('UPDATE CustomReactions SET Response = ? ' 'WHERE CustomReactionID = ?', t)
                 conn.commit()
                 self.rebuild_lists()
                 if proposals:
-                    title = ("Response successfully modified! "
-                             "Returning to list of reaction proposals...")
+                    title = ("Response successfully modified! " "Returning to list of reaction proposals...")
                 else:
-                    title = ("Response successfully modified! "
-                             "Returning to list of current reactions...")
-                await message.edit(embed=discord.Embed(title=title).set_footer(
-                    text=f"Modified by {user}.", icon_url=user.avatar_url))
+                    title = ("Response successfully modified! " "Returning to list of current reactions...")
+                await message.edit(embed=discord.Embed(
+                    title=title).set_footer(text=f"Modified by {user}.", icon_url=user.avatar_url))
                 conn.close()
                 await asyncio.sleep(5)
 
@@ -773,15 +684,11 @@ class CustomReactions(commands.Cog):
             if reaction.emoji == EMOJI['three']:
                 await message.edit(embed=LOADING_EMBED)
                 if proposals:
-                    title = ("Modify a custom reaction proposal. "
-                             "React with the option you want")
-                    footer = (f"{user} is currently modifying a "
-                              f"custom reaction proposal. \n")
+                    title = ("Modify a custom reaction proposal. " "React with the option you want")
+                    footer = (f"{user} is currently modifying a " f"custom reaction proposal. \n")
                 else:
-                    title = ("Modify a custom reaction. React with the "
-                             "option you want")
-                    footer = (f"{user} is currently modifying a "
-                              f"custom reaction. \n")
+                    title = ("Modify a custom reaction. React with the " "option you want")
+                    footer = (f"{user} is currently modifying a " f"custom reaction. \n")
                 description = (f"Should the message that calls the "
                                f"reaction be deleted?\n"
                                f"{EMOJI['zero']} No\n"
@@ -790,15 +697,13 @@ class CustomReactions(commands.Cog):
                 await message.clear_reactions()
                 current_options.extend((*NUMBERS[0:2], EMOJI['stop_button']))
                 await add_yes_or_no_reactions(message)
-                await message.edit(
-                    embed=discord.Embed(title=title, description=description).
-                    set_footer(text=footer, icon_url=user.avatar_url))
+                await message.edit(embed=discord.Embed(title=title, description=description).set_footer(
+                    text=footer, icon_url=user.avatar_url))
 
                 try:
-                    reaction, reaction_user = await self.bot.wait_for(
-                        'reaction_add',
-                        check=get_reaction_check(reaction_user=user),
-                        timeout=60)
+                    reaction, reaction_user = await self.bot.wait_for('reaction_add',
+                                                                      check=get_reaction_check(reaction_user=user),
+                                                                      timeout=60)
 
                 except asyncio.TimeoutError:
                     if proposals:
@@ -830,16 +735,12 @@ class CustomReactions(commands.Cog):
                                      "Returning to list of current "
                                      "reactions...")
                         await message.edit(embed=discord.Embed(
-                            title=title).set_footer(
-                                text=f"Modified by {user}.",
-                                icon_url=user.avatar_url))
+                            title=title).set_footer(text=f"Modified by {user}.", icon_url=user.avatar_url))
                         conn.close()
                         await asyncio.sleep(5)
                     else:
                         t = (0, custom_react_id)
-                        c.execute(
-                            'UPDATE CustomReactions SET DeletePrompt = ? '
-                            'WHERE CustomReactionID = ?', t)
+                        c.execute('UPDATE CustomReactions SET DeletePrompt = ? ' 'WHERE CustomReactionID = ?', t)
                         conn.commit()
                         self.rebuild_lists()
                         if proposals:
@@ -847,13 +748,9 @@ class CustomReactions(commands.Cog):
                                      "Returning to list of current "
                                      "reaction proposals...")
                         else:
-                            title = ("Option successfully modified! "
-                                     "Returning to list of current "
-                                     "reactions...")
+                            title = ("Option successfully modified! " "Returning to list of current " "reactions...")
                         await message.edit(embed=discord.Embed(
-                            title=title).set_footer(
-                                text=f"Modified by {user}.",
-                                icon_url=user.avatar_url))
+                            title=title).set_footer(text=f"Modified by {user}.", icon_url=user.avatar_url))
                         conn.close()
                         await asyncio.sleep(5)
 
@@ -869,16 +766,12 @@ class CustomReactions(commands.Cog):
                                      "Returning to list of "
                                      "current reactions...")
                         await message.edit(embed=discord.Embed(
-                            title=title).set_footer(
-                                text=f"Modified by {user}.",
-                                icon_url=user.avatar_url))
+                            title=title).set_footer(text=f"Modified by {user}.", icon_url=user.avatar_url))
                         conn.close()
                         await asyncio.sleep(5)
                     else:
                         t = (1, custom_react_id)
-                        c.execute(
-                            'UPDATE CustomReactions SET DeletePrompt = ? '
-                            'WHERE CustomReactionID = ?', t)
+                        c.execute('UPDATE CustomReactions SET DeletePrompt = ? ' 'WHERE CustomReactionID = ?', t)
                         conn.commit()
                         self.rebuild_lists()
                         if proposals:
@@ -886,13 +779,9 @@ class CustomReactions(commands.Cog):
                                      "Returning to list of current "
                                      "reaction proposals...")
                         else:
-                            title = ("Option successfully modified! "
-                                     "Returning to list of current "
-                                     "reactions...")
+                            title = ("Option successfully modified! " "Returning to list of current " "reactions...")
                         await message.edit(embed=discord.Embed(
-                            title=title).set_footer(
-                                text=f"Modified by {user}.",
-                                icon_url=user.avatar_url))
+                            title=title).set_footer(text=f"Modified by {user}.", icon_url=user.avatar_url))
                         conn.close()
                         await asyncio.sleep(5)
                 # Stop
@@ -904,15 +793,11 @@ class CustomReactions(commands.Cog):
             if reaction.emoji == EMOJI['four']:
                 await message.edit(embed=LOADING_EMBED)
                 if proposals:
-                    title = ("Modify a custom reaction proposal. "
-                             "React with the option you want")
-                    footer = (f"{user} is currently modifying a custom "
-                              f"reaction proposal. \n")
+                    title = ("Modify a custom reaction proposal. " "React with the option you want")
+                    footer = (f"{user} is currently modifying a custom " f"reaction proposal. \n")
                 else:
-                    title = ("Modify a custom reaction. "
-                             "React with the option you want")
-                    footer = (f"{user} is currently modifying a custom "
-                              f"reaction. \n")
+                    title = ("Modify a custom reaction. " "React with the option you want")
+                    footer = (f"{user} is currently modifying a custom " f"reaction. \n")
                 description = (f"Should the custom reaction be activated "
                                f"if the prompt is anywhere in a message?\n"
                                f"{EMOJI['zero']} No\n"
@@ -921,14 +806,12 @@ class CustomReactions(commands.Cog):
                 await message.clear_reactions()
                 current_options.extend((*NUMBERS[0:2], EMOJI['stop_button']))
                 await add_yes_or_no_reactions(message)
-                await message.edit(
-                    embed=discord.Embed(title=title, description=description).
-                    set_footer(text=footer, icon_url=user.avatar_url))
+                await message.edit(embed=discord.Embed(title=title, description=description).set_footer(
+                    text=footer, icon_url=user.avatar_url))
                 try:
-                    reaction, reaction_user = await self.bot.wait_for(
-                        'reaction_add',
-                        check=get_reaction_check(reaction_user=user),
-                        timeout=60)
+                    reaction, reaction_user = await self.bot.wait_for('reaction_add',
+                                                                      check=get_reaction_check(reaction_user=user),
+                                                                      timeout=60)
 
                 except asyncio.TimeoutError:
                     if proposals:
@@ -960,16 +843,12 @@ class CustomReactions(commands.Cog):
                                      "Returning to list of "
                                      "current reactions...")
                         await message.edit(embed=discord.Embed(
-                            title=title).set_footer(
-                                text=f"Modified by {user}.",
-                                icon_url=user.avatar_url))
+                            title=title).set_footer(text=f"Modified by {user}.", icon_url=user.avatar_url))
                         conn.close()
                         await asyncio.sleep(5)
                     else:
                         t = (0, custom_react_id)
-                        c.execute(
-                            'UPDATE CustomReactions SET Anywhere = ? '
-                            'WHERE CustomReactionID = ?', t)
+                        c.execute('UPDATE CustomReactions SET Anywhere = ? ' 'WHERE CustomReactionID = ?', t)
                         conn.commit()
                         self.rebuild_lists()
                         if proposals:
@@ -977,13 +856,9 @@ class CustomReactions(commands.Cog):
                                      "Returning to list of current "
                                      "reaction proposals...")
                         else:
-                            title = ("Option successfully modified! "
-                                     "Returning to list of current "
-                                     "reactions...")
+                            title = ("Option successfully modified! " "Returning to list of current " "reactions...")
                         await message.edit(embed=discord.Embed(
-                            title=title).set_footer(
-                                text=f"Modified by {user}.",
-                                icon_url=user.avatar_url))
+                            title=title).set_footer(text=f"Modified by {user}.", icon_url=user.avatar_url))
                         conn.close()
                         await asyncio.sleep(5)
 
@@ -999,16 +874,12 @@ class CustomReactions(commands.Cog):
                                      "Returning to list of current "
                                      "reactions...")
                         await message.edit(embed=discord.Embed(
-                            title=title).set_footer(
-                                text=f"Modified by {user}.",
-                                icon_url=user.avatar_url))
+                            title=title).set_footer(text=f"Modified by {user}.", icon_url=user.avatar_url))
                         conn.close()
                         await asyncio.sleep(5)
                     else:
                         t = (1, custom_react_id)
-                        c.execute(
-                            'UPDATE CustomReactions SET Anywhere = ? '
-                            'WHERE CustomReactionID = ?', t)
+                        c.execute('UPDATE CustomReactions SET Anywhere = ? ' 'WHERE CustomReactionID = ?', t)
                         conn.commit()
                         self.rebuild_lists()
                         if proposals:
@@ -1016,13 +887,9 @@ class CustomReactions(commands.Cog):
                                      "Returning to list of current "
                                      "reaction proposals...")
                         else:
-                            title = ("Option successfully modified! "
-                                     "Returning to list of current "
-                                     "reactions...")
+                            title = ("Option successfully modified! " "Returning to list of current " "reactions...")
                         await message.edit(embed=discord.Embed(
-                            title=title).set_footer(
-                                text=f"Modified by {user}.",
-                                icon_url=user.avatar_url))
+                            title=title).set_footer(text=f"Modified by {user}.", icon_url=user.avatar_url))
                         conn.close()
                         await asyncio.sleep(5)
                 # Stop
@@ -1034,16 +901,11 @@ class CustomReactions(commands.Cog):
             if reaction.emoji == EMOJI['five']:
                 await message.edit(embed=LOADING_EMBED)
                 if proposals:
-                    title = ("Modify a custom reaction proposal. "
-                             "React with the option you want")
-                    footer = (f"{user} is currently modifying a custom "
-                              f"reaction "
-                              f"proposal. \n")
+                    title = ("Modify a custom reaction proposal. " "React with the option you want")
+                    footer = (f"{user} is currently modifying a custom " f"reaction " f"proposal. \n")
                 else:
-                    title = ("Modify a custom reaction. React with the "
-                             "option you want")
-                    footer = (f"{user} is currently modifying a "
-                              f"custom reaction. \n")
+                    title = ("Modify a custom reaction. React with the " "option you want")
+                    footer = (f"{user} is currently modifying a " f"custom reaction. \n")
                 description = (f"Should the reaction be sent in the DMs of "
                                f"the user who called the reaction "
                                f"instead of the channel?\n"
@@ -1053,14 +915,12 @@ class CustomReactions(commands.Cog):
                 await message.clear_reactions()
                 current_options.extend((*NUMBERS[0:2], EMOJI['stop_button']))
                 await add_yes_or_no_reactions(message)
-                await message.edit(
-                    embed=discord.Embed(title=title, description=description).
-                    set_footer(text=footer, icon_url=user.avatar_url))
+                await message.edit(embed=discord.Embed(title=title, description=description).set_footer(
+                    text=footer, icon_url=user.avatar_url))
                 try:
-                    reaction, reaction_user = await self.bot.wait_for(
-                        'reaction_add',
-                        check=get_reaction_check(reaction_user=user),
-                        timeout=60)
+                    reaction, reaction_user = await self.bot.wait_for('reaction_add',
+                                                                      check=get_reaction_check(reaction_user=user),
+                                                                      timeout=60)
 
                 except asyncio.TimeoutError:
                     if proposals:
@@ -1092,16 +952,12 @@ class CustomReactions(commands.Cog):
                                      "Returning to list of "
                                      "current reactions...")
                         await message.edit(embed=discord.Embed(
-                            title=title).set_footer(
-                                text=f"Modified by {user}.",
-                                icon_url=user.avatar_url))
+                            title=title).set_footer(text=f"Modified by {user}.", icon_url=user.avatar_url))
                         conn.close()
                         await asyncio.sleep(5)
                     else:
                         t = (0, custom_react_id)
-                        c.execute(
-                            'UPDATE CustomReactions SET DM = ? '
-                            'WHERE CustomReactionID = ?', t)
+                        c.execute('UPDATE CustomReactions SET DM = ? ' 'WHERE CustomReactionID = ?', t)
                         conn.commit()
                         self.rebuild_lists()
                         if proposals:
@@ -1109,13 +965,9 @@ class CustomReactions(commands.Cog):
                                      "Returning to list of current "
                                      "reaction proposals...")
                         else:
-                            title = ("Option successfully modified! "
-                                     "Returning to list of current "
-                                     "reactions...")
+                            title = ("Option successfully modified! " "Returning to list of current " "reactions...")
                         await message.edit(embed=discord.Embed(
-                            title=title).set_footer(
-                                text=f"Modified by {user}.",
-                                icon_url=user.avatar_url))
+                            title=title).set_footer(text=f"Modified by {user}.", icon_url=user.avatar_url))
                         conn.close()
                         await asyncio.sleep(5)
                 # Activate "dm" option
@@ -1130,16 +982,12 @@ class CustomReactions(commands.Cog):
                                      "Returning to list of current "
                                      "reactions...")
                         await message.edit(embed=discord.Embed(
-                            title=title).set_footer(
-                                text=f"Modified by {user}.",
-                                icon_url=user.avatar_url))
+                            title=title).set_footer(text=f"Modified by {user}.", icon_url=user.avatar_url))
                         conn.close()
                         await asyncio.sleep(5)
                     else:
                         t = (1, custom_react_id)
-                        c.execute(
-                            'UPDATE CustomReactions SET DM = ? '
-                            'WHERE CustomReactionID = ?', t)
+                        c.execute('UPDATE CustomReactions SET DM = ? ' 'WHERE CustomReactionID = ?', t)
                         conn.commit()
                         self.rebuild_lists()
                         if proposals:
@@ -1147,13 +995,9 @@ class CustomReactions(commands.Cog):
                                      "Returning to list of current "
                                      "reaction proposals...")
                         else:
-                            title = ("Option successfully modified! "
-                                     "Returning to list of current "
-                                     "reactions...")
+                            title = ("Option successfully modified! " "Returning to list of current " "reactions...")
                         await message.edit(embed=discord.Embed(
-                            title=title).set_footer(
-                                text=f"Modified by {user}.",
-                                icon_url=user.avatar_url))
+                            title=title).set_footer(text=f"Modified by {user}.", icon_url=user.avatar_url))
                         conn.close()
                         await asyncio.sleep(5)
                 # Stop
@@ -1164,26 +1008,20 @@ class CustomReactions(commands.Cog):
             # Approve a custom reaction proposal
             if reaction.emoji == EMOJI['white_check_mark']:
                 t = (0, custom_react_id)
-                c.execute(
-                    'UPDATE CustomReactions SET Proposal = ? '
-                    'WHERE CustomReactionID = ?', t)
+                c.execute('UPDATE CustomReactions SET Proposal = ? ' 'WHERE CustomReactionID = ?', t)
                 conn.commit()
                 self.rebuild_lists()
                 title = ("Custom reaction proposal successfully approved! "
                          "Returning to list of current reaction proposals...")
                 footer = f"Approved by {user}."
-                await message.edit(embed=discord.Embed(title=title).set_footer(
-                    text=footer, icon_url=user.avatar_url))
+                await message.edit(embed=discord.Embed(title=title).set_footer(text=footer, icon_url=user.avatar_url))
                 conn.close()
                 await asyncio.sleep(5)
 
             # Delete a custom reaction or proposal
-            if reaction.emoji == EMOJI[
-                    "put_litter_in_its_place"] or reaction.emoji == EMOJI['x']:
+            if reaction.emoji == EMOJI["put_litter_in_its_place"] or reaction.emoji == EMOJI['x']:
                 t = (custom_react_id, )
-                c.execute(
-                    'DELETE FROM CustomReactions WHERE CustomReactionID = ?',
-                    t)
+                c.execute('DELETE FROM CustomReactions WHERE CustomReactionID = ?', t)
                 conn.commit()
                 if proposals:
                     title = ("Custom reaction proposal successfully "
@@ -1191,11 +1029,9 @@ class CustomReactions(commands.Cog):
                              "reaction proposals...")
                     footer = f"Rejected by {user}."
                 else:
-                    title = ("Custom reaction successfully deleted! "
-                             "Returning to list of current reactions...")
+                    title = ("Custom reaction successfully deleted! " "Returning to list of current reactions...")
                     footer = f"Deleted by {user}."
-                await message.edit(embed=discord.Embed(title=title).set_footer(
-                    text=footer, icon_url=user.avatar_url))
+                await message.edit(embed=discord.Embed(title=title).set_footer(text=footer, icon_url=user.avatar_url))
                 conn.close()
                 self.rebuild_lists()
                 await asyncio.sleep(5)
@@ -1206,8 +1042,7 @@ class CustomReactions(commands.Cog):
                 return True
 
         async def list_placeholders(message):
-            title = ("The following placeholders can be used in "
-                     "prompts and responses:")
+            title = ("The following placeholders can be used in " "prompts and responses:")
             description = ("-%user%: the user who called "
                            "the prompt (can only be used in a response)\n"
                            "-%channel%: the name of "
@@ -1238,16 +1073,13 @@ class CustomReactions(commands.Cog):
                            "lists themselves). If a choice contains commas, "
                            "it can be surrounded by \"\" to not be split into "
                            "different choices")
-            await message.edit(
-                embed=discord.Embed(title=title, description=description))
+            await message.edit(embed=discord.Embed(title=title, description=description))
 
         async def leave(message):
             await message.delete()
 
         initial_message = await ctx.send(embed=LOADING_EMBED)
-        is_mod = (discord.utils.get(main_user.roles,
-                                    name=self.bot.config.moderator_role)
-                  is not None)
+        is_mod = (discord.utils.get(main_user.roles, name=self.bot.config.moderator_role) is not None)
         await create_assistant(initial_message, is_mod)
 
 

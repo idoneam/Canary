@@ -39,9 +39,7 @@ class Memes(commands.Cog):
         if input_str is None:
             return
         msg = auto_incorrect(input_str)
-        self.bot.mod_logger.info(
-            f"?bac invoked: Author: {ctx.message.author}, Message: "
-            f"{ctx.message.content}")
+        self.bot.mod_logger.info(f"?bac invoked: Author: {ctx.message.author}, Message: " f"{ctx.message.content}")
         await ctx.send(msg)
         await ctx.message.delete()
 
@@ -88,11 +86,8 @@ class Memes(commands.Cog):
         disappears after."""
         if input_str is None:
             return
-        msg = "".join((c.upper() if random.randint(0, 1) else c.lower())
-                      for c in input_str)
-        self.bot.mod_logger.info(
-            f"?mix invoked: Author: {ctx.message.author}, Message: "
-            f"{ctx.message.content}")
+        msg = "".join((c.upper() if random.randint(0, 1) else c.lower()) for c in input_str)
+        self.bot.mod_logger.info(f"?mix invoked: Author: {ctx.message.author}, Message: " f"{ctx.message.content}")
         await ctx.send(msg)
         await ctx.message.delete()
 
@@ -134,13 +129,11 @@ class Memes(commands.Cog):
             try:
                 num = int(command)
             except ValueError:
-                await ctx.send(
-                    f"invalid input: `{command}` does not parse to an integer")
+                await ctx.send(f"invalid input: `{command}` does not parse to an integer")
                 return
             req = requests.get(f"https://xkcd.com/{num}")
             if num < 1:
-                await ctx.send(f"the number `{num}` is less than one, "
-                               f"such an xkcd issue cannot exist")
+                await ctx.send(f"the number `{num}` is less than one, " f"such an xkcd issue cannot exist")
                 return
 
         if req.status_code == 404:
@@ -148,23 +141,20 @@ class Memes(commands.Cog):
             req = requests.get("https://xkcd.com/")
 
         if req.status_code != 200:
-            await ctx.send(f"xkcd number `{command}` could not be found "
-                           f"(request returned `{req.status_code}`)")
+            await ctx.send(f"xkcd number `{command}` could not be found " f"(request returned `{req.status_code}`)")
             return
 
         soup = BeautifulSoup(req.content, "html.parser")
         if num is None:
-            title_num = re.findall(
-                r'^https://xkcd.com/([1-9][0-9]*)/$',
-                soup.find('meta', property='og:url')['content'])[0]
+            title_num = re.findall(r'^https://xkcd.com/([1-9][0-9]*)/$',
+                                   soup.find('meta', property='og:url')['content'])[0]
         else:
             title_num = str(num)
 
         img_soup = soup.find("div", attrs={"id": "comic"}).find("img")
         embd = discord.Embed(
             title=f"{img_soup['alt']} (#{title_num})",
-            url=req.url).set_image(url=f"https:{img_soup['src']}").set_footer(
-                text=str(img_soup['title']))
+            url=req.url).set_image(url=f"https:{img_soup['src']}").set_footer(text=str(img_soup['title']))
         await ctx.send(embed=embd)
 
 

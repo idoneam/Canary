@@ -54,8 +54,7 @@ async def on_ready():
         webhook_string = " and to the log webhook"
     else:
         webhook_string = ""
-    sys.stdout.write(f'Bot is ready, program output will be written to a '
-                     f'log file{webhook_string}.\n')
+    sys.stdout.write(f'Bot is ready, program output will be written to a ' f'log file{webhook_string}.\n')
     sys.stdout.flush()
     bot.dev_logger.info(f'Logged in as {bot.user.name} ({bot.user.id})')
 
@@ -120,9 +119,7 @@ async def update(ctx):
     Update the bot by pulling changes from the git repository
     """
     bot.dev_logger.info('Update Git repository')
-    shell_output = subprocess.check_output("git pull {}".format(
-        bot.config.repository),
-                                           shell=True)
+    shell_output = subprocess.check_output("git pull {}".format(bot.config.repository), shell=True)
     status_message = shell_output.decode("unicode_escape")
     await ctx.send('`{}`'.format(status_message))
 
@@ -133,12 +130,9 @@ async def backup(ctx):
     """
     Send the current database file to the owner
     """
-    current_time = datetime.now(
-        tz=timezone('America/New_York')).strftime('%Y%m%d-%H:%M')
+    current_time = datetime.now(tz=timezone('America/New_York')).strftime('%Y%m%d-%H:%M')
     backup_filename = 'Martlet{}.db'.format(current_time)
-    await ctx.send(content='Here you go',
-                   file=discord.File(fp=bot.config.db_path,
-                                     filename=backup_filename))
+    await ctx.send(content='Here you go', file=discord.File(fp=bot.config.db_path, filename=backup_filename))
     bot.dev_logger.info('Database backup')
 
 
@@ -147,8 +141,7 @@ def main():
         try:
             bot.load_extension(extension)
         except Exception as e:
-            bot.dev_logger.warning(f'Failed to load extension {extension}\n'
-                                   f'{type(e).__name__}: {e}')
+            bot.dev_logger.warning(f'Failed to load extension {extension}\n' f'{type(e).__name__}: {e}')
     bot.run(bot.config.discord_key)
 
 

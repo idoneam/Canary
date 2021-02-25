@@ -55,8 +55,7 @@ class Games(commands.Cog):
         """
         roll_cmd = ROLL_PATTERN.match(arg)
         if arg == 'safe':    # nice meme bro
-            await ctx.send('https://media.giphy.com/media/'
-                           'd3mlE7uhX8KFgEmY/giphy.gif')
+            await ctx.send('https://media.giphy.com/media/' 'd3mlE7uhX8KFgEmY/giphy.gif')
             return
         # Applying some bounds on parameters
         if roll_cmd is not None:
@@ -69,23 +68,17 @@ class Games(commands.Cog):
             mod = 0
 
         if mpr == 'each':
-            roll_list, total, maximum, minimum = dice_roll(sides,
-                                                           repeat,
-                                                           mod,
-                                                           mpr=True)
+            roll_list, total, maximum, minimum = dice_roll(sides, repeat, mod, mpr=True)
             mod_desc = ' to each roll'
         else:
             roll_list, total, maximum, minimum = dice_roll(sides, repeat, mod)
             mod_desc = ' to the sum of rolls'
         # Now that we have our rolls, prep the embed:
         resultsmsg = discord.Embed(description='Rolling {} {}-sided dice'
-                                   ', with a {} modifier{}'.format(
-                                       repeat, sides, mod, mod_desc),
+                                   ', with a {} modifier{}'.format(repeat, sides, mod, mod_desc),
                                    colour=0x822AE0)
         if repeat <= 10:    # Anything more and the roll list is too long
-            resultsmsg.add_field(name='Rolls',
-                                 value=str(roll_list)[1:-1],
-                                 inline=False)
+            resultsmsg.add_field(name='Rolls', value=str(roll_list)[1:-1], inline=False)
         # Want the modified sum to be shown even for single rolls:
         if repeat > 1 or mod != 0:
             resultsmsg.add_field(name='Sum', value=total)

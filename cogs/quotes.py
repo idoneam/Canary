@@ -64,8 +64,7 @@ class Quotes(commands.Cog):
 
             # Preprocess the quote to improve chances of getting a nice
             # dictionary going
-            cq = re.sub(GEN_SPACE_SYMBOLS, ' ',
-                        re.sub(GEN_BLANK_SYMBOLS, '', q[0].lower())).strip()
+            cq = re.sub(GEN_SPACE_SYMBOLS, ' ', re.sub(GEN_BLANK_SYMBOLS, '', q[0].lower())).strip()
 
             # Split cleaned quote into words by any whitespace.
             words = re.split(r'\s+', cq)
@@ -124,10 +123,8 @@ class Quotes(commands.Cog):
             # The user who reacted isn't the bot
             # The react is the delete emoji
             # The react is on the "Quote added." message
-            return (
-                user == ctx.message.author
-                or user == member) and user != self.bot.user and str(
-                    reaction.emoji) == '🚮' and reaction.message.id == msg.id
+            return (user == ctx.message.author or user == member) and user != self.bot.user and str(
+                reaction.emoji) == '🚮' and reaction.message.id == msg.id
 
         try:
             await self.bot.wait_for('reaction_add', check=check, timeout=120)
@@ -162,9 +159,8 @@ class Quotes(commands.Cog):
         elif mentions and mentions[0].mention == str1:    # Has args
             u_id = mentions[0].id
             # Query for either user and quote or user only (None)
-            c.execute(
-                'SELECT ID, Name, Quote FROM Quotes WHERE ID = ? AND Quote '
-                'LIKE ?', (u_id, f"%{str2 if str2 is not None else ''}%"))
+            c.execute('SELECT ID, Name, Quote FROM Quotes WHERE ID = ? AND Quote '
+                      'LIKE ?', (u_id, f"%{str2 if str2 is not None else ''}%"))
             quotes = c.fetchall()
 
         else:    # query for quote only
@@ -173,17 +169,13 @@ class Quotes(commands.Cog):
                 c.execute("SELECT ID, Name, Quote FROM Quotes")
                 quotes = c.fetchall()
                 try:
-                    quotes = [
-                        q for q in quotes if re.search(query[1:-1], q[2])
-                    ]
+                    quotes = [q for q in quotes if re.search(query[1:-1], q[2])]
                 except re.error:
                     conn.close()
                     await ctx.send("Invalid regex syntax.")
                     return
             else:
-                c.execute(
-                    'SELECT ID, Name, Quote FROM Quotes WHERE Quote LIKE ?',
-                    (f'%{query}%', ))
+                c.execute('SELECT ID, Name, Quote FROM Quotes WHERE Quote LIKE ?', (f'%{query}%', ))
                 quotes = c.fetchall()
 
         if not quotes:
@@ -195,14 +187,11 @@ class Quotes(commands.Cog):
                 # The user who reacted isn't the bot
                 # The react is the ok emoji
                 # The react is on the "Quote not found." message
-                return (user == ctx.message.author and user != self.bot.user
-                        ) and (str(reaction.emoji) == '🆗'
-                               and reaction.message.id == msg.id)
+                return (user == ctx.message.author and user != self.bot.user) and (str(reaction.emoji) == '🆗'
+                                                                                   and reaction.message.id == msg.id)
 
             try:
-                await self.bot.wait_for('reaction_add',
-                                        check=check,
-                                        timeout=120)
+                await self.bot.wait_for('reaction_add', check=check, timeout=120)
 
             except asyncio.TimeoutError:
                 await msg.remove_reaction('🆗', self.bot.user)
@@ -227,9 +216,7 @@ class Quotes(commands.Cog):
 
         author_name = author.display_name if author else name
         pfp = author.avatar_url if author else DEFAULT_AVATAR
-        embed = discord.Embed(colour=discord.Colour(random.randint(
-            0, 16777215)),
-                              description=quote)
+        embed = discord.Embed(colour=discord.Colour(random.randint(0, 16777215)), description=quote)
 
         img_urls_found = re.findall(IMAGE_REGEX, quote)
 
@@ -259,20 +246,15 @@ class Quotes(commands.Cog):
             await ctx.send('No quote found.', delete_after=60)
             return
 
-        quote_list_text = [
-            f'[{i}] {quote[2]}' for i, quote in enumerate(quote_list, 1)
-        ]
+        quote_list_text = [f'[{i}] {quote[2]}' for i, quote in enumerate(quote_list, 1)]
 
-        p = Pages(ctx,
-                  item_list=quote_list_text,
-                  title='Quotes from {}'.format(quote_author.display_name))
+        p = Pages(ctx, item_list=quote_list_text, title='Quotes from {}'.format(quote_author.display_name))
 
         await p.paginate()
 
         def msg_check(msg):
             try:
-                return (0 <= int(msg.content) <= len(quote_list)
-                        and msg.author.id == author_id
+                return (0 <= int(msg.content) <= len(quote_list) and msg.author.id == author_id
                         and msg.channel == ctx.message.channel)
             except ValueError:
                 return False
@@ -284,14 +266,10 @@ class Quotes(commands.Cog):
                 delete_after=60)
 
             try:
-                message = await self.bot.wait_for('message',
-                                                  check=msg_check,
-                                                  timeout=60)
+                message = await self.bot.wait_for('message', check=msg_check, timeout=60)
 
             except asyncio.TimeoutError:
-                await ctx.send(
-                    'Command timeout. You may want to run the command again.',
-                    delete_after=60)
+                await ctx.send('Command timeout. You may want to run the command again.', delete_after=60)
                 break
 
             else:
@@ -301,17 +279,13 @@ class Quotes(commands.Cog):
                 else:
                     t = (quote_list[index][0], quote_list[index][2])
                     del quote_list[index]
-                    c.execute('DELETE FROM Quotes WHERE ID = ? AND Quote = ?',
-                              t)
+                    c.execute('DELETE FROM Quotes WHERE ID = ? AND Quote = ?', t)
                     conn.commit()
 
                     await ctx.send('Quote deleted', delete_after=60)
                     await message.delete()
 
-                    p.itemList = [
-                        f'[{i}] {quote[2]}'
-                        for i, quote in enumerate(quote_list, 1)
-                    ]
+                    p.itemList = [f'[{i}] {quote[2]}' for i, quote in enumerate(quote_list, 1)]
 
                 await p.paginate()
 
@@ -356,25 +330,20 @@ class Quotes(commands.Cog):
             c.execute("SELECT * FROM Quotes")
             quotes = c.fetchall()
             try:
-                quote_list = [
-                    q for q in quotes if re.search(query[1:-1], q[2])
-                ]
+                quote_list = [q for q in quotes if re.search(query[1:-1], q[2])]
             except re.error:
                 conn.close()
                 await ctx.send("Invalid regex syntax.")
                 return
         else:
-            c.execute('SELECT * FROM Quotes WHERE Quote LIKE ?',
-                      (f'%{query}%', ))
+            c.execute('SELECT * FROM Quotes WHERE Quote LIKE ?', (f'%{query}%', ))
             quote_list = c.fetchall()
 
         if not quote_list:
             await ctx.send('No quote found.', delete_after=60)
             return
 
-        quote_list_text = [
-            f'[{i}] {quote[2]}' for i, quote in enumerate(quote_list, 1)
-        ]
+        quote_list_text = [f'[{i}] {quote[2]}' for i, quote in enumerate(quote_list, 1)]
 
         p = Pages(ctx,
                   item_list=quote_list_text,
@@ -396,8 +365,7 @@ class Quotes(commands.Cog):
 
         # Preprocess seed so that we can use it as a lookup
         if seed is not None:
-            seed = re.sub(GEN_SPACE_SYMBOLS, ' ',
-                          re.sub(GEN_SPACE_SYMBOLS, '', seed.lower())).strip()
+            seed = re.sub(GEN_SPACE_SYMBOLS, ' ', re.sub(GEN_SPACE_SYMBOLS, '', seed.lower())).strip()
         else:
             try:
                 seed = np.random.choice(list(self.mc_table.keys()))
@@ -408,8 +376,7 @@ class Quotes(commands.Cog):
         if seed is None:
             await ctx.send('Markov chain table is empty.', delete_after=60)
         elif seed not in self.mc_table.keys():
-            await ctx.send('Could not generate anything with that seed.',
-                           delete_after=60)
+            await ctx.send('Could not generate anything with that seed.', delete_after=60)
         else:
             longest_sentence = []
             retries = 0
@@ -421,8 +388,7 @@ class Quotes(commands.Cog):
                 # Add words to the sentence until a termination condition is
                 # encountered.
                 while True:
-                    choices = [(w, self.mc_table[current_word][w])
-                               for w in self.mc_table[current_word]]
+                    choices = [(w, self.mc_table[current_word][w]) for w in self.mc_table[current_word]]
                     c_words, p_dist = zip(*choices)
 
                     # Choose a random word and add it to the sentence using the
@@ -432,8 +398,7 @@ class Quotes(commands.Cog):
 
                     # Don't allow termination until the minimum length is met
                     # or we don't have any other option.
-                    while (current_word == 'TERM'
-                           and len(sentence) < min_length
+                    while (current_word == 'TERM' and len(sentence) < min_length
                            and len(self.mc_table[old_word].keys()) > 1):
                         current_word = np.random.choice(c_words, p=p_dist)
 

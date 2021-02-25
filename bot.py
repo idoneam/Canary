@@ -36,11 +36,8 @@ command_prefix = _parser.command_prefix
 # to the specified log file
 _logger = logging.getLogger('Canary')
 _logger.setLevel(_parser.log_level)
-_file_handler = logging.FileHandler(filename=_parser.log_file,
-                                    encoding='utf-8',
-                                    mode='a')
-_file_handler.setFormatter(
-    logging.Formatter('[%(levelname)s] %(asctime)s: %(message)s'))
+_file_handler = logging.FileHandler(filename=_parser.log_file, encoding='utf-8', mode='a')
+_file_handler.setFormatter(logging.Formatter('[%(levelname)s] %(asctime)s: %(message)s'))
 _logger.addHandler(_file_handler)
 
 # Create dev (sub-)logger, which is where errors and messages are logged
@@ -64,9 +61,7 @@ class _WebhookHandler(logging.Handler):
         else:
             self.username = username
         logging.Handler.__init__(self)
-        self.webhook = Webhook.partial(webhook_id,
-                                       webhook_token,
-                                       adapter=RequestsWebhookAdapter())
+        self.webhook = Webhook.partial(webhook_id, webhook_token, adapter=RequestsWebhookAdapter())
 
     def emit(self, record):
         msg = self.format(record)
@@ -78,8 +73,7 @@ if _parser.dev_log_webhook_id and _parser.dev_log_webhook_token:
     _dev_webhook_handler = _WebhookHandler(_parser.dev_log_webhook_id,
                                            _parser.dev_log_webhook_token,
                                            username=_dev_webhook_username)
-    _dev_webhook_handler.setFormatter(
-        logging.Formatter('[%(levelname)s] %(asctime)s:\n%(message)s'))
+    _dev_webhook_handler.setFormatter(logging.Formatter('[%(levelname)s] %(asctime)s:\n%(message)s'))
     _dev_logger.addHandler(_dev_webhook_handler)
 
 if _parser.mod_log_webhook_id and _parser.mod_log_webhook_token:
@@ -87,8 +81,7 @@ if _parser.mod_log_webhook_id and _parser.mod_log_webhook_token:
     _mod_webhook_handler = _WebhookHandler(_parser.mod_log_webhook_id,
                                            _parser.mod_log_webhook_token,
                                            username=_mod_webhook_username)
-    _mod_webhook_handler.setFormatter(
-        logging.Formatter('[%(levelname)s] %(asctime)s:\n%(message)s'))
+    _mod_webhook_handler.setFormatter(logging.Formatter('[%(levelname)s] %(asctime)s:\n%(message)s'))
     _mod_logger.addHandler(_mod_webhook_handler)
 
 
@@ -116,9 +109,7 @@ class Canary(commands.Bot):
         self.dev_logger.debug('Database is ready')
 
     def log_traceback(self, exception):
-        self.dev_logger.error("".join(
-            traceback.format_exception(type(exception), exception,
-                                       exception.__traceback__)))
+        self.dev_logger.error("".join(traceback.format_exception(type(exception), exception, exception.__traceback__)))
 
     async def on_command_error(self, ctx, error):
         """The event triggered when an error is raised while invoking a command.
@@ -139,16 +130,13 @@ class Canary(commands.Bot):
 
         elif isinstance(error, commands.NoPrivateMessage):
             try:
-                return await ctx.author.send(
-                    '{} can not be used in Private Messages.'.format(
-                        ctx.command))
+                return await ctx.author.send('{} can not be used in Private Messages.'.format(ctx.command))
             except Exception:
                 pass
 
         elif isinstance(error, commands.BadArgument):
             if ctx.command.qualified_name == 'tag list':
-                return await ctx.send(
-                    'I could not find that member. Please try again.')
+                return await ctx.send('I could not find that member. Please try again.')
 
         elif isinstance(error, commands.MaxConcurrencyReached):
             return await ctx.send(f"The {ctx.command} command cannot be used "
@@ -156,8 +144,7 @@ class Canary(commands.Bot):
                                   f"time{'s' if error.number != 1 else ''} "
                                   f"per {error.per.name}")
 
-        self.dev_logger.error('Ignoring exception in command {}:'.format(
-            ctx.command))
+        self.dev_logger.error('Ignoring exception in command {}:'.format(ctx.command))
         self.log_traceback(error)
 
 

@@ -76,8 +76,7 @@ class Helpers(commands.Cog):
         if link[:2] == "//":
             link = "https:" + link
 
-        exam_schedule = discord.Embed(title="Latest Exam Schedule",
-                                      description="{}".format(link))
+        exam_schedule = discord.Embed(title="Latest Exam Schedule", description="{}".format(link))
 
         await ctx.send(embed=exam_schedule)
 
@@ -101,12 +100,9 @@ class Helpers(commands.Cog):
         """
 
         wind_speed_mps = ws_kph * 1000 / 3600
-        wind_chill = (13.12 + 0.6215 * temp - 11.37 * ws_kph**0.16 +
-                      0.3965 * temp * ws_kph**0.16)
-        vapour_pressure = humidity / 100 * 6.105 * math.exp(
-            (17.27 * temp) / (237.7 + temp))
-        apparent_temperature = (temp + 0.33 * vapour_pressure -
-                                0.7 * wind_speed_mps - 4.00)
+        wind_chill = (13.12 + 0.6215 * temp - 11.37 * ws_kph**0.16 + 0.3965 * temp * ws_kph**0.16)
+        vapour_pressure = humidity / 100 * 6.105 * math.exp((17.27 * temp) / (237.7 + temp))
+        apparent_temperature = (temp + 0.33 * vapour_pressure - 0.7 * wind_speed_mps - 4.00)
         feels_like = temp
         if temp <= 10:
             if ws_kph >= 5:
@@ -127,8 +123,7 @@ class Helpers(commands.Cog):
         Data taken from http://weather.gc.ca/city/pages/qc-147_metric_e.html
         """
         def retrieve_string(label):
-            return soup.find(
-                "dt", string=label).find_next_sibling().get_text().strip()
+            return soup.find("dt", string=label).find_next_sibling().get_text().strip()
 
         await ctx.trigger_typing()
 
@@ -142,33 +137,20 @@ class Helpers(commands.Cog):
         tendency_string = retrieve_string("Tendency:")
         wind_string = retrieve_string("Wind:")
         humidity_string = retrieve_string("Humidity:")
-        feels_like_string = Helpers._calculate_feels_like(
-            temp=float(re.search(r"-?\d+\.\d", temperature_string).group()),
-            humidity=float(re.search(r"\d+", humidity_string).group()),
-            ws_kph=float(re.search(r"\d+", wind_string).group()))
+        feels_like_string = Helpers._calculate_feels_like(temp=float(
+            re.search(r"-?\d+\.\d", temperature_string).group()),
+                                                          humidity=float(re.search(r"\d+", humidity_string).group()),
+                                                          ws_kph=float(re.search(r"\d+", wind_string).group()))
 
         weather_now = discord.Embed(title='Current Weather',
-                                    description='Conditions observed at %s' %
-                                    observed_string,
+                                    description='Conditions observed at %s' % observed_string,
                                     colour=0x7EC0EE)
-        weather_now.add_field(name="Temperature",
-                              value=temperature_string,
-                              inline=True)
-        weather_now.add_field(name="Condition",
-                              value=condition_string,
-                              inline=True)
-        weather_now.add_field(name="Pressure",
-                              value=pressure_string,
-                              inline=True)
-        weather_now.add_field(name="Tendency",
-                              value=tendency_string,
-                              inline=True)
-        weather_now.add_field(name="Wind Speed",
-                              value=wind_string,
-                              inline=True)
-        weather_now.add_field(name="Feels like",
-                              value=feels_like_string,
-                              inline=True)
+        weather_now.add_field(name="Temperature", value=temperature_string, inline=True)
+        weather_now.add_field(name="Condition", value=condition_string, inline=True)
+        weather_now.add_field(name="Pressure", value=pressure_string, inline=True)
+        weather_now.add_field(name="Tendency", value=tendency_string, inline=True)
+        weather_now.add_field(name="Wind Speed", value=wind_string, inline=True)
+        weather_now.add_field(name="Feels like", value=feels_like_string, inline=True)
 
         # Weather alerts
 
@@ -184,28 +166,20 @@ class Helpers(commands.Cog):
             alert_date = alert_category.find_next("span")
             alert_heading = alert_date.find_next("strong")
             # This is a string for some reason.
-            alert_location = alert_heading.find_next(
-                string=re.compile("Montréal.*"))
+            alert_location = alert_heading.find_next(string=re.compile("Montréal.*"))
             # Only gets first <p> of warning. Subsequent paragraphs are ignored
-            alert_content = ". ".join(
-                alert_location.find_next("p").get_text().strip().split(
-                    ".")).rstrip()
+            alert_content = ". ".join(alert_location.find_next("p").get_text().strip().split(".")).rstrip()
 
-            weather_alert = discord.Embed(
-                title=alert_title_text,
-                description="**{}** at {}".format(
-                    alert_category.get_text().strip(),
-                    alert_date.get_text().strip()),
-                colour=0xFF0000)
-            weather_alert.add_field(
-                name=alert_heading.get_text().strip(),
-                value=f"**{alert_location.strip()}**\n{alert_content}",
-                inline=True)
+            weather_alert = discord.Embed(title=alert_title_text,
+                                          description="**{}** at {}".format(alert_category.get_text().strip(),
+                                                                            alert_date.get_text().strip()),
+                                          colour=0xFF0000)
+            weather_alert.add_field(name=alert_heading.get_text().strip(),
+                                    value=f"**{alert_location.strip()}**\n{alert_content}",
+                                    inline=True)
 
         except AttributeError:
-            weather_alert = discord.Embed(title=alert_title_text,
-                                          description="No alerts in effect.",
-                                          colour=0xFF0000)
+            weather_alert = discord.Embed(title=alert_title_text, description="No alerts in effect.", colour=0xFF0000)
 
         # TODO Finish final message. Test on no-alert condition.
 
@@ -234,16 +208,12 @@ class Helpers(commands.Cog):
 
         # Course codes are in the format AAAA 000, or AAA1 000 in some rare
         # cases. Courses across multiple semesters have a suffix like D1/D2.
-        result = re.compile(r"([A-Za-z]{3}[A-Za-z0-9])\s*(\d{3}\s*(\w\d)?)",
-                            re.IGNORECASE | re.DOTALL).search(query)
+        result = re.compile(r"([A-Za-z]{3}[A-Za-z0-9])\s*(\d{3}\s*(\w\d)?)", re.IGNORECASE | re.DOTALL).search(query)
         if not result:
-            await ctx.send(
-                ':warning: Incorrect format. The correct format is `?course '
-                '<course name>`.')
+            await ctx.send(':warning: Incorrect format. The correct format is `?course ' '<course name>`.')
             return
 
-        search_term = re.sub(r"\s+", "",
-                             f"{result.group(1)}-{result.group(2)}")
+        search_term = re.sub(r"\s+", "", f"{result.group(1)}-{result.group(2)}")
         url = self.bot.config.course_tpl.format(search_term)
         r = await fetch(url, "content")
         soup = BeautifulSoup(r, "html.parser")
@@ -254,15 +224,10 @@ class Helpers(commands.Cog):
             await ctx.send("No course found for {}.".format(query))
             return
 
-        content = soup.find("div", id="block-system-main").find_all(
-            "div", {"class": "content"})[1]
+        content = soup.find("div", id="block-system-main").find_all("div", {"class": "content"})[1]
         overview = content.p.get_text().strip()
-        terms = soup.find_all(
-            "p",
-            {"class": "catalog-terms"})[0].get_text().split(':')[1].strip()
-        instructors = soup.find_all("p",
-                                    {"class": "catalog-instructors"
-                                     })[0].get_text().split(':')[1].strip()
+        terms = soup.find_all("p", {"class": "catalog-terms"})[0].get_text().split(':')[1].strip()
+        instructors = soup.find_all("p", {"class": "catalog-instructors"})[0].get_text().split(':')[1].strip()
         lists = content.find_all('li')
         tidbits = []
         for i in lists:
@@ -287,8 +252,7 @@ class Helpers(commands.Cog):
 
         await ctx.trigger_typing()
 
-        soup = BeautifulSoup(await fetch(MCGILL_KEY_DATES_URL, "content"),
-                             'html.parser')
+        soup = BeautifulSoup(await fetch(MCGILL_KEY_DATES_URL, "content"), 'html.parser')
 
         now = datetime.datetime.now()
         current_year, current_month = now.year, now.month
@@ -326,15 +290,12 @@ class Helpers(commands.Cog):
 
             node = node.next_sibling
 
-        em = discord.Embed(
-            title=
-            f"McGill Important Dates {'Fall' if is_fall else 'Winter'} {current_year}",
-            description=MCGILL_KEY_DATES_URL,
-            colour=0xDA291C)
+        em = discord.Embed(title=f"McGill Important Dates {'Fall' if is_fall else 'Winter'} {current_year}",
+                           description=MCGILL_KEY_DATES_URL,
+                           colour=0xDA291C)
 
         for i in range(len(headers)):
-            em.add_field(name=f"{headers[i][:255]}\u2026"
-                         if len(headers[i]) > 256 else headers[i],
+            em.add_field(name=f"{headers[i][:255]}\u2026" if len(headers[i]) > 256 else headers[i],
                          value=sections[i],
                          inline=False)
 
@@ -356,27 +317,24 @@ class Helpers(commands.Cog):
 
         markdown_url = f"[{definitions[0]['word']}]({url})"
         definitions_list_text = [
-            "**\n{}**\n\n{}\n\n*{}*".format(
-                markdown_url,
-                bytes(entry["definition"], "utf-8").decode("unicode_escape"),
-                bytes(entry["example"], "utf-8").decode("unicode_escape"))
+            "**\n{}**\n\n{}\n\n*{}*".format(markdown_url,
+                                            bytes(entry["definition"], "utf-8").decode("unicode_escape"),
+                                            bytes(entry["example"], "utf-8").decode("unicode_escape"))
             for entry in definitions
         ]
 
-        p = Pages(
-            ctx,
-            item_list=definitions_list_text,
-            title="Definitions for '{}' from Urban Dictionary:".format(query),
-            display_option=(3, 1),
-            editable_content=False)
+        p = Pages(ctx,
+                  item_list=definitions_list_text,
+                  title="Definitions for '{}' from Urban Dictionary:".format(query),
+                  display_option=(3, 1),
+                  editable_content=False)
 
         await p.paginate()
 
     @commands.command()
     async def lmgtfy(self, ctx, *, query):
         """Generates a Let Me Google that For You link."""
-        url = LMGTFY_TEMPLATE.format(
-            query.replace("+", "%2B").replace(" ", "+"))
+        url = LMGTFY_TEMPLATE.format(query.replace("+", "%2B").replace(" ", "+"))
         await ctx.send(url)
 
     @commands.command()
@@ -392,8 +350,7 @@ class Helpers(commands.Cog):
             sp = ctx.message.content.split("$")
 
         if len(sp) < 3:
-            await ctx.send("PLEASE USE '$' AROUND YOUR LATEX EQUATIONS. CHEEP."
-                           )
+            await ctx.send("PLEASE USE '$' AROUND YOUR LATEX EQUATIONS. CHEEP.")
             return
 
         up = int(len(sp) / 2)
@@ -401,23 +358,16 @@ class Helpers(commands.Cog):
             tex += "\\[" + sp[2 * i + 1] + "\\]"
 
         buf = BytesIO()
-        preview(
-            tex,
-            preamble=LATEX_PREAMBLE,
-            viewer="BytesIO",
-            outputbuffer=buf,
-            euler=False,
-            dvioptions=["-T", "tight", "-z", "9", "--truecolor", "-D", "600"])
+        preview(tex,
+                preamble=LATEX_PREAMBLE,
+                viewer="BytesIO",
+                outputbuffer=buf,
+                euler=False,
+                dvioptions=["-T", "tight", "-z", "9", "--truecolor", "-D", "600"])
         buf.seek(0)
         img_bytes = np.asarray(bytearray(buf.read()), dtype=np.uint8)
         img = cv2.imdecode(img_bytes, cv2.IMREAD_UNCHANGED)
-        img2 = cv2.copyMakeBorder(img,
-                                  115,
-                                  115,
-                                  115,
-                                  115,
-                                  cv2.BORDER_CONSTANT,
-                                  value=(255, 255, 255))
+        img2 = cv2.copyMakeBorder(img, 115, 115, 115, 115, cv2.BORDER_CONSTANT, value=(255, 255, 255))
         fn = "latexed.png"
         retval, buf = cv2.imencode(".png", img2)
         img_bytes = BytesIO(buf)
@@ -436,9 +386,7 @@ class Helpers(commands.Cog):
         await ctx.trigger_typing()
 
         while pagenum < pagelimit:
-            r = await fetch(
-                self.bot.config.course_search_tpl.format(keyword, pagenum),
-                "content")
+            r = await fetch(self.bot.config.course_search_tpl.format(keyword, pagenum), "content")
             soup = BeautifulSoup(r, "html.parser")
             found = soup.find_all("div", {"class": "views-row"})
 
@@ -484,8 +432,7 @@ class Helpers(commands.Cog):
         """Retrieves the CTF printers' statuses from tepid.science.mcgill.ca"""
         data = await fetch(self.bot.config.tepid_url, "json")
         for key, value in data.items():
-            await ctx.send(f"At least one printer in {key} is up!"
-                           if value else f"Both printers in {key} are down.")
+            await ctx.send(f"At least one printer in {key} is up!" if value else f"Both printers in {key} are down.")
 
     @commands.command()
     async def modpow(self, ctx, a, b, m):
@@ -496,29 +443,24 @@ class Helpers(commands.Cog):
         except ValueError:
             ctx.send("Input must be integers")
 
-    @commands.command(
-        aliases=['foodspot', 'fs', 'food', 'foodspotting', 'food_spotting'])
+    @commands.command(aliases=['foodspot', 'fs', 'food', 'foodspotting', 'food_spotting'])
     async def food_spot(self, ctx, *args):
         # Written by @le-potate
         """Posts a food sale in #foodspotting.
         Use: `?foodspot Samosas in leacock`
         You can also attach one picture to your message (Write the command in
         the uploaded image caption)"""
-        if utils.get(ctx.author.roles,
-                     name=self.bot.config.no_food_spotting_role):
+        if utils.get(ctx.author.roles, name=self.bot.config.no_food_spotting_role):
             return
 
         # If no value is provided, use a zero-width space
-        channel = utils.get(self.bot.get_guild(
-            self.bot.config.server_id).text_channels,
+        channel = utils.get(self.bot.get_guild(self.bot.config.server_id).text_channels,
                             name=self.bot.config.food_spotting_channel)
-        embed = discord.Embed(title="Food spotted",
-                              description=" ".join(args) if args else "\u200b")
-        embed.set_footer(
-            text=("Added by {0} • Use '{1}foodspot' or '{1}fs' if you spot "
-                  "food (See '{1}help foodspot')").format(
-                      ctx.message.author, self.bot.config.command_prefix[0]),
-            icon_url=ctx.message.author.avatar_url)
+        embed = discord.Embed(title="Food spotted", description=" ".join(args) if args else "\u200b")
+        embed.set_footer(text=("Added by {0} • Use '{1}foodspot' or '{1}fs' if you spot "
+                               "food (See '{1}help foodspot')").format(ctx.message.author,
+                                                                       self.bot.config.command_prefix[0]),
+                         icon_url=ctx.message.author.avatar_url)
 
         try:
             embed.set_image(url=ctx.message.attachments[0].url)
@@ -560,17 +502,14 @@ class Helpers(commands.Cog):
         img = np.zeros((size, size, 3), np.uint8)
         img[:, :] = (b, g, r)
         ext = "jpg"
-        _r, buffer = cv2.imencode(f".{ext}", img,
-                                  [cv2.IMWRITE_JPEG_QUALITY, 0])
+        _r, buffer = cv2.imencode(f".{ext}", img, [cv2.IMWRITE_JPEG_QUALITY, 0])
         buffer = BytesIO(buffer)
         fn = f"{match.group(1)}.{ext}"
         await ctx.send(file=discord.File(fp=buffer, filename=fn))
 
     @commands.Cog.listener()
     async def on_member_remove(self, member):
-        roles_id = [
-            role.id for role in member.roles if role.name != "@everyone"
-        ]
+        roles_id = [role.id for role in member.roles if role.name != "@everyone"]
         if roles_id:
             conn = sqlite3.connect(self.bot.config.db_path)
             c = conn.cursor()
@@ -587,23 +526,17 @@ class Helpers(commands.Cog):
         """
         conn = sqlite3.connect(self.bot.config.db_path)
         c = conn.cursor()
-        fetched_roles = c.execute(
-            'SELECT Roles FROM PreviousRoles WHERE ID = ?',
-            (user.id, )).fetchone()
+        fetched_roles = c.execute('SELECT Roles FROM PreviousRoles WHERE ID = ?', (user.id, )).fetchone()
         # the above returns a tuple with a string of IDs separated by spaces
         if fetched_roles is not None:
             roles_id = fetched_roles[0].split(" ")
             valid_roles = []
             for role_id in roles_id:
-                role = self.bot.get_guild(self.bot.config.server_id).get_role(
-                    int(role_id))
+                role = self.bot.get_guild(self.bot.config.server_id).get_role(int(role_id))
                 if role:
                     valid_roles.append(role)
 
-            roles_name = [
-                "[{}] {}\n".format(i, role.name)
-                for i, role in enumerate(valid_roles, 1)
-            ]
+            roles_name = ["[{}] {}\n".format(i, role.name) for i, role in enumerate(valid_roles, 1)]
 
             embed = discord.Embed(title="Loading...")
             message = await ctx.send(embed=embed)
@@ -613,30 +546,23 @@ class Helpers(commands.Cog):
                 await message.add_reaction("▶")
             await message.add_reaction("🆗")
 
-            p = Pages(
-                ctx,
-                item_list=roles_name,
-                title="{} had the following roles before leaving.\n"
-                "A {} can add these roles back by reacting with 🆗".format(
-                    user.display_name, self.bot.config.moderator_role),
-                msg=message,
-                display_option=(3, 20),
-                editable_content=True,
-                editable_content_emoji="🆗",
-                return_user_on_edit=True)
+            p = Pages(ctx,
+                      item_list=roles_name,
+                      title="{} had the following roles before leaving.\n"
+                      "A {} can add these roles back by reacting with 🆗".format(user.display_name,
+                                                                                self.bot.config.moderator_role),
+                      msg=message,
+                      display_option=(3, 20),
+                      editable_content=True,
+                      editable_content_emoji="🆗",
+                      return_user_on_edit=True)
             ok_user = await p.paginate()
 
             while p.edit_mode:
-                if discord.utils.get(ok_user.roles,
-                                     name=self.bot.config.moderator_role):
-                    await user.add_roles(
-                        *valid_roles,
-                        reason="{} used the previous_roles command".format(
-                            ok_user.name))
-                    embed = discord.Embed(
-                        title="{}'s previous roles were successfully "
-                        "added back by {}".format(user.display_name,
-                                                  ok_user.display_name))
+                if discord.utils.get(ok_user.roles, name=self.bot.config.moderator_role):
+                    await user.add_roles(*valid_roles, reason="{} used the previous_roles command".format(ok_user.name))
+                    embed = discord.Embed(title="{}'s previous roles were successfully "
+                                          "added back by {}".format(user.display_name, ok_user.display_name))
                     await message.edit(embed=embed)
                     await message.clear_reaction("◀")
                     await message.clear_reaction("▶")
@@ -646,8 +572,7 @@ class Helpers(commands.Cog):
                     ok_user = await p.paginate()
 
         else:
-            embed = discord.Embed(
-                title="Could not find any roles for this user")
+            embed = discord.Embed(title="Could not find any roles for this user")
             await ctx.send(embed=embed)
 
         conn.close()
@@ -661,24 +586,16 @@ class Helpers(commands.Cog):
         if one is passed as an optional argument."""
         if user is None:
             user = ctx.author
-        ui_embed = discord.Embed(
-            colour=(user.id - sum(ord(char) for char in user.name)) % 0xFFFFFF)
+        ui_embed = discord.Embed(colour=(user.id - sum(ord(char) for char in user.name)) % 0xFFFFFF)
         ui_embed.add_field(name="username", value=str(user))
         ui_embed.add_field(name="display name", value=user.display_name)
         ui_embed.add_field(name="id", value=user.id)
-        ui_embed.add_field(name="joined server",
-                           value=user.joined_at.strftime("%m/%d/%Y, %H:%M:%S"))
-        ui_embed.add_field(
-            name="joined discord",
-            value=user.created_at.strftime("%m/%d/%Y, %H:%M:%S"))
-        ui_embed.add_field(
-            name="top role, colour",
-            value=f"`{user.top_role}`, " +
-            (str(user.colour).upper()
-             if user.colour != discord.Colour.default() else "default colour"))
-        ui_embed.add_field(name="avatar url",
-                           value=user.avatar_url,
-                           inline=False)
+        ui_embed.add_field(name="joined server", value=user.joined_at.strftime("%m/%d/%Y, %H:%M:%S"))
+        ui_embed.add_field(name="joined discord", value=user.created_at.strftime("%m/%d/%Y, %H:%M:%S"))
+        ui_embed.add_field(name="top role, colour",
+                           value=f"`{user.top_role}`, " +
+                           (str(user.colour).upper() if user.colour != discord.Colour.default() else "default colour"))
+        ui_embed.add_field(name="avatar url", value=user.avatar_url, inline=False)
         ui_embed.set_image(url=user.avatar_url)
 
         await ctx.send(embed=ui_embed)

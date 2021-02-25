@@ -76,12 +76,9 @@ def _convert_choice_list(choice_list_string, to_pattern_str=False):
         return choice_list_string
     # otherwise, split the content between %[ and ]% to get the list of choices
     # content is separated by commas, except when they are inside quotes
-    choice_list_matches_iter = re.finditer(
-        r'(?:^"?|, ?"?)\K(?:(?<=").+?(?=")|[^ ,][^,]*)',
-        choice_list_string[last_start_pos + 2:first_end_pos_after])
-    choice_list = [
-        choice_match.group() for choice_match in choice_list_matches_iter
-    ]
+    choice_list_matches_iter = re.finditer(r'(?:^"?|, ?"?)\K(?:(?<=").+?(?=")|[^ ,][^,]*)',
+                                           choice_list_string[last_start_pos + 2:first_end_pos_after])
+    choice_list = [choice_match.group() for choice_match in choice_list_matches_iter]
     # if to_pattern_str, any of these choices can match, thus this is
     # a regex pattern string of alternatives
     if to_pattern_str:
@@ -92,8 +89,7 @@ def _convert_choice_list(choice_list_string, to_pattern_str=False):
     # replace everything between the %[ and ]% by the choice that was chosen
     # or the pattern, and return a call to the function itself since there
     # might still be pairs of %[ and ]% remaining
-    choice_list_string = (choice_list_string[:last_start_pos] + choice +
-                          choice_list_string[first_end_pos_after + 2:])
+    choice_list_string = (choice_list_string[:last_start_pos] + choice + choice_list_string[first_end_pos_after + 2:])
     return _convert_choice_list(choice_list_string)
 
 
@@ -121,12 +117,7 @@ def _get_pattern_from_string(string, anywhere=False):
 
 
 class PString:
-    def __init__(self,
-                 string,
-                 user=None,
-                 channel=None,
-                 groups=None,
-                 additional_info=None):
+    def __init__(self, string, user=None, channel=None, groups=None, additional_info=None):
         """
         A p-string is composed of a string with placeholders in it,
         and values for these placeholders. Printing a p-string will
@@ -164,9 +155,7 @@ class PString:
 
     @property
     def _patterns_and_values(self):
-        return dict(
-            zip(PLACEHOLDERS_PATTERNS,
-                (self.user, self.channel, *self.groups)))
+        return dict(zip(PLACEHOLDERS_PATTERNS, (self.user, self.channel, *self.groups)))
 
     def __str__(self):
         filled_string = self.string
@@ -179,11 +168,7 @@ class PString:
 
 
 class PStringEncodings:
-    def __init__(self,
-                 input_strings,
-                 output_strings,
-                 anywhere_values,
-                 additional_info_list=None):
+    def __init__(self, input_strings, output_strings, anywhere_values, additional_info_list=None):
         """
         Used to encode a list of input strings with placeholders
         and a list of output strings with placeholders to
@@ -224,8 +209,7 @@ class PStringEncodings:
         if not additional_info_list:
             additional_info_list = [None] * len(input_strings)
         # the lists must all be the same length
-        if not (len(input_strings) == len(output_strings) ==
-                len(anywhere_values) == len(additional_info_list)):
+        if not (len(input_strings) == len(output_strings) == len(anywhere_values) == len(additional_info_list)):
             raise ValueError("input_strings, output_strings, "
                              "anywhere_values (if not bool) and"
                              "additional_info_list (if provided)"
@@ -243,8 +227,7 @@ class PStringEncodings:
         # get the list of pairings of input regex pattern and output p-strings
         self.patterns_and_p_strings = [
             (pattern, PString(output_string, additional_info=additional_info))
-            for output_string, pattern, additional_info in zip(
-                output_strings, self.patterns, additional_info_list)
+            for output_string, pattern, additional_info in zip(output_strings, self.patterns, additional_info_list)
         ]
 
     def parser(self, content, user=None, channel=None):
@@ -265,26 +248,20 @@ class PStringEncodings:
         """
         # first search the big patterns_string to see if anything matches
         # (also check is the patterns_string is not just the parens)
-        if (re.search(self.patterns_string, content)
-                and len(self.patterns_string) > 2):
+        if (re.search(self.patterns_string, content) and len(self.patterns_string) > 2):
             # choose a random iterator of match objects from those of all
             # the matching input regex pattern (i.e. we are choosing
             # which corresponding pattern to use)
-            match_iter = random.choice([
-                (pattern.finditer(content), p_string)
-                for (pattern, p_string) in self.patterns_and_p_strings
-                if pattern.search(content) is not None
-            ])
+            match_iter = random.choice([(pattern.finditer(content), p_string)
+                                        for (pattern, p_string) in self.patterns_and_p_strings
+                                        if pattern.search(content) is not None])
             # for that random iterator of match objects choose a random
             # iteration (i.e. we are choosing which corresponding match
             # of this pattern in the content to use)
-            match = (random.choice([match for match in match_iter[0]]),
-                     match_iter[1])
+            match = (random.choice([match for match in match_iter[0]]), match_iter[1])
             # fill the corresponding p-strings with the capture groups,
             # the user info and the channel info
-            match[1].groups = [
-                group for group in match[0].groups() if group is not None
-            ]
+            match[1].groups = [group for group in match[0].groups() if group is not None]
             match[1].user = user
             match[1].channel = channel
             return match[1]

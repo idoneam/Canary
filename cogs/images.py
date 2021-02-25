@@ -48,8 +48,7 @@ def filter_image(func):
             result = cv2.imdecode(img_bytes, cv2.IMREAD_UNCHANGED)
             args = (args[0], result) if len(args) == 2 else (result, )
             result = await func(self, ctx, *args)
-            _r, buffer = cv2.imencode(f".{ext}", result,
-                                      [cv2.IMWRITE_JPEG_QUALITY, 100])
+            _r, buffer = cv2.imencode(f".{ext}", result, [cv2.IMWRITE_JPEG_QUALITY, 100])
             await ctx.message.delete()
             await ctx.send(file=discord.File(fp=BytesIO(buffer), filename=fn))
 
@@ -72,10 +71,8 @@ class Images(commands.Cog):
 
     @staticmethod
     async def get_attachment(ctx: discord.ext.commands.Context):
-        messages = await ctx.channel.history(limit=Images.IMAGE_HISTORY_LIMIT
-                                             ).flatten()
-        return next(
-            (msg.attachments[0] for msg in messages if msg.attachments), None)
+        messages = await ctx.channel.history(limit=Images.IMAGE_HISTORY_LIMIT).flatten()
+        return next((msg.attachments[0] for msg in messages if msg.attachments), None)
 
     @staticmethod
     def _cv_linear_polar(image, flags):
@@ -85,14 +82,11 @@ class Images(commands.Cog):
 
     @staticmethod
     def _polar(image):
-        return Images._cv_linear_polar(
-            image, cv2.INTER_LINEAR + cv2.WARP_FILL_OUTLIERS)
+        return Images._cv_linear_polar(image, cv2.INTER_LINEAR + cv2.WARP_FILL_OUTLIERS)
 
     @staticmethod
     def _cart(image):
-        return Images._cv_linear_polar(
-            image,
-            cv2.INTER_LINEAR + cv2.WARP_FILL_OUTLIERS + cv2.WARP_INVERSE_MAP)
+        return Images._cv_linear_polar(image, cv2.INTER_LINEAR + cv2.WARP_FILL_OUTLIERS + cv2.WARP_INVERSE_MAP)
 
     @staticmethod
     def _bounded_radius(radius: str):
@@ -175,14 +169,12 @@ class Images(commands.Cog):
 
         # pad border to avoid black regions when transforming image back to
         # normal
-        image = cv2.copyMakeBorder(image, v_pad, v_pad, h_pad, h_pad,
-                                   cv2.BORDER_REPLICATE)
+        image = cv2.copyMakeBorder(image, v_pad, v_pad, h_pad, h_pad, cv2.BORDER_REPLICATE)
         image = Images._polar(image)
 
         # wrap border to avoid the sharp horizontal line when transforming
         # image back to normal
-        image = cv2.copyMakeBorder(image, half_radius, half_radius,
-                                   half_radius, half_radius, cv2.BORDER_WRAP)
+        image = cv2.copyMakeBorder(image, half_radius, half_radius, half_radius, half_radius, cv2.BORDER_WRAP)
         image = cv2.blur(image, (1, radius))
         image = image[half_radius:-half_radius, half_radius:-half_radius]
         image = Images._cart(image)

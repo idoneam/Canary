@@ -124,8 +124,7 @@ class ArgConverter:
             for key in remaining_vars:
                 try:
                     # try converting the argument
-                    converted_arguments_dict[key] = await remaining_vars[key][
-                        0].convert(ctx, arg)
+                    converted_arguments_dict[key] = await remaining_vars[key][0].convert(ctx, arg)
                     # if we did, delete the key from the converters dict
                     # as a converter
                     del remaining_vars[key]
@@ -135,15 +134,12 @@ class ArgConverter:
                     # if this converted didn't work, we try the next
                     pass
             if not arg_converted:
-                raise commands.BadArgument(
-                    f"Invalid input: Argument \"{arg}\" could not be converted"
-                )
+                raise commands.BadArgument(f"Invalid input: Argument \"{arg}\" could not be converted")
         # if there are remaining variables, either set them to their default
         # values or raise commands.BadArgument if they are required
         for key in remaining_vars:
             if len(self._converters_dict[key]) == 1:
-                raise commands.BadArgument(f"Invalid input: Missing required "
-                                           f"argument {key}")
+                raise commands.BadArgument(f"Invalid input: Missing required " f"argument {key}")
             else:
                 converted_arguments_dict[key] = self._converters_dict[key][1]
         return converted_arguments_dict

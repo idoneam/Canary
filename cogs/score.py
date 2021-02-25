@@ -37,10 +37,8 @@ class Score(commands.Cog):
     @commands.Cog.listener()
     async def on_ready(self):
         self.guild = self.bot.get_guild(self.bot.config.server_id)
-        self.UPMARTLET = discord.utils.get(self.guild.emojis,
-                                           name=self.bot.config.upvote_emoji)
-        self.DOWNMARTLET = discord.utils.get(
-            self.guild.emojis, name=self.bot.config.downvote_emoji)
+        self.UPMARTLET = discord.utils.get(self.guild.emojis, name=self.bot.config.upvote_emoji)
+        self.DOWNMARTLET = discord.utils.get(self.guild.emojis, name=self.bot.config.downvote_emoji)
 
     def _get_score(self, emoji):
         if emoji.id == self.UPMARTLET.id:
@@ -80,8 +78,7 @@ class Score(commands.Cog):
             c.execute('UPDATE Members SET Score=Score+? WHERE ID=?', t)
         else:
             # No record exists for the user yet
-            c.execute('INSERT INTO Members VALUES (?, ?, ?)',
-                      (message.author.id, message.author.display_name, score))
+            c.execute('INSERT INTO Members VALUES (?, ?, ?)', (message.author.id, message.author.display_name, score))
 
         conn.commit()
         conn.close()
@@ -134,9 +131,7 @@ class Score(commands.Cog):
         members = c.fetchall()
 
         if not members:
-            await ctx.send(
-                "Ranking is not yet available for this server, please "
-                "upvote/downvote moar.")
+            await ctx.send("Ranking is not yet available for this server, please " "upvote/downvote moar.")
             return
 
         table = []
@@ -146,18 +141,11 @@ class Score(commands.Cog):
         for (ID, DisplayName, Upmartlet) in members:
             table.append((counter, DisplayName, Upmartlet))
             if counter % 7 == 0 or counter == len(members):
-                table_list.append(
-                    tabulate(table[:counter],
-                             headers=["Rank", "Name", "Score"],
-                             tablefmt="fancy_grid"))
+                table_list.append(tabulate(table[:counter], headers=["Rank", "Name", "Score"], tablefmt="fancy_grid"))
                 del table[:]
             counter += 1
 
-        p = Pages(ctx,
-                  item_list=table_list,
-                  title="Upmartlet ranking",
-                  display_option=(0, 1),
-                  editable_content=False)
+        p = Pages(ctx, item_list=table_list, title="Upmartlet ranking", display_option=(0, 1), editable_content=False)
 
         await p.paginate()
 
