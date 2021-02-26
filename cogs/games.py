@@ -29,7 +29,7 @@ from time import time
 import pickle
 import random
 from asyncio import TimeoutError
-from typing import Dict, List, Set, Tuple
+from typing import Tuple
 from .utils.dice_roll import dice_roll
 from .utils.clamp_default import clamp_default
 from .utils.hangman import mk_hm_embed_up_fn, LOSS_MISTAKES
@@ -46,7 +46,7 @@ class Games(commands.Cog):
         self.hm_timeout = bot.config.games["hm_timeout"]
         with open(f"{os.getcwd()}/data/premade/{hangman_tbl_name}.obj",
                   "rb") as hangman_pkl:
-            self.hangman_dict: Dict[str, Tuple[str,
+            self.hangman_dict: dict[str, Tuple[str,
                                                str]] = pickle.load(hangman_pkl)
 
     @commands.max_concurrency(1, per=commands.BucketType.channel, wait=False)
@@ -85,9 +85,10 @@ class Games(commands.Cog):
         hm_word, hm_img = random.choice(word_list)
         lowered_word = hm_word.lower()
 
-        not_guessed: Set[str] = set(re.sub(r"[^a-z]", "", lowered_word))
-        incorrect_guesses: Set[str] = set()
-        timeout_dict: Dict[discord.Member, float] = {}
+        not_guessed: set[str] = set(char for char in lowered_word
+                                    if char in "abcdefghijklmnopqrstuvwxyz")
+        incorrect_guesses: set[str] = set()
+        timeout_dict: dict[discord.Member, float] = {}
         winner: discord.Member = None
         cool_win: bool = False
 
