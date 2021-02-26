@@ -118,7 +118,7 @@ class Quotes(commands.Cog):
         c = conn.cursor()
         t = (member.id, member.name, quote, str(ctx.message.created_at))
         c.execute('INSERT INTO Quotes VALUES (?,?,?,?)', t)
-        msg = await ctx.send("quote added.")
+        msg = await ctx.send("Quote added.")
 
         conn.commit()
 
