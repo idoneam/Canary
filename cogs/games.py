@@ -32,7 +32,7 @@ from asyncio import TimeoutError
 from typing import Tuple
 from .utils.dice_roll import dice_roll
 from .utils.clamp_default import clamp_default
-from .utils.hangman import mk_hm_embed_up_fn, LOSS_MISTAKES
+from .utils.hangman import mk_hm_embed_up_fns, LOSS_MISTAKES
 from .currency import HANGMAN_REWARD
 
 ROLL_PATTERN = re.compile(r'^(\d*)d(\d*)([+-]?\d*)$')
@@ -84,7 +84,6 @@ class Games(commands.Cog):
 
         hm_word, hm_img = random.choice(word_list)
         lowered_word = hm_word.lower()
-
         not_guessed: set[str] = set(char for char in lowered_word
                                     if char in "abcdefghijklmnopqrstuvwxyz")
         incorrect_guesses: set[str] = set()
@@ -97,9 +96,9 @@ class Games(commands.Cog):
                 (len(msg.content) == 1 and msg.content.isalpha())
                 or msg.content.lower() == lowered_word)
 
-        update_embed, hm_embed = mk_hm_embed_up_fn(pretty_name, hm_word,
-                                                   lowered_word, not_guessed,
-                                                   incorrect_guesses)
+        add_msg, up_corr, up_mstk, hm_embed = mk_hm_embed_up_fns(
+            pretty_name, hm_word, lowered_word, not_guessed, incorrect_guesses)
+
         await ctx.send(embed=hm_embed)
 
         while True:
@@ -109,7 +108,7 @@ class Games(commands.Cog):
                                                    check=wait_for_check,
                                                    timeout=self.hm_timeout)
             except TimeoutError:
-                update_embed("the game has timed out")
+                add_msg("the game has timed out")
                 await ctx.send(embed=hm_embed)
                 await ctx.send(
                     f"sorry everyone, no one has interacted with the "
@@ -124,10 +123,11 @@ class Games(commands.Cog):
                 if curr_guess == lowered_word:
                     cool_win = len(not_guessed) > (len(set(lowered_word)) /
                                                    2.5)
+                    not_guessed.clear()
                     winner = curr_msg.author
-                    update_embed(f"{winner} guessed the entire word!",
-                                 correct_guess=True,
-                                 img_url=hm_img)
+                    up_corr()
+                    add_msg(f"{winner} guessed the entire word!")
+                    hm_embed.set_image(url=hm_img)
                     await ctx.send(embed=hm_embed)
                     await ctx.send(
                         f"congratulations `{winner}`, you solved the hangman" +
@@ -139,14 +139,14 @@ class Games(commands.Cog):
                     # curr_guess in not_guessed
                     # => curr_guess is correct and new
                     not_guessed.remove(curr_guess)
-                    continue_game = update_embed(
-                        f"{curr_msg.author} guessed '{curr_guess}' correctly!",
-                        correct_guess=True)
+                    continue_game = up_corr()
+                    add_msg(
+                        f"{curr_msg.author} guessed '{curr_guess}' correctly!")
                     await ctx.send(embed=hm_embed)
                     if not continue_game:
                         winner = curr_msg.author
-                        update_embed(f"{winner} finished solving the hangman!",
-                                     img_url=hm_img)
+                        add_msg(f"{winner} finished solving the hangman!")
+                        hm_embed.set_image(url=hm_img)
                         await ctx.send(embed=hm_embed)
                         await ctx.send(
                             f"congratulations `{winner}`, you solved the hangman, "
@@ -155,7 +155,7 @@ class Games(commands.Cog):
                 elif curr_guess in lowered_word:
                     # curr_guess not in not_guessed (elif) and in word
                     # => curr_guess is correct but already made
-                    update_embed(
+                    add_msg(
                         f"{curr_msg.author}, '{curr_guess}' was already guessed"
                     )
                     await ctx.send(embed=hm_embed)
@@ -166,13 +166,11 @@ class Games(commands.Cog):
                     # => curr_guess is incorrect and new
                     timeout_dict[curr_msg.author] = time()
                     incorrect_guesses.add(curr_guess)
-                    continue_game = update_embed(
-                        f"{curr_msg.author} guessed '{curr_guess}' wrong!",
-                        incorrect_guess=True)
+                    continue_game = up_mstk()
+                    add_msg(f"{curr_msg.author} guessed '{curr_guess}' wrong!")
                     await ctx.send(embed=hm_embed)
                     if not continue_game:
-                        update_embed(
-                            f"{curr_msg.author} used your last chance!")
+                        add_msg(f"{curr_msg.author} used your last chance!")
                         await ctx.send(embed=hm_embed)
                         await ctx.send(
                             f"sorry everyone, {curr_msg.author} used your "
@@ -183,13 +181,13 @@ class Games(commands.Cog):
                     # not in word and in incorrect_guesses (else)
                     # => curr_guess is incorrect but already made
                     timeout_dict[curr_msg.author] = time()
-                    update_embed(
+                    add_msg(
                         f"{curr_msg.author}, '{curr_guess}' was already guessed"
                     )
                     await ctx.send(embed=hm_embed)
             else:
                 # message from a user in time out
-                update_embed(f"{curr_msg.author} you cannot guess right now!")
+                add_msg(f"{curr_msg.author} you cannot guess right now!")
                 await ctx.send(embed=hm_embed)
         if winner is not None:
             conn = sqlite3.connect(self.bot.config.db_path)

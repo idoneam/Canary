@@ -170,8 +170,8 @@ def mk_movie_list() -> list[Tuple[str, str]]:
     return kino_list
 
 
-def mk_hm_embed_up_fn(category_name, word, lowered_word, not_guessed,
-                      incorrect_guesses):
+def mk_hm_embed_up_fns(category_name, word, lowered_word, not_guessed,
+                       incorrect_guesses):
     field_name: str = f"hangman (category: {category_name})"
     first_line: str = " ".join(
         char if lowered_char not in not_guessed else "_"
@@ -185,41 +185,38 @@ def mk_hm_embed_up_fn(category_name, word, lowered_word, not_guessed,
         value=f"`{first_line}`\n```{HANG_LIST[num_mistakes]}```").set_footer(
             text=last_line)
 
-    def heuf(new_msg,
-             *,
-             incorrect_guess: bool = False,
-             correct_guess: bool = False,
-             img_url: str = None) -> bool:
+    def correct():
+        nonlocal first_line
+
+        first_line = " ".join(
+            char if lowered_char not in not_guessed else "_"
+            for char, lowered_char in zip(word, lowered_word))
+
+        return bool(not_guessed)
+
+    def mistake():
+        nonlocal last_line
+        nonlocal num_mistakes
+
+        last_line = f"""incorrect guesses: '{"', '".join(sorted(incorrect_guesses))}'"""
+        num_mistakes += 1
+        embed.set_footer(text=last_line)
+
+        return num_mistakes < LOSS_MISTAKES
+
+    def message(new_msg: str) -> bool:
         nonlocal embed
         nonlocal player_msg_list
 
         player_msg_list.append(new_msg)
         player_msg_list = player_msg_list[-3:]
-
-        if incorrect_guess:
-            nonlocal last_line
-            nonlocal num_mistakes
-            last_line = f"""incorrect guesses: {", ".join("'"+char+"'" for char in sorted(incorrect_guesses))}"""
-            num_mistakes += 1
-            embed.set_footer(text=last_line)
-        if correct_guess:
-            nonlocal first_line
-            first_line = " ".join(
-                char if lowered_char not in not_guessed else "_"
-                for char, lowered_char in zip(word, lowered_word))
-
-        if img_url:
-            embed.set_image(url=img_url)
-
         embed.set_field_at(0,
                            name=field_name,
                            value="`{0}`\n```{1}```\n{2}".format(
                                first_line, HANG_LIST[num_mistakes],
                                "\n".join(player_msg_list)))
 
-        return bool(not_guessed) and num_mistakes < LOSS_MISTAKES
-
-    return heuf, embed
+    return message, correct, mistake, embed
 
 
 def mk_hangman_dict(file_name) -> dict[str, list[Tuple[str, str]]]:
