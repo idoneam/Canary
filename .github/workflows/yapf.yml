@@ -1,6 +1,9 @@
-name: YAPF Formatting Check
+name: YAPF Check
 
-on: [push]
+on:
+  push:
+    paths:
+      '**.py'
 
 jobs:
   formatting-check:
