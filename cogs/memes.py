@@ -35,12 +35,27 @@ class Memes(commands.Cog):
     async def bac(self, ctx, *, input_str: str = None):
         """
         Purposefully auto-incorrects inputted sentences
+        Inputted text is either the content of the message to
+        after the command or the content of the message to which
+        the invoking message is replying to. If the invoking message
+        is replying a message, the bot will reply to that message as
+        well. Invoking message will be deleted.
         """
+        replying: bool = ctx.message.reference and ctx.message.reference.resolved
         if input_str is None:
-            return
+            if not replying:
+                return
+            input_str = ctx.message.reference.resolved.content
         msg = auto_incorrect(input_str)
-        self.bot.mod_logger.info(f"?bac invoked: Author: {ctx.message.author}, Message: " f"{ctx.message.content}")
-        await ctx.send(msg)
+        self.bot.mod_logger.info(
+            f"?bac invoked: Author: '{ctx.message.author}', "
+            f"Message: '{ctx.message.content}'" +
+            ((f", Used on {str(ctx.message.reference.resolved.author)}"
+              f"'s message: '{ctx.message.reference.resolved.content}'"
+              ) if replying else ""))
+        await ctx.send(msg,
+                       reference=ctx.message.reference,
+                       mention_author=False)
         await ctx.message.delete()
 
     @commands.command()
@@ -82,13 +97,30 @@ class Memes(commands.Cog):
 
     @commands.command()
     async def mix(self, ctx, *, input_str: str = None):
-        """Alternates upper/lower case for input string. Input message
-        disappears after."""
+        """Alternates upper/lower case for input string.
+        Inputted text is either the content of the message to
+        after the command or the content of the message to which
+        the invoking message is replying to. If the invoking message
+        is replying a message, the bot will reply to that message as
+        well. Invoking message will be deleted.
+        """
+        replying: bool = ctx.message.reference and ctx.message.reference.resolved
         if input_str is None:
-            return
-        msg = "".join((c.upper() if random.randint(0, 1) else c.lower()) for c in input_str)
-        self.bot.mod_logger.info(f"?mix invoked: Author: {ctx.message.author}, Message: " f"{ctx.message.content}")
-        await ctx.send(msg)
+            if not replying:
+                return
+            input_str = ctx.message.reference.resolved.content
+        msg = "".join((c.upper() if random.randint(0, 1) else c.lower())
+                      for c in input_str)
+        self.bot.mod_logger.info(
+            f"?
+          invoked: Author: '{ctx.message.author}', "
+            f"Message: '{ctx.message.content}'" +
+            ((f", Used on {str(ctx.message.reference.resolved.author)}"
+              f"'s message: '{ctx.message.reference.resolved.content}'"
+              ) if replying else ""))
+        await ctx.send(msg,
+                       reference=ctx.message.reference,
+                       mention_author=False)
         await ctx.message.delete()
 
     @commands.command(aliases=['boot'])

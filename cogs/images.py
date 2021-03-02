@@ -33,7 +33,10 @@ def filter_image(func):
     async def wrapper(self, ctx, *args):
         att = await Images.get_attachment(ctx)
         if att is None:
-            await ctx.send('Image not found :c', delete_after=15)
+            await ctx.send(
+                "no image could be found (only attached image files"
+                " can be detected) or message could not be found",
+                delete_after=15)
             return
 
         await ctx.trigger_typing()
@@ -71,8 +74,19 @@ class Images(commands.Cog):
 
     @staticmethod
     async def get_attachment(ctx: discord.ext.commands.Context):
-        messages = await ctx.channel.history(limit=Images.IMAGE_HISTORY_LIMIT).flatten()
-        return next((msg.attachments[0] for msg in messages if msg.attachments), None)
+        """
+        Returns either the attachment of the message to which
+        the invoking message is replying to, or, if that fails
+        the attachment of the most recent of the last 100 messages.
+        If no such message exists, returns None.
+        """
+        if (ctx.message.reference and ctx.message.reference.resolved
+                and ctx.message.reference.resolved.attachments):
+            return ctx.message.reference.resolved.attachments[0]
+        async for msg in ctx.channel.history(limit=Images.IMAGE_HISTORY_LIMIT):
+            if msg.attachments:
+                return msg.attachments[0]
+        return None
 
     @staticmethod
     def _cv_linear_polar(image, flags):
