@@ -166,25 +166,22 @@ class Helpers(commands.Cog):
             f"Conditions observed at {observed_string if observed_string else '[REDACTED]'}",
             colour=0x7EC0EE)
         weather_now.add_field(name="Temperature",
-                              value=temperature_string if temperature_string
-                              else "could not be computed",
+                              value=temperature_string
+                              or "could not be computed",
                               inline=True)
         weather_now.add_field(name="Condition",
                               value=condition_string
-                              if condition_string else "could not be computed",
+                              or "could not be computed",
                               inline=True)
         weather_now.add_field(name="Pressure",
-                              value=pressure_string
-                              if pressure_string else "could not be computed",
+                              value=pressure_string or "could not be computed",
                               inline=True)
         weather_now.add_field(name="Tendency",
-                              value=tendency_string
-                              if tendency_string else "could not be computed",
+                              value=tendency_string or "could not be computed",
                               inline=True)
-        weather_now.add_field(
-            name="Wind Speed",
-            value=wind_string if wind_string else "could not be computed",
-            inline=True)
+        weather_now.add_field(name="Wind Speed",
+                              value=wind_string or "could not be computed",
+                              inline=True)
         weather_now.add_field(name="Feels like",
                               value=feels_like_string,
                               inline=True)
