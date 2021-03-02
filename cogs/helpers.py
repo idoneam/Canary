@@ -166,12 +166,10 @@ class Helpers(commands.Cog):
             f"Conditions observed at {observed_string or '[REDACTED]'}",
             colour=0x7EC0EE)
         weather_now.add_field(name="Temperature",
-                              value=temperature_string
-                              or "n/a",
+                              value=temperature_string or "n/a",
                               inline=True)
         weather_now.add_field(name="Condition",
-                              value=condition_string
-                              or "n/a",
+                              value=condition_string or "n/a",
                               inline=True)
         weather_now.add_field(name="Pressure",
                               value=pressure_string or "n/a",
