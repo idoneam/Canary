@@ -39,6 +39,7 @@ import datetime
 import random
 from .utils.paginator import Pages
 from .utils.requests import fetch
+from .utils.site_save import site_save
 import sqlite3
 
 MCGILL_EXAM_URL = "https://www.mcgill.ca/exams/dates"
@@ -132,108 +133,100 @@ class Helpers(commands.Cog):
         return f"{round(feels_like, 1)}°C"
 
     @commands.command()
+    @site_save("http://weather.gc.ca/city/pages/qc-147_metric_e.html")
     async def weather(self, ctx):
         """
         Retrieves current weather conditions.
         Data taken from http://weather.gc.ca/city/pages/qc-147_metric_e.html
         """
+        await ctx.trigger_typing()
+
+        r = await fetch(self.bot.config.gc_weather_url, "content")
+        soup = BeautifulSoup(r, "html.parser")
+
+        def retrieve_string(label):
+            if elem := soup.find("dt", string=label).find_next_sibling():
+                return elem.get_text().strip()
+            return None
+
+        observed_string = retrieve_string("Date: ")
+        temperature_string = retrieve_string("Temperature:")
+        condition_string = retrieve_string("Condition:")
+        pressure_string = retrieve_string("Pressure:")
+        tendency_string = retrieve_string("Tendency:")
+        wind_string = retrieve_string("Wind:")
+        humidity_string = retrieve_string("Humidity:")
+        feels_like_string = Helpers._calculate_feels_like(
+            temp=float(re.search(r"-?\d+\.\d", temperature_string).group()),
+            humidity=float(re.search(r"\d+", humidity_string).group()),
+            ws_kph=float(re.search(r"\d+", wind_string).group())
+        ) if humidity_string and temperature_string and wind_string else "n/a"
+
+        weather_now = discord.Embed(
+            title="Current Weather",
+            description=
+            f"Conditions observed at {observed_string or '[REDACTED]'}",
+            colour=0x7EC0EE)
+        weather_now.add_field(name="Temperature",
+                            value=temperature_string or "n/a",
+                            inline=True)
+        weather_now.add_field(name="Condition",
+                            value=condition_string or "n/a",
+                            inline=True)
+        weather_now.add_field(name="Pressure",
+                            value=pressure_string or "n/a",
+                            inline=True)
+        weather_now.add_field(name="Tendency",
+                            value=tendency_string or "n/a",
+                            inline=True)
+        weather_now.add_field(name="Wind Speed",
+                            value=wind_string or "n/a",
+                            inline=True)
+        weather_now.add_field(name="Feels like",
+                            value=feels_like_string,
+                            inline=True)
+
+        # Weather alerts
+
+        r_alert = await fetch(self.bot.config.gc_weather_alert_url, "content")
+        alert_soup = BeautifulSoup(r_alert, "html.parser")
+
+        alert_title = alert_soup.find("h1", string=ALERT_REGEX)
+        alert_title_text = alert_title.get_text().strip()
+
+        # Only gets first <p> of warning. Subsequent paragraphs are ignored.
         try:
-            await ctx.trigger_typing()
+            alert_category = alert_title.find_next("h2")
+            alert_date = alert_category.find_next("span")
+            alert_heading = alert_date.find_next("strong")
+            # This is a string for some reason.
+            alert_location = alert_heading.find_next(string=MTL_REGEX)
+            # Only gets first <p> of warning. Subsequent paragraphs are ignored
+            alert_content = ". ".join(
+                alert_location.find_next("p").get_text().strip().split(
+                    ".")).rstrip()
 
-            r = await fetch(self.bot.config.gc_weather_url, "content")
-            soup = BeautifulSoup(r, "html.parser")
+            weather_alert = discord.Embed(
+                title=alert_title_text,
+                description="**{}** at {}".format(
+                    alert_category.get_text().strip(),
+                    alert_date.get_text().strip()),
+                colour=0xFF0000)
+            weather_alert.add_field(
+                name=alert_heading.get_text().strip(),
+                value=f"**{alert_location.strip()}**\n{alert_content}",
+                inline=True)
 
-            def retrieve_string(label):
-                if elem := soup.find("dt", string=label).find_next_sibling():
-                    return elem.get_text().strip()
-                return None
+        except AttributeError:
+            weather_alert = discord.Embed(title=alert_title_text,
+                                        description="No alerts in effect.",
+                                        colour=0xFF0000)
 
-            observed_string = retrieve_string("Date: ")
-            temperature_string = retrieve_string("Temperature:")
-            condition_string = retrieve_string("Condition:")
-            pressure_string = retrieve_string("Pressure:")
-            tendency_string = retrieve_string("Tendency:")
-            wind_string = retrieve_string("Wind:")
-            humidity_string = retrieve_string("Humidity:")
-            feels_like_string = Helpers._calculate_feels_like(
-                temp=float(re.search(r"-?\d+\.\d", temperature_string).group()),
-                humidity=float(re.search(r"\d+", humidity_string).group()),
-                ws_kph=float(re.search(r"\d+", wind_string).group())
-            ) if humidity_string and temperature_string and wind_string else "n/a"
+        # TODO Finish final message. Test on no-alert condition.
 
-            weather_now = discord.Embed(
-                title="Current Weather",
-                description=
-                f"Conditions observed at {observed_string or '[REDACTED]'}",
-                colour=0x7EC0EE)
-            weather_now.add_field(name="Temperature",
-                                value=temperature_string or "n/a",
-                                inline=True)
-            weather_now.add_field(name="Condition",
-                                value=condition_string or "n/a",
-                                inline=True)
-            weather_now.add_field(name="Pressure",
-                                value=pressure_string or "n/a",
-                                inline=True)
-            weather_now.add_field(name="Tendency",
-                                value=tendency_string or "n/a",
-                                inline=True)
-            weather_now.add_field(name="Wind Speed",
-                                value=wind_string or "n/a",
-                                inline=True)
-            weather_now.add_field(name="Feels like",
-                                value=feels_like_string,
-                                inline=True)
-
-            # Weather alerts
-
-            r_alert = await fetch(self.bot.config.gc_weather_alert_url, "content")
-            alert_soup = BeautifulSoup(r_alert, "html.parser")
-
-            alert_title = alert_soup.find("h1", string=ALERT_REGEX)
-            alert_title_text = alert_title.get_text().strip()
-
-            # Only gets first <p> of warning. Subsequent paragraphs are ignored.
-            try:
-                alert_category = alert_title.find_next("h2")
-                alert_date = alert_category.find_next("span")
-                alert_heading = alert_date.find_next("strong")
-                # This is a string for some reason.
-                alert_location = alert_heading.find_next(string=MTL_REGEX)
-                # Only gets first <p> of warning. Subsequent paragraphs are ignored
-                alert_content = ". ".join(
-                    alert_location.find_next("p").get_text().strip().split(
-                        ".")).rstrip()
-
-                weather_alert = discord.Embed(
-                    title=alert_title_text,
-                    description="**{}** at {}".format(
-                        alert_category.get_text().strip(),
-                        alert_date.get_text().strip()),
-                    colour=0xFF0000)
-                weather_alert.add_field(
-                    name=alert_heading.get_text().strip(),
-                    value=f"**{alert_location.strip()}**\n{alert_content}",
-                    inline=True)
-
-            except AttributeError:
-                weather_alert = discord.Embed(title=alert_title_text,
-                                            description="No alerts in effect.",
-                                            colour=0xFF0000)
-
-            # TODO Finish final message. Test on no-alert condition.
-
-            # Sending final message
-            await ctx.send(embed=weather_now)
-            await ctx.send(embed=weather_alert)
-
-        except Exception as exception:
-            fname = f"data/runtime/crash_dump_{time.time()}.html"
-            with open(fname, "w") as crash_file:
-                crash_file.write(await fetch(self.bot.config.gc_weather_url))
-            self.bot.dev_logger.webhook_handler.webhook.send(file=discord.File(fname), username=self.bot.dev_logger.webhook_handler.username)
-            os.remove(fname)
-            raise exception
+        # Sending final message
+        await ctx.send(embed=weather_now)
+        await ctx.send(embed=weather_alert)
 
     @commands.command()
     async def wttr(self, ctx):
