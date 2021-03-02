@@ -168,23 +168,23 @@ class Helpers(commands.Cog):
             f"Conditions observed at {observed_string or '[REDACTED]'}",
             colour=0x7EC0EE)
         weather_now.add_field(name="Temperature",
-                            value=temperature_string or "n/a",
-                            inline=True)
+                              value=temperature_string or "n/a",
+                              inline=True)
         weather_now.add_field(name="Condition",
-                            value=condition_string or "n/a",
-                            inline=True)
+                              value=condition_string or "n/a",
+                              inline=True)
         weather_now.add_field(name="Pressure",
-                            value=pressure_string or "n/a",
-                            inline=True)
+                              value=pressure_string or "n/a",
+                              inline=True)
         weather_now.add_field(name="Tendency",
-                            value=tendency_string or "n/a",
-                            inline=True)
+                              value=tendency_string or "n/a",
+                              inline=True)
         weather_now.add_field(name="Wind Speed",
-                            value=wind_string or "n/a",
-                            inline=True)
+                              value=wind_string or "n/a",
+                              inline=True)
         weather_now.add_field(name="Feels like",
-                            value=feels_like_string,
-                            inline=True)
+                              value=feels_like_string,
+                              inline=True)
 
         # Weather alerts
 
@@ -219,8 +219,8 @@ class Helpers(commands.Cog):
 
         except AttributeError:
             weather_alert = discord.Embed(title=alert_title_text,
-                                        description="No alerts in effect.",
-                                        colour=0xFF0000)
+                                          description="No alerts in effect.",
+                                          colour=0xFF0000)
 
         # TODO Finish final message. Test on no-alert condition.
 
