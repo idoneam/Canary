@@ -205,7 +205,6 @@ def mk_hm_embed_up_fns(category_name, word, lowered_word, not_guessed,
         return num_mistakes < LOSS_MISTAKES
 
     def message(new_msg: str) -> bool:
-        nonlocal embed
         nonlocal player_msg_list
 
         player_msg_list.append(new_msg)
