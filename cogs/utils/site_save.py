@@ -2,10 +2,12 @@ import os
 from time import time
 import discord
 from .requests import fetch
+from functools import wraps
 
 
 def site_save(link):
     def deco(func):
+        @wraps(func)
         async def wrapper(self, *args, **kwargs):
             try:
                 return await func(self, *args, **kwargs)
@@ -19,8 +21,6 @@ def site_save(link):
                 os.remove(fname)
                 raise exception
 
-        wrapper.__name__ = func.__name__
-        wrapper.__doc__ = func.__doc__
         return wrapper
 
     return deco
