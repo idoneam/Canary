@@ -99,11 +99,7 @@ class Quotes(commands.Cog):
         conn.close()
 
     @commands.command(aliases=['addq'])
-    async def add_quotes(self,
-                         ctx,
-                         member: discord.Member = None,
-                         *,
-                         quote: str = None):
+    async def add_quotes(self, ctx, member: discord.Member = None, *, quote: str = None):
         """
         Add a quote to a user's quote database.
         """

@@ -47,15 +47,11 @@ class Memes(commands.Cog):
                 return
             input_str = ctx.message.reference.resolved.content
         msg = auto_incorrect(input_str)
-        self.bot.mod_logger.info(
-            f"?bac invoked: Author: '{ctx.message.author}', "
-            f"Message: '{ctx.message.content}'" +
-            ((f", Used on {str(ctx.message.reference.resolved.author)}"
-              f"'s message: '{ctx.message.reference.resolved.content}'"
-              ) if replying else ""))
-        await ctx.send(msg,
-                       reference=ctx.message.reference,
-                       mention_author=False)
+        self.bot.mod_logger.info(f"?bac invoked: Author: '{ctx.message.author}', "
+                                 f"Message: '{ctx.message.content}'" +
+                                 ((f", Used on {str(ctx.message.reference.resolved.author)}"
+                                   f"'s message: '{ctx.message.reference.resolved.content}'") if replying else ""))
+        await ctx.send(msg, reference=ctx.message.reference, mention_author=False)
         await ctx.message.delete()
 
     @commands.command()
@@ -109,18 +105,12 @@ class Memes(commands.Cog):
             if not replying:
                 return
             input_str = ctx.message.reference.resolved.content
-        msg = "".join((c.upper() if random.randint(0, 1) else c.lower())
-                      for c in input_str)
-        self.bot.mod_logger.info(
-            f"?
-          invoked: Author: '{ctx.message.author}', "
-            f"Message: '{ctx.message.content}'" +
-            ((f", Used on {str(ctx.message.reference.resolved.author)}"
-              f"'s message: '{ctx.message.reference.resolved.content}'"
-              ) if replying else ""))
-        await ctx.send(msg,
-                       reference=ctx.message.reference,
-                       mention_author=False)
+        msg = "".join((c.upper() if random.randint(0, 1) else c.lower()) for c in input_str)
+        self.bot.mod_logger.info(f"?mix invoked: Author: '{ctx.message.author}', "
+                                 f"Message: '{ctx.message.content}'" +
+                                 ((f", Used on {str(ctx.message.reference.resolved.author)}"
+                                   f"'s message: '{ctx.message.reference.resolved.content}'") if replying else ""))
+        await ctx.send(msg, reference=ctx.message.reference, mention_author=False)
         await ctx.message.delete()
 
     @commands.command(aliases=['boot'])

@@ -53,10 +53,8 @@ URBAN_DICT_TEMPLATE = "http://api.urbandictionary.com/v0/define?term={}"
 LMGTFY_TEMPLATE = "https://lmgtfy.com/?q={}"
 
 LANG_CODES = "|".join(googletrans.LANGUAGES.keys())
-LANG_NAMES = "|".join(
-    lang.split(" ")[0] for lang in googletrans.LANGCODES.keys())
-TRANSLATE_REGEX = re.compile(
-    f"^(|{LANG_NAMES}|{LANG_CODES})>({LANG_NAMES}|{LANG_CODES})$")
+LANG_NAMES = "|".join(lang.split(" ")[0] for lang in googletrans.LANGCODES.keys())
+TRANSLATE_REGEX = re.compile(f"^(|{LANG_NAMES}|{LANG_CODES})>({LANG_NAMES}|{LANG_CODES})$")
 
 LATEX_PREAMBLE = r"""\documentclass[varwidth,12pt]{standalone}
 \usepackage{alphabeta}
@@ -647,17 +645,14 @@ class Helpers(commands.Cog):
                            "To get a list of all valid language codes "
                            "and names, call `?translate codes`")
         elif command == "codes":
-            await ctx.send(
-                "Here is a list of all language "
-                "codes and names:\n" +
-                ", ".join(f"`{code}`: {lang}"
-                          for code, lang in googletrans.LANGUAGES.items()))
+            await ctx.send("Here is a list of all language "
+                           "codes and names:\n" + ", ".join(f"`{code}`: {lang}"
+                                                            for code, lang in googletrans.LANGUAGES.items()))
         elif code_match := TRANSLATE_REGEX.match(command):
             if ctx.message.reference and ctx.message.reference.resolved:
                 inp_str = ctx.message.reference.resolved.content
             if not inp_str:
-                await ctx.send(
-                    "Sorry, no string to translate has been detected")
+                await ctx.send("Sorry, no string to translate has been detected")
                 return
             src, dst = code_match.groups()
             if src in googletrans.LANGCODES:
@@ -667,29 +662,20 @@ class Helpers(commands.Cog):
             translator = googletrans.Translator()
             if not src:
                 detected_lang = translator.detect(inp_str)
-                src = detected_lang.lang if isinstance(
-                    detected_lang.lang, str) else detected_lang.lang[0]
-                cnf = detected_lang.confidence if isinstance(
-                    detected_lang.confidence,
-                    float) else detected_lang.confidence[0]
-                name_str = (
-                    f"translated text from {googletrans.LANGUAGES[src]}"
-                    f" (auto-detected with {round(cnf*100)}%"
-                    f" certainty) to {googletrans.LANGUAGES[dst]}")
+                src = detected_lang.lang if isinstance(detected_lang.lang, str) else detected_lang.lang[0]
+                cnf = detected_lang.confidence if isinstance(detected_lang.confidence,
+                                                             float) else detected_lang.confidence[0]
+                name_str = (f"translated text from {googletrans.LANGUAGES[src]}"
+                            f" (auto-detected with {round(cnf*100)}%"
+                            f" certainty) to {googletrans.LANGUAGES[dst]}")
             else:
-                name_str = (
-                    f"translated text from {googletrans.LANGUAGES[src]}"
-                    f" to {googletrans.LANGUAGES[dst]}")
+                name_str = (f"translated text from {googletrans.LANGUAGES[src]}" f" to {googletrans.LANGUAGES[dst]}")
             if src == dst:
-                await ctx.send(
-                    f"Inputted source (`{src}`) and target (`{dst}`) "
-                    f"languages are the same, which does not make sense")
+                await ctx.send(f"Inputted source (`{src}`) and target (`{dst}`) "
+                               f"languages are the same, which does not make sense")
                 return
             embed = discord.Embed(colour=random.randint(0, 0xFFFFFF))
-            embed.add_field(name=name_str,
-                            value=translator.translate(inp_str,
-                                                       src=src,
-                                                       dest=dst).text)
+            embed.add_field(name=name_str, value=translator.translate(inp_str, src=src, dest=dst).text)
 
             await ctx.send(embed=embed)
         else:
