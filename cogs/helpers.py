@@ -163,7 +163,7 @@ class Helpers(commands.Cog):
         weather_now = discord.Embed(
             title="Current Weather",
             description=
-            f"Conditions observed at {observed_string if observed_string else '[REDACTED]'}",
+            f"Conditions observed at {observed_string or '[REDACTED]'}",
             colour=0x7EC0EE)
         weather_now.add_field(name="Temperature",
                               value=temperature_string
