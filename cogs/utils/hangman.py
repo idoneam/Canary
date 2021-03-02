@@ -170,52 +170,51 @@ def mk_movie_list() -> list[Tuple[str, str]]:
     return kino_list
 
 
-def mk_hm_embed_up_fns(category_name, word, lowered_word, not_guessed,
-                       incorrect_guesses):
-    field_name: str = f"hangman (category: {category_name})"
-    first_line: str = " ".join(
-        char if lowered_char not in not_guessed else "_"
-        for char, lowered_char in zip(word, lowered_word))
-    last_line: str = "incorrect guesses: "
-    player_msg_list: list[str] = []
-    num_mistakes: int = 0
-    embed = discord.Embed(colour=random.randint(0, 0xFFFFFF))
-    embed.add_field(
-        name=field_name,
-        value=f"`{first_line}`\n```{HANG_LIST[num_mistakes]}```").set_footer(
-            text=last_line)
+class HangmanState:
+    def __init__(self, category_name, word_list):
+        self.word, self.img = random.choice(word_list)
+        self.lword = self.word.lower()
+        self.not_guessed: set[str] = set(
+            char for char in self.lword
+            if char in "abcdefghijklmnopqrstuvwxyz")
+        self.incorrect_guesses: set[str] = set()
+        self.field_name: str = f"hangman (category: {category_name})"
+        self.first_line: str = " ".join(
+            char if lowered_char not in self.not_guessed else "_"
+            for char, lowered_char in zip(self.word, self.lword))
+        self.last_line: str = "incorrect guesses: "
+        self.player_msg_list: list[str] = []
+        self.num_mistakes: int = 0
+        self.embed = discord.Embed(
+            colour=random.randint(0, 0xFFFFFF)
+        ).add_field(
+            name=self.field_name,
+            value=f"`{self.first_line}`\n```{HANG_LIST[self.num_mistakes]}```"
+        ).set_footer(text=self.last_line)
 
-    def correct():
-        nonlocal first_line
+    def correct(self):
+        self.first_line = " ".join(
+            char if lowered_char not in self.not_guessed else "_"
+            for char, lowered_char in zip(self.word, self.lword))
 
-        first_line = " ".join(
-            char if lowered_char not in not_guessed else "_"
-            for char, lowered_char in zip(word, lowered_word))
+        return bool(self.not_guessed)
 
-        return bool(not_guessed)
+    def mistake(self):
+        self.last_line = f"""incorrect guesses: '{"', '".join(sorted(self.incorrect_guesses))}'"""
+        self.num_mistakes += 1
+        self.embed.set_footer(text=self.last_line)
 
-    def mistake():
-        nonlocal last_line
-        nonlocal num_mistakes
+        return self.num_mistakes < LOSS_MISTAKES
 
-        last_line = f"""incorrect guesses: '{"', '".join(sorted(incorrect_guesses))}'"""
-        num_mistakes += 1
-        embed.set_footer(text=last_line)
-
-        return num_mistakes < LOSS_MISTAKES
-
-    def message(new_msg: str) -> bool:
-        nonlocal player_msg_list
-
-        player_msg_list.append(new_msg)
-        player_msg_list = player_msg_list[-3:]
-        embed.set_field_at(0,
-                           name=field_name,
-                           value="`{0}`\n```{1}```\n{2}".format(
-                               first_line, HANG_LIST[num_mistakes],
-                               "\n".join(player_msg_list)))
-
-    return message, correct, mistake, embed
+    def add_msg(self, new_msg):
+        self.player_msg_list.append(new_msg)
+        self.player_msg_list = self.player_msg_list[-3:]
+        self.embed.set_field_at(0,
+                                name=self.field_name,
+                                value="`{0}`\n```{1}```\n{2}".format(
+                                    self.first_line,
+                                    HANG_LIST[self.num_mistakes],
+                                    "\n".join(self.player_msg_list)))
 
 
 def mk_hangman_dict(file_name) -> dict[str, list[Tuple[str, str]]]:

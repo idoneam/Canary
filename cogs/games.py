@@ -32,7 +32,7 @@ from asyncio import TimeoutError
 from typing import Tuple
 from .utils.dice_roll import dice_roll
 from .utils.clamp_default import clamp_default
-from .utils.hangman import mk_hm_embed_up_fns, LOSS_MISTAKES
+from .utils.hangman import HangmanState, LOSS_MISTAKES
 from .currency import HANGMAN_REWARD
 
 ROLL_PATTERN = re.compile(r'^(\d*)d(\d*)([+-]?\d*)$')
@@ -82,11 +82,7 @@ class Games(commands.Cog):
                            f"here is a list of valid commands: {cat_list}")
             return
 
-        hm_word, hm_img = random.choice(word_list)
-        lowered_word = hm_word.lower()
-        not_guessed: set[str] = set(char for char in lowered_word
-                                    if char in "abcdefghijklmnopqrstuvwxyz")
-        incorrect_guesses: set[str] = set()
+        game_state = HangmanState(pretty_name, word_list)
         timeout_dict: dict[discord.Member, float] = {}
         winner: discord.Member = None
         cool_win: bool = False
@@ -94,12 +90,9 @@ class Games(commands.Cog):
         def wait_for_check(msg) -> bool:
             return msg.channel == ctx.message.channel and (
                 (len(msg.content) == 1 and msg.content.isalpha())
-                or msg.content.lower() == lowered_word)
+                or msg.content.lower() == game_state.lword)
 
-        add_msg, up_corr, up_mstk, hm_embed = mk_hm_embed_up_fns(
-            pretty_name, hm_word, lowered_word, not_guessed, incorrect_guesses)
-
-        await ctx.send(embed=hm_embed)
+        await ctx.send(embed=game_state.embed)
 
         while True:
 
@@ -108,8 +101,8 @@ class Games(commands.Cog):
                                                    check=wait_for_check,
                                                    timeout=self.hm_timeout)
             except TimeoutError:
-                add_msg("the game has timed out")
-                await ctx.send(embed=hm_embed)
+                game_state.add_msg("the game has timed out")
+                await ctx.send(embed=game_state.embed)
                 await ctx.send(
                     f"sorry everyone, no one has interacted with the "
                     f"hangman in {self.hm_timeout//60} minutes, "
@@ -120,75 +113,80 @@ class Games(commands.Cog):
             if not (curr_msg.author in timeout_dict and
                     (time() - timeout_dict[curr_msg.author]) < 3.0
                     ):    # check that user isn't time'd out
-                if curr_guess == lowered_word:
-                    cool_win = len(not_guessed) > (len(set(lowered_word)) /
-                                                   2.5)
-                    not_guessed.clear()
+                if curr_guess == game_state.lword:
+                    cool_win = len(game_state.not_guessed) > (
+                        len(set(game_state.lword)) / 2.5)
+                    game_state.not_guessed.clear()
                     winner = curr_msg.author
-                    up_corr()
-                    add_msg(f"{winner} guessed the entire word!")
-                    hm_embed.set_image(url=hm_img)
-                    await ctx.send(embed=hm_embed)
+                    game_state.correct()
+                    game_state.add_msg(f"{winner} guessed the entire word!")
+                    game_state.embed.set_image(url=game_state.image)
+                    await ctx.send(embed=game_state.embed)
                     await ctx.send(
                         f"congratulations `{winner}`, you solved the hangman" +
                         (f" (in a cool way), earning you {self.hm_cool_win} cheeps"
                          if cool_win else
                          f", earning you {self.hm_norm_win} cheeps"))
                     break
-                if curr_guess in not_guessed:
+                if curr_guess in game_state.not_guessed:
                     # curr_guess in not_guessed
                     # => curr_guess is correct and new
-                    not_guessed.remove(curr_guess)
-                    continue_game = up_corr()
-                    add_msg(
+                    game_state.not_guessed.remove(curr_guess)
+                    continue_game = game_state.correct()
+                    game_state.add_msg(
                         f"{curr_msg.author} guessed '{curr_guess}' correctly!")
-                    await ctx.send(embed=hm_embed)
+                    await ctx.send(embed=game_state.embed)
                     if not continue_game:
                         winner = curr_msg.author
-                        add_msg(f"{winner} finished solving the hangman!")
-                        hm_embed.set_image(url=hm_img)
-                        await ctx.send(embed=hm_embed)
+                        game_state.add_msg(
+                            f"{winner} finished solving the hangman!")
+                        game_state.embed.set_image(url=game_state.img)
+                        await ctx.send(embed=game_state.embed)
                         await ctx.send(
                             f"congratulations `{winner}`, you solved the hangman, "
                             f"earning you {self.hm_norm_win} cheeps")
                         break
-                elif curr_guess in lowered_word:
+                elif curr_guess in game_state.lword:
                     # curr_guess not in not_guessed (elif) and in word
                     # => curr_guess is correct but already made
-                    add_msg(
+                    game_state.add_msg(
                         f"{curr_msg.author}, '{curr_guess}' was already guessed"
                     )
-                    await ctx.send(embed=hm_embed)
-                elif curr_guess not in incorrect_guesses:
+                    await ctx.send(embed=game_state.embed)
+                elif curr_guess not in game_state.incorrect_guesses:
                     # curr_guess not in not_guessed
                     # and not in word (elif) and
                     # not in incorrect guesses
                     # => curr_guess is incorrect and new
                     timeout_dict[curr_msg.author] = time()
-                    incorrect_guesses.add(curr_guess)
-                    continue_game = up_mstk()
-                    add_msg(f"{curr_msg.author} guessed '{curr_guess}' wrong!")
-                    await ctx.send(embed=hm_embed)
+                    game_state.incorrect_guesses.add(curr_guess)
+                    continue_game = game_state.mistake()
+                    game_state.add_msg(
+                        f"{curr_msg.author} guessed '{curr_guess}' wrong!")
+                    await ctx.send(embed=game_state.embed)
                     if not continue_game:
-                        add_msg(f"{curr_msg.author} used your last chance!")
-                        await ctx.send(embed=hm_embed)
+                        game_state.add_msg(
+                            f"{curr_msg.author} used your last chance!")
+                        await ctx.send(embed=game_state.embed)
                         await ctx.send(
                             f"sorry everyone, {curr_msg.author} used your "
-                            f"last chance, the right answer was `{hm_word}`")
+                            f"last chance, the right answer was `{game_state.word}`"
+                        )
                         break
                 else:
                     # curr_guess not in not_guessed and
                     # not in word and in incorrect_guesses (else)
                     # => curr_guess is incorrect but already made
                     timeout_dict[curr_msg.author] = time()
-                    add_msg(
+                    game_state.add_msg(
                         f"{curr_msg.author}, '{curr_guess}' was already guessed"
                     )
-                    await ctx.send(embed=hm_embed)
+                    await ctx.send(embed=game_state.embed)
             else:
                 # message from a user in time out
-                add_msg(f"{curr_msg.author} you cannot guess right now!")
-                await ctx.send(embed=hm_embed)
+                game_state.add_msg(
+                    f"{curr_msg.author} you cannot guess right now!")
+                await ctx.send(embed=game_state.embed)
         if winner is not None:
             conn = sqlite3.connect(self.bot.config.db_path)
             await self.bot.get_cog("Currency").create_bank_transaction(
