@@ -158,7 +158,7 @@ class Helpers(commands.Cog):
             temp=float(re.search(r"-?\d+\.\d", temperature_string).group()),
             humidity=float(re.search(r"\d+", humidity_string).group()),
             ws_kph=float(re.search(r"\d+", wind_string).group())
-        ) if humidity_string and temperature_string and wind_string else "could not be computed"
+        ) if humidity_string and temperature_string and wind_string else "n/a"
 
         weather_now = discord.Embed(
             title="Current Weather",
@@ -167,20 +167,20 @@ class Helpers(commands.Cog):
             colour=0x7EC0EE)
         weather_now.add_field(name="Temperature",
                               value=temperature_string
-                              or "could not be computed",
+                              or "n/a",
                               inline=True)
         weather_now.add_field(name="Condition",
                               value=condition_string
-                              or "could not be computed",
+                              or "n/a",
                               inline=True)
         weather_now.add_field(name="Pressure",
-                              value=pressure_string or "could not be computed",
+                              value=pressure_string or "n/a",
                               inline=True)
         weather_now.add_field(name="Tendency",
-                              value=tendency_string or "could not be computed",
+                              value=tendency_string or "n/a",
                               inline=True)
         weather_now.add_field(name="Wind Speed",
-                              value=wind_string or "could not be computed",
+                              value=wind_string or "n/a",
                               inline=True)
         weather_now.add_field(name="Feels like",
                               value=feels_like_string,
