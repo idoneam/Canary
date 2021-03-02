@@ -52,7 +52,6 @@ URBAN_DICT_TEMPLATE = "http://api.urbandictionary.com/v0/define?term={}"
 
 LMGTFY_TEMPLATE = "https://lmgtfy.com/?q={}"
 
-
 MTL_REGEX = re.compile("Montréal.*")
 ALERT_REGEX = re.compile("Alerts.*")
 
