@@ -38,10 +38,19 @@ class Music(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.song_queue: deque = deque()
+        self.song_lock: asyncio.Lock = asyncio.Lock()
 
     @commands.command()
     async def play(self, ctx: commands.Context, *, url=None):
-        """Streams from a url or name"""
+        """Streams from a youtube url or name"""
+
+        play_queue = True
+
+        if self.song_lock.locked():
+            if url is None:
+                ctx.send("bot is currently playing a song and you did not specify a new song to play.")
+                return
+            play_queue = False
 
         if ctx.voice_client is None:
             if ctx.author.voice:
@@ -56,13 +65,11 @@ class Music(commands.Cog):
             if ctx.author.voice:
                 ctx.voice_client.move_to(ctx.author.voice.channel)
 
-        song_lock = asyncio.Lock()
-
         def after_check(_):
-            song_lock.release()
+            self.song_lock.release()
 
         if url:
-            await song_lock.acquire()
+            await self.song_lock.acquire()
             await ctx.trigger_typing()
             data = await self.bot.loop.run_in_executor(
                 None, lambda: YTDL.extract_info(url, download=False))
@@ -76,17 +83,17 @@ class Music(commands.Cog):
             ctx.voice_client.play(player, after=after_check)
             await ctx.send(f"now playing: {data.get('title')}")
 
-        while self.song_queue and ctx.voice_client:
-            await song_lock.acquire()
-            await ctx.trigger_typing()
-            data = self.song_queue.popleft()
-            player = discord.PCMVolumeTransformer(
-                discord.FFmpegPCMAudio(data["url"], **DISABLE_FFMPEG_VID))
-            ctx.voice_client.play(player, after=after_check)
-            await ctx.send(f"now playing: {data.get('title')}")
-
-        await song_lock.acquire()
-        await ctx.voice_client.disconnect()
+        if play_queue:
+            while self.song_queue and ctx.voice_client:
+                await self.song_lock.acquire()
+                await ctx.trigger_typing()
+                data = self.song_queue.popleft()
+                player = discord.PCMVolumeTransformer(
+                    discord.FFmpegPCMAudio(data["url"], **DISABLE_FFMPEG_VID))
+                ctx.voice_client.play(player, after=after_check)
+                await ctx.send(f"now playing: {data.get('title')}")
+            await self.song_lock.acquire()
+            await ctx.voice_client.disconnect()
 
     @commands.command(aliases=["pq"])
     async def print_queue(self, ctx):
