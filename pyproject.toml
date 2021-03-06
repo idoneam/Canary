@@ -23,7 +23,7 @@ feedparser = "^6.0.2"
 regex = "^2020.11.13"
 googletrans = "==4.0.0rc1"
 youtube_dl = "~2021.3.3"
-pynacl = "~1.4.0"
+PyNaCl = "~1.4.0"
 
 [tool.poetry.dev-dependencies]
 yapf = "==0.30.0"
