@@ -44,7 +44,8 @@ startup = [
     "cogs.roles",
     "cogs.score",
     "cogs.subscribers",
-    "cogs.customreactions",    # Do not remove this terminating comma.
+    "cogs.customreactions",
+    "cogs.music",    # Do not remove this terminating comma
 ]
 
 
