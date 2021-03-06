@@ -139,7 +139,7 @@ class Music(commands.Cog):
             self.song_queue.appendleft(data)
             await ctx.send(f"queued up audio: {data.get('title')}")
 
-    @commands.command()
+    @commands.command(aliases=["vol"])
     async def volume(self, ctx, volume: int):
         """Set volume to a different level"""
 
