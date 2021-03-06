@@ -67,10 +67,10 @@ class Music(commands.Cog):
             data = await self.bot.loop.run_in_executor(
                 None, lambda: YTDL.extract_info(url, download=False))
             if "entries" in data:
-                self.song_queue.extend(data["entries"])
+                self.song_queue.extendleft(reversed(data["entries"]))
                 if len(data["entries"]) > 1:
                     await ctx.send(f"queued up playlist: {data.get('title')}")
-                data = self.song_queue.pop()
+                data = self.song_queue.popleft()
             player = discord.PCMVolumeTransformer(
                 discord.FFmpegPCMAudio(data["url"], **DISABLE_FFMPEG_VID))
             ctx.voice_client.play(player, after=after_check)
@@ -79,7 +79,7 @@ class Music(commands.Cog):
         while self.song_queue and ctx.voice_client:
             await song_lock.acquire()
             await ctx.trigger_typing()
-            data = self.song_queue.pop()
+            data = self.song_queue.popleft()
             player = discord.PCMVolumeTransformer(
                 discord.FFmpegPCMAudio(data["url"], **DISABLE_FFMPEG_VID))
             ctx.voice_client.play(player, after=after_check)
@@ -129,14 +129,14 @@ class Music(commands.Cog):
             None, lambda: YTDL.extract_info(url, download=False))
         if "entries" in data:
             if len(data["entries"]) > 1:
-                self.song_queue.extendleft(reversed(data["entries"]))
+                self.song_queue.extend(data["entries"])
                 await ctx.send(f"queued up playlist: {data.get('title')}")
             else:
                 data = data["entries"][0]
-                self.song_queue.appendleft(data)
+                self.song_queue.append(data)
                 await ctx.send(f"queued up audio: {data.get('title')}")
         else:
-            self.song_queue.appendleft(data)
+            self.song_queue.append(data)
             await ctx.send(f"queued up audio: {data.get('title')}")
 
     @commands.command(aliases=["vol"])
