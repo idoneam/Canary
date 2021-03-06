@@ -47,7 +47,8 @@ class Music(commands.Cog):
             if ctx.author.voice:
                 await ctx.author.voice.channel.connect()
             else:
-                await ctx.send("you are not currently connected to a voice channel.")
+                await ctx.send(
+                    "you are not currently connected to a voice channel.")
                 return
         else:
             if ctx.voice_client.is_playing():
@@ -70,8 +71,8 @@ class Music(commands.Cog):
                 if len(data["entries"]) > 1:
                     await ctx.send(f"queued up playlist: {data.get('title')}")
                 data = self.song_queue.pop()
-            player = discord.PCMVolumeTransformer(discord.FFmpegPCMAudio(
-                data["url"], **DISABLE_FFMPEG_VID))
+            player = discord.PCMVolumeTransformer(
+                discord.FFmpegPCMAudio(data["url"], **DISABLE_FFMPEG_VID))
             ctx.voice_client.play(player, after=after_check)
             await ctx.send(f"now playing: {data.get('title')}")
 
@@ -79,14 +80,13 @@ class Music(commands.Cog):
             await song_lock.acquire()
             await ctx.trigger_typing()
             data = self.song_queue.pop()
-            player = discord.PCMVolumeTransformer(discord.FFmpegPCMAudio(
-                data["url"], **DISABLE_FFMPEG_VID))
+            player = discord.PCMVolumeTransformer(
+                discord.FFmpegPCMAudio(data["url"], **DISABLE_FFMPEG_VID))
             ctx.voice_client.play(player, after=after_check)
             await ctx.send(f"now playing: {data.get('title')}")
 
         await song_lock.acquire()
         await ctx.voice_client.disconnect()
-
 
     @commands.command(aliases=["pq"])
     async def print_queue(self, ctx):
@@ -125,7 +125,8 @@ class Music(commands.Cog):
         """Set volume to a different level"""
 
         if ctx.voice_client is None:
-            await ctx.send("bot is not currently connected to a voice channel.")
+            await ctx.send("bot is not currently connected to a voice channel."
+                           )
             return
 
         ctx.voice_client.source.volume = volume / 100
@@ -155,7 +156,8 @@ class Music(commands.Cog):
         """Stops and disconnects the bot from voice"""
 
         if ctx.voice_client is None:
-            await ctx.send("bot is not currently connected to a voice channel.")
+            await ctx.send("bot is not currently connected to a voice channel."
+                           )
             return
         ctx.voice_client.stop()
         await ctx.voice_client.disconnect()
@@ -165,7 +167,8 @@ class Music(commands.Cog):
         """Skips currently playing song"""
 
         if ctx.voice_client is None:
-            await ctx.send("bot is not currently connected to a voice channel.")
+            await ctx.send("bot is not currently connected to a voice channel."
+                           )
             return
         ctx.voice_client.stop()
 
@@ -173,7 +176,8 @@ class Music(commands.Cog):
     async def pause(self, ctx):
         """Pauses currently playing song"""
         if ctx.voice_client is None:
-            await ctx.send("bot is not currently connected to a voice channel.")
+            await ctx.send("bot is not currently connected to a voice channel."
+                           )
             return
         ctx.voice_client.pause()
 
@@ -182,7 +186,8 @@ class Music(commands.Cog):
         """Resumes currently playing song"""
 
         if ctx.voice_client is None:
-            await ctx.send("bot is not currently connected to a voice channel.")
+            await ctx.send("bot is not currently connected to a voice channel."
+                           )
             return
         ctx.voice_client.resume()
 
