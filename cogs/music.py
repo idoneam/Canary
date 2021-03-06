@@ -41,10 +41,10 @@ class Music(commands.Cog):
         self.song_lock: asyncio.Lock = asyncio.Lock()
 
     @commands.command()
-    async def play(self, ctx: commands.Context, *, url=None):
-        """Streams from a youtube url or name"""
+    async def play(self, ctx, *, url: str = None):
+        """Streams from a youtube url or track name"""
 
-        play_queue = True
+        play_queue: bool = True
 
         if self.song_lock.locked():
             if url is None:
@@ -64,7 +64,7 @@ class Music(commands.Cog):
         else:
             if ctx.voice_client.is_playing():
                 ctx.voice_client.stop()
-            if ctx.author.voice:
+            if ctx.author.voice.channel != ctx.voice_client.channel:
                 ctx.voice_client.move_to(ctx.author.voice.channel)
 
         def after_check(_):
@@ -82,16 +82,19 @@ class Music(commands.Cog):
                 data = self.song_queue.popleft()
             player = discord.PCMVolumeTransformer(
                 discord.FFmpegPCMAudio(data["url"], **DISABLE_FFMPEG_VID))
-            ctx.voice_client.play(player, after=after_check)
-            await ctx.send(f"now playing: {data.get('title')}")
+            if ctx.voice_client is not None:    # make sure that bot has not been disconnected from voice
+                ctx.voice_client.play(player, after=after_check)
+                await ctx.send(f"now playing: {data.get('title')}")
 
         if play_queue:
-            while self.song_queue and ctx.voice_client:
+            while self.song_queue:
                 await self.song_lock.acquire()
                 await ctx.trigger_typing()
                 data = self.song_queue.popleft()
                 player = discord.PCMVolumeTransformer(
                     discord.FFmpegPCMAudio(data["url"], **DISABLE_FFMPEG_VID))
+                if ctx.voice_client is None:    # bot has been disconnected from voice, leave the loop
+                    break
                 ctx.voice_client.play(player, after=after_check)
                 await ctx.send(f"now playing: {data.get('title')}")
             if ctx.voice_client is not None:
