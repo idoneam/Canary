@@ -42,7 +42,7 @@ class Music(commands.Cog):
 
     @commands.command()
     async def play(self, ctx, *, url: str = None):
-        """Streams from a youtube url or track name"""
+        """Streams from a youtube url or track name, or if none is given, from the queue"""
 
         play_queue: bool = True
 
