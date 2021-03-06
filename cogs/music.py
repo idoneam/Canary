@@ -120,18 +120,6 @@ class Music(commands.Cog):
         self.song_queue.clear()
         await ctx.send("cleared current song queue")
 
-    @commands.command()
-    async def volume(self, ctx, volume: int):
-        """Set volume to a different level"""
-
-        if ctx.voice_client is None:
-            await ctx.send("bot is not currently connected to a voice channel."
-                           )
-            return
-
-        ctx.voice_client.source.volume = volume / 100
-        await ctx.send(f"changed volume to {volume}%")
-
     @commands.command(aliases=["qs"])
     async def queue_song(self, ctx, *, url):
         """Queue up a new song or a playlist"""
@@ -150,6 +138,17 @@ class Music(commands.Cog):
         else:
             self.song_queue.appendleft(data)
             await ctx.send(f"queued up audio: {data.get('title')}")
+
+    @commands.command()
+    async def volume(self, ctx, volume: int):
+        """Set volume to a different level"""
+
+        if ctx.voice_client is None:
+            await ctx.send("bot is not currently connected to a voice channel."
+                           )
+            return
+        ctx.voice_client.source.volume = volume / 100
+        await ctx.send(f"changed volume to {volume}%")
 
     @commands.command()
     async def stop(self, ctx):
