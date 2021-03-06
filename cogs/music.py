@@ -48,7 +48,9 @@ class Music(commands.Cog):
 
         if self.song_lock.locked():
             if url is None:
-                ctx.send("bot is currently playing a song and you did not specify a new song to play.")
+                ctx.send(
+                    "bot is currently playing a song and you did not specify a new song to play."
+                )
                 return
             play_queue = False
 
