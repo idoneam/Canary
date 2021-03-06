@@ -94,8 +94,10 @@ class Music(commands.Cog):
                     discord.FFmpegPCMAudio(data["url"], **DISABLE_FFMPEG_VID))
                 ctx.voice_client.play(player, after=after_check)
                 await ctx.send(f"now playing: {data.get('title')}")
-            await self.song_lock.acquire()
-            await ctx.voice_client.disconnect()
+            if ctx.voice_client is not None:
+                await self.song_lock.acquire()
+                await ctx.voice_client.disconnect()
+                self.song_lock.release()
 
     @commands.command(aliases=["pq"])
     async def print_queue(self, ctx):
