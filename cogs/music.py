@@ -59,12 +59,11 @@ class Music(commands.Cog):
             play_queue = False
 
         if ctx.voice_client is None:
-            if ctx.author.voice:
-                await ctx.author.voice.channel.connect()
-            else:
+            if ctx.author.voice is None:
                 await ctx.send(
                     "you are not currently connected to a voice channel.")
                 return
+            await ctx.author.voice.channel.connect()
         else:
             if ctx.author.voice.channel != ctx.voice_client.channel:
                 await ctx.send(
@@ -139,30 +138,19 @@ class Music(commands.Cog):
         """Insert a song into the song queue at a given index"""
 
         await ctx.trigger_typing()
-        if 0 <= song_index < len(self.song_queue):
-            data = await self.get_info(url)
-            if "entries" in data:
-                if len(data["entries"]) > 1:
-                    for song in reversed(data["entries"]):
-                        self.song_queue.insert(song_index, song)
-                    await ctx.send(
-                        f"inserted playlist `{data.get('title')}` at position `{song_index}`"
-                    )
-                else:
-                    data = data["entries"][0]
-                    self.song_queue.insert(song_index, data)
-                    await ctx.send(
-                        f"inserted song `{data.get('title')}` at position `{song_index}`"
-                    )
-            else:
-                self.song_queue.insert(song_index, data)
-                await ctx.send(
-                    f"inserted song `{data.get('title')}` at position `{song_index}`"
-                )
-        else:
+        if song_index < 0 or len(self.song_queue) <= song_index:
             await ctx.send(
                 f"supplied index `{song_index}` is not valid for current queue"
             )
+            return
+        data = await self.get_info(url)
+        entries = data.get("entries", [data])
+        for track in reversed(entries):
+            self.song_queue.insert(song_index, track)
+        await ctx.send(
+            f"inserted playlist `{data.get('title')}` at position `{song_index}`"
+            if len(entries) > 1 else
+            f"inserted track `{data.get('title')}` at position `{song_index}`")
 
     @commands.command(aliases=["cq"])
     async def clear_queue(self, ctx):
@@ -178,17 +166,10 @@ class Music(commands.Cog):
 
         await ctx.trigger_typing()
         data = await self.get_info(url)
-        if "entries" in data:
-            if len(data["entries"]) > 1:
-                self.song_queue.extend(data["entries"])
-                await ctx.send(f"queued up playlist: `{data.get('title')}`")
-            else:
-                data = data["entries"][0]
-                self.song_queue.append(data)
-                await ctx.send(f"queued up track: `{data.get('title')}`")
-        else:
-            self.song_queue.append(data)
-            await ctx.send(f"queued up track: `{data.get('title')}`")
+        entries = data.get("entries", [data])
+        self.song_queue.extend(entries)
+        await ctx.send(f"queued up playlist: `{data.get('title')}`" if len(
+            entries) > 1 else f"queued up track: `{entries[0].get('title')}`")
 
     @commands.command(aliases=["vol"])
     async def volume(self, ctx, volume: int):
