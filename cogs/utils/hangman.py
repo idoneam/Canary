@@ -79,18 +79,19 @@ def mk_animal_list() -> list[Tuple[str, str]]:
     animal_list: list[Tuple[str, str]] = []
     for i in range(16, len(animal_list_soup)):
         curr_entry = animal_list_soup[i].find("td")
-        if curr_entry:
-            animal_name = curr_entry.find("a")
-            animal_soup = BeautifulSoup(
-                requests.get(
-                    f"https://en.wikipedia.org{animal_name['href']}").content,
-                "html.parser")
-            img_list = animal_soup.find_all("img")
-            img_index = 0
-            while str(img_list[img_index]["src"]).endswith(".svg.png"):
-                img_index += 1
-            animal_list.append((animal_name["title"].split(' (')[0],
-                                "https:" + img_list[img_index]["src"]))
+        if curr_entry is None:
+            continue
+        animal_name = curr_entry.find("a")
+        animal_soup = BeautifulSoup(
+            requests.get(
+                f"https://en.wikipedia.org{animal_name['href']}").content,
+            "html.parser")
+        img_list = animal_soup.find_all("img")
+        img_index = 0
+        while str(img_list[img_index]["src"]).endswith(".svg.png"):
+            img_index += 1
+        animal_list.append((animal_name["title"].split(' (')[0],
+                            "https:" + img_list[img_index]["src"]))
     return animal_list
 
 
