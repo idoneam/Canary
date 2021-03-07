@@ -21,7 +21,7 @@ import discord
 import youtube_dl
 from discord.ext import commands
 
-DISABLE_FFMPEG_VID = {"options": "-vn"}
+FFMPEG_OPTS = "-nostats -loglevel quiet -vn"
 
 YTDL = youtube_dl.YoutubeDL({
     "format": "bestaudio/best",
@@ -33,12 +33,14 @@ YTDL = youtube_dl.YoutubeDL({
     "geo_bypass": True,
 })
 
-
 class Music(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.song_queue: deque = deque()
         self.song_lock: asyncio.Lock = asyncio.Lock()
+
+    async def get_info(self, url):
+        return await self.bot.loop.run_in_executor(None, lambda: YTDL.extract_info(url, download=False))
 
     @commands.command()
     async def play(self, ctx, *, url: str = None):
@@ -62,10 +64,12 @@ class Music(commands.Cog):
                     "you are not currently connected to a voice channel.")
                 return
         else:
+            if ctx.author.voice.channel != ctx.voice_client.channel:
+                await ctx.send(
+                    "bot is currently connected to another voice channel.")
+                return
             if ctx.voice_client.is_playing():
                 ctx.voice_client.stop()
-            if ctx.author.voice.channel != ctx.voice_client.channel:
-                ctx.voice_client.move_to(ctx.author.voice.channel)
 
         def after_check(_):
             self.song_lock.release()
@@ -73,15 +77,14 @@ class Music(commands.Cog):
         if url:
             await self.song_lock.acquire()
             await ctx.trigger_typing()
-            data = await self.bot.loop.run_in_executor(
-                None, lambda: YTDL.extract_info(url, download=False))
+            data = await self.get_info(url)
             if "entries" in data:
                 self.song_queue.extendleft(reversed(data["entries"]))
                 if len(data["entries"]) > 1:
                     await ctx.send(f"queued up playlist: {data.get('title')}")
                 data = self.song_queue.popleft()
             player = discord.PCMVolumeTransformer(
-                discord.FFmpegPCMAudio(data["url"], **DISABLE_FFMPEG_VID))
+                discord.FFmpegPCMAudio(data["url"], options=FFMPEG_OPTS))
             if ctx.voice_client is not None:    # make sure that bot has not been disconnected from voice
                 ctx.voice_client.play(player, after=after_check)
                 await ctx.send(f"now playing: {data.get('title')}")
@@ -92,7 +95,7 @@ class Music(commands.Cog):
                 await ctx.trigger_typing()
                 data = self.song_queue.popleft()
                 player = discord.PCMVolumeTransformer(
-                    discord.FFmpegPCMAudio(data["url"], **DISABLE_FFMPEG_VID))
+                    discord.FFmpegPCMAudio(data["url"], options=FFMPEG_OPTS))
                 if ctx.voice_client is None:    # bot has been disconnected from voice, leave the loop
                     break
                 ctx.voice_client.play(player, after=after_check)
@@ -123,7 +126,31 @@ class Music(commands.Cog):
                 f"song at index `{song_index}` was removed from the queue")
         else:
             await ctx.send(
-                f"supplied index: `{song_index}` is not valid for current queue"
+                f"supplied index `{song_index}` is not valid for current queue"
+            )
+
+    @commands.command(aliases=["isq"])
+    async def insert_song(self, ctx, song_index: int, *, url: str):
+        """Insert a song into the song queue at a given index"""
+
+        await ctx.trigger_typing()
+        if 0 <= song_index < len(self.song_queue):
+            data = await self.get_info(url)
+            if "entries" in data:
+                if len(data["entries"]) > 1:
+                    for song in reversed(data["entries"]):
+                        self.song_queue.insert(song_index, song)
+                    await ctx.send(f"inserted playlist `{data.get('title')}` at position {song_index}")
+                else:
+                    data = data["entries"][0]
+                    self.song_queue.insert(song_index, data)
+                    await ctx.send(f"inserted song `{data.get('title')}` at position {song_index}")
+            else:
+                self.song_queue.insert(song_index, data)
+                await ctx.send(f"inserted song `{data.get('title')}` at position {song_index}")
+        else:
+            await ctx.send(
+                f"supplied index `{song_index}` is not valid for current queue"
             )
 
     @commands.command(aliases=["cq"])
@@ -139,19 +166,18 @@ class Music(commands.Cog):
         """Queue up a new song or a playlist"""
 
         await ctx.trigger_typing()
-        data = await self.bot.loop.run_in_executor(
-            None, lambda: YTDL.extract_info(url, download=False))
+        data = await self.get_info(url)
         if "entries" in data:
             if len(data["entries"]) > 1:
                 self.song_queue.extend(data["entries"])
-                await ctx.send(f"queued up playlist: {data.get('title')}")
+                await ctx.send(f"queued up playlist: `{data.get('title')}`")
             else:
                 data = data["entries"][0]
                 self.song_queue.append(data)
-                await ctx.send(f"queued up audio: {data.get('title')}")
+                await ctx.send(f"queued up track: `{data.get('title')}`")
         else:
             self.song_queue.append(data)
-            await ctx.send(f"queued up audio: {data.get('title')}")
+            await ctx.send(f"queued up track: `{data.get('title')}`")
 
     @commands.command(aliases=["vol"])
     async def volume(self, ctx, volume: int):
