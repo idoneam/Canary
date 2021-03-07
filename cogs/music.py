@@ -150,7 +150,7 @@ class Music(commands.Cog):
         await ctx.send(
             f"inserted playlist `{data.get('title')}` at position `{song_index}`"
             if len(entries) > 1 else
-            f"inserted track `{data.get('title')}` at position `{song_index}`")
+            f"inserted track `{entries[0].get('title')}` at position `{song_index}`")
 
     @commands.command(aliases=["cq"])
     async def clear_queue(self, ctx):
