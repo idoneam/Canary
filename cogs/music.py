@@ -33,6 +33,7 @@ YTDL = youtube_dl.YoutubeDL({
     "geo_bypass": True,
 })
 
+
 class Music(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -40,7 +41,8 @@ class Music(commands.Cog):
         self.song_lock: asyncio.Lock = asyncio.Lock()
 
     async def get_info(self, url):
-        return await self.bot.loop.run_in_executor(None, lambda: YTDL.extract_info(url, download=False))
+        return await self.bot.loop.run_in_executor(
+            None, lambda: YTDL.extract_info(url, download=False))
 
     @commands.command()
     async def play(self, ctx, *, url: str = None):
@@ -81,7 +83,8 @@ class Music(commands.Cog):
             if "entries" in data:
                 self.song_queue.extendleft(reversed(data["entries"]))
                 if len(data["entries"]) > 1:
-                    await ctx.send(f"inserted playlist `{data.get('title')}` to start")
+                    await ctx.send(
+                        f"inserted playlist `{data.get('title')}` to start")
                 data = self.song_queue.popleft()
             player = discord.PCMVolumeTransformer(
                 discord.FFmpegPCMAudio(data["url"], options=FFMPEG_OPTS))
@@ -142,14 +145,20 @@ class Music(commands.Cog):
                 if len(data["entries"]) > 1:
                     for song in reversed(data["entries"]):
                         self.song_queue.insert(song_index, song)
-                    await ctx.send(f"inserted playlist `{data.get('title')}` at position `{song_index}`")
+                    await ctx.send(
+                        f"inserted playlist `{data.get('title')}` at position `{song_index}`"
+                    )
                 else:
                     data = data["entries"][0]
                     self.song_queue.insert(song_index, data)
-                    await ctx.send(f"inserted song `{data.get('title')}` at position `{song_index}`")
+                    await ctx.send(
+                        f"inserted song `{data.get('title')}` at position `{song_index}`"
+                    )
             else:
                 self.song_queue.insert(song_index, data)
-                await ctx.send(f"inserted song `{data.get('title')}` at position `{song_index}`")
+                await ctx.send(
+                    f"inserted song `{data.get('title')}` at position `{song_index}`"
+                )
         else:
             await ctx.send(
                 f"supplied index `{song_index}` is not valid for current queue"
