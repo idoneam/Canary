@@ -106,6 +106,7 @@ class Music(commands.Cog):
             if ctx.voice_client is not None:
                 await ctx.voice_client.disconnect()
             self.song_lock.release()
+            await ctx.send("queue is empty, finished playing all songs.")
 
     @commands.command(aliases=["pq"])
     async def print_queue(self, ctx):
