@@ -193,6 +193,11 @@ class Music(commands.Cog):
             await ctx.send("bot is not currently connected to a voice channel."
                            )
             return
+        if (ctx.author.voice is None
+                or ctx.author.voice.channel != ctx.voice_client.channel):
+            await ctx.send(
+                "you must be listening to music with the bot do this.")
+            return
         ctx.voice_client.stop()
         await ctx.voice_client.disconnect()
 
@@ -204,6 +209,11 @@ class Music(commands.Cog):
             await ctx.send("bot is not currently connected to a voice channel."
                            )
             return
+        if (ctx.author.voice is None
+                or ctx.author.voice.channel != ctx.voice_client.channel):
+            await ctx.send(
+                "you must be listening to music with the bot do this.")
+            return
         ctx.voice_client.stop()
 
     @commands.command()
@@ -212,6 +222,11 @@ class Music(commands.Cog):
         if ctx.voice_client is None:
             await ctx.send("bot is not currently connected to a voice channel."
                            )
+            return
+        if (ctx.author.voice is None
+                or ctx.author.voice.channel != ctx.voice_client.channel):
+            await ctx.send(
+                "you must be listening to music with the bot do this.")
             return
         ctx.voice_client.pause()
 
@@ -225,10 +240,16 @@ class Music(commands.Cog):
             await ctx.send("bot is not currently connected to a voice channel."
                            )
             return
-        if (ctx.author.voice
-                and ctx.author.voice.channel != ctx.voice_client.channel
-                and len(ctx.voice_client.channel.members) <= 1):
-            await ctx.voice_client.move_to(ctx.author.voice.channel)
+        if ctx.author.voice is None:
+            await ctx.send("you must be in a voice channel to do this.")
+            return
+        if ctx.author.voice.channel != ctx.voice_client.channel:
+            if len(ctx.voice_client.channel.members) <= 1:
+                await ctx.voice_client.move_to(ctx.author.voice.channel)
+            else:
+                await ctx.send(
+                    "you must be listening to music with the bot do this.")
+                return
         ctx.voice_client.resume()
 
 
