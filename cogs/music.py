@@ -16,6 +16,7 @@
 # along with Canary. If not, see <https://www.gnu.org/licenses/>.
 
 import asyncio
+from typing import Optional
 from collections import deque
 import discord
 import youtube_dl
@@ -39,7 +40,7 @@ class Music(commands.Cog):
         self.bot = bot
         self.song_queue: deque = deque()
         self.song_lock: asyncio.Lock = asyncio.Lock()
-        self.currently_playing: str = ""
+        self.currently_playing: Optional[str] = None
 
     async def get_info(self, url):
         return await self.bot.loop.run_in_executor(
@@ -104,9 +105,12 @@ class Music(commands.Cog):
                 ctx.voice_client.play(player, after=after_check)
                 await ctx.send(f"now playing: `{name or 'title not found'}`")
             if ctx.voice_client is not None:
+                self.song_lock.release()
                 await ctx.voice_client.disconnect()
-            self.song_lock.release()
-            await ctx.send("queue is empty, finished playing all songs.")
+                await ctx.send("queue is empty, finished playing all songs.")
+            else:
+                self.song_lock.release()
+                await ctx.send("stopped playing, disconnected.")
 
     @commands.command(aliases=["pq"])
     async def print_queue(self, ctx):
@@ -124,17 +128,18 @@ class Music(commands.Cog):
         """Displays the currently playing song"""
 
         if ctx.voice_client is None:
-            await ctx.send("bot is not currently playing anything")
-            return
-        if ctx.voice_client.is_paused():
+            await ctx.send("bot is not currently playing anything.")
+        elif ctx.voice_client.is_paused():
             await ctx.send(
-                f"currently playing song (paused): `{self.currently_playing}`")
+                f"currently playing song (paused): `{self.currently_playing or 'title not found'}`"
+            )
         elif ctx.voice_client.is_playing():
             await ctx.send(
-                f"currently playing song: `{self.currently_playing}`")
+                f"currently playing song: `{self.currently_playing or 'title not found'}`"
+            )
         else:
             await ctx.send(
-                "bot connected to voice, but not currently playing anything (should never happen)"
+                "bot connected to voice, but not currently playing anything (should never happen)."
             )
 
     @commands.command(aliases=["rs"])
@@ -168,9 +173,9 @@ class Music(commands.Cog):
                 discord.FFmpegPCMAudio(track["url"], options=FFMPEG_OPTS))
             self.song_queue.insert(song_index, (player, track.get("title")))
         await ctx.send(
-            f"inserted playlist `{data.get('title')}` at position `{song_index}`"
+            f"inserted playlist `{data.get('title') or 'title not found'}` at position `{song_index}`"
             if len(entries) > 1 else
-            f"inserted track `{entries[0].get('title')}` at position `{song_index}`"
+            f"inserted track `{entries[0].get('title') or 'title not found'}` at position `{song_index}`"
         )
 
     @commands.command(aliases=["cq"])
@@ -192,8 +197,11 @@ class Music(commands.Cog):
             player = discord.PCMVolumeTransformer(
                 discord.FFmpegPCMAudio(track["url"], options=FFMPEG_OPTS))
             self.song_queue.append((player, track.get("title")))
-        await ctx.send(f"queued up playlist: `{data.get('title')}`" if len(
-            entries) > 1 else f"queued up track: `{entries[0].get('title')}`")
+        await ctx.send(
+            f"queued up playlist: `{data.get('title') or 'title not found'}`"
+            if len(entries) > 1 else
+            f"queued up track: `{entries[0].get('title') or 'title not found'}`"
+        )
 
     @commands.command(aliases=["vol"])
     async def volume(self, ctx, volume: int):
@@ -210,6 +218,7 @@ class Music(commands.Cog):
     async def stop(self, ctx):
         """Stops and disconnects the bot from voice"""
 
+        await ctx.trigger_typing()
         if ctx.voice_client is None or not ctx.voice_client.is_playing():
             await ctx.send(
                 "bot is not currently playing anything to a voice channel.")
@@ -225,6 +234,7 @@ class Music(commands.Cog):
     async def skip(self, ctx):
         """Skips currently playing song"""
 
+        await ctx.trigger_typing()
         if ctx.voice_client is None or not ctx.voice_client.is_playing():
             await ctx.send(
                 "bot is not currently playing anything to a voice channel.")
@@ -234,11 +244,13 @@ class Music(commands.Cog):
                 "you must be listening to music with the bot do this.")
         else:
             ctx.voice_client.stop()
+            await ctx.send("skipped current song.")
 
     @commands.command()
     async def pause(self, ctx):
         """Pauses currently playing song"""
 
+        await ctx.trigger_typing()
         if ctx.voice_client is None or not ctx.voice_client.is_playing():
             await ctx.send(
                 "bot is not currently playing anything to a voice channel.")
@@ -250,6 +262,7 @@ class Music(commands.Cog):
                 "you must be listening to music with the bot do this.")
         else:
             ctx.voice_client.pause()
+            await ctx.send("paused current song.")
 
     @commands.command()
     async def resume(self, ctx):
@@ -257,6 +270,7 @@ class Music(commands.Cog):
         If no one else is present in the current channel, and
         author is in a different channel, moves to that one"""
 
+        await ctx.trigger_typing()
         if ctx.voice_client is None or not ctx.voice_client.is_paused():
             await ctx.send("bot is not currently paused in a voice channel.")
         elif ctx.author.voice is None:
@@ -265,11 +279,14 @@ class Music(commands.Cog):
             if len(ctx.voice_client.channel.members) <= 1:
                 await ctx.voice_client.move_to(ctx.author.voice.channel)
                 ctx.voice_client.resume()
+                await ctx.send(
+                    "moved to your channel, and resumed current song.")
             else:
                 await ctx.send(
                     "you must be listening to music with the bot do this.")
         else:
             ctx.voice_client.resume()
+            await ctx.send("resumed current song.")
 
 
 def setup(bot):
