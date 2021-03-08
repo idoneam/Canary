@@ -39,7 +39,6 @@ class Music(commands.Cog):
         self.bot = bot
         self.song_queue: deque = deque()
         self.song_lock: asyncio.Lock = asyncio.Lock()
-        self.channel_lock: asyncio.Lock = asyncio.Lock()
 
     async def get_info(self, url):
         return await self.bot.loop.run_in_executor(
@@ -57,21 +56,22 @@ class Music(commands.Cog):
             return
 
         if ctx.voice_client is not None:
+            if ctx.voice_client.is_paused():
+                await ctx.send(
+                    "bot is currently paused, please use `resume` before playing."
+                )
+                return
             if ctx.author.voice.channel != ctx.voice_client.channel:
                 if len(ctx.voice_client.channel.members) > 1:
                     await ctx.send(
                         "bot is currently playing music for users in another voice channel."
                     )
                     return
-            if ctx.voice_client.is_paused():
-                await ctx.send(
-                    "bot is currently paused, please use `resume` before playing."
-                )
-                return
-            ctx.voice_client.stop()
-
-        if self.song_lock.locked():
-            if url is None:
+                ctx.voice_client.pause()
+                await ctx.voice_client.move_to(ctx.author.voice.channel)
+                if not url:
+                    ctx.voice_client.resume()
+            elif url is None:
                 await ctx.send(
                     "bot is currently playing a song and you did not specify a new song to play."
                 )
@@ -81,38 +81,29 @@ class Music(commands.Cog):
         def after_check(_):
             self.song_lock.release()
 
-        async with self.channel_lock:
+        if url:
+            await ctx.trigger_typing()
+            data = await self.get_info(url)
+            entries = data.get("entries", [data])
+            for track in reversed(entries):
+                player = discord.PCMVolumeTransformer(
+                    discord.FFmpegPCMAudio(track["url"], options=FFMPEG_OPTS))
+                self.song_queue.insert(0, (player, track.get("title")))
+            if not play_queue:
+                ctx.voice_client.stop()
+
+        if play_queue:
             await ctx.author.voice.channel.connect()
-
-            if url:
-                await self.song_lock.acquire()
+            while await self.song_lock.acquire() and self.song_queue:
                 await ctx.trigger_typing()
-                data = await self.get_info(url)
-                entries = data.get("entries", [data])
-                for track in reversed(entries):
-                    player = discord.PCMVolumeTransformer(
-                        discord.FFmpegPCMAudio(track["url"],
-                                               options=FFMPEG_OPTS))
-                    self.song_queue.insert(0, (player, track.get("title")))
                 player, name = self.song_queue.popleft()
-                if ctx.voice_client is not None:    # make sure that bot has not been disconnected from voice
-                    ctx.voice_client.play(player, after=after_check)
-                    await ctx.send(
-                        f"now playing: `{name or 'title not found'}`")
-
-            if play_queue:
-                while self.song_queue:
-                    await self.song_lock.acquire()
-                    await ctx.trigger_typing()
-                    player, name = self.song_queue.popleft()
-                    if ctx.voice_client is None:    # bot has been disconnected from voice, leave the loop
-                        break
-                    ctx.voice_client.play(player, after=after_check)
-                    await ctx.send(
-                        f"now playing: `{name or 'title not found'}`")
-                if ctx.voice_client is not None:
-                    async with self.song_lock:
-                        await ctx.voice_client.disconnect()
+                if ctx.voice_client is None:    # bot has been disconnected from voice, leave the loop
+                    break
+                ctx.voice_client.play(player, after=after_check)
+                await ctx.send(f"now playing: `{name or 'title not found'}`")
+            if ctx.voice_client is not None:
+                async with self.song_lock:
+                    await ctx.voice_client.disconnect()
 
     @commands.command(aliases=["pq"])
     async def print_queue(self, ctx):
