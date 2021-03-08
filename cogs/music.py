@@ -97,7 +97,7 @@ class Music(commands.Cog):
             while True:
                 await self.song_lock.acquire()
                 await ctx.trigger_typing()
-                if self.song_queue or ctx.voice_client is None:
+                if (not self.song_queue) or ctx.voice_client is None:
                     break
                 player, name = self.song_queue.popleft()
                 self.currently_playing = name
@@ -178,7 +178,7 @@ class Music(commands.Cog):
 
         await ctx.trigger_typing()
         self.song_queue.clear()
-        await ctx.send("cleared current song queue")
+        await ctx.send("cleared current song queue.")
 
     @commands.command(aliases=["qs"])
     async def queue_song(self, ctx, *, url):
@@ -198,7 +198,7 @@ class Music(commands.Cog):
     async def volume(self, ctx, volume: int):
         """Set volume to a different level"""
 
-        if ctx.voice_client is None:
+        if ctx.voice_client is None or not ctx.voice_client.is_playing():
             await ctx.send("bot is not currently connected to a voice channel."
                            )
             return
@@ -209,46 +209,46 @@ class Music(commands.Cog):
     async def stop(self, ctx):
         """Stops and disconnects the bot from voice"""
 
-        if ctx.voice_client is None:
-            await ctx.send("bot is not currently connected to a voice channel."
-                           )
-            return
-        if (ctx.author.voice is None
-                or ctx.author.voice.channel != ctx.voice_client.channel):
+        if ctx.voice_client is None or not ctx.voice_client.is_playing():
+            await ctx.send(
+                "bot is not currently playing anything to a voice channel.")
+        elif (ctx.author.voice is None
+              or ctx.author.voice.channel != ctx.voice_client.channel):
             await ctx.send(
                 "you must be listening to music with the bot do this.")
-            return
-        ctx.voice_client.stop()
-        await ctx.voice_client.disconnect()
+        else:
+            ctx.voice_client.stop()
+            await ctx.voice_client.disconnect()
 
-    @commands.command()
+    @commands.command(aliases=["next"])
     async def skip(self, ctx):
         """Skips currently playing song"""
 
-        if ctx.voice_client is None:
-            await ctx.send("bot is not currently connected to a voice channel."
-                           )
-            return
-        if (ctx.author.voice is None
-                or ctx.author.voice.channel != ctx.voice_client.channel):
+        if ctx.voice_client is None or not ctx.voice_client.is_playing():
+            await ctx.send(
+                "bot is not currently playing anything to a voice channel.")
+        elif (ctx.author.voice is None
+              or ctx.author.voice.channel != ctx.voice_client.channel):
             await ctx.send(
                 "you must be listening to music with the bot do this.")
-            return
-        ctx.voice_client.stop()
+        else:
+            ctx.voice_client.stop()
 
     @commands.command()
     async def pause(self, ctx):
         """Pauses currently playing song"""
-        if ctx.voice_client is None:
-            await ctx.send("bot is not currently connected to a voice channel."
-                           )
-            return
-        if (ctx.author.voice is None
-                or ctx.author.voice.channel != ctx.voice_client.channel):
+
+        if ctx.voice_client is None or not ctx.voice_client.is_playing():
+            await ctx.send(
+                "bot is not currently playing anything to a voice channel.")
+        elif ctx.voice_client.is_paused():
+            await ctx.send("music has already been paused.")
+        elif (ctx.author.voice is None
+              or ctx.author.voice.channel != ctx.voice_client.channel):
             await ctx.send(
                 "you must be listening to music with the bot do this.")
-            return
-        ctx.voice_client.pause()
+        else:
+            ctx.voice_client.pause()
 
     @commands.command()
     async def resume(self, ctx):
@@ -256,21 +256,19 @@ class Music(commands.Cog):
         If no one else is present in the current channel, and
         author is in a different channel, moves to that one"""
 
-        if ctx.voice_client is None:
-            await ctx.send("bot is not currently connected to a voice channel."
-                           )
-            return
-        if ctx.author.voice is None:
+        if ctx.voice_client is None or not ctx.voice_client.is_paused():
+            await ctx.send("bot is not currently paused in a voice channel.")
+        elif ctx.author.voice is None:
             await ctx.send("you must be in a voice channel to do this.")
-            return
-        if ctx.author.voice.channel != ctx.voice_client.channel:
+        elif ctx.author.voice.channel != ctx.voice_client.channel:
             if len(ctx.voice_client.channel.members) <= 1:
                 await ctx.voice_client.move_to(ctx.author.voice.channel)
+                ctx.voice_client.resume()
             else:
                 await ctx.send(
                     "you must be listening to music with the bot do this.")
-                return
-        ctx.voice_client.resume()
+        else:
+            ctx.voice_client.resume()
 
 
 def setup(bot):
