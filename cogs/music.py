@@ -94,12 +94,13 @@ class Music(commands.Cog):
 
         if play_queue:
             await ctx.author.voice.channel.connect()
-            while await self.song_lock.acquire() and self.song_queue:
+            while True:
+                await self.song_lock.acquire()
                 await ctx.trigger_typing()
+                if self.song_queue or ctx.voice_client is None:
+                    break
                 player, name = self.song_queue.popleft()
                 self.currently_playing = name
-                if ctx.voice_client is None:    # bot has been disconnected from voice, leave the loop
-                    break
                 ctx.voice_client.play(player, after=after_check)
                 await ctx.send(f"now playing: `{name or 'title not found'}`")
             if ctx.voice_client is not None:
