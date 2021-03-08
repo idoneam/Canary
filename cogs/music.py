@@ -48,14 +48,14 @@ class Music(commands.Cog):
     async def play(self, ctx, *, url: str = None):
         """Streams from a youtube url or track name, or if none is given, from the queue"""
 
-        play_queue: bool = True
+        play_queue: bool = ctx.voice_client is None
 
         if ctx.author.voice is None:
             await ctx.send(
                 "you are not currently connected to a voice channel.")
             return
 
-        if ctx.voice_client is not None:
+        if not play_queue:
             if ctx.voice_client.is_paused():
                 await ctx.send(
                     "bot is currently paused, please use `resume` before playing."
@@ -76,7 +76,6 @@ class Music(commands.Cog):
                     "bot is currently playing a song and you did not specify a new song to play."
                 )
                 return
-            play_queue = False
 
         def after_check(_):
             self.song_lock.release()
