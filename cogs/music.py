@@ -116,11 +116,13 @@ class Music(commands.Cog):
     async def print_queue(self, ctx):
         """Prints the current song queue"""
 
-        await ctx.send(
-            "```\n" +
-            "\n".join(f"[{index}] {song.get('title') or 'title not found'}"
-                      for index, song in enumerate(self.song_queue)) +
-            "\n```" if self.song_queue else "no songs currently in queue")
+        async with self.queue_lock:
+            await ctx.trigger_typing()
+            await ctx.send(
+                "```\n" +
+                "\n".join(f"[{index}] {song.get('title') or 'title not found'}"
+                          for index, song in enumerate(self.song_queue)) +
+                "\n```" if self.song_queue else "no songs currently in queue")
 
     @commands.command(aliases=["rs"])
     async def remove_song(self, ctx, song_index: int):
