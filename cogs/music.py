@@ -39,6 +39,7 @@ class Music(commands.Cog):
         self.bot = bot
         self.song_queue: deque = deque()
         self.song_lock: asyncio.Lock = asyncio.Lock()
+        self.queue_lock: asyncio.Lock = asyncio.Lock()
 
     async def get_info(self, url):
         return await self.bot.loop.run_in_executor(
@@ -80,11 +81,13 @@ class Music(commands.Cog):
             await ctx.trigger_typing()
             data = await self.get_info(url)
             if "entries" in data:
-                self.song_queue.extendleft(reversed(data["entries"]))
-                if len(data["entries"]) > 1:
-                    await ctx.send(
-                        f"inserted playlist `{data.get('title')}` to start")
-                data = self.song_queue.popleft()
+                async with self.queue_lock:
+                    self.song_queue.extendleft(reversed(data["entries"]))
+                    if len(data["entries"]) > 1:
+                        await ctx.send(
+                            f"inserted playlist `{data.get('title')}` to start"
+                        )
+                    data = self.song_queue.popleft()
             player = discord.PCMVolumeTransformer(
                 discord.FFmpegPCMAudio(data["url"], options=FFMPEG_OPTS))
             if ctx.voice_client is not None:    # make sure that bot has not been disconnected from voice
@@ -97,7 +100,8 @@ class Music(commands.Cog):
                 if ctx.voice_client is None:    # bot has been disconnected from voice, leave the loop
                     break
                 await ctx.trigger_typing()
-                data = self.song_queue.popleft()
+                async with self.queue_lock:
+                    data = self.song_queue.popleft()
                 player = discord.PCMVolumeTransformer(
                     discord.FFmpegPCMAudio(data["url"], options=FFMPEG_OPTS))
                 if ctx.voice_client is None:    # bot has been disconnected from voice, leave the loop
@@ -105,9 +109,8 @@ class Music(commands.Cog):
                 ctx.voice_client.play(player, after=after_check)
                 await ctx.send(f"now playing: `{data.get('title')}`")
             if ctx.voice_client is not None:
-                await self.song_lock.acquire()
-                await ctx.voice_client.disconnect()
-                self.song_lock.release()
+                async with self.song_lock:
+                    await ctx.voice_client.disconnect()
 
     @commands.command(aliases=["pq"])
     async def print_queue(self, ctx):
@@ -123,30 +126,32 @@ class Music(commands.Cog):
     async def remove_song(self, ctx, song_index: int):
         """Remove a song from the song queue by index"""
 
-        await ctx.trigger_typing()
-        if 0 <= song_index < len(self.song_queue):
+        async with self.queue_lock:
+            await ctx.trigger_typing()
+            if song_index < 0 or len(self.song_queue) <= song_index:
+                await ctx.send(
+                    f"supplied index `{song_index}` is not valid for current queue"
+                )
+                return
             del self.song_queue[song_index]
-            await ctx.send(
-                f"song at index `{song_index}` was removed from the queue")
-        else:
-            await ctx.send(
-                f"supplied index `{song_index}` is not valid for current queue"
-            )
+        await ctx.send(
+            f"song at index `{song_index}` was removed from the queue")
 
     @commands.command(aliases=["iqs"])
     async def insert_song(self, ctx, song_index: int, *, url: str):
         """Insert a song into the song queue at a given index"""
 
-        await ctx.trigger_typing()
-        if song_index < 0 or len(self.song_queue) <= song_index:
-            await ctx.send(
-                f"supplied index `{song_index}` is not valid for current queue"
-            )
-            return
-        data = await self.get_info(url)
-        entries = data.get("entries", [data])
-        for track in reversed(entries):
-            self.song_queue.insert(song_index, track)
+        async with self.queue_lock:
+            await ctx.trigger_typing()
+            if song_index < 0 or len(self.song_queue) <= song_index:
+                await ctx.send(
+                    f"supplied index `{song_index}` is not valid for current queue"
+                )
+                return
+            data = await self.get_info(url)
+            entries = data.get("entries", [data])
+            for track in reversed(entries):
+                self.song_queue.insert(song_index, track)
         await ctx.send(
             f"inserted playlist `{data.get('title')}` at position `{song_index}`"
             if len(entries) > 1 else
@@ -157,18 +162,20 @@ class Music(commands.Cog):
     async def clear_queue(self, ctx):
         """Clears current song queue"""
 
-        await ctx.trigger_typing()
-        self.song_queue.clear()
+        async with self.queue_lock:
+            await ctx.trigger_typing()
+            self.song_queue.clear()
         await ctx.send("cleared current song queue")
 
     @commands.command(aliases=["qs"])
     async def queue_song(self, ctx, *, url):
         """Queue up a new song or a playlist"""
 
-        await ctx.trigger_typing()
-        data = await self.get_info(url)
-        entries = data.get("entries", [data])
-        self.song_queue.extend(entries)
+        async with self.queue_lock:
+            await ctx.trigger_typing()
+            data = await self.get_info(url)
+            entries = data.get("entries", [data])
+            self.song_queue.extend(entries)
         await ctx.send(f"queued up playlist: `{data.get('title')}`" if len(
             entries) > 1 else f"queued up track: `{entries[0].get('title')}`")
 
