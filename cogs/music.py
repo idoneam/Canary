@@ -39,6 +39,7 @@ class Music(commands.Cog):
         self.bot = bot
         self.song_queue: deque = deque()
         self.song_lock: asyncio.Lock = asyncio.Lock()
+        self.currently_playing: str = ""
 
     async def get_info(self, url):
         return await self.bot.loop.run_in_executor(
@@ -96,6 +97,7 @@ class Music(commands.Cog):
             while await self.song_lock.acquire() and self.song_queue:
                 await ctx.trigger_typing()
                 player, name = self.song_queue.popleft()
+                self.currently_playing = name
                 if ctx.voice_client is None:    # bot has been disconnected from voice, leave the loop
                     break
                 ctx.voice_client.play(player, after=after_check)
@@ -106,7 +108,7 @@ class Music(commands.Cog):
 
     @commands.command(aliases=["pq"])
     async def print_queue(self, ctx):
-        """Prints the current song queue"""
+        """Displays the current song queue"""
 
         await ctx.trigger_typing()
         await ctx.send(
@@ -114,6 +116,24 @@ class Music(commands.Cog):
             "\n".join(f"[{index}] {title or 'title not found'}"
                       for index, (_, title) in enumerate(self.song_queue)) +
             "\n```" if self.song_queue else "no songs currently in queue")
+
+    @commands.command(aliases=["ms", "currently_playing", "cps"])
+    async def music_status(self, ctx):
+        """Displays the currently playing song"""
+
+        if ctx.voice_client is None:
+            await ctx.send("bot is not currently playing anything")
+            return
+        if ctx.voice_client.is_paused():
+            await ctx.send(
+                f"currently playing song (paused): `{self.currently_playing}`")
+        elif ctx.voice_client.is_playing():
+            await ctx.send(
+                f"currently playing song: `{self.currently_playing}`")
+        else:
+            await ctx.send(
+                "bot connected to voice, but not currently playing anything (should never happen)"
+            )
 
     @commands.command(aliases=["rs"])
     async def remove_song(self, ctx, song_index: int):
