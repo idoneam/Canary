@@ -102,8 +102,8 @@ class Music(commands.Cog):
                 ctx.voice_client.play(player, after=after_check)
                 await ctx.send(f"now playing: `{name or 'title not found'}`")
             if ctx.voice_client is not None:
-                self.song_lock.release()
                 await ctx.voice_client.disconnect()
+            self.song_lock.release()
 
     @commands.command(aliases=["pq"])
     async def print_queue(self, ctx):
