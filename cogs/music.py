@@ -51,6 +51,11 @@ class Music(commands.Cog):
 
         play_queue: bool = True
 
+        if ctx.author.voice is None:
+            await ctx.send(
+                "you are not currently connected to a voice channel.")
+            return
+
         if self.song_lock.locked():
             if url is None:
                 ctx.send(
@@ -60,16 +65,15 @@ class Music(commands.Cog):
             play_queue = False
 
         if ctx.voice_client is None:
-            if ctx.author.voice is None:
-                await ctx.send(
-                    "you are not currently connected to a voice channel.")
-                return
             await ctx.author.voice.channel.connect()
         else:
             if ctx.author.voice.channel != ctx.voice_client.channel:
-                await ctx.send(
-                    "bot is currently connected to another voice channel.")
-                return
+                if ctx.voice_client.channel.members:
+                    await ctx.send(
+                        "bot is currently playing music for users in another voice channel."
+                    )
+                    return
+                await ctx.voice_client.move_to(ctx.author.voice.channel)
             if ctx.voice_client.is_playing():
                 ctx.voice_client.stop()
 
