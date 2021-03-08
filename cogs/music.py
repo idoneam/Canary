@@ -40,6 +40,7 @@ class Music(commands.Cog):
         self.song_queue: deque = deque()
         self.song_lock: asyncio.Lock = asyncio.Lock()
         self.queue_lock: asyncio.Lock = asyncio.Lock()
+        self.channel_lock: asyncio.Lock = asyncio.Lock()
 
     async def get_info(self, url):
         return await self.bot.loop.run_in_executor(
@@ -56,65 +57,70 @@ class Music(commands.Cog):
                 "you are not currently connected to a voice channel.")
             return
 
+        if ctx.voice_client is not None:
+            if ctx.author.voice.channel != ctx.voice_client.channel:
+                if len(ctx.voice_client.channel.members) > 1:
+                    await ctx.send(
+                        "bot is currently playing music for users in another voice channel."
+                    )
+                    return
+            if ctx.voice_client.is_paused():
+                await ctx.send(
+                    "bot is currently paused, please use `resume` before playing."
+                )
+                return
+            ctx.voice_client.stop()
+
         if self.song_lock.locked():
             if url is None:
-                ctx.send(
+                await ctx.send(
                     "bot is currently playing a song and you did not specify a new song to play."
                 )
                 return
             play_queue = False
 
-        if ctx.voice_client is None:
-            await ctx.author.voice.channel.connect()
-        else:
-            if ctx.author.voice.channel != ctx.voice_client.channel:
-                if ctx.voice_client.channel.members:
-                    await ctx.send(
-                        "bot is currently playing music for users in another voice channel."
-                    )
-                    return
-                await ctx.voice_client.move_to(ctx.author.voice.channel)
-            if ctx.voice_client.is_playing():
-                ctx.voice_client.stop()
-
         def after_check(_):
             self.song_lock.release()
 
-        if url:
-            await self.song_lock.acquire()
-            await ctx.trigger_typing()
-            data = await self.get_info(url)
-            if "entries" in data:
-                async with self.queue_lock:
-                    self.song_queue.extendleft(reversed(data["entries"]))
-                    if len(data["entries"]) > 1:
-                        await ctx.send(
-                            f"inserted playlist `{data.get('title')}` to start"
-                        )
-                    data = self.song_queue.popleft()
-            player = discord.PCMVolumeTransformer(
-                discord.FFmpegPCMAudio(data["url"], options=FFMPEG_OPTS))
-            if ctx.voice_client is not None:    # make sure that bot has not been disconnected from voice
-                ctx.voice_client.play(player, after=after_check)
-                await ctx.send(f"now playing: `{data.get('title')}`")
+        async with self.channel_lock:
+            await ctx.author.voice.channel.connect()
 
-        if play_queue:
-            while self.song_queue:
+            if url:
                 await self.song_lock.acquire()
-                if ctx.voice_client is None:    # bot has been disconnected from voice, leave the loop
-                    break
                 await ctx.trigger_typing()
-                async with self.queue_lock:
-                    data = self.song_queue.popleft()
+                data = await self.get_info(url)
+                if "entries" in data:
+                    async with self.queue_lock:
+                        self.song_queue.extendleft(reversed(data["entries"]))
+                        if len(data["entries"]) > 1:
+                            await ctx.send(
+                                f"inserted playlist `{data.get('title')}` to start"
+                            )
+                        data = self.song_queue.popleft()
                 player = discord.PCMVolumeTransformer(
                     discord.FFmpegPCMAudio(data["url"], options=FFMPEG_OPTS))
-                if ctx.voice_client is None:    # bot has been disconnected from voice, leave the loop
-                    break
-                ctx.voice_client.play(player, after=after_check)
-                await ctx.send(f"now playing: `{data.get('title')}`")
-            if ctx.voice_client is not None:
-                async with self.song_lock:
-                    await ctx.voice_client.disconnect()
+                if ctx.voice_client is not None:    # make sure that bot has not been disconnected from voice
+                    ctx.voice_client.play(player, after=after_check)
+                    await ctx.send(f"now playing: `{data.get('title')}`")
+
+            if play_queue:
+                while self.song_queue:
+                    await self.song_lock.acquire()
+                    if ctx.voice_client is None:    # bot has been disconnected from voice, leave the loop
+                        break
+                    await ctx.trigger_typing()
+                    async with self.queue_lock:
+                        data = self.song_queue.popleft()
+                    player = discord.PCMVolumeTransformer(
+                        discord.FFmpegPCMAudio(data["url"],
+                                               options=FFMPEG_OPTS))
+                    if ctx.voice_client is None:    # bot has been disconnected from voice, leave the loop
+                        break
+                    ctx.voice_client.play(player, after=after_check)
+                    await ctx.send(f"now playing: `{data.get('title')}`")
+                if ctx.voice_client is not None:
+                    async with self.song_lock:
+                        await ctx.voice_client.disconnect()
 
     @commands.command(aliases=["pq"])
     async def print_queue(self, ctx):
@@ -228,12 +234,18 @@ class Music(commands.Cog):
 
     @commands.command()
     async def resume(self, ctx):
-        """Resumes currently playing song"""
+        """Resumes currently playing song.
+        If no one else is present in the current channel, and
+        author is in a different channel, moves to that one"""
 
         if ctx.voice_client is None:
             await ctx.send("bot is not currently connected to a voice channel."
                            )
             return
+        if (ctx.author.voice
+                and ctx.author.voice.channel != ctx.voice_client.channel
+                and len(ctx.voice_client.channel.members) <= 1):
+            await ctx.voice_client.move_to(ctx.author.voice.channel)
         ctx.voice_client.resume()
 
 
