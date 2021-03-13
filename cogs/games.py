@@ -120,7 +120,7 @@ class Games(commands.Cog):
                     winner = curr_msg.author
                     game_state.correct()
                     game_state.add_msg(f"{winner} guessed the entire word!")
-                    game_state.embed.set_image(url=game_state.image)
+                    game_state.embed.set_image(url=game_state.img)
                     await ctx.send(embed=game_state.embed)
                     await ctx.send(
                         f"congratulations `{winner}`, you solved the hangman" +
