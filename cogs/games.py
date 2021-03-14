@@ -195,7 +195,7 @@ class Games(commands.Cog):
         if winner is not None:
             conn = sqlite3.connect(self.bot.config.db_path)
             await self.bot.get_cog("Currency").create_bank_transaction(
-                conn.cursor(), ctx.message.author,
+                conn.cursor(), winner,
                 self.hm_cool_win if cool_win else self.hm_norm_win,
                 HANGMAN_REWARD, {"cool": cool_win})
             conn.commit()
