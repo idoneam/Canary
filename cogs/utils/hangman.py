@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Canary. If not, see <https://www.gnu.org/licenses/>.
 import pickle
-from typing import Tuple
+from typing import Tuple, Optional
 import requests
 import discord
 import random
@@ -123,17 +123,17 @@ def mk_country_list() -> list[Tuple[str, str]]:
     return country_list
 
 
-def mk_element_list() -> list[Tuple[str, str]]:
+def mk_element_list() -> list[Tuple[str, Optional[str]]]:
     elem_list_soup = BeautifulSoup(
         requests.get(
             "https://en.wikipedia.org/wiki/List_of_chemical_elements").content,
         "html.parser").find_all("tr")
-    elem_list: list[Tuple[str, str]] = []
+    elem_list: list[Tuple[str, Optional[str]]] = []
     for i in range(4, 118):
         curr_entry = elem_list_soup[i].find_all("td")
         elem_name_entry = curr_entry[2].find("a")
         try:
-            elem_img = "https:" + BeautifulSoup(
+            elem_img: Optional[str] = "https:" + BeautifulSoup(
                 requests.get(
                     f"https://en.wikipedia.org{elem_name_entry['href']}").
                 content, "html.parser").find("table", {
@@ -141,9 +141,7 @@ def mk_element_list() -> list[Tuple[str, str]]:
                 }).find("a").find("img")["src"]
         except TypeError:
             elem_img = None
-        elem_list.append(
-            (f"{elem_name_entry.contents[0]} ({curr_entry[1].contents[0]})",
-             elem_img))
+        elem_list.append((str(elem_name_entry.contents[0]), elem_img))
     return elem_list
 
 
@@ -172,7 +170,8 @@ def mk_movie_list() -> list[Tuple[str, str]]:
 
 
 class HangmanState:
-    def __init__(self, category_name, word_list):
+    def __init__(self, category_name: str,
+                 word_list: list[Tuple[str, Optional[str]]]):
         self.word, self.img = random.choice(word_list)
         self.lword = self.word.lower()
         self.not_guessed: set[str] = set(
@@ -218,7 +217,7 @@ class HangmanState:
                                     "\n".join(self.player_msg_list)))
 
 
-def mk_hangman_dict(file_name) -> dict[str, list[Tuple[str, str]]]:
+def mk_hangman_dict(file_name):
     with open(f"data/premade/{file_name}.obj", "wb") as dump_file:
         pickle.dump(
             {

@@ -29,7 +29,7 @@ from time import time
 import pickle
 import random
 from asyncio import TimeoutError
-from typing import Tuple
+from typing import Tuple, Optional
 from .utils.dice_roll import dice_roll
 from .utils.clamp_default import clamp_default
 from .utils.hangman import HangmanState, LOSS_MISTAKES
@@ -46,7 +46,7 @@ class Games(commands.Cog):
         self.hm_timeout = bot.config.games["hm_timeout"]
         with open(f"{os.getcwd()}/data/premade/{hangman_tbl_name}.obj",
                   "rb") as hangman_pkl:
-            self.hangman_dict: dict[str, Tuple[str,
+            self.hangman_dict: dict[str, Tuple[list[Tuple[str, Optional[str]]],
                                                str]] = pickle.load(hangman_pkl)
 
     @commands.max_concurrency(1, per=commands.BucketType.channel, wait=False)
@@ -82,9 +82,12 @@ class Games(commands.Cog):
                            f"here is a list of valid commands: {cat_list}")
             return
 
+        if command is None:
+            pretty_name = "[REDACTED]"
+
         game_state = HangmanState(pretty_name, word_list)
         timeout_dict: dict[discord.Member, float] = {}
-        winner: discord.Member = None
+        winner: Optional[discord.Member] = None
         cool_win: bool = False
 
         def wait_for_check(msg) -> bool:
@@ -97,7 +100,7 @@ class Games(commands.Cog):
         while True:
 
             try:
-                curr_msg = await self.bot.wait_for('message',
+                curr_msg = await self.bot.wait_for("message",
                                                    check=wait_for_check,
                                                    timeout=self.hm_timeout)
             except TimeoutError:
@@ -120,7 +123,8 @@ class Games(commands.Cog):
                     winner = curr_msg.author
                     game_state.correct()
                     game_state.add_msg(f"{winner} guessed the entire word!")
-                    game_state.embed.set_image(url=game_state.img)
+                    if game_state.img:
+                        game_state.embed.set_image(url=game_state.img)
                     await ctx.send(embed=game_state.embed)
                     await ctx.send(
                         f"congratulations `{winner}`, you solved the hangman" +
@@ -140,7 +144,8 @@ class Games(commands.Cog):
                         winner = curr_msg.author
                         game_state.add_msg(
                             f"{winner} finished solving the hangman!")
-                        game_state.embed.set_image(url=game_state.img)
+                        if game_state.img:
+                            game_state.embed.set_image(url=game_state.img)
                         await ctx.send(embed=game_state.embed)
                         await ctx.send(
                             f"congratulations `{winner}`, you solved the hangman, "
