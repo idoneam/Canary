@@ -177,12 +177,12 @@ class HangmanState:
         self.not_guessed: set[str] = set(
             char for char in self.lword
             if char in "abcdefghijklmnopqrstuvwxyz")
-        self.incorrect_guesses: set[str] = set()
+        self.previous_guesses: set[str] = set()
         self.field_name: str = f"hangman (category: {category_name})"
         self.first_line: str = " ".join(
             char if lowered_char not in self.not_guessed else "_"
             for char, lowered_char in zip(self.word, self.lword))
-        self.last_line: str = "incorrect guesses: "
+        self.last_line: str = "previous guesses: "
         self.player_msg_list: list[str] = []
         self.num_mistakes: int = 0
         self.embed = discord.Embed(
@@ -193,6 +193,8 @@ class HangmanState:
         ).set_footer(text=self.last_line)
 
     def correct(self):
+        self.last_line = f"""previous guesses: '{"', '".join(sorted(self.previous_guesses))}'"""
+        self.embed.set_footer(text=self.last_line)
         self.first_line = " ".join(
             char if lowered_char not in self.not_guessed else "_"
             for char, lowered_char in zip(self.word, self.lword))
@@ -200,7 +202,7 @@ class HangmanState:
         return bool(self.not_guessed)
 
     def mistake(self):
-        self.last_line = f"""incorrect guesses: '{"', '".join(sorted(self.incorrect_guesses))}'"""
+        self.last_line = f"""previous guesses: '{"', '".join(sorted(self.previous_guesses))}'"""
         self.num_mistakes += 1
         self.embed.set_footer(text=self.last_line)
 

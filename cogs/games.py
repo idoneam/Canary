@@ -132,9 +132,14 @@ class Games(commands.Cog):
                          if cool_win else
                          f", earning you {self.hm_norm_win} cheeps"))
                     break
-                if curr_guess in game_state.not_guessed:
-                    # curr_guess in not_guessed
-                    # => curr_guess is correct and new
+                if curr_guess in game_state.previous_guesses:
+                    timeout_dict[curr_msg.author] = time()
+                    game_state.add_msg(
+                        f"{curr_msg.author}, '{curr_guess}' was already guessed"
+                    )
+                    await ctx.send(embed=game_state.embed)
+                elif curr_guess in game_state.not_guessed:
+                    game_state.previous_guesses.add(curr_guess)
                     game_state.not_guessed.remove(curr_guess)
                     continue_game = game_state.correct()
                     game_state.add_msg(
@@ -151,20 +156,9 @@ class Games(commands.Cog):
                             f"congratulations `{winner}`, you solved the hangman, "
                             f"earning you {self.hm_norm_win} cheeps")
                         break
-                elif curr_guess in game_state.lword:
-                    # curr_guess not in not_guessed (elif) and in word
-                    # => curr_guess is correct but already made
-                    game_state.add_msg(
-                        f"{curr_msg.author}, '{curr_guess}' was already guessed"
-                    )
-                    await ctx.send(embed=game_state.embed)
-                elif curr_guess not in game_state.incorrect_guesses:
-                    # curr_guess not in not_guessed
-                    # and not in word (elif) and
-                    # not in incorrect guesses
-                    # => curr_guess is incorrect and new
+                else:
                     timeout_dict[curr_msg.author] = time()
-                    game_state.incorrect_guesses.add(curr_guess)
+                    game_state.previous_guesses.add(curr_guess)
                     continue_game = game_state.mistake()
                     game_state.add_msg(
                         f"{curr_msg.author} guessed '{curr_guess}' wrong!")
@@ -178,15 +172,6 @@ class Games(commands.Cog):
                             f"last chance, the right answer was `{game_state.word}`"
                         )
                         break
-                else:
-                    # curr_guess not in not_guessed and
-                    # not in word and in incorrect_guesses (else)
-                    # => curr_guess is incorrect but already made
-                    timeout_dict[curr_msg.author] = time()
-                    game_state.add_msg(
-                        f"{curr_msg.author}, '{curr_guess}' was already guessed"
-                    )
-                    await ctx.send(embed=game_state.embed)
             else:
                 # message from a user in time out
                 game_state.add_msg(
