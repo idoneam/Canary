@@ -114,7 +114,7 @@ class Games(commands.Cog):
 
             curr_guess = curr_msg.content.lower()
             if not (curr_msg.author in timeout_dict and
-                    (time() - timeout_dict[curr_msg.author]) < 3.0
+                    (time() - timeout_dict[curr_msg.author]) < 1.5
                     ):    # check that user isn't time'd out
                 if curr_guess == game_state.lword:
                     cool_win = len(game_state.not_guessed) > (
