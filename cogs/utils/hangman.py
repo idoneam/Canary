@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Canary. If not, see <https://www.gnu.org/licenses/>.
 import pickle
-from typing import Tuple, Optional
+from typing import Optional
 import requests
 import discord
 import random
@@ -71,12 +71,12 @@ HANG_LIST: list[str] = [
 LOSS_MISTAKES: int = len(HANG_LIST) - 1
 
 
-def mk_animal_list() -> list[Tuple[str, str]]:
+def mk_animal_list() -> list[tuple[str, str]]:
     animal_list_soup = BeautifulSoup(
         requests.get(
             "https://en.wikipedia.org/wiki/List_of_animal_names").content,
         "html.parser").find_all("tr")
-    animal_list: list[Tuple[str, str]] = []
+    animal_list: list[tuple[str, str]] = []
     for i in range(16, len(animal_list_soup)):
         curr_entry = animal_list_soup[i].find("td")
         if curr_entry is None:
@@ -95,14 +95,14 @@ def mk_animal_list() -> list[Tuple[str, str]]:
     return animal_list
 
 
-def mk_country_list() -> list[Tuple[str, str]]:
+def mk_country_list() -> list[tuple[str, str]]:
     elem_list_soup = BeautifulSoup(
         requests.get(
             "https://en.wikipedia.org/wiki/List_of_sovereign_states").content,
         "html.parser").find("table", {
             "class": "sortable wikitable"
         }).find_all("tr")
-    country_list: list[Tuple[str, str]] = []
+    country_list: list[tuple[str, str]] = []
     for i in range(4, 241):
         curr_entry = elem_list_soup[i].find_all("td")
         if len(curr_entry) != 4 or i in (227, 228, 229):
@@ -123,12 +123,12 @@ def mk_country_list() -> list[Tuple[str, str]]:
     return country_list
 
 
-def mk_element_list() -> list[Tuple[str, Optional[str]]]:
+def mk_element_list() -> list[tuple[str, Optional[str]]]:
     elem_list_soup = BeautifulSoup(
         requests.get(
             "https://en.wikipedia.org/wiki/List_of_chemical_elements").content,
         "html.parser").find_all("tr")
-    elem_list: list[Tuple[str, Optional[str]]] = []
+    elem_list: list[tuple[str, Optional[str]]] = []
     for i in range(4, 118):
         curr_entry = elem_list_soup[i].find_all("td")
         elem_name_entry = curr_entry[2].find("a")
@@ -145,12 +145,12 @@ def mk_element_list() -> list[Tuple[str, Optional[str]]]:
     return elem_list
 
 
-def mk_movie_list() -> list[Tuple[str, str]]:
+def mk_movie_list() -> list[tuple[str, str]]:
     kino_elem_soup = BeautifulSoup(
         requests.get(
             "https://en.wikipedia.org/wiki/List_of_years_in_film").content,
         "html.parser").find_all("i")
-    kino_list: list[Tuple[str, str]] = []
+    kino_list: list[tuple[str, str]] = []
     for i in range(195, len(kino_elem_soup)):
         kino_elem = kino_elem_soup[i].find("a")
         if kino_elem:
@@ -171,7 +171,7 @@ def mk_movie_list() -> list[Tuple[str, str]]:
 
 class HangmanState:
     def __init__(self, category_name: str,
-                 word_list: list[Tuple[str, Optional[str]]]):
+                 word_list: list[tuple[str, Optional[str]]]):
         self.word, self.img = random.choice(word_list)
         self.lword = self.word.lower()
         self.not_guessed: set[str] = set(

@@ -28,8 +28,8 @@ import sqlite3
 from time import time
 import pickle
 import random
-from asyncio import TimeoutError
-from typing import Tuple, Optional
+import asyncio
+from typing import Optional
 from .utils.dice_roll import dice_roll
 from .utils.clamp_default import clamp_default
 from .utils.hangman import HangmanState, LOSS_MISTAKES
@@ -46,7 +46,7 @@ class Games(commands.Cog):
         self.hm_timeout = bot.config.games["hm_timeout"]
         with open(f"{os.getcwd()}/data/premade/{hangman_tbl_name}.obj",
                   "rb") as hangman_pkl:
-            self.hangman_dict: dict[str, Tuple[list[Tuple[str, Optional[str]]],
+            self.hangman_dict: dict[str, tuple[list[tuple[str, Optional[str]]],
                                                str]] = pickle.load(hangman_pkl)
 
     @commands.max_concurrency(1, per=commands.BucketType.channel, wait=False)
@@ -103,7 +103,7 @@ class Games(commands.Cog):
                 curr_msg = await self.bot.wait_for("message",
                                                    check=wait_for_check,
                                                    timeout=self.hm_timeout)
-            except TimeoutError:
+            except asyncio.TimeoutError:
                 game_state.add_msg("the game has timed out")
                 await ctx.send(embed=game_state.embed)
                 await ctx.send(
