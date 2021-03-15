@@ -176,7 +176,7 @@ class Games(commands.Cog):
                             f"{curr_msg.author} used your last chance!")
                         await ctx.send(embed=game_state.embed)
                         await ctx.send(
-                            f"sorry everyone, {curr_msg.author} used your "
+                            f"sorry everyone, `{curr_msg.author}` used your "
                             f"last chance, the right answer was `{game_state.word}`"
                         )
                         break
