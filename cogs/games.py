@@ -25,7 +25,7 @@ from discord.ext import commands
 import re
 import os
 import sqlite3
-from time import gmtime, time
+from time import time
 import pickle
 import random
 import asyncio
@@ -91,10 +91,8 @@ class Games(commands.Cog):
                            f"here is a list of valid commands: {cat_list}")
             return
 
-        if command is None:
-            pretty_name = "[REDACTED]"
-
-        game_state = HangmanState(pretty_name, word_list)
+        game_state = HangmanState(
+            "[REDACTED]" if command is None else pretty_name, word_list)
         timeout_dict: dict[discord.Member, float] = {}
         winner: Optional[discord.Member] = None
         cool_win: bool = False
@@ -123,13 +121,12 @@ class Games(commands.Cog):
 
             curr_guess = curr_msg.content.lower()
             if not (curr_msg.author in timeout_dict and
-                    (time() - timeout_dict[curr_msg.author]) < 1.5
-                    ):    # check that user isn't time'd out
+                    (time() - timeout_dict[curr_msg.author]) < 1.5):
                 if curr_guess == game_state.lword:
-                    cool_win = len(game_state.not_guessed) > (
-                        len(set(game_state.lword)) / 2.5)
                     winner = curr_msg.author
-                    game_state.full()
+                    cool_win = game_state.full()
+                    if command is None:
+                        game_state.field_name = f"hangman (category: {pretty_name})"
                     game_state.add_msg(f"{winner} guessed the entire word!")
                     if game_state.img:
                         game_state.embed.set_image(url=game_state.img)
@@ -147,14 +144,12 @@ class Games(commands.Cog):
                     )
                     await ctx.send(embed=game_state.embed)
                 elif curr_guess in game_state.not_guessed:
-                    game_state.previous_guesses.add(curr_guess)
-                    game_state.not_guessed.remove(curr_guess)
-                    continue_game = game_state.correct()
-                    game_state.add_msg(
-                        f"{curr_msg.author} guessed '{curr_guess}' correctly!")
+                    continue_game = game_state.correct(curr_guess)
                     await ctx.send(embed=game_state.embed)
                     if not continue_game:
                         winner = curr_msg.author
+                        if command is None:
+                            game_state.field_name = f"hangman (category: {pretty_name})"
                         game_state.add_msg(
                             f"{winner} finished solving the hangman!")
                         if game_state.img:
@@ -166,14 +161,17 @@ class Games(commands.Cog):
                         break
                 else:
                     timeout_dict[curr_msg.author] = time()
-                    game_state.previous_guesses.add(curr_guess)
-                    continue_game = game_state.mistake()
+                    continue_game = game_state.mistake(curr_guess)
                     game_state.add_msg(
                         f"{curr_msg.author} guessed '{curr_guess}' wrong!")
                     await ctx.send(embed=game_state.embed)
                     if not continue_game:
+                        if command is None:
+                            game_state.field_name = f"hangman (category: {pretty_name})"
                         game_state.add_msg(
                             f"{curr_msg.author} used your last chance!")
+                        if game_state.img:
+                            game_state.embed.set_image(url=game_state.img)
                         await ctx.send(embed=game_state.embed)
                         await ctx.send(
                             f"sorry everyone, `{curr_msg.author}` used your "
@@ -181,7 +179,6 @@ class Games(commands.Cog):
                         )
                         break
             else:
-                # message from a user in time out
                 game_state.add_msg(
                     f"{curr_msg.author} you cannot guess right now!")
                 await ctx.send(embed=game_state.embed)

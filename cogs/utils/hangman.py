@@ -194,8 +194,11 @@ class HangmanState:
 
     def full(self):
         self.first_line = " ".join(char for char in self.word)
+        return len(self.not_guessed) > (len(set(self.lword)) / 2.5)
 
-    def correct(self):
+    def correct(self, guess: str) -> bool:
+        self.previous_guesses.add(guess)
+        self.not_guessed.remove(guess)
         self.last_line = f"""previous guesses: '{"', '".join(sorted(self.previous_guesses))}'"""
         self.embed.set_footer(text=self.last_line)
         self.first_line = " ".join(
@@ -204,7 +207,8 @@ class HangmanState:
 
         return bool(self.not_guessed)
 
-    def mistake(self):
+    def mistake(self, guess: str) -> bool:
+        self.previous_guesses.add(guess)
         self.last_line = f"""previous guesses: '{"', '".join(sorted(self.previous_guesses))}'"""
         self.num_mistakes += 1
         self.embed.set_footer(text=self.last_line)
