@@ -145,6 +145,8 @@ class Games(commands.Cog):
                     await ctx.send(embed=game_state.embed)
                 elif curr_guess in game_state.not_guessed:
                     continue_game = game_state.correct(curr_guess)
+                    game_state.add_msg(
+                        f"{curr_msg.author} guessed '{curr_guess}' correctly!")
                     await ctx.send(embed=game_state.embed)
                     if not continue_game:
                         winner = curr_msg.author
