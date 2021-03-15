@@ -70,8 +70,17 @@ class Games(commands.Cog):
                 f"single letter (interpreted in a case insensitive manner)\n"
                 f"here is a list of valid category commands: {cat_list}")
             return
-        category: str = command or random.choice(list(
-            self.hangman_dict.keys()))
+        if command in ["movies", "kino"]:
+            category = "movie"
+        elif command in ["elements"]:
+            category = "element"
+        elif command in ["countries"]:
+            category = "country"
+        elif command in ["animals"]:
+            category = "animal"
+        else:
+            category: str = command or random.choice(
+                list(self.hangman_dict.keys()))
         try:
             word_list, pretty_name = self.hangman_dict[category]
         except KeyError:
