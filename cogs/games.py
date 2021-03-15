@@ -25,7 +25,7 @@ from discord.ext import commands
 import re
 import os
 import sqlite3
-from time import time
+from time import gmtime, time
 import pickle
 import random
 import asyncio
@@ -128,9 +128,8 @@ class Games(commands.Cog):
                 if curr_guess == game_state.lword:
                     cool_win = len(game_state.not_guessed) > (
                         len(set(game_state.lword)) / 2.5)
-                    game_state.not_guessed.clear()
                     winner = curr_msg.author
-                    game_state.correct()
+                    game_state.full()
                     game_state.add_msg(f"{winner} guessed the entire word!")
                     if game_state.img:
                         game_state.embed.set_image(url=game_state.img)

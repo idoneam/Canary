@@ -192,6 +192,9 @@ class HangmanState:
             value=f"`{self.first_line}`\n```{HANG_LIST[self.num_mistakes]}```"
         ).set_footer(text=self.last_line)
 
+    def full(self):
+        self.first_line = " ".join(char for char in self.word)
+
     def correct(self):
         self.last_line = f"""previous guesses: '{"', '".join(sorted(self.previous_guesses))}'"""
         self.embed.set_footer(text=self.last_line)
