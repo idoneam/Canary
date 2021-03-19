@@ -15,14 +15,15 @@ def site_save(link):
             except Exception as exception:
                 fname: str = f"data/runtime/crash_dump_{time()}.html"
                 dump_channel: Optional[discord.TextChannel] = None
-                for channel in ctx.guild.text_channels:
-                    if channel.name == "marty_dev_log":
-                        dump_channel = channel
-                if dump_channel:
-                    with open(fname, "w") as crash_file:
-                        crash_file.write(await fetch(link))
-                    await dump_channel.send(file=discord.File(fname))
-                    os.remove(fname)
+                if self.bot.config.log_channel:
+                    for channel in ctx.guild.text_channels:
+                        if channel.name == self.bot.config.log_channel:
+                            dump_channel = channel
+                    if dump_channel:
+                        with open(fname, "w") as crash_file:
+                            crash_file.write(await fetch(link))
+                        await dump_channel.send(file=discord.File(fname))
+                        os.remove(fname)
                 raise exception
 
         return wrapper
