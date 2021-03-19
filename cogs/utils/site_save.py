@@ -19,6 +19,7 @@ def site_save(link):
                     for channel in ctx.guild.text_channels:
                         if channel.name == self.bot.config.log_channel:
                             dump_channel = channel
+                            break
                     if dump_channel:
                         with open(fname, "w") as crash_file:
                             crash_file.write(await fetch(link))
