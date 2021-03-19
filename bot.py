@@ -81,7 +81,6 @@ if _parser.dev_log_webhook_id and _parser.dev_log_webhook_token:
     _dev_webhook_handler.setFormatter(
         logging.Formatter('[%(levelname)s] %(asctime)s:\n%(message)s'))
     _dev_logger.addHandler(_dev_webhook_handler)
-    _dev_logger.webhook_handler = _dev_webhook_handler
 
 if _parser.mod_log_webhook_id and _parser.mod_log_webhook_token:
     _mod_webhook_username = f"{_parser.bot_name} Mod Logs"
