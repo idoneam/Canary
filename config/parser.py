@@ -59,7 +59,6 @@ class Parser:
 
         # Logging
         self.log_file = config['Logging']['LogFile']
-        self.log_channel = config["Logging"]["LogChannel"] or None
         loglevel = config['Logging']['LogLevel'].lower()
         self.log_level = LOG_LEVELS.get(loglevel, logging.WARNING)
         if config['Logging']['DevLogWebhookID'] \
