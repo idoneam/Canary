@@ -193,7 +193,7 @@ class HangmanState:
         ).set_footer(text=self.last_line)
 
     def full(self):
-        self.first_line = " ".join(char for char in self.word)
+        self.first_line = " ".join(self.word)
         return len(self.not_guessed) > (len(set(self.lword)) / 2.5)
 
     def correct(self, guess: str) -> bool:

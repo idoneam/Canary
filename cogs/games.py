@@ -36,6 +36,13 @@ from .utils.hangman import HangmanState, LOSS_MISTAKES
 from .currency import HANGMAN_REWARD
 
 ROLL_PATTERN = re.compile(r'^(\d*)d(\d*)([+-]?\d*)$')
+CATEGORY_SYNONYMS = {
+    "movies": "movie",
+    "kino": "movie",
+    "elements": "element",
+    "countries": "country",
+    "animals": "animal",
+}
 
 
 class Games(commands.Cog):
@@ -51,7 +58,7 @@ class Games(commands.Cog):
 
     @commands.max_concurrency(1, per=commands.BucketType.channel, wait=False)
     @commands.command(aliases=["hm"])
-    async def hangman(self, ctx, *, command: str = None):
+    async def hangman(self, ctx, *, command: Optional[str] = None):
         """
         Play a nice game of hangman with internet strangers!
         Guesses must be single letters (interpreted in a case insensitive manner) or the entire correct word
@@ -70,17 +77,9 @@ class Games(commands.Cog):
                 f"single letter (interpreted in a case insensitive manner)\n"
                 f"here is a list of valid category commands: {cat_list}")
             return
-        if command in ["movies", "kino"]:
-            category = "movie"
-        elif command in ["elements"]:
-            category = "element"
-        elif command in ["countries"]:
-            category = "country"
-        elif command in ["animals"]:
-            category = "animal"
-        else:
-            category: str = command or random.choice(
-                list(self.hangman_dict.keys()))
+
+        category: str = CATEGORY_SYNONYMS.get(
+            command, command) or random.choice(list(self.hangman_dict.keys()))
         try:
             word_list, pretty_name = self.hangman_dict[category]
         except KeyError:
@@ -120,70 +119,73 @@ class Games(commands.Cog):
                 return
 
             curr_guess = curr_msg.content.lower()
-            if not (curr_msg.author in timeout_dict and
-                    (time() - timeout_dict[curr_msg.author]) < 1.5):
-                if curr_guess == game_state.lword:
+
+            if curr_msg.author in timeout_dict and (
+                    time() - timeout_dict[curr_msg.author]) < 1.5:
+                game_state.add_msg(
+                    f"{curr_msg.author} you cannot guess right now!")
+                await ctx.send(embed=game_state.embed)
+                continue
+
+            if curr_guess == game_state.lword:
+                winner = curr_msg.author
+                cool_win = game_state.full()
+                if command is None:
+                    game_state.field_name = f"hangman (category: {pretty_name})"
+                game_state.add_msg(f"{winner} guessed the entire word!")
+                if game_state.img:
+                    game_state.embed.set_image(url=game_state.img)
+                await ctx.send(embed=game_state.embed)
+                await ctx.send(
+                    f"congratulations `{winner}`, you solved the hangman" +
+                    (f" (in a cool way), earning you {self.hm_cool_win} cheeps"
+                     if cool_win else
+                     f", earning you {self.hm_norm_win} cheeps"))
+                break
+
+            if curr_guess in game_state.previous_guesses:
+                timeout_dict[curr_msg.author] = time()
+                game_state.add_msg(
+                    f"{curr_msg.author}, '{curr_guess}' was already guessed")
+                await ctx.send(embed=game_state.embed)
+            elif curr_guess in game_state.not_guessed:
+                continue_game = game_state.correct(curr_guess)
+                game_state.add_msg(
+                    f"{curr_msg.author} guessed '{curr_guess}' correctly!")
+                await ctx.send(embed=game_state.embed)
+                if not continue_game:
                     winner = curr_msg.author
-                    cool_win = game_state.full()
                     if command is None:
                         game_state.field_name = f"hangman (category: {pretty_name})"
-                    game_state.add_msg(f"{winner} guessed the entire word!")
+                    game_state.add_msg(
+                        f"{winner} finished solving the hangman!")
                     if game_state.img:
                         game_state.embed.set_image(url=game_state.img)
                     await ctx.send(embed=game_state.embed)
                     await ctx.send(
-                        f"congratulations `{winner}`, you solved the hangman" +
-                        (f" (in a cool way), earning you {self.hm_cool_win} cheeps"
-                         if cool_win else
-                         f", earning you {self.hm_norm_win} cheeps"))
+                        f"congratulations `{winner}`, you solved the hangman, "
+                        f"earning you {self.hm_norm_win} cheeps")
                     break
-                if curr_guess in game_state.previous_guesses:
-                    timeout_dict[curr_msg.author] = time()
-                    game_state.add_msg(
-                        f"{curr_msg.author}, '{curr_guess}' was already guessed"
-                    )
-                    await ctx.send(embed=game_state.embed)
-                elif curr_guess in game_state.not_guessed:
-                    continue_game = game_state.correct(curr_guess)
-                    game_state.add_msg(
-                        f"{curr_msg.author} guessed '{curr_guess}' correctly!")
-                    await ctx.send(embed=game_state.embed)
-                    if not continue_game:
-                        winner = curr_msg.author
-                        if command is None:
-                            game_state.field_name = f"hangman (category: {pretty_name})"
-                        game_state.add_msg(
-                            f"{winner} finished solving the hangman!")
-                        if game_state.img:
-                            game_state.embed.set_image(url=game_state.img)
-                        await ctx.send(embed=game_state.embed)
-                        await ctx.send(
-                            f"congratulations `{winner}`, you solved the hangman, "
-                            f"earning you {self.hm_norm_win} cheeps")
-                        break
-                else:
-                    timeout_dict[curr_msg.author] = time()
-                    continue_game = game_state.mistake(curr_guess)
-                    game_state.add_msg(
-                        f"{curr_msg.author} guessed '{curr_guess}' wrong!")
-                    await ctx.send(embed=game_state.embed)
-                    if not continue_game:
-                        if command is None:
-                            game_state.field_name = f"hangman (category: {pretty_name})"
-                        game_state.add_msg(
-                            f"{curr_msg.author} used your last chance!")
-                        if game_state.img:
-                            game_state.embed.set_image(url=game_state.img)
-                        await ctx.send(embed=game_state.embed)
-                        await ctx.send(
-                            f"sorry everyone, `{curr_msg.author}` used your "
-                            f"last chance, the right answer was `{game_state.word}`"
-                        )
-                        break
             else:
+                timeout_dict[curr_msg.author] = time()
+                continue_game = game_state.mistake(curr_guess)
                 game_state.add_msg(
-                    f"{curr_msg.author} you cannot guess right now!")
+                    f"{curr_msg.author} guessed '{curr_guess}' wrong!")
                 await ctx.send(embed=game_state.embed)
+                if not continue_game:
+                    if command is None:
+                        game_state.field_name = f"hangman (category: {pretty_name})"
+                    game_state.add_msg(
+                        f"{curr_msg.author} used your last chance!")
+                    if game_state.img:
+                        game_state.embed.set_image(url=game_state.img)
+                    await ctx.send(embed=game_state.embed)
+                    await ctx.send(
+                        f"sorry everyone, `{curr_msg.author}` used your "
+                        f"last chance, the right answer was `{game_state.word}`"
+                    )
+                    break
+
         if winner is not None:
             conn = sqlite3.connect(self.bot.config.db_path)
             await self.bot.get_cog("Currency").create_bank_transaction(
@@ -191,6 +193,7 @@ class Games(commands.Cog):
                 self.hm_cool_win if cool_win else self.hm_norm_win,
                 HANGMAN_REWARD, {"cool": cool_win})
             conn.commit()
+            conn.close()
 
     @commands.command()
     async def roll(self, ctx, arg: str = '', mpr: str = ''):
