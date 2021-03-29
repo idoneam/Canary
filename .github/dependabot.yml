@@ -9,8 +9,10 @@ updates:
   reviewers:
   - davidlougheed
   - le-potate
+  - namemcguffin
   assignees:
   - davidlougheed
   - le-potate
+  - namemcguffin
   labels:
   - dependencies
