@@ -16,6 +16,7 @@
 # along with Canary. If not, see <https://www.gnu.org/licenses/>.
 
 import asyncio
+from functools import wraps
 from typing import Optional
 from collections import deque
 import discord
@@ -33,6 +34,23 @@ YTDL = youtube_dl.YoutubeDL({
     "default_search": "auto",
     "geo_bypass": True,
 })
+
+
+def check_playing(func):
+    @wraps(func)
+    async def wrapper(self, ctx, *args, **kwargs):
+        await ctx.trigger_typing()
+        if ctx.voice_client is None or not ctx.voice_client.is_playing():
+            await ctx.send(
+                "bot is not currently playing anything to a voice channel.")
+        elif (ctx.author.voice is None
+              or ctx.author.voice.channel != ctx.voice_client.channel):
+            await ctx.send(
+                "you must be listening to music with the bot do this.")
+        else:
+            return await func(self, ctx, *args, **kwargs)
+
+    return wrapper
 
 
 class Music(commands.Cog):
@@ -215,54 +233,28 @@ class Music(commands.Cog):
         await ctx.send(f"changed volume to {volume}%")
 
     @commands.command()
+    @check_playing
     async def stop(self, ctx):
         """Stops and disconnects the bot from voice"""
 
-        await ctx.trigger_typing()
-        if ctx.voice_client is None or not ctx.voice_client.is_playing():
-            await ctx.send(
-                "bot is not currently playing anything to a voice channel.")
-        elif (ctx.author.voice is None
-              or ctx.author.voice.channel != ctx.voice_client.channel):
-            await ctx.send(
-                "you must be listening to music with the bot do this.")
-        else:
-            ctx.voice_client.stop()
-            await ctx.voice_client.disconnect()
+        ctx.voice_client.stop()
+        await ctx.voice_client.disconnect()
 
     @commands.command(aliases=["next"])
+    @check_playing
     async def skip(self, ctx):
         """Skips currently playing song"""
 
-        await ctx.trigger_typing()
-        if ctx.voice_client is None or not ctx.voice_client.is_playing():
-            await ctx.send(
-                "bot is not currently playing anything to a voice channel.")
-        elif (ctx.author.voice is None
-              or ctx.author.voice.channel != ctx.voice_client.channel):
-            await ctx.send(
-                "you must be listening to music with the bot do this.")
-        else:
-            ctx.voice_client.stop()
-            await ctx.send("skipped current song.")
+        ctx.voice_client.stop()
+        await ctx.send("skipped current song.")
 
     @commands.command()
+    @check_playing
     async def pause(self, ctx):
         """Pauses currently playing song"""
 
-        await ctx.trigger_typing()
-        if ctx.voice_client is None or not ctx.voice_client.is_playing():
-            await ctx.send(
-                "bot is not currently playing anything to a voice channel.")
-        elif ctx.voice_client.is_paused():
-            await ctx.send("music has already been paused.")
-        elif (ctx.author.voice is None
-              or ctx.author.voice.channel != ctx.voice_client.channel):
-            await ctx.send(
-                "you must be listening to music with the bot do this.")
-        else:
-            ctx.voice_client.pause()
-            await ctx.send("paused current song.")
+        ctx.voice_client.pause()
+        await ctx.send("paused current song.")
 
     @commands.command()
     async def resume(self, ctx):
@@ -276,14 +268,13 @@ class Music(commands.Cog):
         elif ctx.author.voice is None:
             await ctx.send("you must be in a voice channel to do this.")
         elif ctx.author.voice.channel != ctx.voice_client.channel:
-            if len(ctx.voice_client.channel.members) <= 1:
-                await ctx.voice_client.move_to(ctx.author.voice.channel)
-                ctx.voice_client.resume()
-                await ctx.send(
-                    "moved to your channel, and resumed current song.")
-            else:
+            if len(ctx.voice_client.channel.members) > 1:
                 await ctx.send(
                     "you must be listening to music with the bot do this.")
+                return
+            await ctx.voice_client.move_to(ctx.author.voice.channel)
+            ctx.voice_client.resume()
+            await ctx.send("moved to your channel, and resumed current song.")
         else:
             ctx.voice_client.resume()
             await ctx.send("resumed current song.")
