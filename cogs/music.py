@@ -97,7 +97,7 @@ class Music(commands.Cog):
                 )
                 return
 
-        def after_check(_):
+        def release_lock(_):
             self.song_lock.release()
 
         if url:
@@ -105,9 +105,7 @@ class Music(commands.Cog):
             data = await self.get_info(url)
             entries = data.get("entries", [data])
             for track in reversed(entries):
-                player = discord.PCMVolumeTransformer(
-                    discord.FFmpegPCMAudio(track["url"], options=FFMPEG_OPTS))
-                self.song_queue.insert(0, (player, track.get("title")))
+                self.song_queue.insert(0, track)
             if not play_queue:
                 ctx.voice_client.stop()
 
@@ -118,10 +116,14 @@ class Music(commands.Cog):
                 await ctx.trigger_typing()
                 if (not self.song_queue) or ctx.voice_client is None:
                     break
-                player, name = self.song_queue.popleft()
-                self.currently_playing = name
-                ctx.voice_client.play(player, after=after_check)
-                await ctx.send(f"now playing: `{name or 'title not found'}`")
+                track = self.song_queue.popleft()
+                self.currently_playing = track.get("title")
+                ctx.voice_client.play(discord.PCMVolumeTransformer(
+                    discord.FFmpegPCMAudio(track["url"], options=FFMPEG_OPTS)),
+                                      after=release_lock)
+                await ctx.send(
+                    f"now playing: `{self.currently_playing or 'title not found'}`"
+                )
             if ctx.voice_client is not None:
                 await ctx.voice_client.disconnect()
                 self.song_lock.release()
@@ -139,7 +141,7 @@ class Music(commands.Cog):
             "```\n" +
             "\n".join(f"[{index}] {title or 'title not found'}"
                       for index, (_, title) in enumerate(self.song_queue)) +
-            "\n```" if self.song_queue else "no songs currently in queue")
+            "\n```" if self.song_queue else "no songs currently in queue.")
 
     @commands.command(aliases=["ms", "currently_playing", "cps"])
     async def music_status(self, ctx):
@@ -187,9 +189,7 @@ class Music(commands.Cog):
         data = await self.get_info(url)
         entries = data.get("entries", [data])
         for track in reversed(entries):
-            player = discord.PCMVolumeTransformer(
-                discord.FFmpegPCMAudio(track["url"], options=FFMPEG_OPTS))
-            self.song_queue.insert(song_index, (player, track.get("title")))
+            self.song_queue.insert(song_index, track)
         await ctx.send(
             f"inserted playlist `{data.get('title') or 'title not found'}` at position `{song_index}`"
             if len(entries) > 1 else
@@ -212,9 +212,7 @@ class Music(commands.Cog):
         data = await self.get_info(url)
         entries = data.get("entries", [data])
         for track in entries:
-            player = discord.PCMVolumeTransformer(
-                discord.FFmpegPCMAudio(track["url"], options=FFMPEG_OPTS))
-            self.song_queue.append((player, track.get("title")))
+            self.song_queue.append(track)
         await ctx.send(
             f"queued up playlist: `{data.get('title') or 'title not found'}`"
             if len(entries) > 1 else
