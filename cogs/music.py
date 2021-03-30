@@ -122,7 +122,7 @@ class Music(commands.Cog):
                     discord.FFmpegPCMAudio(track["url"], options=FFMPEG_OPTS)),
                                       after=release_lock)
                 await ctx.send(
-                    f"now playing: `{self.currently_playing or 'title not found'}`"
+                    f"now playing: `{self.currently_playing or 'title not found'}`."
                 )
             if ctx.voice_client is not None:
                 await ctx.voice_client.disconnect()
@@ -139,8 +139,8 @@ class Music(commands.Cog):
         await ctx.trigger_typing()
         await ctx.send(
             "```\n" +
-            "\n".join(f"[{index}] {title or 'title not found'}"
-                      for index, (_, title) in enumerate(self.song_queue)) +
+            "\n".join(f"[{index}] {track.get('title') or 'title not found'}"
+                      for index, track in enumerate(self.song_queue)) +
             "\n```" if self.song_queue else "no songs currently in queue.")
 
     @commands.command(aliases=["ms", "currently_playing", "cps"])
@@ -151,11 +151,11 @@ class Music(commands.Cog):
             await ctx.send("bot is not currently playing anything.")
         elif ctx.voice_client.is_paused():
             await ctx.send(
-                f"currently playing song (paused): `{self.currently_playing or 'title not found'}`"
+                f"currently playing song (paused): `{self.currently_playing or 'title not found'}`."
             )
         elif ctx.voice_client.is_playing():
             await ctx.send(
-                f"currently playing song: `{self.currently_playing or 'title not found'}`"
+                f"currently playing song: `{self.currently_playing or 'title not found'}`."
             )
         else:
             await ctx.send(
@@ -169,12 +169,14 @@ class Music(commands.Cog):
         await ctx.trigger_typing()
         if song_index < 0 or len(self.song_queue) <= song_index:
             await ctx.send(
-                f"supplied index `{song_index}` is not valid for current queue"
+                f"supplied index `{song_index}` is not valid for current queue."
             )
             return
+        title = self.song_queue[song_index].get("title")
         del self.song_queue[song_index]
         await ctx.send(
-            f"song at index `{song_index}` was removed from the queue")
+            f"`{title or 'title not found'}` at index `{song_index}` was removed from the queue."
+        )
 
     @commands.command(aliases=["iqs"])
     async def insert_song(self, ctx, song_index: int, *, url: str):
@@ -183,7 +185,7 @@ class Music(commands.Cog):
         await ctx.trigger_typing()
         if song_index < 0 or len(self.song_queue) <= song_index:
             await ctx.send(
-                f"supplied index `{song_index}` is not valid for current queue"
+                f"supplied index `{song_index}` is not valid for current queue."
             )
             return
         data = await self.get_info(url)
@@ -191,9 +193,9 @@ class Music(commands.Cog):
         for track in reversed(entries):
             self.song_queue.insert(song_index, track)
         await ctx.send(
-            f"inserted playlist `{data.get('title') or 'title not found'}` at position `{song_index}`"
+            f"inserted playlist `{data.get('title') or 'title not found'}` at position `{song_index}`."
             if len(entries) > 1 else
-            f"inserted track `{entries[0].get('title') or 'title not found'}` at position `{song_index}`"
+            f"inserted track `{entries[0].get('title') or 'title not found'}` at position `{song_index}`."
         )
 
     @commands.command(aliases=["cq"])
@@ -214,21 +216,18 @@ class Music(commands.Cog):
         for track in entries:
             self.song_queue.append(track)
         await ctx.send(
-            f"queued up playlist: `{data.get('title') or 'title not found'}`"
+            f"queued up playlist: `{data.get('title') or 'title not found'}`."
             if len(entries) > 1 else
-            f"queued up track: `{entries[0].get('title') or 'title not found'}`"
+            f"queued up track: `{entries[0].get('title') or 'title not found'}`."
         )
 
     @commands.command(aliases=["vol"])
+    @check_playing
     async def volume(self, ctx, volume: int):
         """Set volume to a different level"""
 
-        if ctx.voice_client is None or not ctx.voice_client.is_playing():
-            await ctx.send("bot is not currently connected to a voice channel."
-                           )
-            return
         ctx.voice_client.source.volume = volume / 100
-        await ctx.send(f"changed volume to {volume}%")
+        await ctx.send(f"changed volume to {volume}%.")
 
     @commands.command()
     @check_playing
