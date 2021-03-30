@@ -143,6 +143,7 @@ class Music(commands.Cog):
             self.song_lock.release()
 
     @commands.command()
+    @check_playing
     async def loop(self, ctx):
         """Changes looping state"""
 
