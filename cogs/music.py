@@ -77,6 +77,10 @@ class Music(commands.Cog):
                 "you are not currently connected to a voice channel.")
             return
 
+        if play_queue and url is None:
+            await ctx.send("you did not specify a song to play.")
+            return
+
         if not play_queue:
             if ctx.voice_client.is_paused():
                 await ctx.send(
