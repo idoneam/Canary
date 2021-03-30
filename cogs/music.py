@@ -17,7 +17,6 @@
 
 import asyncio
 from functools import wraps
-from typing import Optional
 from collections import deque
 import discord
 import youtube_dl
@@ -40,7 +39,9 @@ def check_playing(func):
     @wraps(func)
     async def wrapper(self, ctx, *args, **kwargs):
         await ctx.trigger_typing()
-        if ctx.voice_client is None or not ctx.voice_client.is_playing():
+        if self.playing is None or ctx.voice_client is None or (
+                not self.song_lock.locked()) or (
+                    not ctx.voice_client.is_playing()):
             await ctx.send(
                 "bot is not currently playing anything to a voice channel.")
         elif (ctx.author.voice is None
@@ -48,7 +49,7 @@ def check_playing(func):
             await ctx.send(
                 "you must be listening to music with the bot do this.")
         else:
-            return await func(self, ctx, *args, **kwargs)
+            await func(self, ctx, *args, **kwargs)
 
     return wrapper
 
@@ -58,7 +59,8 @@ class Music(commands.Cog):
         self.bot = bot
         self.song_queue: deque = deque()
         self.song_lock: asyncio.Lock = asyncio.Lock()
-        self.currently_playing: Optional[str] = None
+        self.playing = None
+        self.looping = None
 
     async def get_info(self, url):
         return await self.bot.loop.run_in_executor(
@@ -111,26 +113,39 @@ class Music(commands.Cog):
 
         if play_queue:
             await ctx.author.voice.channel.connect()
+
             while True:
                 await self.song_lock.acquire()
                 await ctx.trigger_typing()
-                if (not self.song_queue) or ctx.voice_client is None:
+                if ((not self.song_queue) and
+                    (self.looping is None)) or ctx.voice_client is None:
                     break
-                track = self.song_queue.popleft()
-                self.currently_playing = track.get("title")
+                self.playing = self.looping or self.song_queue.popleft()
                 ctx.voice_client.play(discord.PCMVolumeTransformer(
-                    discord.FFmpegPCMAudio(track["url"], options=FFMPEG_OPTS)),
+                    discord.FFmpegPCMAudio(self.playing["url"],
+                                           options=FFMPEG_OPTS)),
                                       after=release_lock)
                 await ctx.send(
-                    f"now playing: `{self.currently_playing or 'title not found'}`."
+                    f"now playing: `{self.playing.get('title') or 'title not found'}`."
                 )
+
             if ctx.voice_client is not None:
                 await ctx.voice_client.disconnect()
-                self.song_lock.release()
                 await ctx.send("queue is empty, finished playing all songs.")
             else:
-                self.song_lock.release()
                 await ctx.send("stopped playing, disconnected.")
+
+            self.playing = None
+            self.song_lock.release()
+
+    @commands.command()
+    async def loop(self, ctx):
+        """Changes looping state"""
+
+        self.looping = self.playing if self.looping is None else None
+        await ctx.send(
+            f"`{self.playing.get('title')}` is now set to{' ' if self.looping else ' no longer '}loop."
+        )
 
     @commands.command(aliases=["pq"])
     async def print_queue(self, ctx):
@@ -151,11 +166,11 @@ class Music(commands.Cog):
             await ctx.send("bot is not currently playing anything.")
         elif ctx.voice_client.is_paused():
             await ctx.send(
-                f"currently playing song (paused): `{self.currently_playing or 'title not found'}`."
+                f"currently playing (paused){' on loop' if self.looping else ''}: `{self.playing.get('title') or 'title not found'}`."
             )
         elif ctx.voice_client.is_playing():
             await ctx.send(
-                f"currently playing song: `{self.currently_playing or 'title not found'}`."
+                f"currently playing{' on loop' if self.looping else ''}: `{self.playing.get('title') or 'title not found'}`."
             )
         else:
             await ctx.send(
@@ -234,6 +249,7 @@ class Music(commands.Cog):
     async def stop(self, ctx):
         """Stops and disconnects the bot from voice"""
 
+        self.looping = None
         ctx.voice_client.stop()
         await ctx.voice_client.disconnect()
 
@@ -242,6 +258,7 @@ class Music(commands.Cog):
     async def skip(self, ctx):
         """Skips currently playing song"""
 
+        self.looping = None
         ctx.voice_client.stop()
         await ctx.send("skipped current song.")
 
