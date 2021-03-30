@@ -144,7 +144,7 @@ class Music(commands.Cog):
 
         self.looping = self.playing if self.looping is None else None
         await ctx.send(
-            f"`{self.playing.get('title')}` is now set to{' ' if self.looping else ' no longer '}loop."
+            f"`{self.playing.get('title') or 'title not found'}` is now set to{' ' if self.looping else ' no longer '}loop."
         )
 
     @commands.command(aliases=["pq"])
