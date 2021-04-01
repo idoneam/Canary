@@ -20,12 +20,15 @@ import discord
 from discord.ext import commands
 
 # misc imports
+import concurrent.futures
 import os
 import numpy as np
 import cv2
 import math
-from functools import wraps
+from functools import wraps, partial
 from io import BytesIO
+
+MAX_IMAGE_SIZE = 8 * (10**6)
 
 
 def filter_image(func):
@@ -33,31 +36,63 @@ def filter_image(func):
     async def wrapper(self, ctx, *args):
         att = await Images.get_attachment(ctx)
         if att is None:
-            await ctx.send(
-                "no image could be found (only attached image files"
-                " can be detected) or message could not be found",
-                delete_after=15)
+            await ctx.send("no image could be found (only attached image files"
+                           " can be detected) or message could not be found")
             return
 
         await ctx.trigger_typing()
-
         buffer = BytesIO()
         await att.save(fp=buffer)
+
         original_name, ext = att.filename.rsplit('.', 1)
+        ext = ext.lower()
+        if ext in ("jpeg", "jpg"):
+            is_png = False
+        elif ext in ("png"):
+            is_png = True
+        else:
+            await ctx.send("image format not supported.")
+            return
+
         fn = f"{original_name}-{func.__name__}.{ext}"
+        ratio = (MAX_IMAGE_SIZE /
+                 att.size) * 100 if att.size > MAX_IMAGE_SIZE else 100
 
         try:
-            img_bytes = np.asarray(bytearray(buffer.read()), dtype=np.uint8)
-            result = cv2.imdecode(img_bytes, cv2.IMREAD_UNCHANGED)
-            args = (args[0], result) if len(args) == 2 else (result, )
-            result = await func(self, ctx, *args)
-            _r, buffer = cv2.imencode(f".{ext}", result,
-                                      [cv2.IMWRITE_JPEG_QUALITY, 100])
+
+            with concurrent.futures.ProcessPoolExecutor() as pool:
+                img_bytes = await self.bot.loop.run_in_executor(
+                    pool,
+                    partial(np.asarray, bytearray(buffer.read()), np.uint8))
+                result = await self.bot.loop.run_in_executor(
+                    pool, partial(cv2.imdecode, img_bytes,
+                                  cv2.IMREAD_UNCHANGED))
+
+                if att.size > MAX_IMAGE_SIZE:
+                    _, buffer = await self.bot.loop.run_in_executor(
+                        pool,
+                        partial(cv2.imencode, f".{ext}", result,
+                                (cv2.IMWRITE_JPEG_QUALITY if is_png else
+                                 cv2.IMWRITE_JPEG_QUALITY, ratio)))
+                    result = await self.bot.loop.run_in_executor(
+                        pool,
+                        partial(cv2.imdecode, buffer, cv2.IMREAD_UNCHANGED))
+
+                args = (*args[:-1], result)
+                result = await func(self, ctx, *args)
+                _, buffer = await self.bot.loop.run_in_executor(
+                    pool,
+                    partial(cv2.imencode, f".{ext}", result,
+                            (cv2.IMWRITE_JPEG_QUALITY
+                             if is_png else cv2.IMWRITE_JPEG_QUALITY, 100)))
+
+        except Exception as exc:    # TODO: Narrow the exception
+            await ctx.send('an error has occurred.')
+            raise exc
+
+        else:
             await ctx.message.delete()
             await ctx.send(file=discord.File(fp=BytesIO(buffer), filename=fn))
-
-        except Exception:    # TODO: Narrow the exception
-            await ctx.send('Error occurred.', delete_after=60)
 
     return wrapper
 
