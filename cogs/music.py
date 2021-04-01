@@ -23,6 +23,7 @@ import youtube_dl
 from discord.ext import commands
 
 FFMPEG_OPTS = "-nostats -loglevel quiet -vn"
+FFMPEG_BEFORE_OPTS = "-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5"
 
 YTDL = youtube_dl.YoutubeDL({
     "format": "bestaudio/best",
@@ -127,6 +128,7 @@ class Music(commands.Cog):
                 self.playing = self.looping or self.song_queue.popleft()
                 ctx.voice_client.play(discord.PCMVolumeTransformer(
                     discord.FFmpegPCMAudio(self.playing["url"],
+                                           before_options=FFMPEG_BEFORE_OPTS,
                                            options=FFMPEG_OPTS)),
                                       after=release_lock)
                 await ctx.send(
