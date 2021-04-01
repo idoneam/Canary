@@ -109,7 +109,7 @@ class Images(commands.Cog):
             os.mkdir("./tmp/", mode=0o755)
 
     @staticmethod
-    async def get_attachment(ctx: discord.ext.commands.Context):
+    async def get_attachment(ctx: commands.Context):
         """
         Returns either the attachment of the message to which
         the invoking message is replying to, or, if that fails
@@ -142,8 +142,8 @@ class Images(commands.Cog):
             cv2.INTER_LINEAR + cv2.WARP_FILL_OUTLIERS + cv2.WARP_INVERSE_MAP)
 
     @staticmethod
-    def _bounded_radius(radius: str):
-        return max(1, min(int(radius), 500))
+    def _bounded_radius(radius: int):
+        return max(1, min(radius, 500))
 
     @commands.command()
     @filter_image
@@ -163,38 +163,38 @@ class Images(commands.Cog):
 
     @commands.command()
     @filter_image
-    async def blur(self, _ctx, iterations='1', image=None):
+    async def blur(self, _ctx, iterations: int = 1, image=None):
         """
         Blur the image
         """
-        iterations = max(0, min(int(iterations), 100))
-        for i in range(iterations):
+        iterations = max(0, min(iterations, 100))
+        for _ in range(iterations):
             image = cv2.GaussianBlur(image, (5, 5), 0)
         return image
 
     @commands.command(aliases=['left', 'right'])
     @filter_image
-    async def hblur(self, _ctx, radius='10', image=None):
+    async def hblur(self, _ctx, radius: int = 10, image=None):
         """
         Blur the image horizontally
         """
-        radius = self._bounded_radius(radius)
+        radius = Images._bounded_radius(radius)
         image = cv2.blur(image, (radius, 1))
         return image
 
     @commands.command(aliases=['up', 'down'])
     @filter_image
-    async def vblur(self, _ctx, radius='10', image=None):
+    async def vblur(self, _ctx, radius: int = 10, image=None):
         """
         Blur the image vertically
         """
-        radius = self._bounded_radius(radius)
+        radius = Images._bounded_radius(radius)
         image = cv2.blur(image, (1, radius))
         return image
 
     @commands.command(aliases=['zoom', 'radial'])
     @filter_image
-    async def rblur(self, _ctx, radius='10', image=None):
+    async def rblur(self, _ctx, radius: int = 10, image=None):
         """
         Radial blur
         """
@@ -206,12 +206,12 @@ class Images(commands.Cog):
 
     @commands.command(aliases=['circle', 'circular', 'spin'])
     @filter_image
-    async def cblur(self, _ctx, radius='10', image=None):
+    async def cblur(self, _ctx, radius: int = 10, image=None):
         """
         Circular blur
         """
 
-        radius = self._bounded_radius(radius)
+        radius = Images._bounded_radius(radius)
         half_radius = radius // 2
 
         # determine values for padding
@@ -239,12 +239,12 @@ class Images(commands.Cog):
 
     @commands.command(aliases=['df', 'dfry', 'fry'])
     @filter_image
-    async def deepfry(self, _ctx, iterations='1', image=None):
+    async def deepfry(self, _ctx, iterations: int = 1, image=None):
         """
         Deep fry an image, mhmm
         """
 
-        iterations = max(0, min(int(iterations), 20))
+        iterations = max(0, min(iterations, 20))
         kernel = np.array([[0, 0, 0], [0, 1, 0], [0, 0, 0]]) \
             + np.array([[0, -1, 0], [-1, 4, -1], [0, -1, 0]]) * 0.3
 
@@ -266,14 +266,14 @@ class Images(commands.Cog):
 
     @commands.command()
     @filter_image
-    async def noise(self, _ctx, iterations='1', image=None):
+    async def noise(self, _ctx, iterations: int = 1, image=None):
         """
         Add some noise to tha image!!
         """
 
-        iterations = max(0, min(int(iterations), 20))
+        iterations = max(0, min(iterations, 20))
 
-        for i in range(iterations):
+        for _ in range(iterations):
             noise = np.std(image) * np.random.random(image.shape)
             image = cv2.add(image, noise.astype('uint8'))
             image = cv2.addWeighted(image, 1, image, 0, -np.std(image) * 0.49)
