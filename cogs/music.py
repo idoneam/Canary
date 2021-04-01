@@ -16,6 +16,7 @@
 # along with Canary. If not, see <https://www.gnu.org/licenses/>.
 
 import asyncio
+import random
 from functools import wraps
 from collections import deque
 import discord
@@ -41,8 +42,7 @@ def check_playing(func):
     async def wrapper(self, ctx, *args, **kwargs):
         await ctx.trigger_typing()
         if self.playing is None or ctx.voice_client is None or (
-                not self.song_lock.locked()) or (
-                    not ctx.voice_client.is_playing()):
+                not self.song_lock.locked()):
             await ctx.send(
                 "bot is not currently playing anything to a voice channel.")
         elif (ctx.author.voice is None
@@ -62,6 +62,7 @@ class Music(commands.Cog):
         self.song_lock: asyncio.Lock = asyncio.Lock()
         self.playing = None
         self.looping = None
+        self.volume_level: int = 100
 
     async def get_info(self, url):
         return await self.bot.loop.run_in_executor(
@@ -126,14 +127,25 @@ class Music(commands.Cog):
                     (self.looping is None)) or ctx.voice_client is None:
                     break
                 self.playing = self.looping or self.song_queue.popleft()
+                now_playing = discord.Embed(
+                    colour=random.randint(0, 0xFFFFFF),
+                    title="now playing").add_field(
+                        name="track title",
+                        value=self.playing.get("title") or "title not found",
+                        inline=False).add_field(
+                            name="volume",
+                            value=f"{self.volume_level}%",
+                            inline=True).add_field(
+                                name="looping",
+                                value="no" if self.looping is None else "yes",
+                                inline=True)
                 ctx.voice_client.play(discord.PCMVolumeTransformer(
                     discord.FFmpegPCMAudio(self.playing["url"],
                                            before_options=FFMPEG_BEFORE_OPTS,
-                                           options=FFMPEG_OPTS)),
+                                           options=FFMPEG_OPTS),
+                    self.volume_level / 100),
                                       after=release_lock)
-                await ctx.send(
-                    f"now playing: `{self.playing.get('title') or 'title not found'}`."
-                )
+                await ctx.send(embed=now_playing)
 
             if ctx.voice_client is not None:
                 await ctx.voice_client.disconnect()
@@ -143,6 +155,7 @@ class Music(commands.Cog):
 
             self.playing = None
             self.song_lock.release()
+            self.volume_level = 100
 
     @commands.command()
     @check_playing
@@ -158,31 +171,53 @@ class Music(commands.Cog):
     async def print_queue(self, ctx):
         """Displays the current song queue"""
 
-        await ctx.trigger_typing()
-        await ctx.send(
-            "```\n" +
-            "\n".join(f"[{index}] {track.get('title') or 'title not found'}"
-                      for index, track in enumerate(self.song_queue)) +
-            "\n```" if self.song_queue else "no songs currently in queue.")
+        if not self.song_queue:
+            await ctx.send("no songs currently in queue.")
+            return
+        songs = discord.Embed(colour=random.randint(0, 0xFFFFFF),
+                              title="song queue")
+        for index, track in enumerate(self.song_queue):
+            songs.add_field(name=f"track title at index {index}",
+                            value=track.get("title") or "title not found",
+                            inline=False)
+        await ctx.send(embed=songs)
 
     @commands.command(aliases=["ms", "currently_playing", "cps"])
     async def music_status(self, ctx):
         """Displays the currently playing song"""
 
+        status = discord.Embed(colour=random.randint(0, 0xFFFFFF),
+                               title="music status")
         if ctx.voice_client is None:
-            await ctx.send("bot is not currently playing anything.")
+            status.add_field(name="status", value="not playing")
         elif ctx.voice_client.is_paused():
-            await ctx.send(
-                f"currently playing (paused){' on loop' if self.looping else ''}: `{self.playing.get('title') or 'title not found'}`."
-            )
+            status.add_field(
+                name="track title",
+                value=self.playing.get("title") or "title not found",
+                inline=False).add_field(
+                    name="status", value="paused", inline=True).add_field(
+                        name="looping",
+                        value="no" if self.looping is None else "yes",
+                        inline=True).add_field(name="volume",
+                                               value=f"{self.volume_level}%",
+                                               inline=True)
         elif ctx.voice_client.is_playing():
-            await ctx.send(
-                f"currently playing{' on loop' if self.looping else ''}: `{self.playing.get('title') or 'title not found'}`."
-            )
+            status.add_field(
+                name="track title",
+                value=self.playing.get("title") or "title not found",
+                inline=False).add_field(
+                    name="status", value="playing", inline=True).add_field(
+                        name="looping",
+                        value="no" if self.looping is None else "yes",
+                        inline=True).add_field(name="volume",
+                                               value=f"{self.volume_level}%",
+                                               inline=True)
         else:
-            await ctx.send(
-                "bot connected to voice, but not currently playing anything (should never happen)."
-            )
+            status.add_field(
+                name="status",
+                value=
+                "not playing but connected [ERROR STATE SHOULD NEVER OCCUR]")
+        await ctx.send(embed=status)
 
     @commands.command(aliases=["rs"])
     async def remove_song(self, ctx, song_index: int):
@@ -204,7 +239,6 @@ class Music(commands.Cog):
     async def insert_song(self, ctx, song_index: int, *, url: str):
         """Insert a song into the song queue at a given index"""
 
-        await ctx.trigger_typing()
         if song_index < 0 or len(self.song_queue) <= song_index:
             await ctx.send(
                 f"supplied index `{song_index}` is not valid for current queue."
@@ -224,7 +258,6 @@ class Music(commands.Cog):
     async def clear_queue(self, ctx):
         """Clears current song queue"""
 
-        await ctx.trigger_typing()
         self.song_queue.clear()
         await ctx.send("cleared current song queue.")
 
@@ -245,11 +278,12 @@ class Music(commands.Cog):
 
     @commands.command(aliases=["vol"])
     @check_playing
-    async def volume(self, ctx, volume: int):
+    async def volume(self, ctx, new_vol: int):
         """Set volume to a different level"""
 
-        ctx.voice_client.source.volume = volume / 100
-        await ctx.send(f"changed volume to {volume}%.")
+        self.volume_level = new_vol
+        ctx.voice_client.source.volume = new_vol / 100
+        await ctx.send(f"changed volume to {self.volume_level}%.")
 
     @commands.command()
     @check_playing
@@ -283,7 +317,6 @@ class Music(commands.Cog):
         If no one else is present in the current channel, and
         author is in a different channel, moves to that one"""
 
-        await ctx.trigger_typing()
         if ctx.voice_client is None or not ctx.voice_client.is_paused():
             await ctx.send("bot is not currently paused in a voice channel.")
         elif ctx.author.voice is None:
