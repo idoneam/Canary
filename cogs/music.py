@@ -221,7 +221,9 @@ class Music(commands.Cog):
                     timeout=60.0,
                     check=partial(self.check_reaction, queue_msg))
             except asyncio.TimeoutError:
-                queue_embed.title += " (timed out)"
+                for reaction in QUEUE_ACTIONS:
+                    await queue_msg.remove_reaction(reaction, self.bot.user)
+                queue_embed.title += " (no longer responsive)"
                 await queue_msg.edit(embed=queue_embed)
                 break
             new_index = QUEUE_ACTIONS[str(react)](curr_index, max_index)
