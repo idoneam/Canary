@@ -22,6 +22,7 @@ urllib3 = ">=1.25.3"
 feedparser = "^6.0.2"
 regex = "^2021.3.17"
 googletrans = "==4.0.0rc1"
+python-dotenv="^0.16.0"
 
 [tool.poetry.dev-dependencies]
 yapf = "==0.31.0"

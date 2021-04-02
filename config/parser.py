@@ -19,9 +19,10 @@
 
 import codecs
 import configparser
-
+from dotenv import load_dotenv
 import logging
-import decimal    # Currency
+import decimal
+import os
 
 LOG_LEVELS = {
     'critical': logging.CRITICAL,
@@ -36,15 +37,20 @@ LOG_LEVELS = {
 class Parser:
     def __init__(self):
         self.configfile = './config/config.ini'
+        load_dotenv()
 
         config = configparser.ConfigParser()
         config.read_file(codecs.open(self.configfile, "r", "utf-8-sig"))
 
         # Discord token
-        self.discord_key = config['Discord']['Key']
+        self.discord_key = os.environ.get("KEY") or None
 
         # Server configs
-        self.server_id = int(config['Server']['ServerID'])
+        try:
+            self.server_id = int(os.environ.get("SERVER_ID") or "")
+        except ValueError:
+            self.server_id = None
+
         self.command_prefix = [
             s for s in config['Server']['CommandPrefix'].strip().split(',')
         ]
@@ -61,22 +67,18 @@ class Parser:
         self.log_file = config['Logging']['LogFile']
         loglevel = config['Logging']['LogLevel'].lower()
         self.log_level = LOG_LEVELS.get(loglevel, logging.WARNING)
-        if config['Logging']['DevLogWebhookID'] \
-                and config['Logging']['DevLogWebhookToken']:
-            self.dev_log_webhook_id = int(config['Logging']['DevLogWebhookID'])
-            self.dev_log_webhook_token = config['Logging'][
-                'DevLogWebhookToken']
-        else:
+
+        try:
+            self.dev_log_webhook_id = int(os.environ.get("DEV_ID") or "")
+        except ValueError:
             self.dev_log_webhook_id = None
-            self.dev_log_webhook_token = None
-        if config['Logging']['ModLogWebhookID'] \
-                and config['Logging']['ModLogWebhookToken']:
-            self.mod_log_webhook_id = int(config['Logging']['ModLogWebhookID'])
-            self.mod_log_webhook_token = config['Logging'][
-                'ModLogWebhookToken']
-        else:
+        self.dev_log_webhook_token = os.environ.get("DEV_TOKEN") or None
+
+        try:
+            self.mod_log_webhook_id = int(os.environ.get("MOD_ID") or "")
+        except ValueError:
             self.mod_log_webhook_id = None
-            self.mod_log_webhook_token = None
+        self.mod_log_webhook_token = os.environ.get("MOD_TOKEN") or None
 
         # Welcome + Farewell messages
         self.welcome = config['Greetings']['Welcome'].split('\n')
