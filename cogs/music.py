@@ -20,7 +20,6 @@ import random
 from functools import wraps, partial
 from collections import deque
 import discord
-from discord import colour
 import youtube_dl
 from discord.ext import commands
 
@@ -48,13 +47,13 @@ QUEUE_ACTIONS = {
 def check_playing(func):
     @wraps(func)
     async def wrapper(self, ctx, *args, **kwargs):
-        await ctx.trigger_typing()
         if self.playing is None or ctx.voice_client is None or (
                 not self.song_lock.locked()):
             await ctx.send(
                 "bot is not currently playing anything to a voice channel.")
         elif (ctx.author.voice is None
-              or ctx.author.voice.channel != ctx.voice_client.channel):
+              or ctx.author.voice.channel != ctx.voice_client.channel) and len(
+                  ctx.voice_client.channel.members) > 1:
             await ctx.send(
                 "you must be listening to music with the bot do this.")
         else:
