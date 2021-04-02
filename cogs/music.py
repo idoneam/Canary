@@ -17,7 +17,7 @@
 
 import asyncio
 import random
-from functools import wraps
+from functools import wraps, partial
 from collections import deque
 import discord
 import youtube_dl
@@ -66,7 +66,7 @@ class Music(commands.Cog):
 
     async def get_info(self, url):
         return await self.bot.loop.run_in_executor(
-            None, lambda: YTDL.extract_info(url, download=False))
+            None, partial(YTDL.extract_info, url, download=False))
 
     @commands.command()
     async def play(self, ctx, *, url: str = None):
