@@ -113,6 +113,6 @@ ENV/
 Main_flymake.py
 marty_env
 .idea/
+.vscode/
 tmp/
 data/runtime/*
-.vscode/settings.json
