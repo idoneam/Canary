@@ -20,6 +20,7 @@ import random
 from functools import wraps, partial
 from collections import deque
 import discord
+from discord import colour
 import youtube_dl
 from discord.ext import commands
 
@@ -35,6 +36,13 @@ YTDL = youtube_dl.YoutubeDL({
     "default_search": "auto",
     "geo_bypass": True,
 })
+
+QUEUE_ACTIONS = {
+    "⏪": lambda _i, _m: 0,
+    "◀": lambda i, _m: max(0, i - 1),
+    "▶": lambda i, m: min(i + 1, m),
+    "⏩": lambda _i, m: m
+}
 
 
 def check_playing(func):
@@ -64,9 +72,14 @@ class Music(commands.Cog):
         self.looping = None
         self.volume_level: int = 100
 
-    async def get_info(self, url):
+    async def get_info(self, url: str):
         return await self.bot.loop.run_in_executor(
             None, partial(YTDL.extract_info, url, download=False))
+
+    def check_reaction(self, embed_msg: discord.Message,
+                       reaction: discord.Reaction, user: discord.User):
+        return user != self.bot.user and reaction.message.id == embed_msg.id and str(
+            reaction) in QUEUE_ACTIONS
 
     @commands.command()
     async def play(self, ctx, *, url: str = None):
@@ -113,7 +126,7 @@ class Music(commands.Cog):
             data = await self.get_info(url)
             entries = data.get("entries", [data])
             for track in reversed(entries):
-                self.song_queue.insert(0, track)
+                self.song_queue.insert(0, (track, str(ctx.author)))
             if not in_main:
                 ctx.voice_client.stop()
 
@@ -131,16 +144,18 @@ class Music(commands.Cog):
                     colour=random.randint(0, 0xFFFFFF),
                     title="now playing").add_field(
                         name="track title",
-                        value=self.playing.get("title") or "title not found",
+                        value=self.playing[0].get("title")
+                        or "title not found",
                         inline=False).add_field(
                             name="volume",
                             value=f"{self.volume_level}%",
                             inline=True).add_field(
                                 name="looping",
                                 value="no" if self.looping is None else "yes",
-                                inline=True)
+                                inline=True).set_footer(
+                                    text=f"submitted by: {self.playing[1]}")
                 ctx.voice_client.play(discord.PCMVolumeTransformer(
-                    discord.FFmpegPCMAudio(self.playing["url"],
+                    discord.FFmpegPCMAudio(self.playing[0]["url"],
                                            before_options=FFMPEG_BEFORE_OPTS,
                                            options=FFMPEG_OPTS),
                     self.volume_level / 100),
@@ -162,97 +177,145 @@ class Music(commands.Cog):
     async def loop(self, ctx):
         """Changes looping state"""
 
-        self.looping = self.playing if self.looping is None else None
-        await ctx.send(
-            f"`{self.playing.get('title') or 'title not found'}` is now set to{' ' if self.looping else ' no longer '}loop."
-        )
+        if self.looping is None:
+            self.looping = self.playing
+            await ctx.send("current song will now loop.")
+        else:
+            self.looping = None
+            await ctx.send("current song will now no longer loop.")
 
     @commands.command(aliases=["pq"])
-    async def print_queue(self, ctx):
+    async def print_queue(self, ctx: commands.Context):
         """Displays the current song queue"""
 
+        queue_embed = discord.Embed(
+            colour=random.randint(0, 0xFFFFFF),
+            title=
+            f"song queue as of {ctx.message.created_at.strftime('%Y-%m-%d %H:%M:%S')}"
+        )
         if not self.song_queue:
-            await ctx.send("no songs currently in queue.")
+            queue_embed.add_field(name="song queue status",
+                                  value="song queue is currently empty")
+            await ctx.send(embed=queue_embed)
             return
-        songs = discord.Embed(colour=random.randint(0, 0xFFFFFF),
-                              title="song queue")
-        for index, track in enumerate(self.song_queue):
-            songs.add_field(name=f"track title at index {index}",
-                            value=track.get("title") or "title not found",
-                            inline=False)
-        await ctx.send(embed=songs)
+        curr_index: int = 0
+        change_state: bool = True
+        queue_copy = list(self.song_queue)
+        max_index = len(queue_copy) - 1
+        queue_embed.description = f"song queue length: {max_index + 1}"
+        queue_msg = await ctx.send(embed=queue_embed)
+        for reaction in QUEUE_ACTIONS:
+            await queue_msg.add_reaction(reaction)
+        while True:
+            if change_state:
+                queue_embed.clear_fields()
+                track, user = queue_copy[curr_index]
+                queue_embed.add_field(
+                    name=f"track title at index {curr_index}",
+                    value=track.get("title") or "title not found").set_footer(
+                        text=f"submitted by: {user}")
+                await queue_msg.edit(embed=queue_embed)
+            try:
+                react, author = await self.bot.wait_for(
+                    "reaction_add",
+                    timeout=60.0,
+                    check=partial(self.check_reaction, queue_msg))
+            except asyncio.TimeoutError:
+                queue_embed.title += " (timed out)"
+                await queue_msg.edit(embed=queue_embed)
+                break
+            new_index = QUEUE_ACTIONS[str(react)](curr_index, max_index)
+            change_state = new_index != curr_index
+            curr_index = new_index
+            await react.remove(author)
 
     @commands.command(aliases=["ms", "currently_playing", "cps"])
     async def music_status(self, ctx):
         """Displays the currently playing song"""
 
-        status = discord.Embed(colour=random.randint(0, 0xFFFFFF),
-                               title="music status")
+        status_embed = discord.Embed(colour=random.randint(0, 0xFFFFFF),
+                                     title="music status")
         if ctx.voice_client is None:
-            status.add_field(name="status", value="not playing")
-        elif ctx.voice_client.is_paused():
-            status.add_field(
+            status_embed.add_field(name="status", value="not playing")
+            await ctx.send(embed=status_embed)
+            return
+        playing = ctx.voice_client.is_playing()
+        paused = ctx.voice_client.is_paused()
+        if playing or paused:
+            status_embed.add_field(
                 name="track title",
-                value=self.playing.get("title") or "title not found",
+                value=self.playing[0].get("title") or "title not found",
                 inline=False).add_field(
-                    name="status", value="paused", inline=True).add_field(
+                    name="volume", value=f"{self.volume_level}%",
+                    inline=True).add_field(
                         name="looping",
                         value="no" if self.looping is None else "yes",
-                        inline=True).add_field(name="volume",
-                                               value=f"{self.volume_level}%",
-                                               inline=True)
-        elif ctx.voice_client.is_playing():
-            status.add_field(
-                name="track title",
-                value=self.playing.get("title") or "title not found",
-                inline=False).add_field(
-                    name="status", value="playing", inline=True).add_field(
-                        name="looping",
-                        value="no" if self.looping is None else "yes",
-                        inline=True).add_field(name="volume",
-                                               value=f"{self.volume_level}%",
-                                               inline=True)
+                        inline=True).set_footer(
+                            text=f"submitted by: {self.playing[1]}")
+            if playing:
+                status_embed.insert_field_at(1,
+                                             name="status",
+                                             value="playing",
+                                             inline=True)
+            else:
+                status_embed.insert_field_at(1,
+                                             name="status",
+                                             value="paused",
+                                             inline=True)
         else:
-            status.add_field(
+            status_embed.add_field(
                 name="status",
                 value=
                 "not playing but connected [ERROR STATE SHOULD NEVER OCCUR]")
-        await ctx.send(embed=status)
+        await ctx.send(embed=status_embed)
 
     @commands.command(aliases=["rs"])
     async def remove_song(self, ctx, song_index: int):
         """Remove a song from the song queue by index"""
 
-        await ctx.trigger_typing()
         if song_index < 0 or len(self.song_queue) <= song_index:
             await ctx.send(
-                f"supplied index `{song_index}` is not valid for current queue."
-            )
+                f"supplied index {song_index} is not valid for current queue.")
             return
-        title = self.song_queue[song_index].get("title")
+        removed = discord.Embed(
+            colour=random.randint(0, 0xFFFFFF),
+            title=f"removed track at index {song_index}").add_field(
+                name="track name",
+                value=self.song_queue[song_index][0].get("title")
+                or "title not found").set_footer(
+                    text=f"removed by: {ctx.author}")
         del self.song_queue[song_index]
-        await ctx.send(
-            f"`{title or 'title not found'}` at index `{song_index}` was removed from the queue."
-        )
+        await ctx.send(embed=removed)
 
     @commands.command(aliases=["iqs"])
     async def insert_song(self, ctx, song_index: int, *, url: str):
         """Insert a song into the song queue at a given index"""
 
+        await ctx.trigger_typing()
         if song_index < 0 or len(self.song_queue) <= song_index:
             await ctx.send(
-                f"supplied index `{song_index}` is not valid for current queue."
-            )
+                f"supplied index {song_index} is not valid for current queue.")
             return
         data = await self.get_info(url)
         entries = data.get("entries", [data])
+        author_str = str(ctx.author)
         for track in reversed(entries):
-            self.song_queue.insert(song_index, track)
-        await ctx.send(
-            f"inserted playlist `{data.get('title') or 'title not found'}` at position `{song_index}`."
-            if len(entries) > 1 else
-            f"inserted track `{entries[0].get('title') or 'title not found'}` at position `{song_index}`."
-        )
+            self.song_queue.insert(song_index, (track, author_str))
+        if len(entries) > 1:
+            inserted = discord.Embed(
+                colour=random.randint(0, 0xFFFFFF),
+                title=f"inserted playlist at index {song_index}")
+            inserted.add_field(name="playlist name",
+                               value=data.get("title") or "title not found")
+        else:
+            inserted = discord.Embed(
+                colour=random.randint(0, 0xFFFFFF),
+                title=f"inserted track at index {song_index}")
+            inserted.add_field(name="track name",
+                               value=entries[0].get("title")
+                               or "title not found")
+        inserted.set_footer(text=f"submitted by: {author_str}")
+        await ctx.send(embed=inserted)
 
     @commands.command(aliases=["cq"])
     async def clear_queue(self, ctx):
@@ -268,15 +331,24 @@ class Music(commands.Cog):
         await ctx.trigger_typing()
         data = await self.get_info(url)
         entries = data.get("entries", [data])
+        author_str = str(ctx.author)
         for track in entries:
-            self.song_queue.append(track)
-        await ctx.send(
-            f"queued up playlist: `{data.get('title') or 'title not found'}`."
-            if len(entries) > 1 else
-            f"queued up track: `{entries[0].get('title') or 'title not found'}`."
-        )
+            self.song_queue.append((track, author_str))
+        if len(entries) > 1:
+            queued = discord.Embed(colour=random.randint(0, 0xFFFFFF),
+                                   title="queued up playlist")
+            queued.add_field(name="playlist name",
+                             value=data.get("title") or "title not found")
+        else:
+            queued = discord.Embed(colour=random.randint(0, 0xFFFFFF),
+                                   title="queued up track")
+            queued.add_field(name="track name",
+                             value=entries[0].get("title")
+                             or "title not found")
+        queued.set_footer(text=f"submitted by: {author_str}")
+        await ctx.send(embed=queued)
 
-    @commands.command(aliases=["vol"])
+    @commands.command(aliases=["vol", "v"])
     @check_playing
     async def volume(self, ctx, new_vol: int):
         """Set volume to a different level"""
