@@ -79,10 +79,10 @@ class Games(commands.Cog):
     async def hangman(self, ctx, command: Optional[str] = None):
         """
         Play a nice game of hangman with internet strangers!
-        Guesses must be single letters (interpreted in a case insensitive manner) or the entire correct word
-        Can either be called with "?{hm|hangman}" or "?{hm|hangman} x", where x is a valid category command
-        Get all categories/help by typing "?{hm|hangman} help"
-        You can quit an ongoing game by typing "?{hm|hangman} quit"
+        Guesses must be single letters (interpreted in a case insensitive manner) or the entire correct word.
+        Can either be called with "?{hm|hangman}" or "?{hm|hangman} x", where x is a valid category command.
+        See all commands and game rules by typing "?{hm|hangman} help".
+        Quit an ongoing game by typing "?{hm|hangman} quit".
         """
 
         await ctx.trigger_typing()
