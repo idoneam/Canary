@@ -109,7 +109,8 @@ class Games(commands.Cog):
         try:
             word_list, pretty_name = self.hangman_dict[category]
         except KeyError:
-            await ctx.send(self.help_str())
+            await ctx.send(f"command `{command}` is not valid\n" +
+                           "\n".join(self.help_str().split("\n")[1:]))
             return
 
         if ctx.message.channel in self.hm_locks:
@@ -130,6 +131,7 @@ class Games(commands.Cog):
 
         msg_check = partial(self.hm_msg_check, ctx.message.channel,
                             game_state.lword)
+
         await ctx.send(embed=game_state.embed)
 
         while True:
