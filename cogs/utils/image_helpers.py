@@ -8,7 +8,6 @@ import concurrent.futures
 import math
 from functools import partial
 from io import BytesIO
-import time
 
 MAX_IMAGE_SIZE = 8 * (10**6)
 IMAGE_HISTORY_LIMIT = 50
@@ -103,26 +102,17 @@ def bounded_radius(radius: int):
 
 
 def polar(image):
-    """
-    Transform Cartesian to polar coordinates.
-    """
     return np.rot90(
         cv_linear_polar(image, cv2.INTER_LINEAR + cv2.WARP_FILL_OUTLIERS), -1)
 
 
 def cart(image):
-    """
-    Transform from polar to Cartesian coordinates.
-    """
     return cv_linear_polar(
         np.rot90(image),
         cv2.INTER_LINEAR + cv2.WARP_FILL_OUTLIERS + cv2.WARP_INVERSE_MAP)
 
 
 def blur(image, iterations: int):
-    """
-    Blur the image
-    """
     iterations = max(0, min(iterations, 100))
     for _ in range(iterations):
         image = cv2.GaussianBlur(image, (5, 5), 0)
@@ -130,27 +120,18 @@ def blur(image, iterations: int):
 
 
 def hblur(image, radius: int):
-    """
-    Blur the image horizontally
-    """
     radius = bounded_radius(radius)
     image = cv2.blur(image, (radius, 1))
     return image
 
 
 def vblur(image, radius: int):
-    """
-    Blur the image vertically
-    """
     radius = bounded_radius(radius)
     image = cv2.blur(image, (1, radius))
     return image
 
 
 def rblur(image, radius: int):
-    """
-    Radial blur
-    """
     radius = bounded_radius(radius)
     image = cv_linear_polar(image, cv2.INTER_LINEAR + cv2.WARP_FILL_OUTLIERS)
     image = cv2.blur(image, (radius, 1))
@@ -161,10 +142,6 @@ def rblur(image, radius: int):
 
 
 def cblur(image, radius: int):
-    """
-    Circular blur
-    """
-
     radius = bounded_radius(radius)
     half_radius = radius // 2
 
@@ -195,10 +172,6 @@ def cblur(image, radius: int):
 
 
 def deepfry(image, iterations: int):
-    """
-    Deep fry an image, mhmm
-    """
-
     iterations = max(0, min(iterations, 20))
     kernel = np.array([[0, 0, 0], [0, 1, 0], [
         0, 0, 0
@@ -222,10 +195,6 @@ def deepfry(image, iterations: int):
 
 
 def noise(image, iterations: int):
-    """
-    Add some noise to tha image!!
-    """
-
     iterations = max(0, min(iterations, 20))
 
     for _ in range(iterations):

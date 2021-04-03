@@ -34,46 +34,73 @@ class Images(commands.Cog):
 
     @commands.command()
     async def polar(self, ctx):
+        """
+        Transform Cartesian to polar coordinates.
+        """
         await image_helpers.fitler_image(self.bot.loop, image_helpers.polar,
                                          ctx)
 
     @commands.command()
     async def cart(self, ctx):
+        """
+        Transform from polar to Cartesian coordinates.
+        """
         await image_helpers.fitler_image(self.bot.loop, image_helpers.cart,
                                          ctx)
 
     @commands.command()
     async def blur(self, ctx, radius: int = 10):
+        """
+        Blur the image
+        """
         await image_helpers.fitler_image(self.bot.loop, image_helpers.blur,
                                          ctx, radius)
 
     @commands.command(aliases=['left', 'right'])
     async def hblur(self, ctx, radius: int = 10):
+        """
+        Blur the image horizontally
+        """
         await image_helpers.fitler_image(self.bot.loop, image_helpers.hblur,
                                          ctx, radius)
 
     @commands.command(aliases=['up', 'down'])
     async def vlur(self, ctx, radius: int = 10):
+        """
+        Blur the image vertically
+        """
         await image_helpers.fitler_image(self.bot.loop, image_helpers.vblur,
                                          ctx, radius)
 
     @commands.command(aliases=['zoom', 'radial'])
     async def rblur(self, ctx, radius: int = 10):
+        """
+        Radial blur
+        """
         await image_helpers.fitler_image(self.bot.loop, image_helpers.rblur,
                                          ctx, radius)
 
     @commands.command(aliases=['circle', 'circular', 'spin'])
     async def cblur(self, ctx, radius: int = 10):
+        """
+        Circular blur
+        """
         await image_helpers.fitler_image(self.bot.loop, image_helpers.cblur,
                                          ctx, radius)
 
     @commands.command(aliases=['df', 'dfry', 'fry'])
     async def deepfry(self, ctx, iterations: int = 1):
+        """
+        Deep fry an image, mhmm
+        """
         await image_helpers.fitler_image(self.bot.loop, image_helpers.deepfry,
                                          ctx, iterations)
 
     @commands.command()
     async def noise(self, ctx, iterations: int = 1):
+        """
+        Add some noise to tha image!!
+        """
         await image_helpers.fitler_image(self.bot.loop, image_helpers.noise,
                                          ctx, iterations)
 
