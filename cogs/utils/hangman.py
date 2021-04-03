@@ -68,8 +68,6 @@ HANG_LIST: list[str] = [
 ========"""
 ]
 
-LOSS_MISTAKES: int = len(HANG_LIST) - 1
-
 
 def mk_animal_list() -> list[tuple[str, str]]:
     animal_list_soup = BeautifulSoup(
@@ -213,7 +211,7 @@ class HangmanState:
         self.num_mistakes += 1
         self.embed.set_footer(text=self.last_line)
 
-        return self.num_mistakes < LOSS_MISTAKES
+        return self.num_mistakes < 6
 
     def add_msg(self, new_msg):
         self.player_msg_list.append(new_msg)

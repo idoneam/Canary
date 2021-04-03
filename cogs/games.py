@@ -33,7 +33,7 @@ from typing import Optional
 from functools import partial
 from .utils.dice_roll import dice_roll
 from .utils.clamp_default import clamp_default
-from .utils.hangman import HangmanState, LOSS_MISTAKES
+from .utils.hangman import HangmanState
 from .currency import HANGMAN_REWARD
 
 ROLL_PATTERN = re.compile(r'^(\d*)d(\d*)([+-]?\d*)$')
@@ -62,9 +62,9 @@ class Games(commands.Cog):
         cat_list: str = ", ".join(
             f"`{hm_cat}` (length: {len(self.hangman_dict[hm_cat][0])})"
             for hm_cat in sorted(self.hangman_dict.keys()))
-        return (f"rules: {LOSS_MISTAKES - 1} wrong guesses are allowed, "
-                f"guesses must be either the entire correct word or a "
-                f"single letter (interpreted in a case insensitive manner)\n"
+        return ("rules: 5 wrong guesses are allowed, guesses "
+                "must be either the entire correct word or a "
+                "single letter (interpreted in a case insensitive manner)\n"
                 f"here is a list of valid category commands: {cat_list}\n"
                 "other commands are: `quit` (stops current game) "
                 "and `help` (sends this message)")
@@ -81,8 +81,13 @@ class Games(commands.Cog):
         Play a nice game of hangman with internet strangers!
         Guesses must be single letters (interpreted in a case insensitive manner) or the entire correct word.
         Can either be called with "?{hm|hangman}" or "?{hm|hangman} x", where x is a valid category command.
-        See all commands and game rules by typing "?{hm|hangman} help".
+        See all commands by typing "?{hm|hangman} help".
         Quit an ongoing game by typing "?{hm|hangman} quit".
+
+        Rules:
+            - 5 wrong guesses allowed
+            - for a guess to be registered, it must either be the full correct word or a single letter
+            - guesses are interpreted in a case insensitive manner
         """
 
         await ctx.trigger_typing()
