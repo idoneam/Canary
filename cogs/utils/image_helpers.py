@@ -16,18 +16,14 @@ def apply_transform(transform, buffer, size, max_size, ext, is_png, *args):
     ratio = (max_size / size) * 100 if size > max_size else None
 
     if ratio:
-        _, buffer = cv2.imencode(
-            f".{ext}", result,
-            (cv2.IMWRITE_JPEG_QUALITY if is_png else cv2.IMWRITE_JPEG_QUALITY,
-             ratio))
+        _, buffer = cv2.imencode(f".{ext}", result,
+                                 (cv2.CV_IMWRITE_PNG_COMPRESSION if is_png else
+                                  cv2.IMWRITE_JPEG_QUALITY, ratio))
         result = cv2.imdecode(buffer, cv2.IMREAD_UNCHANGED)
 
     result = transform(result, *args)
 
-    _, buffer = cv2.imencode(
-        f".{ext}", result,
-        (cv2.IMWRITE_JPEG_QUALITY if is_png else cv2.IMWRITE_JPEG_QUALITY,
-         100))
+    _, buffer = cv2.imencode(f".{ext}", result)
 
     return buffer
 
