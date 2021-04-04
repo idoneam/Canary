@@ -142,6 +142,13 @@ class Parser:
                    key=lambda c: c[0])
         }
 
+        self.images = {
+            "max_image_size": int(config["Images"]["MaxImageSize"]),
+            "image_history_limit": int(config["Images"]["ImageHistoryLimit"]),
+            "max_radius": int(config["Images"]["MaxRadius"]),
+            "max_iterations": int(config["Images"]["MaxIterations"]),
+        }
+
         roles = {
             "pronouns": config["Roles"]["Pronouns"],
             "fields": config["Roles"]["Fields"],

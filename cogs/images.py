@@ -26,6 +26,10 @@ from .utils import image_helpers
 class Images(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        self.max_size = self.bot.config.images["max_image_size"]
+        self.hist_lim = self.bot.config.images["image_history_limit"]
+        self.max_rad = self.bot.config.images["max_radius"]
+        self.max_itr = self.bot.config.images["max_iterations"]
 
     @commands.Cog.listener()
     async def on_ready(self):
@@ -38,7 +42,7 @@ class Images(commands.Cog):
         Transform Cartesian to polar coordinates.
         """
         await image_helpers.fitler_image(self.bot.loop, image_helpers.polar,
-                                         ctx)
+                                         ctx, self.hist_lim, self.max_size)
 
     @commands.command()
     async def cart(self, ctx):
@@ -46,15 +50,15 @@ class Images(commands.Cog):
         Transform from polar to Cartesian coordinates.
         """
         await image_helpers.fitler_image(self.bot.loop, image_helpers.cart,
-                                         ctx)
+                                         ctx, self.hist_lim, self.max_size)
 
     @commands.command()
-    async def blur(self, ctx, radius: int = 10):
+    async def blur(self, ctx, iterations: int = 1):
         """
         Blur the image
         """
         await image_helpers.fitler_image(self.bot.loop, image_helpers.blur,
-                                         ctx, radius)
+                                         ctx, self.hist_lim, self.max_size, iterations, self.max_itr)
 
     @commands.command(aliases=['left', 'right'])
     async def hblur(self, ctx, radius: int = 10):
@@ -62,7 +66,7 @@ class Images(commands.Cog):
         Blur the image horizontally
         """
         await image_helpers.fitler_image(self.bot.loop, image_helpers.hblur,
-                                         ctx, radius)
+                                         ctx, self.hist_lim, self.max_size, radius, self.max_rad)
 
     @commands.command(aliases=['up', 'down'])
     async def vblur(self, ctx, radius: int = 10):
@@ -70,7 +74,7 @@ class Images(commands.Cog):
         Blur the image vertically
         """
         await image_helpers.fitler_image(self.bot.loop, image_helpers.vblur,
-                                         ctx, radius)
+                                         ctx, self.hist_lim, self.max_size, radius, self.max_rad)
 
     @commands.command(aliases=['zoom', 'radial'])
     async def rblur(self, ctx, radius: int = 10):
@@ -78,7 +82,7 @@ class Images(commands.Cog):
         Radial blur
         """
         await image_helpers.fitler_image(self.bot.loop, image_helpers.rblur,
-                                         ctx, radius)
+                                         ctx, self.hist_lim, self.max_size, radius, self.max_rad)
 
     @commands.command(aliases=['circle', 'circular', 'spin'])
     async def cblur(self, ctx, radius: int = 10):
@@ -86,7 +90,7 @@ class Images(commands.Cog):
         Circular blur
         """
         await image_helpers.fitler_image(self.bot.loop, image_helpers.cblur,
-                                         ctx, radius)
+                                         ctx, self.hist_lim, self.max_size, radius, self.max_rad)
 
     @commands.command(aliases=['df', 'dfry', 'fry'])
     async def deepfry(self, ctx, iterations: int = 1):
@@ -94,7 +98,7 @@ class Images(commands.Cog):
         Deep fry an image, mhmm
         """
         await image_helpers.fitler_image(self.bot.loop, image_helpers.deepfry,
-                                         ctx, iterations)
+                                         ctx, self.hist_lim, self.max_size, iterations, self.max_itr)
 
     @commands.command()
     async def noise(self, ctx, iterations: int = 1):
@@ -102,7 +106,7 @@ class Images(commands.Cog):
         Add some noise to tha image!!
         """
         await image_helpers.fitler_image(self.bot.loop, image_helpers.noise,
-                                         ctx, iterations)
+                                         ctx, self.hist_lim, self.max_size, iterations, self.max_itr)
 
 
 def setup(bot):

@@ -9,16 +9,11 @@ import math
 from functools import partial
 from io import BytesIO
 
-MAX_IMAGE_SIZE = 8 * (10**6)
-IMAGE_HISTORY_LIMIT = 50
-MAX_RADIUS = 500
-MAX_ITERATIONS = 20
 
-
-def apply_transform(transform, buffer, size, ext, is_png, *args):
+def apply_transform(transform, buffer, size, max_size, ext, is_png, *args):
     img_bytes = np.asarray(bytearray(buffer.read()), np.uint8)
     result = cv2.imdecode(img_bytes, cv2.IMREAD_UNCHANGED)
-    ratio = (MAX_IMAGE_SIZE / size) * 100 if size > MAX_IMAGE_SIZE else None
+    ratio = (max_size / size) * 100 if size > max_size else None
 
     if ratio:
         _, buffer = cv2.imencode(
@@ -37,9 +32,9 @@ def apply_transform(transform, buffer, size, ext, is_png, *args):
     return buffer
 
 
-async def fitler_image(loop, transform, ctx, *args):
+async def fitler_image(loop, transform, ctx, history_limit, max_size, *args):
 
-    att = await get_attachment(ctx)
+    att = await get_attachment(ctx, history_limit)
     if att is None:
         await ctx.send("no image could be found (only attached image files"
                        " can be detected) or message could not be found")
@@ -65,7 +60,7 @@ async def fitler_image(loop, transform, ctx, *args):
         with concurrent.futures.ProcessPoolExecutor() as pool:
             buffer = await loop.run_in_executor(
                 pool,
-                partial(apply_transform, transform, buffer, att.size, ext,
+                partial(apply_transform, transform, buffer, att.size, max_size, ext,
                         is_png, *args))
 
     except Exception as exc:    # TODO: Narrow the exception
@@ -77,7 +72,7 @@ async def fitler_image(loop, transform, ctx, *args):
         await ctx.send(file=discord.File(fp=BytesIO(buffer), filename=fn))
 
 
-async def get_attachment(ctx: commands.Context):
+async def get_attachment(ctx: commands.Context, lim: int):
     """
     Returns either the attachment of the message to which
     the invoking message is replying to, or, if that fails
@@ -87,7 +82,7 @@ async def get_attachment(ctx: commands.Context):
     if (ctx.message.reference and ctx.message.reference.resolved
             and ctx.message.reference.resolved.attachments):
         return ctx.message.reference.resolved.attachments[0]
-    async for msg in ctx.message.channel.history(limit=IMAGE_HISTORY_LIMIT):
+    async for msg in ctx.message.channel.history(limit=lim):
         if msg.attachments:
             return msg.attachments[0]
     return None
@@ -110,27 +105,27 @@ def cart(image):
         cv2.INTER_LINEAR + cv2.WARP_FILL_OUTLIERS + cv2.WARP_INVERSE_MAP)
 
 
-def blur(image, iterations: int):
-    iterations = max(0, min(iterations, MAX_ITERATIONS))
+def blur(image, iterations: int, max_iter: int):
+    iterations = max(0, min(iterations, max_iter))
     for _ in range(iterations):
         image = cv2.GaussianBlur(image, (5, 5), 0)
     return image
 
 
-def hblur(image, radius: int):
-    radius = max(1, min(radius, MAX_RADIUS))
+def hblur(image, radius: int, max_rad: int):
+    radius = max(1, min(radius, max_rad))
     image = cv2.blur(image, (radius, 1))
     return image
 
 
-def vblur(image, radius: int):
-    radius = max(1, min(radius, MAX_RADIUS))
+def vblur(image, radius: int, max_rad: int):
+    radius = max(1, min(radius, max_rad))
     image = cv2.blur(image, (1, radius))
     return image
 
 
-def rblur(image, radius: int):
-    radius = max(1, min(radius, MAX_RADIUS))
+def rblur(image, radius: int, max_rad: int):
+    radius = max(1, min(radius, max_rad))
     image = cv_linear_polar(image, cv2.INTER_LINEAR + cv2.WARP_FILL_OUTLIERS)
     image = cv2.blur(image, (radius, 1))
     image = cv_linear_polar(
@@ -139,8 +134,8 @@ def rblur(image, radius: int):
     return image
 
 
-def cblur(image, radius: int):
-    radius = max(1, min(radius, MAX_RADIUS))
+def cblur(image, radius: int, max_rad: int):
+    radius = max(1, min(radius, max_rad))
     half_radius = radius // 2
 
     # determine values for padding
@@ -169,8 +164,8 @@ def cblur(image, radius: int):
     return image
 
 
-def deepfry(image, iterations: int):
-    iterations = max(0, min(iterations, MAX_ITERATIONS))
+def deepfry(image, iterations: int, max_iter: int):
+    iterations = max(0, min(iterations, max_iter))
     kernel = np.array([[0, 0, 0], [0, 1, 0], [
         0, 0, 0
     ]]) + np.array([[0, -1, 0], [-1, 4, -1], [0, -1, 0]]) * 0.3
@@ -192,8 +187,8 @@ def deepfry(image, iterations: int):
     return image
 
 
-def noise(image, iterations: int):
-    iterations = max(0, min(iterations, MAX_ITERATIONS))
+def noise(image, iterations: int, max_iter: int):
+    iterations = max(0, min(iterations, max_iter))
 
     for _ in range(iterations):
         noised = np.std(image) * np.random.random(image.shape)
