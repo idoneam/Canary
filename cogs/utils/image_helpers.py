@@ -60,8 +60,8 @@ async def fitler_image(loop, transform, ctx, history_limit, max_size, *args):
         with concurrent.futures.ProcessPoolExecutor() as pool:
             buffer = await loop.run_in_executor(
                 pool,
-                partial(apply_transform, transform, buffer, att.size, max_size, ext,
-                        is_png, *args))
+                partial(apply_transform, transform, buffer, att.size, max_size,
+                        ext, is_png, *args))
 
     except Exception as exc:    # TODO: Narrow the exception
         await ctx.send("an error has occurred.")

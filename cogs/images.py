@@ -20,7 +20,7 @@ from discord.ext import commands
 
 # misc imports
 import os
-from .utils import image_helpers
+from .utils import image_helpers as ih
 
 
 class Images(commands.Cog):
@@ -41,72 +41,72 @@ class Images(commands.Cog):
         """
         Transform Cartesian to polar coordinates.
         """
-        await image_helpers.fitler_image(self.bot.loop, image_helpers.polar,
-                                         ctx, self.hist_lim, self.max_size)
+        await ih.fitler_image(self.bot.loop, ih.polar, ctx, self.hist_lim,
+                              self.max_size)
 
     @commands.command()
     async def cart(self, ctx):
         """
         Transform from polar to Cartesian coordinates.
         """
-        await image_helpers.fitler_image(self.bot.loop, image_helpers.cart,
-                                         ctx, self.hist_lim, self.max_size)
+        await ih.fitler_image(self.bot.loop, ih.cart, ctx, self.hist_lim,
+                              self.max_size)
 
     @commands.command()
     async def blur(self, ctx, iterations: int = 1):
         """
         Blur the image
         """
-        await image_helpers.fitler_image(self.bot.loop, image_helpers.blur,
-                                         ctx, self.hist_lim, self.max_size, iterations, self.max_itr)
+        await ih.fitler_image(self.bot.loop, ih.blur, ctx, self.hist_lim,
+                              self.max_size, iterations, self.max_itr)
 
     @commands.command(aliases=['left', 'right'])
     async def hblur(self, ctx, radius: int = 10):
         """
         Blur the image horizontally
         """
-        await image_helpers.fitler_image(self.bot.loop, image_helpers.hblur,
-                                         ctx, self.hist_lim, self.max_size, radius, self.max_rad)
+        await ih.fitler_image(self.bot.loop, ih.hblur, ctx, self.hist_lim,
+                              self.max_size, radius, self.max_rad)
 
     @commands.command(aliases=['up', 'down'])
     async def vblur(self, ctx, radius: int = 10):
         """
         Blur the image vertically
         """
-        await image_helpers.fitler_image(self.bot.loop, image_helpers.vblur,
-                                         ctx, self.hist_lim, self.max_size, radius, self.max_rad)
+        await ih.fitler_image(self.bot.loop, ih.vblur, ctx, self.hist_lim,
+                              self.max_size, radius, self.max_rad)
 
     @commands.command(aliases=['zoom', 'radial'])
     async def rblur(self, ctx, radius: int = 10):
         """
         Radial blur
         """
-        await image_helpers.fitler_image(self.bot.loop, image_helpers.rblur,
-                                         ctx, self.hist_lim, self.max_size, radius, self.max_rad)
+        await ih.fitler_image(self.bot.loop, ih.rblur, ctx, self.hist_lim,
+                              self.max_size, radius, self.max_rad)
 
     @commands.command(aliases=['circle', 'circular', 'spin'])
     async def cblur(self, ctx, radius: int = 10):
         """
         Circular blur
         """
-        await image_helpers.fitler_image(self.bot.loop, image_helpers.cblur,
-                                         ctx, self.hist_lim, self.max_size, radius, self.max_rad)
+        await ih.fitler_image(self.bot.loop, ih.cblur, ctx, self.hist_lim,
+                              self.max_size, radius, self.max_rad)
 
     @commands.command(aliases=['df', 'dfry', 'fry'])
     async def deepfry(self, ctx, iterations: int = 1):
         """
         Deep fry an image, mhmm
         """
-        await image_helpers.fitler_image(self.bot.loop, image_helpers.deepfry,
-                                         ctx, self.hist_lim, self.max_size, iterations, self.max_itr)
+        await ih.fitler_image(self.bot.loop, ih.deepfry, ctx, self.hist_lim,
+                              self.max_size, iterations, self.max_itr)
 
     @commands.command()
     async def noise(self, ctx, iterations: int = 1):
         """
         Add some noise to tha image!!
         """
-        await image_helpers.fitler_image(self.bot.loop, image_helpers.noise,
-                                         ctx, self.hist_lim, self.max_size, iterations, self.max_itr)
+        await ih.fitler_image(self.bot.loop, ih.noise, ctx, self.hist_lim,
+                              self.max_size, iterations, self.max_itr)
 
 
 def setup(bot):
