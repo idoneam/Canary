@@ -65,7 +65,7 @@ class Images(commands.Cog):
                                          ctx, radius)
 
     @commands.command(aliases=['up', 'down'])
-    async def vlur(self, ctx, radius: int = 10):
+    async def vblur(self, ctx, radius: int = 10):
         """
         Blur the image vertically
         """

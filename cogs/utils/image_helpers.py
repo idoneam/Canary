@@ -11,6 +11,8 @@ from io import BytesIO
 
 MAX_IMAGE_SIZE = 8 * (10**6)
 IMAGE_HISTORY_LIMIT = 50
+MAX_RADIUS = 500
+MAX_ITERATIONS = 20
 
 
 def apply_transform(transform, buffer, size, ext, is_png, *args):
@@ -97,10 +99,6 @@ def cv_linear_polar(image, flags):
     return cv2.linearPolar(image, (w / 2, h / 2), r, flags)
 
 
-def bounded_radius(radius: int):
-    return max(1, min(radius, 500))
-
-
 def polar(image):
     return np.rot90(
         cv_linear_polar(image, cv2.INTER_LINEAR + cv2.WARP_FILL_OUTLIERS), -1)
@@ -113,26 +111,26 @@ def cart(image):
 
 
 def blur(image, iterations: int):
-    iterations = max(0, min(iterations, 100))
+    iterations = max(0, min(iterations, MAX_ITERATIONS))
     for _ in range(iterations):
         image = cv2.GaussianBlur(image, (5, 5), 0)
     return image
 
 
 def hblur(image, radius: int):
-    radius = bounded_radius(radius)
+    radius = max(1, min(radius, MAX_RADIUS))
     image = cv2.blur(image, (radius, 1))
     return image
 
 
 def vblur(image, radius: int):
-    radius = bounded_radius(radius)
+    radius = max(1, min(radius, MAX_RADIUS))
     image = cv2.blur(image, (1, radius))
     return image
 
 
 def rblur(image, radius: int):
-    radius = bounded_radius(radius)
+    radius = max(1, min(radius, MAX_RADIUS))
     image = cv_linear_polar(image, cv2.INTER_LINEAR + cv2.WARP_FILL_OUTLIERS)
     image = cv2.blur(image, (radius, 1))
     image = cv_linear_polar(
@@ -142,7 +140,7 @@ def rblur(image, radius: int):
 
 
 def cblur(image, radius: int):
-    radius = bounded_radius(radius)
+    radius = max(1, min(radius, MAX_RADIUS))
     half_radius = radius // 2
 
     # determine values for padding
@@ -172,7 +170,7 @@ def cblur(image, radius: int):
 
 
 def deepfry(image, iterations: int):
-    iterations = max(0, min(iterations, 20))
+    iterations = max(0, min(iterations, MAX_ITERATIONS))
     kernel = np.array([[0, 0, 0], [0, 1, 0], [
         0, 0, 0
     ]]) + np.array([[0, -1, 0], [-1, 4, -1], [0, -1, 0]]) * 0.3
@@ -195,7 +193,7 @@ def deepfry(image, iterations: int):
 
 
 def noise(image, iterations: int):
-    iterations = max(0, min(iterations, 20))
+    iterations = max(0, min(iterations, MAX_ITERATIONS))
 
     for _ in range(iterations):
         noised = np.std(image) * np.random.random(image.shape)
