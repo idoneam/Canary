@@ -81,12 +81,14 @@ def mk_duration_string(inf_dict) -> str:
         "%H:%M:%S", time.gmtime(total)) if total > 0 else "n/a (livestream)"
 
 
-def parse_time(time_str: str) -> Tuple[str, int]:
+def parse_time(time_str: str) -> int:
     total: int = 0
     for index, substr in enumerate(reversed(time_str.split(":"))):
         if substr.isdigit():
             total += int(substr) * (60**index)
-    return time.strftime("%H:%M:%S", time.gmtime(total)), total
+        else:
+            raise ValueError
+    return total
 
 
 class Music(commands.Cog):
@@ -229,31 +231,51 @@ class Music(commands.Cog):
             self.song_lock.release()
             self.volume_level = 100
 
-    @commands.command(aliases=["gst"])
+    @commands.command(aliases=["gt"])
     @check_playing
-    async def goto_song_time(self, ctx, time_str: str):
+    async def goto_time(self, ctx, time_str: str):
         """Go to a specific timestamp in currently playing track"""
 
         try:
             parsed = parse_time(time_str)
         except ValueError:
-            await ctx.send(f"could not parse `{time_str}` to a timestamp.")
+            await ctx.send(f"could not parse `{time_str}` to a time value.")
             return
-        self.skip_opts = parsed
+        self.skip_opts = time.strftime("%H:%M:%S", time.gmtime(parsed)), parsed
         ctx.voice_client.stop()
         await ctx.send(
             f"moved to `{self.skip_opts[0]}` in currently playing track.")
 
-    @commands.command(aliases=["mst"])
+    @commands.command(aliases=["ft"])
     @check_playing
-    async def move_song_time(self, ctx, seconds: int):
-        """Move forwards or backwards (in seconds) in currently playing track"""
+    async def forward_time(self, ctx, time_str: str):
+        """Move forwards in currently playing track"""
 
-        self.skip_opts = parse_time(
-            str(
-                max(
-                    round((time.perf_counter() - self.song_start_time) +
-                          seconds), 0)))
+        try:
+            parsed = parse_time(time_str)
+        except ValueError:
+            await ctx.send(f"could not parse `{time_str}` to a time value.")
+            return
+        parsed = max(
+            0, round(time.perf_counter() - self.song_start_time + parsed))
+        self.skip_opts = time.strftime("%H:%M:%S", time.gmtime(parsed)), parsed
+        ctx.voice_client.stop()
+        await ctx.send(
+            f"moved to `{self.skip_opts[0]}` in currently playing track.")
+
+    @commands.command(aliases=["bt"])
+    @check_playing
+    async def backwards_time(self, ctx, time_str: str):
+        """Move backwards in currently playing track"""
+
+        try:
+            parsed = parse_time(time_str)
+        except ValueError:
+            await ctx.send(f"could not parse `{time_str}` to a time value.")
+            return
+        parsed = max(
+            0, round(time.perf_counter() - self.song_start_time - parsed))
+        self.skip_opts = time.strftime("%H:%M:%S", time.gmtime(parsed)), parsed
         ctx.voice_client.stop()
         await ctx.send(
             f"moved to `{self.skip_opts[0]}` in currently playing track.")
