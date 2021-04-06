@@ -64,9 +64,9 @@ def check_playing(func):
 
 
 def mk_title_string(inf_dict) -> str:
-    return (
-        f"[{inf_dict.get('title', 'title not found')}]({inf_dict.get('webpage_url')})"
-    )
+    url = inf_dict.get("webpage_url")
+    return (inf_dict.get("title", "title not found") if url is None else
+            f"[{inf_dict.get('title', 'title not found')}]({url})")
 
 
 def mk_duration_string(inf_dict) -> str:
