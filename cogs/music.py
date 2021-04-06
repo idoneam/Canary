@@ -20,7 +20,7 @@ import random
 import time
 from functools import wraps, partial
 from collections import deque
-from typing import Optional
+from typing import Optional, Tuple
 import discord
 import youtube_dl
 from discord.ext import commands
@@ -81,19 +81,12 @@ def mk_duration_string(inf_dict) -> str:
         "%H:%M:%S", time.gmtime(total)) if total > 0 else "n/a (livestream)"
 
 
-def parse_time(time_str: str) -> Optional[str]:
-    if (len(time_str) >= 8 and time_str[-6:-2:3] == "::"
-            and time_str[-2:].isdigit() and time_str[-5:-3].isdigit()
-            and time_str[:-6].isdigit() and int(time_str[-2:]) < 60
-            and int(time_str[-5:-3]) < 60):
-        return time_str
-    if (len(time_str) == 5 and time_str[2] == ":" and time_str[:2].isdigit()
-            and time_str[3:].isdigit() and int(time_str[:2]) < 60
-            and int(time_str[3:]) < 60):
-        return f"00:{time_str}"
-    if time_str.isdigit():
-        return time.strftime("%H:%M:%S", time.gmtime(int(time_str)))
-    return None
+def parse_time(time_str: str) -> Tuple[str, int]:
+    total: int = 0
+    for index, substr in enumerate(reversed(time_str.split(":"))):
+        if substr.isdigit():
+            total += int(substr) * (60**index)
+    return time.strftime("%H:%M:%S", time.gmtime(total)), total
 
 
 class Music(commands.Cog):
@@ -104,7 +97,7 @@ class Music(commands.Cog):
         self.playing = None
         self.looping = None
         self.volume_level: int = 100
-        self.skip_opts: Optional[str] = None
+        self.skip_opts: Optional[Tuple[str, int]] = None
         self.song_start_time: float = 0
 
     async def get_info(self, url: str):
@@ -207,21 +200,23 @@ class Music(commands.Cog):
                         ),
                         after=release_lock,
                     )
+                    self.song_start_time = time.perf_counter()
                     await ctx.send(embed=now_playing)
                 else:
+                    skip_str, delta = self.skip_opts
                     ctx.voice_client.play(
                         discord.PCMVolumeTransformer(
                             discord.FFmpegPCMAudio(
                                 self.playing[0]["url"],
                                 before_options=
-                                f"{FFMPEG_BEFORE_OPTS} -ss {self.skip_opts}",
+                                f"{FFMPEG_BEFORE_OPTS} -ss {skip_str}",
                                 options=FFMPEG_OPTS,
                             ),
                             self.volume_level / 100,
                         ),
                         after=release_lock,
                     )
-                self.song_start_time = time.perf_counter()
+                    self.song_start_time = time.perf_counter() - delta
                 self.skip_opts = None
 
             if ctx.voice_client is not None:
@@ -234,34 +229,34 @@ class Music(commands.Cog):
             self.song_lock.release()
             self.volume_level = 100
 
-    @commands.command(aliases=["gtst"])
+    @commands.command(aliases=["gst"])
     @check_playing
-    async def go_to_song_time(self, ctx, time_str: str):
+    async def goto_song_time(self, ctx, time_str: str):
         """Go to a specific timestamp in currently playing track"""
 
-        time_val = parse_time(time_str)
-        if time_val is None:
+        try:
+            parsed = parse_time(time_str)
+        except ValueError:
             await ctx.send(f"could not parse `{time_str}` to a timestamp.")
             return
-        self.skip_opts = time_val
+        self.skip_opts = parsed
         ctx.voice_client.stop()
-        await ctx.send(f"moved to `{time_val}` in currently playing track.")
+        await ctx.send(
+            f"moved to `{self.skip_opts[0]}` in currently playing track.")
 
     @commands.command(aliases=["mst"])
     @check_playing
     async def move_song_time(self, ctx, seconds: int):
         """Move forwards or backwards (in seconds) in currently playing track"""
 
-        time_val = parse_time(
+        self.skip_opts = parse_time(
             str(
                 max(
-                    round(time.perf_counter() - self.song_start_time +
+                    round((time.perf_counter() - self.song_start_time) +
                           seconds), 0)))
-        self.skip_opts = time_val
         ctx.voice_client.stop()
         await ctx.send(
-            f"moved {'back' if seconds < 0 else 'forward'} {abs(seconds)} seconds in currently playing track."
-        )
+            f"moved to `{self.skip_opts[0]}` in currently playing track.")
 
     @commands.command()
     @check_playing
