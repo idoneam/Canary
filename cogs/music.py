@@ -17,6 +17,7 @@
 
 import asyncio
 import random
+import time
 from functools import wraps, partial
 from collections import deque
 import discord
@@ -60,6 +61,20 @@ def check_playing(func):
             await func(self, ctx, *args, **kwargs)
 
     return wrapper
+
+
+def mk_title_string(inf_dict) -> str:
+    return f"[{inf_dict.get('title', 'title not found')}]({inf_dict.get('webpage_url')})"
+
+
+def mk_duration_string(inf_dict) -> str:
+    total: int = 0
+    for track in inf_dict.get("entries", [inf_dict]):
+        dur = track.get("duration")
+        if dur is None:
+            return "duration not found"
+        total += dur
+    return time.strftime("%H:%M:%S", time.gmtime(total))
 
 
 class Music(commands.Cog):
@@ -140,19 +155,23 @@ class Music(commands.Cog):
                     break
                 self.playing = self.looping or self.song_queue.popleft()
                 now_playing = (discord.Embed(
-                    colour=random.randint(0, 0xFFFFFF), title="now playing"
-                ).add_field(
-                    name="track title",
-                    value=
-                    f"[{self.playing[0].get('title', 'title not found')}]({self.playing[0].get('webpage_url')})",
-                    inline=False,
-                ).add_field(
-                    name="volume", value=f"{self.volume_level}%",
-                    inline=True).add_field(
-                        name="looping",
-                        value="no" if self.looping is None else "yes",
-                        inline=True,
-                    ).set_footer(text=f"submitted by: {self.playing[1]}"))
+                    colour=random.randint(0, 0xFFFFFF),
+                    title="now playing").add_field(
+                        name="track title",
+                        value=mk_title_string(self.playing[0]),
+                        inline=False,
+                    ).add_field(
+                        name="volume",
+                        value=f"{self.volume_level}%",
+                        inline=True).add_field(
+                            name="duration",
+                            value=mk_duration_string(self.playing[0]),
+                            inline=True).add_field(
+                                name="looping",
+                                value="no" if self.looping is None else "yes",
+                                inline=True,
+                            ).set_footer(
+                                text=f"submitted by: {self.playing[1]}"))
                 ctx.voice_client.play(
                     discord.PCMVolumeTransformer(
                         discord.FFmpegPCMAudio(
@@ -216,9 +235,10 @@ class Music(commands.Cog):
                 track, user = queue_copy[curr_index]
                 queue_embed.add_field(
                     name=f"track title at index {curr_index}",
-                    value=
-                    f"[{track.get('title', 'title not found')}]({track.get('webpage_url')})",
-                ).set_footer(text=f"submitted by: {user}")
+                    value=mk_title_string(track),
+                ).add_field(name="duration",
+                            value=mk_duration_string(track)).set_footer(
+                                text=f"submitted by: {user}")
                 await queue_msg.edit(embed=queue_embed)
             try:
                 react, author = await self.bot.wait_for(
@@ -252,26 +272,22 @@ class Music(commands.Cog):
         if playing or paused:
             status_embed.add_field(
                 name="track title",
-                value=
-                f"[{self.playing[0].get('title', 'title not found')}]({self.playing[0].get('webpage_url')})",
+                value=mk_title_string(self.playing[0]),
                 inline=False,
-            ).add_field(name="volume",
-                        value=f"{self.volume_level}%",
-                        inline=True).add_field(
-                            name="looping",
-                            value="no" if self.looping is None else "yes",
-                            inline=True,
-                        ).set_footer(text=f"submitted by: {self.playing[1]}")
-            if playing:
-                status_embed.insert_field_at(1,
-                                             name="status",
-                                             value="playing",
-                                             inline=True)
-            else:
-                status_embed.insert_field_at(1,
-                                             name="status",
-                                             value="paused",
-                                             inline=True)
+            ).add_field(
+                name="volume", value=f"{self.volume_level}%",
+                inline=True).add_field(
+                    name="duration",
+                    value=mk_duration_string(self.playing[0]),
+                    inline=True).add_field(
+                        name="status",
+                        value="playing" if playing else "paused",
+                        inline=True,
+                    ).add_field(
+                        name="looping",
+                        value="no" if self.looping is None else "yes",
+                        inline=True,
+                    ).set_footer(text=f"submitted by: {self.playing[1]}")
         else:
             status_embed.add_field(
                 name="status",
@@ -293,9 +309,11 @@ class Music(commands.Cog):
             title=f"removed track at index {song_index}",
         ).add_field(
             name="track name",
-            value=
-            f"[{self.song_queue[song_index][0].get('title', 'title not found')}]({self.song_queue[song_index][0].get('webpage_url')})",
-        ).set_footer(text=f"removed by: {ctx.author}"))
+            value=mk_title_string(self.song_queue[song_index][0]),
+        ).add_field(name="duration",
+                    value=mk_duration_string(
+                        self.song_queue[song_index][0])).set_footer(
+                            text=f"removed by: {ctx.author}"))
         del self.song_queue[song_index]
         await ctx.send(embed=removed)
 
@@ -317,22 +335,18 @@ class Music(commands.Cog):
             inserted = discord.Embed(
                 colour=random.randint(0, 0xFFFFFF),
                 title=f"inserted playlist at index {song_index}",
-            )
-            inserted.add_field(
+            ).add_field(
                 name="playlist name",
-                value=
-                f"[{data.get('title', 'title not found')}]({data.get('webpage_url')})",
-            )
+                value=mk_title_string(data),
+            ).add_field(name="duration", value=mk_duration_string(data))
         else:
             inserted = discord.Embed(
                 colour=random.randint(0, 0xFFFFFF),
                 title=f"inserted track at index {song_index}",
-            )
-            inserted.add_field(
+            ).add_field(
                 name="track name",
-                value=
-                f"[{entries[0].get('title', 'title not found')}]({entries[0].get('webpage_url')})",
-            )
+                value=mk_title_string(entries[0]),
+            ).add_field(name="duration", value=mk_duration_string(entries[0]))
         inserted.set_footer(text=f"submitted by: {author_str}")
         await ctx.send(embed=inserted)
 
@@ -358,17 +372,15 @@ class Music(commands.Cog):
                                    title="queued up playlist")
             queued.add_field(
                 name="playlist name",
-                value=
-                f"[{data.get('title', 'title not found')}]({data.get('webpage_url')})",
-            )
+                value=mk_title_string(data),
+            ).add_field(name="duration", value=mk_duration_string(data))
         else:
             queued = discord.Embed(colour=random.randint(0, 0xFFFFFF),
                                    title="queued up track")
             queued.add_field(
                 name="track name",
-                value=
-                f"[{entries[0].get('title', 'title not found')}]({entries[0].get('webpage_url')})",
-            )
+                value=mk_title_string(entries[0]),
+            ).add_field(name="duration", value=mk_duration_string(entries[0]))
         queued.set_footer(text=f"submitted by: {author_str}")
         await ctx.send(embed=queued)
 
