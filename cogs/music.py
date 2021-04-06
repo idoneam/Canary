@@ -140,19 +140,19 @@ class Music(commands.Cog):
                     break
                 self.playing = self.looping or self.song_queue.popleft()
                 now_playing = (discord.Embed(
-                    colour=random.randint(0, 0xFFFFFF),
-                    title="now playing").add_field(
-                        name="track title",
-                        value=self.playing[0].get("title", "title not found"),
-                        inline=False,
-                    ).add_field(
-                        name="volume",
-                        value=f"{self.volume_level}%",
-                        inline=True).add_field(
-                            name="looping",
-                            value="no" if self.looping is None else "yes",
-                            inline=True,
-                        ).set_footer(text=f"submitted by: {self.playing[1]}"))
+                    colour=random.randint(0, 0xFFFFFF), title="now playing"
+                ).add_field(
+                    name="track title",
+                    value=
+                    f"[{self.playing[0].get('title', 'title not found')}]({self.playing[0].get('webpage_url')})",
+                    inline=False,
+                ).add_field(
+                    name="volume", value=f"{self.volume_level}%",
+                    inline=True).add_field(
+                        name="looping",
+                        value="no" if self.looping is None else "yes",
+                        inline=True,
+                    ).set_footer(text=f"submitted by: {self.playing[1]}"))
                 ctx.voice_client.play(
                     discord.PCMVolumeTransformer(
                         discord.FFmpegPCMAudio(
@@ -216,7 +216,8 @@ class Music(commands.Cog):
                 track, user = queue_copy[curr_index]
                 queue_embed.add_field(
                     name=f"track title at index {curr_index}",
-                    value=track.get("title", "title not found"),
+                    value=
+                    f"[{track.get('title', 'title not found')}]({track.get('webpage_url')})",
                 ).set_footer(text=f"submitted by: {user}")
                 await queue_msg.edit(embed=queue_embed)
             try:
@@ -251,7 +252,8 @@ class Music(commands.Cog):
         if playing or paused:
             status_embed.add_field(
                 name="track title",
-                value=self.playing[0].get("title", "title not found"),
+                value=
+                f"[{self.playing[0].get('title', 'title not found')}]({self.playing[0].get('webpage_url')})",
                 inline=False,
             ).add_field(name="volume",
                         value=f"{self.volume_level}%",
@@ -291,8 +293,8 @@ class Music(commands.Cog):
             title=f"removed track at index {song_index}",
         ).add_field(
             name="track name",
-            value=self.song_queue[song_index][0].get("title",
-                                                     "title not found"),
+            value=
+            f"[{self.song_queue[song_index][0].get('title', 'title not found')}]({self.song_queue[song_index][0].get('webpage_url')})",
         ).set_footer(text=f"removed by: {ctx.author}"))
         del self.song_queue[song_index]
         await ctx.send(embed=removed)
@@ -316,16 +318,21 @@ class Music(commands.Cog):
                 colour=random.randint(0, 0xFFFFFF),
                 title=f"inserted playlist at index {song_index}",
             )
-            inserted.add_field(name="playlist name",
-                               value=data.get("title", "title not found"))
+            inserted.add_field(
+                name="playlist name",
+                value=
+                f"[{data.get('title', 'title not found')}]({data.get('webpage_url')})",
+            )
         else:
             inserted = discord.Embed(
                 colour=random.randint(0, 0xFFFFFF),
                 title=f"inserted track at index {song_index}",
             )
-            inserted.add_field(name="track name",
-                               value=entries[0].get("title",
-                                                    "title not found"))
+            inserted.add_field(
+                name="track name",
+                value=
+                f"[{entries[0].get('title', 'title not found')}]({entries[0].get('webpage_url')})",
+            )
         inserted.set_footer(text=f"submitted by: {author_str}")
         await ctx.send(embed=inserted)
 
@@ -349,13 +356,19 @@ class Music(commands.Cog):
         if len(entries) > 1:
             queued = discord.Embed(colour=random.randint(0, 0xFFFFFF),
                                    title="queued up playlist")
-            queued.add_field(name="playlist name",
-                             value=data.get("title", "title not found"))
+            queued.add_field(
+                name="playlist name",
+                value=
+                f"[{data.get('title', 'title not found')}]({data.get('webpage_url')})",
+            )
         else:
             queued = discord.Embed(colour=random.randint(0, 0xFFFFFF),
                                    title="queued up track")
-            queued.add_field(name="track name",
-                             value=entries[0].get("title", "title not found"))
+            queued.add_field(
+                name="track name",
+                value=
+                f"[{entries[0].get('title', 'title not found')}]({entries[0].get('webpage_url')})",
+            )
         queued.set_footer(text=f"submitted by: {author_str}")
         await ctx.send(embed=queued)
 
