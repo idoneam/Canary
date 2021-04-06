@@ -157,7 +157,7 @@ class Music(commands.Cog):
                     (self.looping is None)) or ctx.voice_client is None:
                     break
                 self.playing = self.looping or self.song_queue.popleft()
-                now_playing = (discord.Embed(
+                now_playing = discord.Embed(
                     colour=random.randint(0, 0xFFFFFF),
                     title="now playing").add_field(
                         name="track title",
@@ -174,7 +174,7 @@ class Music(commands.Cog):
                             name="looping",
                             value="no" if self.looping is None else "yes",
                             inline=True,
-                        ).set_footer(text=f"submitted by: {self.playing[1]}"))
+                        ).set_footer(text=f"submitted by: {self.playing[1]}")
                 ctx.voice_client.play(
                     discord.PCMVolumeTransformer(
                         discord.FFmpegPCMAudio(
@@ -304,7 +304,7 @@ class Music(commands.Cog):
             await ctx.send(
                 f"supplied index {song_index} is not valid for current queue.")
             return
-        removed = (discord.Embed(
+        removed = discord.Embed(
             colour=random.randint(0, 0xFFFFFF),
             title=f"removed track at index {song_index}",
         ).add_field(
@@ -313,7 +313,7 @@ class Music(commands.Cog):
             inline=False).add_field(
                 name="duration",
                 value=mk_duration_string(self.song_queue[song_index][0]),
-                inline=False).set_footer(text=f"removed by: {ctx.author}"))
+                inline=False).set_footer(text=f"removed by: {ctx.author}")
         del self.song_queue[song_index]
         await ctx.send(embed=removed)
 
@@ -339,16 +339,16 @@ class Music(commands.Cog):
         for track in reversed(entries):
             self.song_queue.insert(song_index, (track, author_str))
         if len(entries) > 1:
-            inserted = (discord.Embed(
+            inserted = discord.Embed(
                 colour=random.randint(0, 0xFFFFFF),
                 title=f"inserted playlist at index {song_index}").add_field(
                     name="playlist name",
                     value=mk_title_string(data),
                     inline=False).add_field(name="duration",
                                             value=mk_duration_string(data),
-                                            inline=False))
+                                            inline=False)
         else:
-            inserted = (discord.Embed(
+            inserted = discord.Embed(
                 colour=random.randint(0, 0xFFFFFF),
                 title=f"inserted track at index {song_index}",
             ).add_field(name="track name",
@@ -356,7 +356,7 @@ class Music(commands.Cog):
                         inline=False).add_field(name="duration",
                                                 value=mk_duration_string(
                                                     entries[0]),
-                                                inline=False))
+                                                inline=False)
         inserted.set_footer(text=f"submitted by: {author_str}")
         await ctx.send(embed=inserted)
 
@@ -386,22 +386,23 @@ class Music(commands.Cog):
             self.song_queue.append((track, author_str))
         if len(entries) > 1:
             queued = discord.Embed(colour=random.randint(0, 0xFFFFFF),
-                                   title="queued up playlist")
-            queued.add_field(name="playlist name",
-                             value=mk_title_string(data),
-                             inline=False).add_field(
-                                 name="duration",
-                                 value=mk_duration_string(data),
-                                 inline=False)
+                                   title="queued up playlist").add_field(
+                                       name="playlist name",
+                                       value=mk_title_string(data),
+                                       inline=False).add_field(
+                                           name="duration",
+                                           value=mk_duration_string(data),
+                                           inline=False)
         else:
             queued = discord.Embed(colour=random.randint(0, 0xFFFFFF),
-                                   title="queued up track")
-            queued.add_field(name="track name",
-                             value=mk_title_string(entries[0]),
-                             inline=False).add_field(name="duration",
-                                                     value=mk_duration_string(
-                                                         entries[0]),
-                                                     inline=False)
+                                   title="queued up track").add_field(
+                                       name="track name",
+                                       value=mk_title_string(entries[0]),
+                                       inline=False).add_field(
+                                           name="duration",
+                                           value=mk_duration_string(
+                                               entries[0]),
+                                           inline=False)
         queued.set_footer(text=f"submitted by: {author_str}")
         await ctx.send(embed=queued)
 
