@@ -20,6 +20,7 @@ import random
 import time
 from functools import wraps, partial
 from collections import deque
+from typing import Optional
 import discord
 import youtube_dl
 from discord.ext import commands
@@ -80,6 +81,21 @@ def mk_duration_string(inf_dict) -> str:
         "%H:%M:%S", time.gmtime(total)) if total > 0 else "n/a (livestream)"
 
 
+def parse_time(time_str: str) -> Optional[str]:
+    if (len(time_str) >= 8 and time_str[-6:-2:3] == "::"
+            and time_str[-2:].isdigit() and time_str[-5:-3].isdigit()
+            and time_str[:-6].isdigit() and int(time_str[-2:]) < 60
+            and int(time_str[-5:-3]) < 60):
+        return time_str
+    if (len(time_str) == 5 and time_str[2] == ":" and time_str[:2].isdigit()
+            and time_str[3:].isdigit() and int(time_str[:2]) < 60
+            and int(time_str[3:]) < 60):
+        return f"00:{time_str}"
+    if time_str.isdigit():
+        return time.strftime("%H:%M:%S", time.gmtime(int(time_str)))
+    return None
+
+
 class Music(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -88,6 +104,8 @@ class Music(commands.Cog):
         self.playing = None
         self.looping = None
         self.volume_level: int = 100
+        self.skip_opts: Optional[str] = None
+        self.song_start_time: float = 0
 
     async def get_info(self, url: str):
         return await self.bot.loop.run_in_executor(
@@ -152,41 +170,59 @@ class Music(commands.Cog):
 
             while True:
                 await self.song_lock.acquire()
-                await ctx.trigger_typing()
-                if ((not self.song_queue) and
-                    (self.looping is None)) or ctx.voice_client is None:
-                    break
-                self.playing = self.looping or self.song_queue.popleft()
-                now_playing = discord.Embed(
-                    colour=random.randint(0, 0xFFFFFF),
-                    title="now playing").add_field(
-                        name="track title",
-                        value=mk_title_string(self.playing[0]),
-                        inline=False,
-                    ).add_field(
-                        name="volume",
-                        value=f"{self.volume_level}%",
-                        inline=True).add_field(
-                            name="duration",
-                            value=mk_duration_string(self.playing[0]),
-                            inline=True,
+                now_playing = None
+                if self.skip_opts is None:
+                    await ctx.trigger_typing()
+                    if ((not self.song_queue) and
+                        (self.looping is None)) or ctx.voice_client is None:
+                        break
+                    self.playing = self.looping or self.song_queue.popleft()
+                    now_playing = discord.Embed(
+                        colour=random.randint(0, 0xFFFFFF),
+                        title="now playing").add_field(
+                            name="track title",
+                            value=mk_title_string(self.playing[0]),
+                            inline=False,
                         ).add_field(
-                            name="looping",
-                            value="no" if self.looping is None else "yes",
-                            inline=True,
-                        ).set_footer(text=f"submitted by: {self.playing[1]}")
-                ctx.voice_client.play(
-                    discord.PCMVolumeTransformer(
-                        discord.FFmpegPCMAudio(
-                            self.playing[0]["url"],
-                            before_options=FFMPEG_BEFORE_OPTS,
-                            options=FFMPEG_OPTS,
+                            name="volume",
+                            value=f"{self.volume_level}%",
+                            inline=True).add_field(
+                                name="duration",
+                                value=mk_duration_string(self.playing[0]),
+                                inline=True,
+                            ).add_field(
+                                name="looping",
+                                value="no" if self.looping is None else "yes",
+                                inline=True,
+                            ).set_footer(
+                                text=f"submitted by: {self.playing[1]}")
+                    ctx.voice_client.play(
+                        discord.PCMVolumeTransformer(
+                            discord.FFmpegPCMAudio(
+                                self.playing[0]["url"],
+                                before_options=FFMPEG_BEFORE_OPTS,
+                                options=FFMPEG_OPTS,
+                            ),
+                            self.volume_level / 100,
                         ),
-                        self.volume_level / 100,
-                    ),
-                    after=release_lock,
-                )
-                await ctx.send(embed=now_playing)
+                        after=release_lock,
+                    )
+                    await ctx.send(embed=now_playing)
+                else:
+                    ctx.voice_client.play(
+                        discord.PCMVolumeTransformer(
+                            discord.FFmpegPCMAudio(
+                                self.playing[0]["url"],
+                                before_options=
+                                f"{FFMPEG_BEFORE_OPTS} -ss {self.skip_opts}",
+                                options=FFMPEG_OPTS,
+                            ),
+                            self.volume_level / 100,
+                        ),
+                        after=release_lock,
+                    )
+                self.song_start_time = time.perf_counter()
+                self.skip_opts = None
 
             if ctx.voice_client is not None:
                 await ctx.voice_client.disconnect()
@@ -197,6 +233,35 @@ class Music(commands.Cog):
             self.playing = None
             self.song_lock.release()
             self.volume_level = 100
+
+    @commands.command(aliases=["gtst"])
+    @check_playing
+    async def go_to_song_time(self, ctx, time_str: str):
+        """Go to a specific timestamp in currently playing track"""
+
+        time_val = parse_time(time_str)
+        if time_val is None:
+            await ctx.send(f"could not parse `{time_str}` to a timestamp.")
+            return
+        self.skip_opts = time_val
+        ctx.voice_client.stop()
+        await ctx.send(f"moved to `{time_val}` in currently playing track.")
+
+    @commands.command(aliases=["mst"])
+    @check_playing
+    async def move_song_time(self, ctx, seconds: int):
+        """Move forwards or backwards (in seconds) in currently playing track"""
+
+        time_val = parse_time(
+            str(
+                max(
+                    round(time.perf_counter() - self.song_start_time +
+                          seconds), 0)))
+        self.skip_opts = time_val
+        ctx.voice_client.stop()
+        await ctx.send(
+            f"moved {'back' if seconds < 0 else 'forward'} {abs(seconds)} seconds in currently playing track."
+        )
 
     @commands.command()
     @check_playing
