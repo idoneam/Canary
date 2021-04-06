@@ -115,6 +115,8 @@ class Music(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.song_queue: deque = deque()
+        self.backup: deque = deque()
+        self.loop_queue: bool = False
         self.song_lock: asyncio.Lock = asyncio.Lock()
         self.playing = None
         self.looping = None
@@ -188,10 +190,19 @@ class Music(commands.Cog):
                 now_playing = None
                 if self.skip_opts is None:
                     await ctx.trigger_typing()
-                    if ((not self.song_queue) and
-                        (self.looping is None)) or ctx.voice_client is None:
+                    if ctx.voice_client is None:
                         break
-                    self.playing = self.looping or self.song_queue.popleft()
+                    if (not self.song_queue) and (self.looping is None):
+                        if self.loop_queue:
+                            self.song_queue = self.backup
+                            self.backup = deque()
+                        else:
+                            break
+                    if self.looping is None:
+                        self.playing = self.song_queue.popleft()
+                        self.backup.append(self.playing)
+                    else:
+                        self.playing = self.looping
                     now_playing = discord.Embed(
                         colour=random.randint(0, 0xFFFFFF),
                         title="now playing").add_field(
@@ -277,10 +288,10 @@ class Music(commands.Cog):
         return max(0,
                    round(time.perf_counter() - self.song_start_time - seconds))
 
-    @commands.command()
+    @commands.command(aliases=["sl"])
     @check_playing
-    async def loop(self, ctx):
-        """Changes looping state"""
+    async def song_loop(self, ctx):
+        """Changes song looping state"""
 
         if self.looping is None:
             self.looping = self.playing
@@ -288,6 +299,14 @@ class Music(commands.Cog):
         else:
             self.looping = None
             await ctx.send("current song will now no longer loop.")
+
+    @commands.command(aliases=["ql"])
+    async def queue_loop(self, ctx):
+        """Changes queue looping state"""
+
+        self.loop_queue = not self.loop_queue
+        await ctx.send(
+            f"queue will now {'' if self.loop_queue else 'no longer '}loop.")
 
     @commands.command(aliases=["pq"])
     async def print_queue(self, ctx: commands.Context):
@@ -305,7 +324,8 @@ class Music(commands.Cog):
             return
         curr_index: int = 0
         change_state: bool = True
-        queue_copy = list(self.song_queue)
+        queue_copy = list(self.song_queue +
+                          self.backup if self.loop_queue else self.song_queue)
         max_index = len(queue_copy) - 1
         queue_embed.description = f"song queue length: {max_index + 1}"
         queue_msg = await ctx.send(embed=queue_embed)
@@ -444,6 +464,7 @@ class Music(commands.Cog):
         """Clears current song queue"""
 
         self.song_queue.clear()
+        self.backup.clear()
         await ctx.send("cleared current song queue.")
 
     @commands.command(aliases=["qs"])
@@ -505,12 +526,28 @@ class Music(commands.Cog):
 
     @commands.command(aliases=["next"])
     @check_playing
-    async def skip(self, ctx):
-        """Skips currently playing song"""
+    async def skip(self, ctx, queue_amount: int = 0):
+        """
+        Skips currently playing song and skips the amount
+        provided in argument (if any) from the queue
+        """
 
+        if queue_amount < 0:
+            await ctx.send("cannot skip a negative amount of songs.")
+            return
+        len_q: int = len(self.song_queue)
+        if (not self.loop_queue) and queue_amount > len_q:
+            await ctx.send(
+                f"cannot skip more songs than there are songs in the queue ({len_q})."
+            )
+            return
         self.looping = None
         ctx.voice_client.stop()
-        await ctx.send("skipped current song.")
+        for _ in range(queue_amount % (len_q + 1)):
+            self.backup.append(self.song_queue.popleft())
+        await ctx.send(
+            f"skipped current song{f' and {queue_amount} more from the queue' if queue_amount else ''}."
+        )
 
     @commands.command()
     @check_playing
