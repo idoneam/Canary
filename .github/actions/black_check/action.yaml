@@ -1,0 +1,4 @@
+name: 'black check'
+runs:
+  using: 'docker'
+  image: 'Dockerfile'

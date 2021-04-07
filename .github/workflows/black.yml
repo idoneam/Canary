@@ -1,0 +1,15 @@
+name: formatting check
+
+on:
+  push:
+    paths:
+      '**.py'
+
+jobs:
+  formatting-check:
+    name: formatting check
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: formatting check
+      uses: ./.github/actions/black_check
