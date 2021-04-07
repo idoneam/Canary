@@ -24,7 +24,7 @@ regex = "^2021.3.17"
 googletrans = "==4.0.0rc1"
 
 [tool.poetry.dev-dependencies]
-pytest = "^6.2.2"
+pytest = "^6.2.3"
 black = "^20.8b1"
 
 [tool.black]
