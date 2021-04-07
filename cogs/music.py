@@ -24,91 +24,10 @@ from typing import Optional
 import discord
 import youtube_dl
 from discord.ext import commands
-
-FFMPEG_OPTS = "-nostats -loglevel quiet -vn"
-FFMPEG_BEFORE_OPTS = "-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5"
-
-YTDL = youtube_dl.YoutubeDL({
-    "format": "bestaudio/best",
-    "restrictfilenames": True,
-    "noplaylist": True,
-    "quiet": True,
-    "no_warnings": True,
-    "default_search": "auto",
-    "geo_bypass": True,
-})
-
-QUEUE_ACTIONS = {
-    "⏪": lambda _i, _m: 0,
-    "◀": lambda i, _m: max(0, i - 1),
-    "▶": lambda i, m: min(i + 1, m),
-    "⏩": lambda _i, m: m,
-}
-
-
-def check_playing(func):
-    @wraps(func)
-    async def wrapper(self, ctx, *args, **kwargs):
-        if (self.playing is None or ctx.voice_client is None
-                or (not self.song_lock.locked())):
-            await ctx.send(
-                "bot is not currently playing anything to a voice channel.")
-        elif (ctx.author.voice is None
-              or ctx.author.voice.channel != ctx.voice_client.channel) and len(
-                  ctx.voice_client.channel.members) > 1:
-            await ctx.send(
-                "you must be listening to music with the bot do this.")
-        else:
-            await func(self, ctx, *args, **kwargs)
-
-    return wrapper
-
-
-def mk_title_string(inf_dict) -> str:
-    url = inf_dict.get("webpage_url")
-    return (inf_dict.get("title", "title not found") if url is None else
-            f"[{inf_dict.get('title', 'title not found')}]({url})")
-
-
-def mk_duration_string(inf_dict) -> str:
-    total: int = 0
-    for track in inf_dict.get("entries", [inf_dict]):
-        dur = track.get("duration")
-        if dur is None:
-            return "duration not found"
-        total += dur
-    return time.strftime(
-        "%H:%M:%S", time.gmtime(total)) if total > 0 else "n/a (livestream)"
-
-
-def parse_time(time_str: str) -> int:
-    total: int = 0
-    for index, substr in enumerate(reversed(time_str.split(":"))):
-        if substr.isdigit():
-            total += int(substr) * (60**index)
-        else:
-            raise ValueError
-    return total
-
-
-def time_func(func):
-    async def wrapper(self, ctx, time_str: str):
-        try:
-            parsed = parse_time(time_str)
-        except ValueError:
-            await ctx.send(f"could not parse `{time_str}` to a time value.")
-            return
-        seconds = func(self, parsed)
-        self.skip_opts = time.strftime("%H:%M:%S",
-                                       time.gmtime(seconds)), seconds
-        ctx.voice_client.stop()
-        await ctx.send(
-            f"moved to `{self.skip_opts[0]}` in currently playing track.")
-
-    wrapper.__name__ = func.__name__
-    wrapper.__doc__ = func.__doc__
-
-    return wrapper
+from .utils.music_helpers import (FFMPEG_BEFORE_OPTS, FFMPEG_OPTS, YTDL,
+                                  QUEUE_ACTIONS, check_playing, parse_time,
+                                  mk_title_string, mk_duration_string,
+                                  time_func)
 
 
 class Music(commands.Cog):
@@ -121,8 +40,10 @@ class Music(commands.Cog):
         self.playing = None
         self.looping = None
         self.volume_level: int = 100
+        self.speed_flag: str = "atempo=1"
         self.skip_opts: Optional[tuple[str, int]] = None
         self.song_start_time: float = 0
+        self.ban_role = self.bot.config.music["ban_role"]
 
     async def get_info(self, url: str):
         return await self.bot.loop.run_in_executor(
@@ -182,85 +103,103 @@ class Music(commands.Cog):
             if not in_main:
                 ctx.voice_client.stop()
 
-        if in_main:
-            await ctx.author.voice.channel.connect()
+        if not in_main:
+            return
 
-            while True:
-                await self.song_lock.acquire()
-                now_playing = None
-                if self.skip_opts is None:
-                    await ctx.trigger_typing()
-                    if ctx.voice_client is None:
+        await ctx.author.voice.channel.connect()
+
+        while True:
+            await self.song_lock.acquire()
+            now_playing = None
+            if self.skip_opts is None:
+                await ctx.trigger_typing()
+                if ctx.voice_client is None:
+                    break
+                if (not self.song_queue) and (self.looping is None):
+                    if not self.loop_queue:
                         break
-                    if (not self.song_queue) and (self.looping is None):
-                        if self.loop_queue:
-                            self.song_queue = self.backup
-                            self.backup = deque()
-                        else:
-                            break
-                    if self.looping is None:
-                        self.playing = self.song_queue.popleft()
-                        self.backup.append(self.playing)
-                    else:
-                        self.playing = self.looping
-                    now_playing = discord.Embed(
-                        colour=random.randint(0, 0xFFFFFF),
-                        title="now playing").add_field(
-                            name="track title",
-                            value=mk_title_string(self.playing[0]),
-                            inline=False,
-                        ).add_field(
-                            name="volume",
-                            value=f"{self.volume_level}%",
-                            inline=True).add_field(
-                                name="duration",
-                                value=mk_duration_string(self.playing[0]),
-                                inline=True,
-                            ).add_field(
-                                name="looping",
-                                value="no" if self.looping is None else "yes",
-                                inline=True,
-                            ).set_footer(
-                                text=f"submitted by: {self.playing[1]}")
-                    ctx.voice_client.play(
-                        discord.PCMVolumeTransformer(
-                            discord.FFmpegPCMAudio(
-                                self.playing[0]["url"],
-                                before_options=FFMPEG_BEFORE_OPTS,
-                                options=FFMPEG_OPTS,
-                            ),
-                            self.volume_level / 100,
-                        ),
-                        after=release_lock,
-                    )
-                    self.song_start_time = time.perf_counter()
-                    await ctx.send(embed=now_playing)
+                    self.song_queue = self.backup
+                    self.backup = deque()
+                if self.looping is None:
+                    self.playing = self.song_queue.popleft()
+                    self.backup.append(self.playing)
                 else:
-                    skip_str, delta = self.skip_opts
-                    ctx.voice_client.play(
-                        discord.PCMVolumeTransformer(
-                            discord.FFmpegPCMAudio(
-                                self.playing[0]["url"],
-                                before_options=
-                                f"{FFMPEG_BEFORE_OPTS} -ss {skip_str}",
-                                options=FFMPEG_OPTS,
-                            ),
-                            self.volume_level / 100,
+                    self.playing = self.looping
+                now_playing = discord.Embed(
+                    colour=random.randint(0, 0xFFFFFF),
+                    title="now playing").add_field(
+                        name="track title",
+                        value=mk_title_string(self.playing[0]),
+                        inline=False,
+                    ).add_field(
+                        name="volume",
+                        value=f"{self.volume_level}%",
+                        inline=True).add_field(
+                            name="duration",
+                            value=mk_duration_string(self.playing[0]),
+                            inline=True,
+                        ).add_field(
+                            name="looping",
+                            value="no" if self.looping is None else "yes",
+                            inline=True,
+                        ).set_footer(text=f"submitted by: {self.playing[1]}")
+                ctx.voice_client.play(
+                    discord.PCMVolumeTransformer(
+                        discord.FFmpegPCMAudio(
+                            self.playing[0]["url"],
+                            before_options=FFMPEG_BEFORE_OPTS,
+                            options=
+                            f'-filter:a "{self.speed_flag}" {FFMPEG_OPTS}',
                         ),
-                        after=release_lock,
-                    )
-                    self.song_start_time = time.perf_counter() - delta
-                self.skip_opts = None
-
-            if ctx.voice_client is not None:
-                await ctx.voice_client.disconnect()
-                await ctx.send("queue is empty, finished playing all songs.")
+                        self.volume_level / 100,
+                    ),
+                    after=release_lock,
+                )
+                self.song_start_time = time.perf_counter()
+                await ctx.send(embed=now_playing)
             else:
-                await ctx.send("stopped playing, disconnected.")
+                skip_str, delta = self.skip_opts
+                ctx.voice_client.play(
+                    discord.PCMVolumeTransformer(
+                        discord.FFmpegPCMAudio(
+                            self.playing[0]["url"],
+                            before_options=
+                            f"{FFMPEG_BEFORE_OPTS} -ss {skip_str}",
+                            options=
+                            f'-filter:a "{self.speed_flag}" {FFMPEG_OPTS}',
+                        ),
+                        self.volume_level / 100,
+                    ),
+                    after=release_lock,
+                )
+                self.song_start_time = time.perf_counter() - delta
+            self.skip_opts = None
 
-            self.playing = None
-            self.song_lock.release()
-            self.volume_level = 100
+        if ctx.voice_client is not None:
+            await ctx.voice_client.disconnect()
+            await ctx.send("queue is empty, finished playing all songs.")
+        else:
+            await ctx.send("stopped playing, disconnected.")
+
+        self.playing = None
+        self.song_lock.release()
+        self.volume_level = 100
+        self.backup = deque()
+        self.speed_flag = "atempo=1"
+
+    @commands.command(aliases=["ps"])
+    @check_playing
+    async def playback_speed(self, ctx, speed: float):
+        """Go to a specific timestamp in currently playing track (clamped 0.25 between 4)"""
+
+        speed = max(0.25, min(speed, 4.0))
+        self.speed_flag = f"atempo=sqrt({speed}),atempo=sqrt({speed})" if (
+            speed > 2 or speed < 0.5) else f"atempo={speed}"
+        parsed = parse_time(
+            str(round(time.perf_counter() - self.song_start_time)))
+        self.skip_opts = time.strftime("%H:%M:%S", time.gmtime(parsed)), parsed
+        ctx.voice_client.stop()
+        await ctx.send(f"changed playback speed to {speed}")
 
     @commands.command(aliases=["gt"])
     @check_playing
@@ -399,21 +338,27 @@ class Music(commands.Cog):
     async def remove_song(self, ctx, song_index: int):
         """Remove a song from the song queue by index"""
 
-        if song_index < 0 or len(self.song_queue) <= song_index:
+        if song_index < 0 or (len(self.song_queue) +
+                              len(self.backup) if self.loop_queue else len(
+                                  self.song_queue)) <= song_index:
             await ctx.send(
                 f"supplied index {song_index} is not valid for current queue.")
             return
+
+        song_list, del_index = (self.song_queue, song_index) if (
+            song_index < len(self.song_queue)) else (self.backup, song_index -
+                                                     len(self.song_queue))
         removed = discord.Embed(
             colour=random.randint(0, 0xFFFFFF),
             title=f"removed track at index {song_index}",
         ).add_field(
             name="track name",
-            value=mk_title_string(self.song_queue[song_index][0]),
+            value=mk_title_string(song_list[del_index][0]),
             inline=False).add_field(
                 name="duration",
-                value=mk_duration_string(self.song_queue[song_index][0]),
+                value=mk_duration_string(song_list[del_index][0]),
                 inline=False).set_footer(text=f"removed by: {ctx.author}")
-        del self.song_queue[song_index]
+        del song_list[del_index]
         await ctx.send(embed=removed)
 
     @commands.command(aliases=["iqs"])
@@ -421,6 +366,9 @@ class Music(commands.Cog):
         """Insert a song into the song queue at a given index"""
 
         await ctx.trigger_typing()
+        if discord.utils.get(ctx.author.roles, name=self.ban_role):
+            await ctx.send("you cannot add songs to the queue.")
+            return
         if song_index < 0 or len(self.song_queue) <= song_index:
             await ctx.send(
                 f"supplied index {song_index} is not valid for current queue.")
@@ -472,6 +420,9 @@ class Music(commands.Cog):
         """Queue up a new song or a playlist"""
 
         await ctx.trigger_typing()
+        if discord.utils.get(ctx.author.roles, name=self.ban_role):
+            await ctx.send("you cannot add songs to the queue.")
+            return
         try:
             data = await self.get_info(url)
         except youtube_dl.utils.DownloadError:
@@ -482,8 +433,7 @@ class Music(commands.Cog):
             await ctx.send("could not find track")
             return
         author_str = str(ctx.author)
-        for track in entries:
-            self.song_queue.append((track, author_str))
+        self.song_queue.extend((track, author_str) for track in entries)
         if len(entries) > 1:
             queued = discord.Embed(colour=random.randint(0, 0xFFFFFF),
                                    title="queued up playlist").add_field(
@@ -542,11 +492,35 @@ class Music(commands.Cog):
             )
             return
         self.looping = None
-        ctx.voice_client.stop()
         for _ in range(queue_amount % (len_q + 1)):
             self.backup.append(self.song_queue.popleft())
+        ctx.voice_client.stop()
         await ctx.send(
             f"skipped current song{f' and {queue_amount} more from the queue' if queue_amount else ''}."
+        )
+
+    @commands.command(aliases=["prev", "previous", "rev"])
+    @check_playing
+    async def rewind(self, ctx, queue_amount: int = 1):
+        """
+        Rewinds to some amount of songs previously
+        """
+        queue_amount += 1
+
+        if queue_amount < 1:
+            await ctx.send("cannot rewind to less than one song ago.")
+            return
+        if queue_amount > len(self.backup):
+            await ctx.send(
+                f"cannot rewind to more than {len(self.backup)} songs.")
+            return
+
+        self.looping = None
+        for _ in range(queue_amount):
+            self.song_queue.appendleft(self.backup.pop())
+        ctx.voice_client.stop()
+        await ctx.send(
+            f"moved backwards by {queue_amount-1} song{'s' if queue_amount == 2 else ''} in the queue."
         )
 
     @commands.command()
