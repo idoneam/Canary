@@ -58,6 +58,10 @@ class Music(commands.Cog):
     async def play(self, ctx, *, url: str = None):
         """Streams from a youtube url or track name, or if none is given, from the queue"""
 
+        if discord.utils.get(ctx.author.roles, name=self.ban_role):
+            await ctx.send("you cannot decide which songs to play.")
+            return
+
         in_main: bool = ctx.voice_client is None
 
         if ctx.author.voice is None:
