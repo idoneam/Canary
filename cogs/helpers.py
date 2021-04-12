@@ -50,7 +50,7 @@ WTTR_IN_MOON_URL = "http://wttr.in/moon.png"
 
 URBAN_DICT_TEMPLATE = "http://api.urbandictionary.com/v0/define?term={}"
 
-LMGTFY_TEMPLATE = "https://lmgtfy.com/?q={}"
+LMGTFY_TEMPLATE = "https://letmegooglethat.com/?q={}"
 
 LANG_CODES = "|".join(googletrans.LANGUAGES.keys())
 LANG_NAMES = "|".join(
