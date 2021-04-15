@@ -15,10 +15,16 @@
 # You should have received a copy of the GNU General Public License
 # along with Canary. If not, see <https://www.gnu.org/licenses/>.
 
+# TODO: add playlist looping, speed, current song time to music status
+# TODO: add playlist sum length to print queue
+# TODO: add playlist declaration to play
+# TODO: maintain pause on goto
+# TODO: clean up code + further testing
+
 import asyncio
 import random
 import time
-from functools import wraps, partial
+from functools import partial
 from collections import deque
 from typing import Optional
 import discord
@@ -100,10 +106,18 @@ class Music(commands.Cog):
 
         if url:
             await ctx.trigger_typing()
-            data = await self.get_info(url)
+            try:
+                data = await self.get_info(url)
+            except youtube_dl.utils.DownloadError:
+                await ctx.send("could not find track.")
+                return
             entries = data.get("entries", [data])
-            for track in reversed(entries):
-                self.song_queue.insert(0, (track, str(ctx.author)))
+            if not entries:
+                await ctx.send("could not find track.")
+                return
+            author_str = str(ctx.author)
+            self.song_queue.extendleft(
+                (track, author_str) for track in reversed(entries))
             if not in_main:
                 ctx.voice_client.stop()
 
@@ -380,11 +394,11 @@ class Music(commands.Cog):
         try:
             data = await self.get_info(url)
         except youtube_dl.utils.DownloadError:
-            await ctx.send("could not find track")
+            await ctx.send("could not find track.")
             return
         entries = data.get("entries", [data])
         if not entries:
-            await ctx.send("could not find track")
+            await ctx.send("could not find track.")
             return
         author_str = str(ctx.author)
         for track in reversed(entries):
@@ -430,11 +444,11 @@ class Music(commands.Cog):
         try:
             data = await self.get_info(url)
         except youtube_dl.utils.DownloadError:
-            await ctx.send("could not find track")
+            await ctx.send("could not find track.")
             return
         entries = data.get("entries", [data])
         if not entries:
-            await ctx.send("could not find track")
+            await ctx.send("could not find track.")
             return
         author_str = str(ctx.author)
         self.song_queue.extend((track, author_str) for track in entries)
