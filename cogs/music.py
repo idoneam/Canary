@@ -16,9 +16,12 @@
 # along with Canary. If not, see <https://www.gnu.org/licenses/>.
 
 # TODO: add playlist looping, speed, current song time to music status
+# TODO: add songs from playlists attached to videos
 # TODO: add playlist sum length to print queue
 # TODO: add playlist declaration to play
 # TODO: maintain pause on goto
+# TODO: determine and (if possible) fix source of lack of precision in relative time skips
+# TODO: fix docstrings
 # TODO: clean up code + further testing
 
 import asyncio
