@@ -121,6 +121,7 @@ class Music(commands.Cog):
             author_str = str(ctx.author)
             self.song_queue.extendleft(
                 (track, author_str) for track in reversed(entries))
+            self.looping = None
             if not in_main:
                 ctx.voice_client.stop()
 
