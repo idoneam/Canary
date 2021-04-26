@@ -1,15 +1,16 @@
-name: formatting check
+name: lint
 
 on:
   push:
     paths:
-      '**.py'
+      "**.py"
 
 jobs:
-  formatting-check:
-    name: formatting check
+  lint:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
-    - name: formatting check
-      uses: ./.github/actions/black_check
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+      - uses: psf/black@stable
+        with:
+          args: ". --check"
