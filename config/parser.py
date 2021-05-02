@@ -150,7 +150,10 @@ class Parser:
             "generics": config["Roles"]["Generics"]
         }
 
-        self.music = {"ban_role": config["Music"]["BanRole"]}
+        self.music = {
+            "ban_role": config["Music"]["BanRole"],
+            "start_vol": float(config["Music"]["StartVol"])
+        }
 
         for rc in roles:
             roles[rc] = [r.strip() for r in roles[rc].split(",")]
