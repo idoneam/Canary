@@ -48,7 +48,6 @@ class Music(commands.Cog):
         self.skip_opts: Optional[tuple[str, int]] = None
         self.track_start_time: float = 0.0
         self.ban_role = self.bot.config.music["ban_role"]
-        self.ffmpeg_lag = 0
         self.pause_start: Optional[float] = None
 
     async def get_info(self, url: str):
@@ -109,7 +108,7 @@ class Music(commands.Cog):
             ),
             after=after or self.release_lock,
         )
-        self.track_start_time = time.perf_counter() - delta + self.ffmpeg_lag
+        self.track_start_time = time.perf_counter() - delta
 
     def from_total(self, idx):
 
@@ -189,8 +188,6 @@ class Music(commands.Cog):
                     self.backup = deque()
                 if self.looping_track:
                     self.play_track(ctx)
-                    self.track_start_time = time.perf_counter(
-                    ) + self.ffmpeg_lag
                 else:
                     self.playing = self.track_queue.popleft()
                     self.backup.append(self.playing)
@@ -202,8 +199,6 @@ class Music(commands.Cog):
                             inline=False,
                         ).set_footer(text=f"submitted by: {self.playing[1]}")
                     self.play_track(ctx)
-                    self.track_start_time = time.perf_counter(
-                    ) + self.ffmpeg_lag
                     await ctx.send(embed=now_playing)
             else:
                 skip_str, delta = self.skip_opts
@@ -230,9 +225,7 @@ class Music(commands.Cog):
         """Change track playback speed (clamped 0.25 between 4)"""
 
         self.speed_val = max(0.25, min(speed, 4.0))
-        self.speed_flag = f"atempo=sqrt({self.speed_val}),atempo=sqrt({self.speed_val})" if (
-            self.speed_val > 2
-            or self.speed_val < 0.5) else f"atempo={self.speed_val}"
+        self.speed_flag = f"atempo={self.speed_val}" if 0.5 < self.speed_val < 2 else f"atempo=sqrt({self.speed_val}),atempo=sqrt({self.speed_val})"
         parsed = parse_time(
             str(round(self.compute_curr_time(ctx.voice_client.is_paused()))))
         self.skip_opts = time.strftime("%H:%M:%S", time.gmtime(parsed)), parsed
@@ -308,7 +301,7 @@ class Music(commands.Cog):
         curr_index: int = start_idx % q_len
         change_state: bool = True
         queue_embed.description = (
-            f"duration: {mk_duration_string(self.track_queue)},"
+            f"duration: {mk_duration_string(self.track_queue)}, "
             f"length: {len(self.track_queue)} tracks"
             f"{' (looping)' if self.looping_queue else ''}")
         queue_msg = await ctx.send(embed=queue_embed)
@@ -554,46 +547,6 @@ class Music(commands.Cog):
         else:
             self.resume_playing(ctx)
             await ctx.send("resumed current track.")
-
-    @commands.command(hidden=True)
-    async def compute_ffmpeg_lag(self, ctx, test_amnt: int = 100):
-        if not discord.utils.get(ctx.author.roles,
-                                 name=self.bot.config.developer_role):
-            return await ctx.send(
-                "you are not authorized to use this function.")
-        if ctx.voice_client:
-            return await ctx.send("bot currently busy, do testing later.")
-        if ctx.author.voice is None:
-            return await ctx.send(
-                "you are not currently connected to a voice channel.")
-        rez_list = []
-        ret = await self.get_info("https://www.youtube.com/watch?v=tPEE9ZwTmy0"
-                                  )
-        if ret is None:
-            return await ctx.send("could not find track/playlist.")
-        data, _, _ = ret
-        await ctx.author.voice.channel.connect()
-        track_dur = data["duration"]
-        await ctx.send(f"testing track duration: {track_dur}")
-        msg = await ctx.send("current iteration: 0")
-
-        def after(_):
-            rez_list.append(time.perf_counter() - (start_time + track_dur))
-            self.track_lock.release()
-
-        for i in range(1, test_amnt + 1):
-            await self.track_lock.acquire()
-            self.playing = data, ctx.author
-            start_time = time.perf_counter()
-            self.play_track(ctx, after=after)
-            await msg.edit(content=f"iter: {i}")
-        avg_lag = sum(rez_list) / test_amnt
-        await msg.edit(
-            content=
-            f"iters: {test_amnt}, avg: {avg_lag}, max: {max(rez_list)}, min: {min(rez_list)}"
-        )
-        self.ffmpeg_lag = avg_lag
-        await ctx.voice_client.disconnect()
 
 
 def setup(bot):
