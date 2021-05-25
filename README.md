@@ -50,11 +50,27 @@ You must set certain values in the `config.ini` file, in particular your Discor
     * `ServerID`: Your server ID.
     * `CommandPrefix`: What a message should begin with to be considered a command.
     * `BotName`: The name of your bot.
+* `[Emoji]`
     * `UpvoteEmoji`: The name of your upvote emoji (for the score function).
     * `DownvoteEmoji`: The name of your downvote emoji.
+    * `RedchikenEmoji`: The name of the redchiken emoji, used to vote on Banner of the Week Contests.
+* `[Roles]`
     * `ModeratorRole`: The name of the role that your moderators have (for functions like DMing users).
     * `DeveloperRole`: The name of the role that your developers have (for functions like restarting the bot). This could be the same role than moderator.
-    * `ReceptionChannelID`: The ID of a channel that will receive messages sent to the bot through the `answer` command (and where messages sent by mods to users with the `dm` command will be logged)
+    * `McgillianRole`: The name of the role that verified McGillians have.
+    * `HonoraryMcGillianRole`: The name of the role that Honorary McGillians (verified Non-McGillians) have.
+    * `BannerRemindersRole`: The name of the role that is pinged when a Banner of the Week Contest starts.
+    * `BannerWinnerRole`: The name of the role that is given to users that win a Banner of the Week Contest.
+    * `TrashTierBannerRole`: The name of the role that is given to users that are banned from submitting in Banner of the Week Contests.
+    * `NoFoodSpottingRole`: The name of the role assigned to abusers of the foodspotting command that will prevent them from using it.
+* `[Channels]`
+    * `ReceptionChannel`: The name of the channel that will receive messages sent to the bot through the `answer` command (and where messages sent by mods to users with the `dm` command will be logged)
+    * `BannerOfTheWeekChannel`: The name of the channel where winning submissions for Banner of the Week Contests are sent.
+    * `BannerSubmissionsChannel`: The name of the channel where submissions for Banner of the Week Contests are sent. This is where users vote.
+    * `BannerConvertedChannel`: The name of the channel where the converted submissions for Banner of the Week Contests are sent. This is where the bot will fetch the winning banner.
+    * `FoodSpottingChannel`: The name of the channel where foodspotting posts are sent.
+    * `MetroStatusChannel`: The name of the channel where metro status alerts are sent.
+    * `BotsChannel`: The name of the channel for bot spamming.
 * `[Meta]`
     * `Repository`: The HTTPS remote for this repository, used by the `update` command as the remote when pulling.
 * `[Logging]`
@@ -77,9 +93,6 @@ You must set certain values in the `config.ini` file, in particular your Discor
 * `[Subscribers]`
     * `FoodRecallChannel`: Channel where you want CFIA recall notices posted.
     * `FoodRecallLocationFilter`: Regions you want to receive CFIA recall notices for.
-    * `FoodSpottingChannel`: Channel where you want foodspotting posts to be sent, ideally in a dedicated channel.
-    * `NoFoodSpottingRole`: Name of role assigned to abusers of the foodspotting command that will prevent them from using it.
-    * `MetroStatusChannel`: Channel where you want metro status alerts to be sent, ideally in a dedicated channel with opt-in read permissions for users.
 * `[Currency]`
     * `Name`: The name of the bot currency.
     * `Symbol`: The currency's symbol (e.g. `$`).
@@ -96,12 +109,12 @@ You must set certain values in the `config.ini` file, in particular your Discor
     * `RollReturns`: The multiplier return for each interval. For example, a value of `0, 2, 4, 10` with the intervals
       described above gives a 0x return for `random <= 66`, a 2x return for `66 < random <= 90`, a 4x return for
       `90 < random <= 99`, and a 10x return for `random == 100`.
-* `[Roles]`:
-    * `Pronouns`: Comma seperated list of pronoun roles in server.
-    * `Fields`: Comma seperated list of field of study roles in server.
-    * `Faculties`: Comma seperated list of faculty roles in server.
-    * `Years`: Comma seperated list of year roles in server.
-    * `Generics`: Comma seperated list of generic or meme roles in server.
+* `[AssignableRoles]`:
+    * `Pronouns`: Comma separated list of pronoun roles in server.
+    * `Fields`: Comma separated list of field of study roles in server.
+    * `Faculties`: Comma separated list of faculty roles in server.
+    * `Years`: Comma separated list of year roles in server.
+    * `Generics`: Comma separated list of generic or meme roles in server.
 </p>
 </details>
 

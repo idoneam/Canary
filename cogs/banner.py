@@ -36,13 +36,13 @@ class Banner(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.guild = None
-        self.banner_role = None
-        self.banner_channel = None
-        self.preview_channel = None
-        self.converted_channel = None
+        self.banner_reminders_role = None
+        self.banner_of_the_week_channel = None
+        self.banner_submissions_channel = None
+        self.banner_converted_channel = None
         self.bots_channel = None
-        self.winner_role = None
-        self.redchiken = None
+        self.banner_winner_role = None
+        self.redchiken_emoji = None
         self.start_datetime = None
         self.week_name = None
         self.send_reminder = None
@@ -50,18 +50,23 @@ class Banner(commands.Cog):
     @commands.Cog.listener()
     async def on_ready(self):
         self.guild = self.bot.get_guild(self.bot.config.server_id)
-        self.banner_channel = utils.get(self.guild.text_channels,
-                                        name="banner_of_the_week")
-        self.preview_channel = utils.get(self.guild.text_channels,
-                                         name="banner_submissions")
-        self.converted_channel = utils.get(self.guild.text_channels,
-                                           name="converted_banner_submissions")
-        self.bots_channel = utils.get(self.guild.text_channels, name="bots")
-        self.banner_role = utils.get(self.guild.roles,
-                                     name="Banner Submissions")
-        self.winner_role = utils.get(self.guild.roles,
-                                     name="Banner of the Week Winner")
-        self.redchiken = utils.get(self.guild.emojis, name="redchiken")
+        self.banner_of_the_week_channel = utils.get(
+            self.guild.text_channels,
+            name=self.bot.config.banner_of_the_week_channel)
+        self.banner_submissions_channel = utils.get(
+            self.guild.text_channels,
+            name=self.bot.config.banner_submissions_channel)
+        self.banner_converted_channel = utils.get(
+            self.guild.text_channels,
+            name=self.bot.config.banner_converted_channel)
+        self.bots_channel = utils.get(self.guild.text_channels,
+                                      name=self.bot.config.bots_channel)
+        self.banner_reminders_role = utils.get(
+            self.guild.roles, name=self.bot.config.banner_reminders_role)
+        self.banner_winner_role = utils.get(
+            self.guild.roles, name=self.bot.config.banner_winner_role)
+        self.redchiken_emoji = utils.get(self.guild.emojis,
+                                         name=self.bot.config.redchiken_emoji)
 
         conn = sqlite3.connect(self.bot.config.db_path)
         c = conn.cursor()
@@ -83,8 +88,8 @@ class Banner(commands.Cog):
     @tasks.loop(minutes=1.0)
     async def check_banner_contest_reminder(self):
         # todo: make general scheduled events db instead
-        if not all((self.guild, self.banner_role, self.preview_channel,
-                    self.start_datetime)):
+        if not all((self.guild, self.banner_reminders_role,
+                    self.banner_submissions_channel, self.start_datetime)):
             return
 
         if datetime.datetime.now(
@@ -93,10 +98,10 @@ class Banner(commands.Cog):
 
         conn = sqlite3.connect(self.bot.config.db_path)
         c = conn.cursor()
-        await self.preview_channel.send(
-            f"{self.banner_role.mention} "
+        await self.banner_submissions_channel.send(
+            f"{self.banner_reminders_role.mention} "
             f"Submissions are now open for the banner picture of the week! "
-            f"Read the rules pinned in {self.banner_channel.mention} to submit a picture. "
+            f"Read the rules pinned in {self.banner_of_the_week_channel.mention} to submit a picture. "
             f"The winner will be chosen in around 12 hours "
             f"(To get these reminders, type `.iam Banner Submissions` in {self.bots_channel.mention})"
         )
@@ -282,13 +287,13 @@ class Banner(commands.Cog):
         preview_message_id = fetched[1]
         converted_message_id = fetched[2]
 
-        preview_message = await self.preview_channel.fetch_message(
+        preview_message = await self.banner_submissions_channel.fetch_message(
             preview_message_id)
-        converted_message = await self.converted_channel.fetch_message(
+        converted_message = await self.banner_converted_channel.fetch_message(
             converted_message_id)
 
         voters = await utils.get(preview_message.reactions,
-                                 emoji=self.redchiken).users().flatten()
+                                 emoji=self.redchiken_emoji).users().flatten()
         if self.bot.user in voters:
             voters.remove(self.bot.user)
         votes = len(voters)
@@ -328,7 +333,7 @@ class Banner(commands.Cog):
         with BytesIO() as image_binary:
             await preview.save(image_binary)
             image_binary.seek(0)
-            await self.banner_channel.send(
+            await self.banner_of_the_week_channel.send(
                 f"With {votes} votes, here is the banner picture of the week "
                 f"of {self.week_name}, submitted by {winner.mention}!",
                 file=discord.File(fp=image_binary,
@@ -339,9 +344,10 @@ class Banner(commands.Cog):
                 reason=f"Banner of the week winner submitted by {winner} "
                 f"(Approved by {ctx.author})")
         except discord.errors.HTTPException as e:
-            if e.code == 30003:  # Discord API code for full pins
-                pins = await self.preview_channel.pins()
-                await pins[-1].unpin(reason="#banner_submissions pins are full")
+            if e.code == 30003:    # Discord API code for full pins
+                pins = await self.banner_submissions_channel.pins()
+                await pins[-1].unpin(reason="#banner_submissions pins are full"
+                                     )
                 await preview_message.pin(
                     reason=f"Banner of the week winner submitted by {winner} "
                     f"(Approved by {ctx.author})")
@@ -354,7 +360,7 @@ class Banner(commands.Cog):
                 f"(Approved by {ctx.author})")
         except discord.errors.HTTPException as e:
             if e.code == 30003:
-                pins = await self.converted_channel.pins()
+                pins = await self.banner_converted_channel.pins()
                 await pins[-1].unpin(
                     reason="#converted_banner_submissions pins are full")
                 await converted_message.pin(
@@ -364,7 +370,7 @@ class Banner(commands.Cog):
                 raise e
 
         await winner.add_roles(
-            self.winner_role,
+            self.banner_winner_role,
             reason=f"Banner of the week winner (Approved by {ctx.author})")
         converted_read = await converted.read()
         await self.guild.edit(
@@ -379,14 +385,16 @@ class Banner(commands.Cog):
         conn = sqlite3.connect(self.bot.config.db_path)
         c = conn.cursor()
 
-        if not (discord.utils.get(ctx.author.roles, name="McGillian")
-                or discord.utils.get(ctx.author.roles,
-                                     name="Honorary McGillian")):
+        if not (discord.utils.get(ctx.author.roles,
+                                  name=self.bot.config.mcgillian_role)
+                or discord.utils.get(
+                    ctx.author.roles,
+                    name=self.bot.config.honorary_mcgillian_role)):
             await ctx.send("You must be a verified user.")
             return
 
         if discord.utils.get(ctx.author.roles,
-                             name="Trash Tier Banner Submissions"):
+                             name=self.bot.config.trash_tier_banner_role):
             await ctx.send(
                 "You cannot submit banners if you have the Trash Tier Banner Submissions role"
             )
@@ -416,7 +424,7 @@ class Banner(commands.Cog):
 
         if self.send_reminder:
             await ctx.send(
-                f"Please wait a minute for the start message to be sent in {self.preview_channel.mention}"
+                f"Please wait a minute for the start message to be sent in {self.banner_submissions_channel.mention}"
             )
             return
 
@@ -513,7 +521,7 @@ class Banner(commands.Cog):
         fetched = c.fetchone()
         if fetched:
             try:
-                message_to_replace = await self.preview_channel.fetch_message(
+                message_to_replace = await self.banner_submissions_channel.fetch_message(
                     fetched[0])
                 await message_to_replace.delete()
             except discord.errors.NotFound:
@@ -525,7 +533,7 @@ class Banner(commands.Cog):
         with BytesIO() as image_binary:
             overlay.save(image_binary, 'PNG')
             image_binary.seek(0)
-            converted_message = await self.converted_channel.send(
+            converted_message = await self.banner_converted_channel.send(
                 f"{ctx.author.mention}'s submission for the week of "
                 f"{self.week_name}{' (resubmission)' if replaced_message else ''}:",
                 file=discord.File(fp=image_binary,
@@ -534,12 +542,12 @@ class Banner(commands.Cog):
         with BytesIO() as image_binary:
             preview.save(image_binary, 'PNG')
             image_binary.seek(0)
-            preview_message = await self.preview_channel.send(
+            preview_message = await self.banner_submissions_channel.send(
                 f"{ctx.author.mention}'s submission for the week of "
                 f"{self.week_name}{' (resubmission)' if replaced_message else ''}:",
                 file=discord.File(fp=image_binary,
                                   filename='banner_preview.png'))
-            await preview_message.add_reaction(self.redchiken)
+            await preview_message.add_reaction(self.redchiken_emoji)
 
         c.execute('REPLACE INTO BannerSubmissions VALUES (?, ?, ?)',
                   (ctx.author.id, preview_message.id, converted_message.id))
