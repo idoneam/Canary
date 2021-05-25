@@ -338,24 +338,30 @@ class Banner(commands.Cog):
             await preview_message.pin(
                 reason=f"Banner of the week winner submitted by {winner} "
                 f"(Approved by {ctx.author})")
-        except discord.errors.HTTPException:
-            pins = await self.preview_channel.pins()
-            await pins[-1].unpin(reason="#banner_submissions pins are full")
-            await preview_message.pin(
-                reason=f"Banner of the week winner submitted by {winner} "
-                f"(Approved by {ctx.author})")
+        except discord.errors.HTTPException as e:
+            if e.code == 30003:  # Discord API code for full pins
+                pins = await self.preview_channel.pins()
+                await pins[-1].unpin(reason="#banner_submissions pins are full")
+                await preview_message.pin(
+                    reason=f"Banner of the week winner submitted by {winner} "
+                    f"(Approved by {ctx.author})")
+            else:
+                raise e
 
         try:
             await converted_message.pin(
                 reason=f"Banner of the week winner submitted by {winner} "
                 f"(Approved by {ctx.author})")
-        except discord.errors.HTTPException:
-            pins = await self.converted_channel.pins()
-            await pins[-1].unpin(
-                reason="#converted_banner_submissions pins are full")
-            await converted_message.pin(
-                reason=f"Banner of the week winner submitted by {winner} "
-                f"(Approved by {ctx.author})")
+        except discord.errors.HTTPException as e:
+            if e.code == 30003:
+                pins = await self.converted_channel.pins()
+                await pins[-1].unpin(
+                    reason="#converted_banner_submissions pins are full")
+                await converted_message.pin(
+                    reason=f"Banner of the week winner submitted by {winner} "
+                    f"(Approved by {ctx.author})")
+            else:
+                raise e
 
         await winner.add_roles(
             self.winner_role,
