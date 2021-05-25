@@ -287,10 +287,20 @@ class Banner(commands.Cog):
         preview_message_id = fetched[1]
         converted_message_id = fetched[2]
 
-        preview_message = await self.banner_submissions_channel.fetch_message(
-            preview_message_id)
-        converted_message = await self.banner_converted_channel.fetch_message(
-            converted_message_id)
+        try:
+            preview_message = await self.banner_submissions_channel.fetch_message(
+                preview_message_id)
+        except discord.errors.NotFound:
+            await ctx.send(f"Could not find submission in {self.banner_submissions_channel.mention}. "
+                           f"It might have been manually deleted. Exiting command.")
+            return
+        try:
+            converted_message = await self.banner_converted_channel.fetch_message(
+                converted_message_id)
+        except discord.errors.NotFound:
+            await ctx.send(f"Could not find submission in {self.banner_converted_channel.mention}. "
+                           f"It might have been manually deleted. Exiting command.")
+            return
 
         voters = await utils.get(preview_message.reactions,
                                  emoji=self.redchiken_emoji).users().flatten()
@@ -526,7 +536,8 @@ class Banner(commands.Cog):
                 await message_to_replace.delete()
             except discord.errors.NotFound:
                 await ctx.send(
-                    "Could not delete previously posted message. It might have been manually deleted."
+                    f"Could not delete previously posted submission from {self.banner_submissions_channel.mention}. "
+                    f"It might have been manually deleted."
                 )
             replaced_message = True
 
