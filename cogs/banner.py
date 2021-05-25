@@ -25,8 +25,7 @@ from io import BytesIO
 import datetime
 import sqlite3
 import requests
-import PIL
-from PIL import Image
+from PIL import Image, UnidentifiedImageError
 import json
 from .utils.checks import is_moderator
 import asyncio
@@ -89,27 +88,29 @@ class Banner(commands.Cog):
             return
 
         if datetime.datetime.now(
-        ) >= self.start_datetime and self.send_reminder:
-            conn = sqlite3.connect(self.bot.config.db_path)
-            c = conn.cursor()
-            await self.preview_channel.send(
-                f"{self.banner_role.mention} "
-                f"Submissions are now open for the banner picture of the week! "
-                f"Read the rules pinned in {self.banner_channel.mention} to submit a picture. "
-                f"The winner will be chosen in around 12 hours "
-                f"(To get these reminders, type `.iam Banner Submissions` in {self.bots_channel.mention})"
-            )
-            c.execute('SELECT Value FROM Settings WHERE Key = ?',
-                      ("BannerContestInfo", ))
-            fetched = c.fetchone()
-            if fetched:
-                self.send_reminder = False
-                banner_dict = json.loads(fetched[0])
-                banner_dict["send_reminder"] = False
-                c.execute('REPLACE INTO Settings VALUES (?, ?)',
-                          ("BannerContestInfo", json.dumps(banner_dict)))
-                conn.commit()
-            conn.close()
+        ) < self.start_datetime or not self.send_reminder:
+            return
+
+        conn = sqlite3.connect(self.bot.config.db_path)
+        c = conn.cursor()
+        await self.preview_channel.send(
+            f"{self.banner_role.mention} "
+            f"Submissions are now open for the banner picture of the week! "
+            f"Read the rules pinned in {self.banner_channel.mention} to submit a picture. "
+            f"The winner will be chosen in around 12 hours "
+            f"(To get these reminders, type `.iam Banner Submissions` in {self.bots_channel.mention})"
+        )
+        c.execute('SELECT Value FROM Settings WHERE Key = ?',
+                  ("BannerContestInfo", ))
+        fetched = c.fetchone()
+        if fetched:
+            self.send_reminder = False
+            banner_dict = json.loads(fetched[0])
+            banner_dict["send_reminder"] = False
+            c.execute('REPLACE INTO Settings VALUES (?, ?)',
+                      ("BannerContestInfo", json.dumps(banner_dict)))
+            conn.commit()
+        conn.close()
 
     async def reset_banner_contest(self):
         self.start_datetime = None
@@ -295,21 +296,22 @@ class Banner(commands.Cog):
         preview = preview_message.attachments[0]
         converted = converted_message.attachments[0]
 
-        with BytesIO() as preview_image_binary:
-            with BytesIO() as converted_image_binary:
-                await preview.save(preview_image_binary)
-                preview_image_binary.seek(0)
-                await converted.save(converted_image_binary)
-                converted_image_binary.seek(0)
-                await ctx.send(
-                    "Do you want to select the following banner as winner? "
-                    "Please type `yes` to confirm. (Type anything otherwise)",
-                    files=[
-                        discord.File(fp=preview_image_binary,
-                                     filename='banner_preview.png'),
-                        discord.File(fp=converted_image_binary,
-                                     filename='converted_banner.png')
-                    ])
+        with BytesIO() as preview_image_binary, BytesIO(
+        ) as converted_image_binary:
+            await preview.save(preview_image_binary)
+            preview_image_binary.seek(0)
+            await converted.save(converted_image_binary)
+            converted_image_binary.seek(0)
+            await ctx.send(
+                "Do you want to select the following banner as winner? "
+                "Please type `yes` to confirm. (Type anything otherwise)",
+                files=[
+                    discord.File(fp=preview_image_binary,
+                                 filename='banner_preview.png'),
+                    discord.File(fp=converted_image_binary,
+                                 filename='converted_banner.png')
+                ])
+
         try:
             confirmation_msg = await self.bot.wait_for('message',
                                                        check=msg_check,
@@ -388,11 +390,11 @@ class Banner(commands.Cog):
                   ("BannerContestInfo", ))
 
         fetched = c.fetchone()
-        if fetched:
-            banner_dict = json.loads(fetched[0])
-        else:
+        if not fetched:
             await ctx.send("No banner contest is currently set")
             return
+
+        banner_dict = json.loads(fetched[0])
 
         timestamp = banner_dict["timestamp"]
         if not timestamp:
@@ -434,61 +436,69 @@ class Banner(commands.Cog):
                     if arg != "-stretch" and arg != "-stretched":
                         url = arg
 
-        overlay_mask = Image.open("./data/premade/banner_converter.png")
-        preview_mask = Image.open("./data/premade/banner_preview.png")
         try:
-            user_image = Image.open(BytesIO(
-                requests.get(url).content)).convert("RGBA")
-        except PIL.UnidentifiedImageError or requests.exceptions.MissingSchema:
+            with Image.open("./data/premade/banner_converter.png") as overlay_mask,\
+                 Image.open("./data/premade/banner_preview.png") as preview_mask,\
+                 Image.open(BytesIO(requests.get(url).content)).convert("RGBA") as user_image:
+
+                overlay_mask_user_canvas_size = overlay_mask.size
+                preview_mask_user_canvas_size = (240, 135)
+                preview_mask_user_box_start = (5, 5)
+
+                if stretch:
+                    overlay = Image.alpha_composite(
+                        user_image.resize(overlay_mask_user_canvas_size),
+                        overlay_mask)
+                    preview_user_image = Image.new('RGBA', preview_mask.size,
+                                                   (0, 0, 0, 0))
+                    preview_user_image.paste(
+                        user_image.resize(preview_mask_user_canvas_size),
+                        preview_mask_user_box_start)
+                    preview = Image.alpha_composite(preview_user_image,
+                                                    preview_mask)
+                else:
+                    overlay_ratio = max(
+                        overlay_mask_user_canvas_size[0] / user_image.size[0],
+                        overlay_mask_user_canvas_size[1] / user_image.size[1])
+                    overlay_user_image = Image.new(
+                        'RGBA', overlay_mask_user_canvas_size, (0, 0, 0, 0))
+                    overlay_user_size = (int(user_image.size[0] *
+                                             overlay_ratio),
+                                         int(user_image.size[1] *
+                                             overlay_ratio))
+                    overlay_mask_user_image_start = (
+                        int(overlay_mask_user_canvas_size[0] / 2 -
+                            overlay_user_size[0] / 2),
+                        int(overlay_mask_user_canvas_size[1] / 2 -
+                            overlay_user_size[1] / 2))
+                    overlay_user_image.paste(
+                        user_image.resize(overlay_user_size),
+                        overlay_mask_user_image_start)
+                    overlay = Image.alpha_composite(overlay_user_image,
+                                                    overlay_mask)
+
+                    preview_ratio = max(
+                        preview_mask_user_canvas_size[0] / user_image.size[0],
+                        preview_mask_user_canvas_size[1] / user_image.size[1])
+                    preview_user_image = Image.new('RGBA', preview_mask.size,
+                                                   (0, 0, 0, 0))
+                    preview_user_size = (int(user_image.size[0] *
+                                             preview_ratio),
+                                         int(user_image.size[1] *
+                                             preview_ratio))
+                    preview_mask_user_image_start = (
+                        5 + int(preview_mask_user_canvas_size[0] / 2 -
+                                preview_user_size[0] / 2),
+                        5 + int(preview_mask_user_canvas_size[1] / 2 -
+                                preview_user_size[1] / 2))
+                    preview_user_image.paste(
+                        user_image.resize(preview_user_size),
+                        preview_mask_user_image_start)
+                    preview = Image.alpha_composite(preview_user_image,
+                                                    preview_mask)
+        except UnidentifiedImageError or requests.exceptions.MissingSchema:
             await ctx.send(f"Image couldn't be opened.")
             return
-
-        overlay_mask_user_canvas_size = overlay_mask.size
-        preview_mask_user_canvas_size = (240, 135)
-        preview_mask_user_box_start = (5, 5)
-
-        if stretch:
-            overlay = Image.alpha_composite(
-                user_image.resize(overlay_mask_user_canvas_size), overlay_mask)
-            preview_user_image = Image.new('RGBA', preview_mask.size,
-                                           (0, 0, 0, 0))
-            preview_user_image.paste(
-                user_image.resize(preview_mask_user_canvas_size),
-                preview_mask_user_box_start)
-            preview = Image.alpha_composite(preview_user_image, preview_mask)
-        else:
-            overlay_ratio = max(
-                overlay_mask_user_canvas_size[0] / user_image.size[0],
-                overlay_mask_user_canvas_size[1] / user_image.size[1])
-            overlay_user_image = Image.new('RGBA',
-                                           overlay_mask_user_canvas_size,
-                                           (0, 0, 0, 0))
-            overlay_user_size = (int(user_image.size[0] * overlay_ratio),
-                                 int(user_image.size[1] * overlay_ratio))
-            overlay_mask_user_image_start = (
-                int(overlay_mask_user_canvas_size[0] / 2 -
-                    overlay_user_size[0] / 2),
-                int(overlay_mask_user_canvas_size[1] / 2 -
-                    overlay_user_size[1] / 2))
-            overlay_user_image.paste(user_image.resize(overlay_user_size),
-                                     overlay_mask_user_image_start)
-            overlay = Image.alpha_composite(overlay_user_image, overlay_mask)
-
-            preview_ratio = max(
-                preview_mask_user_canvas_size[0] / user_image.size[0],
-                preview_mask_user_canvas_size[1] / user_image.size[1])
-            preview_user_image = Image.new('RGBA', preview_mask.size,
-                                           (0, 0, 0, 0))
-            preview_user_size = (int(user_image.size[0] * preview_ratio),
-                                 int(user_image.size[1] * preview_ratio))
-            preview_mask_user_image_start = (
-                5 + int(preview_mask_user_canvas_size[0] / 2 -
-                        preview_user_size[0] / 2),
-                5 + int(preview_mask_user_canvas_size[1] / 2 -
-                        preview_user_size[1] / 2))
-            preview_user_image.paste(user_image.resize(preview_user_size),
-                                     preview_mask_user_image_start)
-            preview = Image.alpha_composite(preview_user_image, preview_mask)
 
         replaced_message = False
         c.execute(
