@@ -291,15 +291,17 @@ class Banner(commands.Cog):
             preview_message = await self.banner_submissions_channel.fetch_message(
                 preview_message_id)
         except discord.errors.NotFound:
-            await ctx.send(f"Could not find submission in {self.banner_submissions_channel.mention}. "
-                           f"It might have been manually deleted. Exiting command.")
+            await ctx.send(
+                f"Could not find submission in {self.banner_submissions_channel.mention}. "
+                f"It might have been manually deleted. Exiting command.")
             return
         try:
             converted_message = await self.banner_converted_channel.fetch_message(
                 converted_message_id)
         except discord.errors.NotFound:
-            await ctx.send(f"Could not find submission in {self.banner_converted_channel.mention}. "
-                           f"It might have been manually deleted. Exiting command.")
+            await ctx.send(
+                f"Could not find submission in {self.banner_converted_channel.mention}. "
+                f"It might have been manually deleted. Exiting command.")
             return
 
         voters = await utils.get(preview_message.reactions,
@@ -537,8 +539,7 @@ class Banner(commands.Cog):
             except discord.errors.NotFound:
                 await ctx.send(
                     f"Could not delete previously posted submission from {self.banner_submissions_channel.mention}. "
-                    f"It might have been manually deleted."
-                )
+                    f"It might have been manually deleted.")
             replaced_message = True
 
         with BytesIO() as image_binary:
