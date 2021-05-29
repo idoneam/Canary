@@ -65,9 +65,9 @@ class Games(commands.Cog):
         return ("rules: 5 wrong guesses are allowed, guesses "
                 "must be either the entire correct word or a "
                 "single letter (interpreted in a case insensitive manner)\n"
-                f"here is a list of valid category commands: {cat_list}\n"
-                "other commands are: `quit` (stops current game) "
-                "and `help` (sends this message)")
+                f"here is a list of valid category arguments: {cat_list}.\n"
+                "quit an ongoing game by typing `?{hm|hangman} quit`.\n"
+                "resend this message by typing `?{hm|hangman} help`.")
 
     def hm_msg_check(self, hm_channel: discord.TextChannel, lowered: str,
                      msg: discord.Message):
@@ -78,13 +78,13 @@ class Games(commands.Cog):
     @commands.command(aliases=["hm"])
     async def hangman(self, ctx, command: Optional[str] = None):
         """
-        Play a nice game of hangman with internet strangers!
-        Guesses must be single letters (interpreted in a case insensitive manner) or the entire correct word.
-        Can either be called with "?{hm|hangman}" or "?{hm|hangman} x", where x is a valid category command.
-        See all commands by typing "?{hm|hangman} help".
-        Quit an ongoing game by typing "?{hm|hangman} quit".
+        play a nice game of hangman with internet strangers!
+        guesses must be single letters (interpreted in a case insensitive manner) or the entire correct word.
+        can either be called with "?{hm|hangman}" or "?{hm|hangman} x", where x is a valid category argument.
+        see all categories by typing "?{hm|hangman} help".
+        quit an ongoing game by typing "?{hm|hangman} quit".
 
-        Rules:
+        rules:
             - 5 wrong guesses allowed
             - for a guess to be registered, it must either be the full correct word or a single letter
             - guesses are interpreted in a case insensitive manner
