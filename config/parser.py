@@ -160,7 +160,14 @@ class Parser:
                    key=lambda c: c[0])
         }
 
-        # Assignable roles
+        # Games
+        self.games = {
+            "hm_norm_win": int(config["Games"]["HangmanNormalWin"]),
+            "hm_cool_win": int(config["Games"]["HangmanCoolWin"]),
+            "hm_timeout": int(config["Games"]["HangmanTimeOut"])
+        }
+
+        # Assignable Roles
         roles = {
             "pronouns": config["AssignableRoles"]["Pronouns"],
             "fields": config["AssignableRoles"]["Fields"],
