@@ -138,6 +138,16 @@ class Banner(commands.Cog):
     @commands.command(aliases=["set_banner_contest"])
     @is_moderator()
     async def setbannercontest(self, ctx):
+        """
+        Set a Banner Picture of the Week contest for the server.
+
+        When calling this command, you will be prompted for the start date and time of the contest,
+        and for the 'name' of the week, which is for example used to say `Banner picture of the week of [...]`.
+        A reminder will be sent in the Banner Submissions channel when the contest starts.
+        You may still plan the next banner contest if the server cannot currently upload and use a banner.
+
+        You must be a moderator to use this command.
+        """
         if "BANNER" not in self.guild.features:
             await ctx.send(
                 "Warning: This server cannot currently upload and use a banner. "
@@ -224,6 +234,19 @@ class Banner(commands.Cog):
         aliases=["banner_winner", "setbannerwinner", "set_banner_winner"])
     @is_moderator()
     async def bannerwinner(self, ctx, winner: discord.Member = None):
+        """
+        Select the winner for an ongoing Banner Picture of the Week contest
+
+        The winning picture is then set as the server's Banner and the submission is published on the Banner of the week channel.
+        The winning user receives the Banner of the Week Winner role, and the submission previews are pinned in the
+        Banner Submissions and Converted Banner Submissions channels.
+
+        This command can be used with a user as argument. Otherwise, a prompt will ask for the user.
+        The user must have submitted a banner using the submitbanner command during the contest.
+        There will then be a prompt with the selected picture to confirm that it is the correct one.
+
+        You must be a moderator to use this command.
+        """
         if not self.start_datetime:
             await ctx.send("There is no banner contest right now.")
             return
@@ -395,6 +418,16 @@ class Banner(commands.Cog):
 
     @commands.command(aliases=["submit_banner"])
     async def submitbanner(self, ctx, *args):
+        """
+        Submit a picture for an Banner Picture of the Week contest
+
+        There must be an ongoing Banner contest to use this command; check the Banner of the Week channel for more information.
+        This command can be used in a picture caption or with a url as argument.
+        The image will be scaled to maximum fit and centered; you can add -strech to the command for the image to be stretched instead.
+        For better results, your picture must be at least 960x540 pixels in a 16:9 aspect ratio.
+
+        You must be a verified user to use this command.
+        """
         conn = sqlite3.connect(self.bot.config.db_path)
         c = conn.cursor()
 
