@@ -42,7 +42,7 @@ class Banner(commands.Cog):
         self.banner_converted_channel = None
         self.bots_channel = None
         self.banner_winner_role = None
-        self.redchiken_emoji = None
+        self.banner_vote_emoji = None
         self.start_datetime = None
         self.week_name = None
         self.send_reminder = None
@@ -65,8 +65,8 @@ class Banner(commands.Cog):
             self.guild.roles, name=self.bot.config.banner_reminders_role)
         self.banner_winner_role = utils.get(
             self.guild.roles, name=self.bot.config.banner_winner_role)
-        self.redchiken_emoji = utils.get(self.guild.emojis,
-                                         name=self.bot.config.redchiken_emoji)
+        self.banner_vote_emoji = utils.get(
+            self.guild.emojis, name=self.bot.config.banner_vote_emoji)
 
         conn = sqlite3.connect(self.bot.config.db_path)
         c = conn.cursor()
@@ -304,8 +304,9 @@ class Banner(commands.Cog):
                 f"It might have been manually deleted. Exiting command.")
             return
 
-        voters = await utils.get(preview_message.reactions,
-                                 emoji=self.redchiken_emoji).users().flatten()
+        voters = await utils.get(
+            preview_message.reactions,
+            emoji=self.banner_vote_emoji).users().flatten()
         if self.bot.user in voters:
             voters.remove(self.bot.user)
         votes = len(voters)
@@ -559,7 +560,7 @@ class Banner(commands.Cog):
                 f"{self.week_name}{' (resubmission)' if replaced_message else ''}:",
                 file=discord.File(fp=image_binary,
                                   filename='banner_preview.png'))
-            await preview_message.add_reaction(self.redchiken_emoji)
+            await preview_message.add_reaction(self.banner_vote_emoji)
 
         c.execute('REPLACE INTO BannerSubmissions VALUES (?, ?, ?)',
                   (ctx.author.id, preview_message.id, converted_message.id))

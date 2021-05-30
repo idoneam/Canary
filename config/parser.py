@@ -53,7 +53,7 @@ class Parser:
         # Emoji
         self.upvote_emoji = config['Emoji']['UpvoteEmoji']
         self.downvote_emoji = config['Emoji']['DownvoteEmoji']
-        self.redchiken_emoji = config['Emoji']['RedchikenEmoji']
+        self.banner_vote_emoji = config['Emoji']['BannerVoteEmoji']
 
         # Roles
         self.moderator_role = config['Roles']['ModeratorRole']

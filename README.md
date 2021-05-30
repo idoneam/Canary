@@ -53,7 +53,7 @@ You must set certain values in the `config.ini` file, in particular your Discor
 * `[Emoji]`
     * `UpvoteEmoji`: The name of your upvote emoji (for the score function).
     * `DownvoteEmoji`: The name of your downvote emoji.
-    * `RedchikenEmoji`: The name of the redchiken emoji, used to vote on Banner of the Week Contests.
+    * `BannerVoteEmoji`: The name of the emoji that is used to vote on Banner of the Week Contests.
 * `[Roles]`
     * `ModeratorRole`: The name of the role that your moderators have (for functions like DMing users).
     * `DeveloperRole`: The name of the role that your developers have (for functions like restarting the bot). This could be the same role than moderator.
