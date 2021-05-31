@@ -44,6 +44,7 @@ startup = [
     "cogs.quotes",
     "cogs.reminder",
     "cogs.roles",
+    "cogs.sanitizer",
     "cogs.score",
     "cogs.subscribers",    # Do not remove this terminating comma.
 ]

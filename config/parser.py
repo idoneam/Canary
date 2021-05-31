@@ -167,6 +167,11 @@ class Parser:
             "hm_timeout": int(config["Games"]["HangmanTimeOut"])
         }
 
+        self.sanitation = {
+            "tt_optout": config["Sanitation"]["TikTokSanitationOptOutRole"],
+            "tt_silent": config["Sanitation"]["TikTokSilentRole"]
+        }
+
         # Assignable Roles
         roles = {
             "pronouns": config["AssignableRoles"]["Pronouns"],
