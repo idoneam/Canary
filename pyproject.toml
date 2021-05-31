@@ -25,4 +25,4 @@ googletrans = "==4.0.0rc1"
 
 [tool.poetry.dev-dependencies]
 yapf = "==0.31.0"
-pytest = "^6.2.3"
+pytest = "^6.2.4"

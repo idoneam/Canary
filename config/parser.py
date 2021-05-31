@@ -49,12 +49,35 @@ class Parser:
             s for s in config['Server']['CommandPrefix'].strip().split(',')
         ]
         self.bot_name = config['Server']['BotName']
-        self.upvote_emoji = config['Server']['UpvoteEmoji']
-        self.downvote_emoji = config['Server']['DownvoteEmoji']
-        self.moderator_role = config['Server']['ModeratorRole']
-        self.developer_role = config['Server']['DeveloperRole']
-        self.reception_channel = config['Server']['ReceptionChannel']
 
+        # Emoji
+        self.upvote_emoji = config['Emoji']['UpvoteEmoji']
+        self.downvote_emoji = config['Emoji']['DownvoteEmoji']
+        self.banner_vote_emoji = config['Emoji']['BannerVoteEmoji']
+
+        # Roles
+        self.moderator_role = config['Roles']['ModeratorRole']
+        self.developer_role = config['Roles']['DeveloperRole']
+        self.mcgillian_role = config['Roles']['McGillianRole']
+        self.honorary_mcgillian_role = config['Roles']['HonoraryMcGillianRole']
+        self.banner_reminders_role = config['Roles']['BannerRemindersRole']
+        self.banner_winner_role = config['Roles']['BannerWinnerRole']
+        self.trash_tier_banner_role = config['Roles']['TrashTierBannerRole']
+        self.no_food_spotting_role = config["Roles"]["NoFoodSpottingRole"]
+
+        # Channels
+        self.reception_channel = config['Channels']['ReceptionChannel']
+        self.banner_of_the_week_channel = config['Channels'][
+            'BannerOfTheWeekChannel']
+        self.banner_submissions_channel = config['Channels'][
+            'BannerSubmissionsChannel']
+        self.banner_converted_channel = config['Channels'][
+            'BannerConvertedChannel']
+        self.food_spotting_channel = config["Channels"]["FoodSpottingChannel"]
+        self.metro_status_channel = config["Channels"]["MetroStatusChannel"]
+        self.bots_channel = config["Channels"]["BotsChannel"]
+
+        # Meta
         self.repository = config['Meta']['Repository']
 
         # Logging
@@ -97,11 +120,6 @@ class Parser:
         # Subscription configuration
         self.recall_channel = config["Subscribers"]["FoodRecallChannel"]
         self.recall_filter = config["Subscribers"]["FoodRecallLocationFilter"]
-        self.food_spotting_channel = config["Subscribers"][
-            "FoodSpottingChannel"]
-        self.no_food_spotting_role = config["Subscribers"][
-            "NoFoodSpottingRole"]
-        self.metro_status_channel = config["Subscribers"]["MetroStatusChannel"]
 
         # Below lies currency configuration
         currency_precision = int(config["Currency"]["Precision"])
@@ -155,12 +173,13 @@ class Parser:
             "hm_timeout": int(config["Games"]["HangmanTimeOut"])
         }
 
+        # Assignable Roles
         roles = {
-            "pronouns": config["Roles"]["Pronouns"],
-            "fields": config["Roles"]["Fields"],
-            "faculties": config["Roles"]["Faculties"],
-            "years": config["Roles"]["Years"],
-            "generics": config["Roles"]["Generics"]
+            "pronouns": config["AssignableRoles"]["Pronouns"],
+            "fields": config["AssignableRoles"]["Fields"],
+            "faculties": config["AssignableRoles"]["Faculties"],
+            "years": config["AssignableRoles"]["Years"],
+            "generics": config["AssignableRoles"]["Generics"]
         }
 
         for rc in roles:
