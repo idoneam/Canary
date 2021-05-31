@@ -50,7 +50,7 @@ CREATE TABLE IF NOT EXISTS `BankTransactions` (
 );
 
 CREATE TABLE IF NOT EXISTS `CustomReactions` (
-	  `CustomReactionID`  INTEGER PRIMARY KEY,
+	`CustomReactionID`  INTEGER PRIMARY KEY,
     `Prompt`            TEXT,
     `Response`          TEXT,
     `UserID`            INTEGER,
@@ -72,3 +72,15 @@ CREATE TABLE IF NOT EXISTS `PenaltyUsers` (
     `ID`          INTEGER UNIQUE,
     `Roles`       TEXT -- space-separated list of role IDs
 );
+
+CREATE TABLE IF NOT EXISTS `Settings` (
+	`Key`       TEXT PRIMARY KEY,
+	`Value`     TEXT
+);
+
+CREATE TABLE IF NOT EXISTS `BannerSubmissions` (
+	`UserID`              INTEGER UNIQUE,
+	`PreviewMessageID`    INTEGER,
+	`ConvertedMessageID`  INTEGER
+);
+
