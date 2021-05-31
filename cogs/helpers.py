@@ -29,6 +29,7 @@ from sympy import preview
 import cv2
 import numpy as np
 import googletrans
+import os
 
 # Other utilities
 import re
@@ -38,6 +39,7 @@ import datetime
 import random
 from .utils.paginator import Pages
 from .utils.custom_requests import fetch
+from .utils.site_save import site_save
 import sqlite3
 
 MCGILL_EXAM_URL = "https://www.mcgill.ca/exams/dates"
@@ -51,6 +53,9 @@ WTTR_IN_MOON_URL = "http://wttr.in/moon.png"
 URBAN_DICT_TEMPLATE = "http://api.urbandictionary.com/v0/define?term={}"
 
 LMGTFY_TEMPLATE = "https://letmegooglethat.com/?q={}"
+
+MTL_REGEX = re.compile("Montréal.*")
+ALERT_REGEX = re.compile("Alerts.*")
 
 LANG_CODES = "|".join(googletrans.LANGUAGES.keys())
 LANG_NAMES = "|".join(
@@ -128,20 +133,22 @@ class Helpers(commands.Cog):
         return f"{round(feels_like, 1)}°C"
 
     @commands.command()
+    @site_save("http://weather.gc.ca/city/pages/qc-147_metric_e.html")
     async def weather(self, ctx):
         """
         Retrieves current weather conditions.
         Data taken from http://weather.gc.ca/city/pages/qc-147_metric_e.html
         """
-        def retrieve_string(label):
-            return soup.find(
-                "dt", string=label).find_next_sibling().get_text().strip()
-
         await ctx.trigger_typing()
 
         r = await fetch(self.bot.config.gc_weather_url, "content")
-
         soup = BeautifulSoup(r, "html.parser")
+
+        def retrieve_string(label):
+            if elem := soup.find("dt", string=label).find_next_sibling():
+                return elem.get_text().strip()
+            return None
+
         observed_string = retrieve_string("Date: ")
         temperature_string = retrieve_string("Temperature:")
         condition_string = retrieve_string("Condition:")
@@ -152,26 +159,28 @@ class Helpers(commands.Cog):
         feels_like_string = Helpers._calculate_feels_like(
             temp=float(re.search(r"-?\d+\.\d", temperature_string).group()),
             humidity=float(re.search(r"\d+", humidity_string).group()),
-            ws_kph=float(re.search(r"\d+", wind_string).group()))
+            ws_kph=float(re.search(r"\d+", wind_string).group())
+        ) if humidity_string and temperature_string and wind_string else "n/a"
 
-        weather_now = discord.Embed(title='Current Weather',
-                                    description='Conditions observed at %s' %
-                                    observed_string,
-                                    colour=0x7EC0EE)
+        weather_now = discord.Embed(
+            title="Current Weather",
+            description=
+            f"Conditions observed at {observed_string or '[REDACTED]'}",
+            colour=0x7EC0EE)
         weather_now.add_field(name="Temperature",
-                              value=temperature_string,
+                              value=temperature_string or "n/a",
                               inline=True)
         weather_now.add_field(name="Condition",
-                              value=condition_string,
+                              value=condition_string or "n/a",
                               inline=True)
         weather_now.add_field(name="Pressure",
-                              value=pressure_string,
+                              value=pressure_string or "n/a",
                               inline=True)
         weather_now.add_field(name="Tendency",
-                              value=tendency_string,
+                              value=tendency_string or "n/a",
                               inline=True)
         weather_now.add_field(name="Wind Speed",
-                              value=wind_string,
+                              value=wind_string or "n/a",
                               inline=True)
         weather_now.add_field(name="Feels like",
                               value=feels_like_string,
@@ -182,7 +191,7 @@ class Helpers(commands.Cog):
         r_alert = await fetch(self.bot.config.gc_weather_alert_url, "content")
         alert_soup = BeautifulSoup(r_alert, "html.parser")
 
-        alert_title = alert_soup.find("h1", string=re.compile("Alerts.*"))
+        alert_title = alert_soup.find("h1", string=ALERT_REGEX)
         alert_title_text = alert_title.get_text().strip()
 
         # Only gets first <p> of warning. Subsequent paragraphs are ignored.
@@ -191,8 +200,7 @@ class Helpers(commands.Cog):
             alert_date = alert_category.find_next("span")
             alert_heading = alert_date.find_next("strong")
             # This is a string for some reason.
-            alert_location = alert_heading.find_next(
-                string=re.compile("Montréal.*"))
+            alert_location = alert_heading.find_next(string=MTL_REGEX)
             # Only gets first <p> of warning. Subsequent paragraphs are ignored
             alert_content = ". ".join(
                 alert_location.find_next("p").get_text().strip().split(
