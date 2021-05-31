@@ -47,10 +47,6 @@ class Parser:
             s for s in config['Server']['CommandPrefix'].strip().split(',')
         ]
         self.bot_name = config['Server']['BotName']
-        self.upvote_emoji = config['Server']['UpvoteEmoji']
-        self.downvote_emoji = config['Server']['DownvoteEmoji']
-        self.moderator_role = config['Server']['ModeratorRole']
-        self.developer_role = config['Server']['DeveloperRole']
 
         # Emoji
         self.upvote_emoji = config['Emoji']['UpvoteEmoji']
