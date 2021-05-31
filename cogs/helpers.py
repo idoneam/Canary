@@ -37,7 +37,7 @@ import time
 import datetime
 import random
 from .utils.paginator import Pages
-from .utils.requests import fetch
+from .utils.custom_requests import fetch
 import sqlite3
 
 MCGILL_EXAM_URL = "https://www.mcgill.ca/exams/dates"
@@ -50,7 +50,7 @@ WTTR_IN_MOON_URL = "http://wttr.in/moon.png"
 
 URBAN_DICT_TEMPLATE = "http://api.urbandictionary.com/v0/define?term={}"
 
-LMGTFY_TEMPLATE = "https://lmgtfy.com/?q={}"
+LMGTFY_TEMPLATE = "https://letmegooglethat.com/?q={}"
 
 LANG_CODES = "|".join(googletrans.LANGUAGES.keys())
 LANG_NAMES = "|".join(

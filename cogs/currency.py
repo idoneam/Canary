@@ -54,9 +54,11 @@ ACTION_BET_FLIP = "bet_flip"
 ACTION_BET_ROLL = "bet_roll"
 ACTION_GIFTER = "gifter"
 ACTION_GIFTEE = "giftee"
+HANGMAN_REWARD = "hangman_reward"
 
 TRANSACTION_ACTIONS = (ACTION_INITIAL_CLAIM, ACTION_CLAIM, ACTION_BET_FLIP,
-                       ACTION_BET_ROLL, ACTION_GIFTER, ACTION_GIFTEE)
+                       ACTION_BET_ROLL, ACTION_GIFTER, ACTION_GIFTEE,
+                       HANGMAN_REWARD)
 
 
 class Currency(commands.Cog):

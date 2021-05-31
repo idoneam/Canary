@@ -149,6 +149,12 @@ class Parser:
             "max_iterations": int(config["Images"]["MaxIterations"]),
         }
 
+        self.games = {
+            "hm_norm_win": int(config["Games"]["HangmanNormalWin"]),
+            "hm_cool_win": int(config["Games"]["HangmanCoolWin"]),
+            "hm_timeout": int(config["Games"]["HangmanTimeOut"])
+        }
+
         roles = {
             "pronouns": config["Roles"]["Pronouns"],
             "fields": config["Roles"]["Fields"],
