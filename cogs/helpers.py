@@ -38,7 +38,7 @@ import time
 import datetime
 import random
 from .utils.paginator import Pages
-from .utils.requests import fetch
+from .utils.custom_requests import fetch
 from .utils.site_save import site_save
 import sqlite3
 
@@ -52,7 +52,7 @@ WTTR_IN_MOON_URL = "http://wttr.in/moon.png"
 
 URBAN_DICT_TEMPLATE = "http://api.urbandictionary.com/v0/define?term={}"
 
-LMGTFY_TEMPLATE = "https://lmgtfy.com/?q={}"
+LMGTFY_TEMPLATE = "https://letmegooglethat.com/?q={}"
 
 MTL_REGEX = re.compile("Montréal.*")
 ALERT_REGEX = re.compile("Alerts.*")
