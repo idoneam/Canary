@@ -135,9 +135,9 @@ class Banner(commands.Cog):
         conn.commit()
         conn.close()
 
-    @commands.command(aliases=["set_banner_contest"])
+    @commands.command(aliases=["setbannercontest"])
     @is_moderator()
-    async def setbannercontest(self, ctx):
+    async def set_banner_contest(self, ctx):
         """
         Set a Banner Picture of the Week contest for the server.
 
@@ -231,9 +231,9 @@ class Banner(commands.Cog):
         conn.close()
 
     @commands.command(
-        aliases=["banner_winner", "setbannerwinner", "set_banner_winner"])
+        aliases=["bannerwinner", "setbannerwinner", "set_banner_winner"])
     @is_moderator()
-    async def bannerwinner(self, ctx, winner: discord.Member = None):
+    async def banner_winner(self, ctx, winner: discord.Member = None):
         """
         Select the winner for an ongoing Banner Picture of the Week contest
 
@@ -416,8 +416,8 @@ class Banner(commands.Cog):
         await self.reset_banner_contest()
         await ctx.send("Successfully set banner and ended contest.")
 
-    @commands.command(aliases=["submit_banner"])
-    async def submitbanner(self, ctx, *args):
+    @commands.command(aliases=["submitbanner"])
+    async def submit_banner(self, ctx, *args):
         """
         Submit a picture for an Banner Picture of the Week contest
 
