@@ -150,8 +150,7 @@ async def on_member_join(member):
     name = str(member)
     conn = sqlite3.connect(bot.config.db_path)
     c = conn.cursor()
-    c.execute("INSERT OR REPLACE INTO Members VALUES (?,?)",
-              (member_id, name))
+    c.execute("INSERT OR REPLACE INTO Members VALUES (?,?)", (member_id, name))
     conn.commit()
     conn.close()
 

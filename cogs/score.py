@@ -343,7 +343,6 @@ class Score(commands.Cog):
 
         emoji = payload.emoji
 
-
         if remove:
             c.execute(
                 "DELETE FROM Reactions WHERE ReacterID = ? AND ReacteeID = ? "
