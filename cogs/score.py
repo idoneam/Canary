@@ -23,13 +23,17 @@
 import discord
 from discord.ext import commands
 
-# for DB
+# For DB functionality
 import sqlite3
-from .utils.paginator import Pages
+import json
+from .utils.members import add_member_if_needed
 
+# For argument parsing
 from discord.ext.commands import MemberConverter, PartialEmojiConverter
 from .utils.arg_converter import ArgConverter
-import json
+
+# For pagination
+from .utils.paginator import Pages
 
 f = open('data/premade/emoji.json', encoding="utf8")
 EMOJI = json.load(f)
@@ -319,31 +323,6 @@ class Score(commands.Cog):
         where_str = ' AND '.join(where_list)
         return where_str, tuple(values_list)
 
-    async def _get_name_from_id(self, user_id):
-        user = self.bot.get_user(user_id)
-        if user is None:
-            try:
-                user = await self.bot.fetch_user(user_id)
-                name = str(user)
-                if "Deleted User" in name:
-                    name = str(user_id)
-            except discord.errors.NotFound:
-                name = str(user_id)
-        else:
-            name = str(user)
-        return name
-
-    async def _add_member_if_needed(self, user_id):
-        conn = sqlite3.connect(self.bot.config.db_path)
-        c = conn.cursor()
-        c.execute("SELECT Name FROM Members WHERE ID = ?", (user_id, ))
-        if not c.fetchone():
-            name = await self._get_name_from_id(user_id)
-            c.execute("INSERT OR IGNORE INTO Members VALUES (?,?)",
-                      (user_id, name))
-        conn.commit()
-        conn.close()
-
     async def _add_or_remove_reaction_from_db(self, payload, remove=False):
         channel = self.bot.get_channel(payload.channel_id)
         message_id = payload.message_id
@@ -353,16 +332,18 @@ class Score(commands.Cog):
         except discord.errors.NotFound:
             return
 
-        reacter_id = self.bot.get_user(payload.user_id).id
-        await self._add_member_if_needed(reacter_id)
-        reactee_id = message.author.id
-        await self._add_member_if_needed(reactee_id)
-
-        emoji = payload.emoji
-
         conn = sqlite3.connect(self.bot.config.db_path)
         conn.execute("PRAGMA foreign_keys = ON")
         c = conn.cursor()
+
+        reacter_id = self.bot.get_user(payload.user_id).id
+        await add_member_if_needed(self, c, reacter_id)
+        reactee_id = message.author.id
+        await add_member_if_needed(self, c, reactee_id)
+
+        emoji = payload.emoji
+
+
         if remove:
             c.execute(
                 "DELETE FROM Reactions WHERE ReacterID = ? AND ReacteeID = ? "
@@ -383,20 +364,6 @@ class Score(commands.Cog):
     async def on_raw_reaction_remove(self, payload):
         if payload.guild_id == self.guild.id:
             await self._add_or_remove_reaction_from_db(payload, remove=True)
-
-    @commands.Cog.listener()
-    async def on_user_update(self, before, after):
-        if str(before) == str(after):
-            return
-
-        user_id = after.id
-        new_name = str(after)
-        conn = sqlite3.connect(self.bot.config.db_path)
-        c = conn.cursor()
-        c.execute("INSERT OR REPLACE INTO Members VALUES (?,?)",
-                  (user_id, new_name))
-        conn.commit()
-        conn.close()
 
     @commands.command()
     async def score(self, ctx, *args):
@@ -677,7 +644,7 @@ class Score(commands.Cog):
     #                                                  ):
     #                 for reaction in message.reactions:
     #                     async for user in reaction.users():
-    #                         await self._add_member_if_needed(user.id)
+    #                         await add_member_if_needed(self, user.id)
     #                         c.execute(
     #                             "INSERT OR IGNORE "
     #                             "INTO Reactions VALUES (?,?,?,?)",

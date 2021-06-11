@@ -27,6 +27,7 @@ from typing import Dict, List, Optional, Tuple
 # For DB functionality
 import sqlite3
 import datetime
+from .utils.members import add_member_if_needed
 
 # For tables
 from tabulate import tabulate
@@ -108,6 +109,9 @@ class Currency(commands.Cog):
             return
 
         now = int(datetime.datetime.now().timestamp())
+
+        c.execute("PRAGMA foreign_keys = ON")
+        await add_member_if_needed(self, c, user.id)
         t = (user.id, self.currency_to_db(amount), action,
              json.dumps(metadata), now)
         c.execute(
