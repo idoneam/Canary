@@ -28,6 +28,8 @@ from io import BytesIO
 from sympy import preview
 import cv2
 import numpy as np
+import googletrans
+import os
 
 # Other utilities
 import re
@@ -36,7 +38,8 @@ import time
 import datetime
 import random
 from .utils.paginator import Pages
-from .utils.requests import fetch
+from .utils.custom_requests import fetch
+from .utils.site_save import site_save
 import sqlite3
 
 MCGILL_EXAM_URL = "https://www.mcgill.ca/exams/dates"
@@ -49,7 +52,16 @@ WTTR_IN_MOON_URL = "http://wttr.in/moon.png"
 
 URBAN_DICT_TEMPLATE = "http://api.urbandictionary.com/v0/define?term={}"
 
-LMGTFY_TEMPLATE = "https://lmgtfy.com/?q={}"
+LMGTFY_TEMPLATE = "https://letmegooglethat.com/?q={}"
+
+MTL_REGEX = re.compile("Montréal.*")
+ALERT_REGEX = re.compile("Alerts.*")
+
+LANG_CODES = "|".join(googletrans.LANGUAGES.keys())
+LANG_NAMES = "|".join(
+    lang.split(" ")[0] for lang in googletrans.LANGCODES.keys())
+TRANSLATE_REGEX = re.compile(
+    f"^(|{LANG_NAMES}|{LANG_CODES})>({LANG_NAMES}|{LANG_CODES})$")
 
 LATEX_PREAMBLE = r"""\documentclass[varwidth,12pt]{standalone}
 \usepackage{alphabeta}
@@ -121,20 +133,22 @@ class Helpers(commands.Cog):
         return f"{round(feels_like, 1)}°C"
 
     @commands.command()
+    @site_save("http://weather.gc.ca/city/pages/qc-147_metric_e.html")
     async def weather(self, ctx):
         """
         Retrieves current weather conditions.
         Data taken from http://weather.gc.ca/city/pages/qc-147_metric_e.html
         """
-        def retrieve_string(label):
-            return soup.find(
-                "dt", string=label).find_next_sibling().get_text().strip()
-
         await ctx.trigger_typing()
 
         r = await fetch(self.bot.config.gc_weather_url, "content")
-
         soup = BeautifulSoup(r, "html.parser")
+
+        def retrieve_string(label):
+            if elem := soup.find("dt", string=label).find_next_sibling():
+                return elem.get_text().strip()
+            return None
+
         observed_string = retrieve_string("Date: ")
         temperature_string = retrieve_string("Temperature:")
         condition_string = retrieve_string("Condition:")
@@ -145,26 +159,28 @@ class Helpers(commands.Cog):
         feels_like_string = Helpers._calculate_feels_like(
             temp=float(re.search(r"-?\d+\.\d", temperature_string).group()),
             humidity=float(re.search(r"\d+", humidity_string).group()),
-            ws_kph=float(re.search(r"\d+", wind_string).group()))
+            ws_kph=float(re.search(r"\d+", wind_string).group())
+        ) if humidity_string and temperature_string and wind_string else "n/a"
 
-        weather_now = discord.Embed(title='Current Weather',
-                                    description='Conditions observed at %s' %
-                                    observed_string,
-                                    colour=0x7EC0EE)
+        weather_now = discord.Embed(
+            title="Current Weather",
+            description=
+            f"Conditions observed at {observed_string or '[REDACTED]'}",
+            colour=0x7EC0EE)
         weather_now.add_field(name="Temperature",
-                              value=temperature_string,
+                              value=temperature_string or "n/a",
                               inline=True)
         weather_now.add_field(name="Condition",
-                              value=condition_string,
+                              value=condition_string or "n/a",
                               inline=True)
         weather_now.add_field(name="Pressure",
-                              value=pressure_string,
+                              value=pressure_string or "n/a",
                               inline=True)
         weather_now.add_field(name="Tendency",
-                              value=tendency_string,
+                              value=tendency_string or "n/a",
                               inline=True)
         weather_now.add_field(name="Wind Speed",
-                              value=wind_string,
+                              value=wind_string or "n/a",
                               inline=True)
         weather_now.add_field(name="Feels like",
                               value=feels_like_string,
@@ -175,7 +191,7 @@ class Helpers(commands.Cog):
         r_alert = await fetch(self.bot.config.gc_weather_alert_url, "content")
         alert_soup = BeautifulSoup(r_alert, "html.parser")
 
-        alert_title = alert_soup.find("h1", string=re.compile("Alerts.*"))
+        alert_title = alert_soup.find("h1", string=ALERT_REGEX)
         alert_title_text = alert_title.get_text().strip()
 
         # Only gets first <p> of warning. Subsequent paragraphs are ignored.
@@ -184,8 +200,7 @@ class Helpers(commands.Cog):
             alert_date = alert_category.find_next("span")
             alert_heading = alert_date.find_next("strong")
             # This is a string for some reason.
-            alert_location = alert_heading.find_next(
-                string=re.compile("Montréal.*"))
+            alert_location = alert_heading.find_next(string=MTL_REGEX)
             # Only gets first <p> of warning. Subsequent paragraphs are ignored
             alert_content = ". ".join(
                 alert_location.find_next("p").get_text().strip().split(
@@ -287,40 +302,35 @@ class Helpers(commands.Cog):
 
         await ctx.trigger_typing()
 
-        r = await fetch(MCGILL_KEY_DATES_URL, "content")
-        soup = BeautifulSoup(r, 'html.parser')
+        soup = BeautifulSoup(await fetch(MCGILL_KEY_DATES_URL, "content"),
+                             'html.parser')
 
         now = datetime.datetime.now()
-        current_year = now.year
-        current_month = now.month
-        if current_month > 4:
-            term = 'Fall'
-        else:
-            term = 'Winter'
-
-        text = soup.find_all('div', {'class': 'field-item even'})
+        current_year, current_month = now.year, now.month
+        is_fall: bool = current_month > 4
+        text = soup.find('div', {'class': 'field-item even'})
 
         # The layout is trash and the divs don't follow a pattern so
         # disintegrate all div tags.
-        for div in text[0].find_all('div'):
-            div.replaceWithChildren()
+        for div in text.find_all('div'):
+            if (div_cls := div.get("class")) and "note" in div_cls:
+                div.decompose()
+            else:
+                div.replaceWithChildren()
 
         headers = []
         sections = []
 
-        if term == 'Fall':
-            node = text[0].find_all('h2')[0].next_sibling
-        else:
-            node = text[0].find_all('h2')[1].next_sibling
+        node = text.find_all('h2')[not is_fall].next_sibling
 
         # Iterate through the tags and find unordered lists.
         # The content of each list will become the body of each section
         # while the contents of the <p> above it will become the headers.
         while node:
             if hasattr(node, 'name'):
-                if node.name == 'h2' and term == 'Fall':
+                if node.name == 'h2' and is_fall:
                     break
-                elif node.name == 'ul':
+                if node.name == 'ul':
                     sections.append(node.get_text())
                     previous = node.previous_sibling.previous_sibling
                     if previous.name == 'p':
@@ -331,13 +341,17 @@ class Helpers(commands.Cog):
 
             node = node.next_sibling
 
-        em = discord.Embed(title='McGill Important Dates {0} {1}'.format(
-            term, str(current_year)),
-                           description=MCGILL_KEY_DATES_URL,
-                           colour=0xDA291C)
+        em = discord.Embed(
+            title=
+            f"McGill Important Dates {'Fall' if is_fall else 'Winter'} {current_year}",
+            description=MCGILL_KEY_DATES_URL,
+            colour=0xDA291C)
 
         for i in range(len(headers)):
-            em.add_field(name=headers[i], value=sections[i], inline=False)
+            em.add_field(name=f"{headers[i][:255]}\u2026"
+                         if len(headers[i]) > 256 else headers[i],
+                         value=sections[i],
+                         inline=False)
 
         await ctx.send(embed=em)
 
@@ -656,36 +670,124 @@ class Helpers(commands.Cog):
     @commands.command(aliases=["ui", "av", "avi", "userinfo"])
     async def user_info(self, ctx, user: discord.Member = None):
         """
-        Show user info and avi
-        Defaults to displaying the information of the user
-        that called the command, whoever another member's username
-        can be passed as an optional argument to display their info"""
+        Show user info and avatar.
+        Displays the information of the user
+        that called the command, or another member's
+        if one is passed as an optional argument."""
         if user is None:
             user = ctx.author
-        ui_embed = discord.Embed(colour=user.id % 16777215)
-        ui_embed.add_field(name="username",
-                           value=f"{user.name}#{user.discriminator}",
-                           inline=True)
-        ui_embed.add_field(name="display name",
-                           value=user.display_name,
-                           inline=True)
-        ui_embed.add_field(name="id", value=user.id, inline=True)
+        ui_embed = discord.Embed(
+            colour=(user.id - sum(ord(char) for char in user.name)) % 0xFFFFFF)
+        ui_embed.add_field(name="username", value=str(user))
+        ui_embed.add_field(name="display name", value=user.display_name)
+        ui_embed.add_field(name="id", value=user.id)
         ui_embed.add_field(name="joined server",
-                           value=user.joined_at.strftime("%m/%d/%Y, %H:%M:%S"),
-                           inline=True)
+                           value=user.joined_at.strftime("%m/%d/%Y, %H:%M:%S"))
         ui_embed.add_field(
             name="joined discord",
-            value=user.created_at.strftime("%m/%d/%Y, %H:%M:%S"),
-            inline=True)
-        ui_embed.add_field(name=f"top role",
-                           value=str(user.top_role),
-                           inline=True)
+            value=user.created_at.strftime("%m/%d/%Y, %H:%M:%S"))
+        ui_embed.add_field(
+            name="top role, colour",
+            value=f"`{user.top_role}`, " +
+            (str(user.colour).upper()
+             if user.colour != discord.Colour.default() else "default colour"))
         ui_embed.add_field(name="avatar url",
                            value=user.avatar_url,
                            inline=False)
         ui_embed.set_image(url=user.avatar_url)
 
         await ctx.send(embed=ui_embed)
+
+    @commands.command(aliases=["trans"])
+    async def translate(self, ctx, command: str, *, inp_str: str = None):
+        """
+        Command used to translate some text from one language to another
+        Takes two arguments: the source/target languages and the text to translate
+        The first argument must be under the following format `src>dst`.
+        `src` indicates the language of the source text.
+        `dst` indicates which language you want the text to be translated into.
+        `src` must be either an empty string (to indicate that you want
+        to autodetect the source language) or a language code/name.
+        `dst` must be a language code/name different from `src` (it cannot be empty).
+        To get a list of all valid language codes and names, call `?translate codes`
+        Second argument is the text that you want to translate. This text is either
+        taken from the message to which the invoking message was replying to, or if the
+        invoking message is not a reply, then to the rest of the message after the first argument.
+        """
+        if command == "help":
+            await ctx.send("Command used to translate some text "
+                           "from one language to another\n"
+                           "Takes two arguments: the source/target "
+                           "languages and the text to translate\n"
+                           "The first argument must be under the "
+                           "following format `src>dst`.\n`src` indicates "
+                           "the language of the source text.\n`dst` "
+                           "indicates which language you want the text "
+                           "to be translated into.\n`src` must "
+                           "be either an empty string (to indicate "
+                           "that you want to autodetect the source "
+                           "language) or a language code/name.\n"
+                           "`dst` must be a language code/name "
+                           "different from `src` (it cannot be empty)\n"
+                           "Second argument is the text that you want to "
+                           "translate. This text is either taken from the "
+                           "message to which the invoking message was "
+                           "replying to, or if the invoking message is "
+                           "not a reply, then to the rest of the invoking "
+                           "message after the first argument.\n"
+                           "To get a list of all valid language codes "
+                           "and names, call `?translate codes`")
+        elif command == "codes":
+            await ctx.send(
+                "Here is a list of all language "
+                "codes and names:\n" +
+                ", ".join(f"`{code}`: {lang}"
+                          for code, lang in googletrans.LANGUAGES.items()))
+        elif code_match := TRANSLATE_REGEX.match(command):
+            if ctx.message.reference and ctx.message.reference.resolved:
+                inp_str = ctx.message.reference.resolved.content
+            if not inp_str:
+                await ctx.send(
+                    "Sorry, no string to translate has been detected")
+                return
+            src, dst = code_match.groups()
+            if src in googletrans.LANGCODES:
+                src = googletrans.LANGCODES[src]
+            if dst in googletrans.LANGCODES:
+                dst = googletrans.LANGCODES[dst]
+            translator = googletrans.Translator()
+            if not src:
+                detected_lang = translator.detect(inp_str)
+                src = detected_lang.lang if isinstance(
+                    detected_lang.lang, str) else detected_lang.lang[0]
+                cnf = detected_lang.confidence if isinstance(
+                    detected_lang.confidence,
+                    float) else detected_lang.confidence[0]
+                name_str = (
+                    f"translated text from {googletrans.LANGUAGES[src]}"
+                    f" (auto-detected with {round(cnf*100)}%"
+                    f" certainty) to {googletrans.LANGUAGES[dst]}")
+            else:
+                name_str = (
+                    f"translated text from {googletrans.LANGUAGES[src]}"
+                    f" to {googletrans.LANGUAGES[dst]}")
+            if src == dst:
+                await ctx.send(
+                    f"Inputted source (`{src}`) and target (`{dst}`) "
+                    f"languages are the same, which does not make sense")
+                return
+            embed = discord.Embed(colour=random.randint(0, 0xFFFFFF))
+            embed.add_field(name=name_str,
+                            value=translator.translate(inp_str,
+                                                       src=src,
+                                                       dest=dst).text)
+
+            await ctx.send(embed=embed)
+        else:
+            await ctx.send(f"First argument `{command}` could not be parsed "
+                           f"to a proper command string for this function.\n"
+                           f"To learn more about how to use this command, "
+                           f"call `?translate help`")
 
 
 def setup(bot):

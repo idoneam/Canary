@@ -76,3 +76,15 @@ CREATE TABLE IF NOT EXISTS `PreviousRoles` (
     `ID`          INTEGER UNIQUE,
     `Roles`       TEXT
 );
+
+CREATE TABLE IF NOT EXISTS `Settings` (
+	`Key`       TEXT PRIMARY KEY,
+	`Value`     TEXT
+);
+
+CREATE TABLE IF NOT EXISTS `BannerSubmissions` (
+	`UserID`              INTEGER UNIQUE,
+	`PreviewMessageID`    INTEGER,
+	`ConvertedMessageID`  INTEGER
+);
+

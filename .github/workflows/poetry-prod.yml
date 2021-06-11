@@ -1,4 +1,4 @@
-name: Poetry Production Dependency Installation
+name: Prod Dependencies
 on:
   pull_request:
     branches:
