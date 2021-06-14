@@ -62,17 +62,20 @@ class Mod(commands.Cog):
 
         conn = sqlite3.connect(self.bot.config.db_path)
         c = conn.cursor()
-        c.execute("SELECT Value FROM Settings WHERE Key = ?", ("CrabboMsgID",))
+        c.execute("SELECT Value FROM Settings WHERE Key = ?",
+                  ("CrabboMsgID", ))
         check_msg = c.fetchone()
         if check_msg:
             await ctx.send("secret crabbo has already been started.")
             conn.close()
             return
-        crabbo_msg = await ctx.send("🦀🦀🦀 crabbo time 🦀🦀🦀\n<@&"
-                                   f"{discord.utils.get(ctx.guild.roles, name=self.bot.config.crabbo_role).id}"
-                                    "> react to this message with 🦀 to enter the secret crabbo festival\n"
-                                    "🦀🦀🦀 crabbo time 🦀🦀🦀")
-        c.execute("REPLACE INTO Settings VALUES (?, ?)", ("CrabboMsgID", crabbo_msg.id))
+        crabbo_msg = await ctx.send(
+            "🦀🦀🦀 crabbo time 🦀🦀🦀\n<@&"
+            f"{discord.utils.get(ctx.guild.roles, name=self.bot.config.crabbo_role).id}"
+            "> react to this message with 🦀 to enter the secret crabbo festival\n"
+            "🦀🦀🦀 crabbo time 🦀🦀🦀")
+        c.execute("REPLACE INTO Settings VALUES (?, ?)",
+                  ("CrabboMsgID", crabbo_msg.id))
         conn.commit()
         conn.close()
         await ctx.message.delete()
@@ -84,9 +87,10 @@ class Mod(commands.Cog):
 
         conn = sqlite3.connect(self.bot.config.db_path)
         c = conn.cursor()
-        c.execute("SELECT Value FROM Settings WHERE Key = ?", ("CrabboMsgID",))
+        c.execute("SELECT Value FROM Settings WHERE Key = ?",
+                  ("CrabboMsgID", ))
         msg_id = c.fetchone()
-        c.execute("DELETE FROM Settings WHERE Key = ?", ("CrabboMsgID",))
+        c.execute("DELETE FROM Settings WHERE Key = ?", ("CrabboMsgID", ))
         conn.commit()
         conn.close()
         if not msg_id:
@@ -98,14 +102,19 @@ class Mod(commands.Cog):
                 crabbos = await react.users().flatten()
                 break
         if crabbos is None or (num_crabbos := len(crabbos)) < 2:
-            await ctx.send("not enough people participated in the secret crabbo festival.")
+            await ctx.send(
+                "not enough people participated in the secret crabbo festival."
+            )
             return
         random.shuffle(crabbos)
-        offset = random.randint(1, num_crabbos-1)
+        offset = random.randint(1, num_crabbos - 1)
         for index, crabbo in enumerate(crabbos):
-            await self.bot.get_user(crabbo.id).send(f"🦀🦀🦀\nyou have been selected to give a gift to: {crabbos[(index+offset)%num_crabbos]}\n🦀🦀🦀")
+            await self.bot.get_user(crabbo.id).send(
+                f"🦀🦀🦀\nyou have been selected to give a gift to: {crabbos[(index+offset)%num_crabbos]}\n🦀🦀🦀"
+            )
 
         await ctx.message.delete()
+
 
 def setup(bot):
     bot.add_cog(Mod(bot))
