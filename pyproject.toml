@@ -20,7 +20,7 @@ numpy = "^1.21.0"
 aiohttp = "~3.7.4"
 urllib3 = ">=1.25.3"
 feedparser = "^6.0.8"
-regex = "^2021.4.4"
+regex = "^2021.7.1"
 googletrans = "==4.0.0rc1"
 
 [tool.poetry.dev-dependencies]
