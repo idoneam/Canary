@@ -42,14 +42,13 @@ EMOJI = json.load(f)
 class TotalEmojiConverter(commands.Converter):
     async def convert(self, ctx, argument):
         try:
-            result = await PartialEmojiConverter().convert(ctx, argument)
+            return await PartialEmojiConverter().convert(ctx, argument)
         except commands.BadArgument:
             if not any(argument in d.values() for d in EMOJI.values()):
                 raise commands.BadArgument(
                     "Not in the current list of Discord Unicode Emojis "
                     "and no Custom Emoji found")
-            result = argument
-        return result
+            return argument
 
 
 class FromConverter(commands.Converter):
@@ -60,14 +59,13 @@ class FromConverter(commands.Converter):
             raise commands.BadArgument("No argument specified for `from` flag")
         arg = argument[5:]
         if arg.lower() == "all":
-            result = "all"
+            return "all"
         else:
             try:
-                result = await MemberConverter().convert(ctx, arg)
+                return await MemberConverter().convert(ctx, arg)
             except commands.BadArgument:
                 raise commands.BadArgument(
                     "Member specified for `from` flag could not be found")
-        return result
 
 
 class ToConverter(commands.Converter):
@@ -78,14 +76,13 @@ class ToConverter(commands.Converter):
             raise commands.BadArgument("No argument specified for `to` flag")
         arg = argument[3:]
         if arg.lower() == "all":
-            result = "all"
+            return "all"
         else:
             try:
-                result = await MemberConverter().convert(ctx, arg)
+                return await MemberConverter().convert(ctx, arg)
             except commands.BadArgument:
                 raise commands.BadArgument(
                     "Member specified for `to` flag could not be found")
-        return result
 
 
 class EmojiTypeConverter(commands.Converter):
@@ -320,7 +317,7 @@ class Score(commands.Cog):
 
         if prefix:
             where_list = [f"{prefix}.{item}" for item in where_list]
-        where_str = ' AND '.join(where_list)
+        where_str = " AND ".join(where_list)
         return where_str, tuple(values_list)
 
     async def _add_or_remove_reaction_from_db(self, payload, remove=False):
@@ -502,8 +499,8 @@ class Score(commands.Cog):
                 await ctx.send(embed=discord.Embed(
                     title="This reaction was never used on this server."))
                 return
-            names = counts[0]
-            values = counts[1]
+            names, values = counts
+
         else:
             # get the WHERE conditions and the values
             where_str, t = self._where_str_and_values_from_args_dict(
