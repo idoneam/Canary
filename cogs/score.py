@@ -623,7 +623,7 @@ class Score(commands.Cog):
     #     conn = sqlite3.connect(self.bot.config.db_path)
     #     conn.execute("PRAGMA foreign_keys = ON")
     #     c = conn.cursor()
-    #     t0 = time.clock()
+    #     t0 = time.perf_counter()
     #     now = datetime.datetime.now()
     #     print("Starting at {}:{}".format(now.hour, now.minute))
     #     for channel in self.bot.get_guild(236668784948019202).text_channels:
@@ -640,7 +640,7 @@ class Score(commands.Cog):
     #                                                  ):
     #                 for reaction in message.reactions:
     #                     async for user in reaction.users():
-    #                         await add_member_if_needed(self, user.id)
+    #                         await add_member_if_needed(self, c, user.id)
     #                         c.execute(
     #                             "INSERT OR IGNORE "
     #                             "INTO Reactions VALUES (?,?,?,?)",
@@ -656,8 +656,8 @@ class Score(commands.Cog):
     #         now = datetime.datetime.now()
     #         print("Completed {} at {}:{}".format(channel.name, now.hour,
     #                                              now.minute))
-    #     t1 = time.clock() - t0
-    #     print("Completed in {} seconds".format(t1))
+    #     t1 = time.perf_counter() - t0
+    #     print("Completed in {} seconds".format(t1))
     #     conn.close()
     # =========================================================================
     # @commands.command()
