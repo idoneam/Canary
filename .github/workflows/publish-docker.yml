@@ -1,0 +1,30 @@
+name: Publish Docker image
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  push_to_registry:
+    name: Push Docker image to GitHub Packages
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+      contents: read
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v2
+      - name: Freeze dependencies
+        run: poetry export -f requirements.txt > requirements.txt
+      - name: Push to GitHub Packages
+        uses: docker/build-push-action@v1
+        with:
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+          registry: ghcr.io
+          repository: idoneam/Canary
+          push: ${{ github.event_name != 'pull_request' }}
+          tag_with_ref: true
+          tag_with_sha: true
+          add_git_labels: true
+
