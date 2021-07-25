@@ -44,7 +44,7 @@ async def fitler_image(loop, transform, ctx, history_limit, max_size, *args):
     ext = ext.lower()
     if ext in ("jpeg", "jpg"):
         is_png = False
-    elif ext in ("png"):
+    elif ext == "png":
         is_png = True
     else:
         await ctx.send("image format not supported.")
