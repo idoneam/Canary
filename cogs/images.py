@@ -41,7 +41,7 @@ class Images(commands.Cog):
         """
         Transform Cartesian to polar coordinates.
         """
-        await ih.fitler_image(self.bot.loop, ih.polar, ctx, self.hist_lim,
+        await ih.filter_image(self.bot.loop, ih.polar, ctx, self.hist_lim,
                               self.max_size)
 
     @commands.command()
@@ -49,7 +49,7 @@ class Images(commands.Cog):
         """
         Transform from polar to Cartesian coordinates.
         """
-        await ih.fitler_image(self.bot.loop, ih.cart, ctx, self.hist_lim,
+        await ih.filter_image(self.bot.loop, ih.cart, ctx, self.hist_lim,
                               self.max_size)
 
     @commands.command()
@@ -57,7 +57,7 @@ class Images(commands.Cog):
         """
         Blur the image
         """
-        await ih.fitler_image(self.bot.loop, ih.blur, ctx, self.hist_lim,
+        await ih.filter_image(self.bot.loop, ih.blur, ctx, self.hist_lim,
                               self.max_size, iterations, self.max_itr)
 
     @commands.command(aliases=['left', 'right'])
@@ -65,7 +65,7 @@ class Images(commands.Cog):
         """
         Blur the image horizontally
         """
-        await ih.fitler_image(self.bot.loop, ih.hblur, ctx, self.hist_lim,
+        await ih.filter_image(self.bot.loop, ih.hblur, ctx, self.hist_lim,
                               self.max_size, radius, self.max_rad)
 
     @commands.command(aliases=['up', 'down'])
@@ -73,7 +73,7 @@ class Images(commands.Cog):
         """
         Blur the image vertically
         """
-        await ih.fitler_image(self.bot.loop, ih.vblur, ctx, self.hist_lim,
+        await ih.filter_image(self.bot.loop, ih.vblur, ctx, self.hist_lim,
                               self.max_size, radius, self.max_rad)
 
     @commands.command(aliases=['zoom', 'radial'])
@@ -81,7 +81,7 @@ class Images(commands.Cog):
         """
         Radial blur
         """
-        await ih.fitler_image(self.bot.loop, ih.rblur, ctx, self.hist_lim,
+        await ih.filter_image(self.bot.loop, ih.rblur, ctx, self.hist_lim,
                               self.max_size, radius, self.max_rad)
 
     @commands.command(aliases=['circle', 'circular', 'spin'])
@@ -89,7 +89,7 @@ class Images(commands.Cog):
         """
         Circular blur
         """
-        await ih.fitler_image(self.bot.loop, ih.cblur, ctx, self.hist_lim,
+        await ih.filter_image(self.bot.loop, ih.cblur, ctx, self.hist_lim,
                               self.max_size, radius, self.max_rad)
 
     @commands.command(aliases=['df', 'dfry', 'fry'])
@@ -97,7 +97,7 @@ class Images(commands.Cog):
         """
         Deep fry an image, mhmm
         """
-        await ih.fitler_image(self.bot.loop, ih.deepfry, ctx, self.hist_lim,
+        await ih.filter_image(self.bot.loop, ih.deepfry, ctx, self.hist_lim,
                               self.max_size, iterations, self.max_itr)
 
     @commands.command()
@@ -105,7 +105,7 @@ class Images(commands.Cog):
         """
         Add some noise to tha image!!
         """
-        await ih.fitler_image(self.bot.loop, ih.noise, ctx, self.hist_lim,
+        await ih.filter_image(self.bot.loop, ih.noise, ctx, self.hist_lim,
                               self.max_size, iterations, self.max_itr)
 
 
