@@ -15,26 +15,26 @@
 # You should have received a copy of the GNU General Public License
 # along with Canary. If not, see <https://www.gnu.org/licenses/>.
 
-# discord-py requirements
 import discord
-import subprocess
-from discord.ext import commands
 
 
-class Info(commands.Cog):
-    def __init__(self, bot):
-        self.bot = bot
+async def _get_name_from_id(self, user_id) -> str:
+    user = self.bot.get_user(user_id)
+    if user is not None:
+        return str(user)
+    try:
+        user = await self.bot.fetch_user(user_id)
+        name = str(user)
+        if "Deleted User" in name:
+            return str(user_id)
+        return name
+    except discord.errors.NotFound:
+        return str(user_id)
 
-    @commands.command()
-    async def version(self, ctx):
-        version = subprocess.check_output(("git", "describe", "--tags"),
-                                          universal_newlines=True).strip()
-        commit, authored = subprocess.check_output(
-            ("git", "log", "-1", "--pretty=format:%h %aI"),
-            universal_newlines=True).strip().split(" ")
-        await ctx.send(f"Version: `{version}`\nCommit: `{commit}` "
-                       f"authored `{authored}`")
 
-
-def setup(bot):
-    bot.add_cog(Info(bot))
+async def add_member_if_needed(self, c, user_id) -> None:
+    c.execute("SELECT Name FROM Members WHERE ID = ?", (user_id, ))
+    if not c.fetchone():
+        name = await _get_name_from_id(self, user_id)
+        c.execute("INSERT OR IGNORE INTO Members VALUES (?,?)",
+                  (user_id, name))

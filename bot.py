@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) idoneam (2016-2019)
+# Copyright (C) idoneam (2016-2020)
 #
 # This file is part of Canary
 #
@@ -24,10 +24,8 @@ from config import parser
 import logging
 import sqlite3
 import traceback
-
-# For log webhook
 import requests
-from discord import Webhook, RequestsWebhookAdapter
+from discord import Webhook, RequestsWebhookAdapter, Intents
 
 __all__ = ['bot', 'developer_role', 'moderator_role']
 
@@ -152,12 +150,21 @@ class Canary(commands.Bot):
                 return await ctx.send(
                     'I could not find that member. Please try again.')
 
+        elif isinstance(error, commands.MaxConcurrencyReached):
+            return await ctx.send(f"The {ctx.command} command cannot be used "
+                                  f"more than {error.number} "
+                                  f"time{'s' if error.number != 1 else ''} "
+                                  f"per {error.per.name}")
+
         self.dev_logger.error('Ignoring exception in command {}:'.format(
             ctx.command))
         self.log_traceback(error)
 
 
 # predefined variables to be imported
-bot = Canary(case_insensitive=True)
+intents = Intents.default()
+intents.members = True
+intents.presences = True
+bot = Canary(case_insensitive=True, intents=intents)
 moderator_role = bot.config.moderator_role
 developer_role = bot.config.developer_role

@@ -1,6 +1,4 @@
-# -*- coding: utf-8 -*-
-#
-# Copyright (C) idoneam (2016-2019)
+# Copyright (C) idoneam (2016-2021)
 #
 # This file is part of Canary
 #
@@ -30,16 +28,18 @@ from io import BytesIO
 from sympy import preview
 import cv2
 import numpy as np
+import googletrans
+import os
 
 # Other utilities
-import os
 import re
 import math
 import time
 import datetime
 import random
 from .utils.paginator import Pages
-from .utils.requests import fetch
+from .utils.custom_requests import fetch
+from .utils.site_save import site_save
 import sqlite3
 
 MCGILL_EXAM_URL = "https://www.mcgill.ca/exams/dates"
@@ -52,12 +52,23 @@ WTTR_IN_MOON_URL = "http://wttr.in/moon.png"
 
 URBAN_DICT_TEMPLATE = "http://api.urbandictionary.com/v0/define?term={}"
 
-LMGTFY_TEMPLATE = "https://lmgtfy.com/?q={}"
+LMGTFY_TEMPLATE = "https://letmegooglethat.com/?q={}"
 
-try:
-    os.mkdir('./pickles')
-except Exception:
-    pass
+MTL_REGEX = re.compile("Montréal.*")
+ALERT_REGEX = re.compile("Alerts.*")
+
+LANG_CODES = "|".join(googletrans.LANGUAGES.keys())
+LANG_NAMES = "|".join(
+    lang.split(" ")[0] for lang in googletrans.LANGCODES.keys())
+TRANSLATE_REGEX = re.compile(
+    f"^(|{LANG_NAMES}|{LANG_CODES})>({LANG_NAMES}|{LANG_CODES})$")
+
+LATEX_PREAMBLE = r"""\documentclass[varwidth,12pt]{standalone}
+\usepackage{alphabeta}
+\usepackage[utf8]{inputenc}
+\usepackage[LGR,T1]{fontenc}
+\usepackage{amsmath,amsfonts,lmodern}
+\begin{document}"""
 
 
 class Helpers(commands.Cog):
@@ -82,86 +93,94 @@ class Helpers(commands.Cog):
 
         await ctx.send(embed=exam_schedule)
 
-    @commands.command()
-    async def weather(self, ctx):
-        """Retrieves current weather conditions.
-        Data taken from http://weather.gc.ca/city/pages/qc-147_metric_e.html"""
-        def retrieve_string(label):
-            return soup.find(
-                "dt", string=label).find_next_sibling().get_text().strip()
+    @staticmethod
+    def _calculate_feels_like(temp: float, humidity: float, ws_kph: float) \
+            -> str:
+        """
+        Get "Feels like" temperature using formula from MetService
+        (Meteorological Service of New Zealand), which uses the standard
+        formula for windchill from Environment Canada for temperatures of 10°C
+        and less (or the normal temperature if the wind speed is less than 5
+        km/h), the Australian apparent temperature for temperatures of 14°C
+        and more (or the normal temperature if it is higher), and a linear
+        roll-off of the wind chill between 10°C and 14°C
+        (https://blog.metservice.com/FeelsLikeTemp)
+        Written by @le-potate
 
+        temp: temperature (in degrees C)
+        humidity: relative humidity (percentage points)
+        ws_kph: wind speed (in km/h)
+        """
+
+        wind_speed_mps = ws_kph * 1000 / 3600
+        wind_chill = (13.12 + 0.6215 * temp - 11.37 * ws_kph**0.16 +
+                      0.3965 * temp * ws_kph**0.16)
+        vapour_pressure = humidity / 100 * 6.105 * math.exp(
+            (17.27 * temp) / (237.7 + temp))
+        apparent_temperature = (temp + 0.33 * vapour_pressure -
+                                0.7 * wind_speed_mps - 4.00)
+        feels_like = temp
+        if temp <= 10:
+            if ws_kph >= 5:
+                feels_like = wind_chill
+        elif temp >= 14:
+            if apparent_temperature > temp:
+                feels_like = apparent_temperature
+        else:
+            if ws_kph >= 5:
+                feels_like = temp - ((temp - wind_chill) * (14 - temp)) / 4
+
+        return f"{round(feels_like, 1)}°C"
+
+    @commands.command()
+    @site_save("http://weather.gc.ca/city/pages/qc-147_metric_e.html")
+    async def weather(self, ctx):
+        """
+        Retrieves current weather conditions.
+        Data taken from http://weather.gc.ca/city/pages/qc-147_metric_e.html
+        """
         await ctx.trigger_typing()
 
         r = await fetch(self.bot.config.gc_weather_url, "content")
-
         soup = BeautifulSoup(r, "html.parser")
-        # Get date
+
+        def retrieve_string(label):
+            if elem := soup.find("dt", string=label).find_next_sibling():
+                return elem.get_text().strip()
+            return None
+
         observed_string = retrieve_string("Date: ")
-        # Get temperature
         temperature_string = retrieve_string("Temperature:")
-        # Get condition
         condition_string = retrieve_string("Condition:")
-        # Get pressure
         pressure_string = retrieve_string("Pressure:")
-        # Get tendency
         tendency_string = retrieve_string("Tendency:")
-        # Get wind
         wind_string = retrieve_string("Wind:")
-        # Get relative humidity
         humidity_string = retrieve_string("Humidity:")
-        # Get "Feels like" temperature using formula from MetService
-        # (Meteorological Service of New Zealand), which uses the standard
-        # formula for windchill from Environment Canada for temperatures of 10°C
-        # and less (or the normal temperature if the wind speed is less than 5
-        # km/h), the Australian apparent temperature for temperatures of 14°C
-        # and more (or the normal temperature if it is higher), and a linear
-        # roll-off of the wind chill between 10°C and 14°C
-        # (https://blog.metservice.com/FeelsLikeTemp)
-        temperature = float(
-            re.search(r"-?\d+\.\d", temperature_string).group())
-        wind_speed_kph = float(re.search(r"\d+", wind_string).group())
-        wind_speed_mps = wind_speed_kph * 1000 / 3600
-        humidity = float(re.search(r"\d+", humidity_string).group())
-        wind_chill = (13.12 + 0.6215 * temperature -
-                      11.37 * wind_speed_kph**0.16 +
-                      0.3965 * temperature * wind_speed_kph**0.16)
-        vapour_pressure = humidity / 100 * 6.105 * math.exp(
-            (17.27 * temperature) / (237.7 + temperature))
-        apparent_temperature = (temperature + 0.33 * vapour_pressure -
-                                0.7 * wind_speed_mps - 4.00)
-        feels_like = temperature
-        if temperature <= 10:
-            if wind_speed_kph >= 5:
-                feels_like = wind_chill
-        elif temperature >= 14:
-            if apparent_temperature > temperature:
-                feels_like = apparent_temperature
-        else:
-            if wind_speed_kph >= 5:
-                feels_like = temperature - ((temperature - wind_chill) *
-                                            (14 - temperature)) / 4
+        feels_like_string = Helpers._calculate_feels_like(
+            temp=float(re.search(r"-?\d+\.\d", temperature_string).group()),
+            humidity=float(re.search(r"\d+", humidity_string).group()),
+            ws_kph=float(re.search(r"\d+", wind_string).group())
+        ) if humidity_string and temperature_string and wind_string else "n/a"
 
-        feels_like = round(feels_like, 1)
-        feels_like_string = "{}°C".format(feels_like)
-
-        weather_now = discord.Embed(title='Current Weather',
-                                    description='Conditions observed at %s' %
-                                    observed_string,
-                                    colour=0x7EC0EE)
+        weather_now = discord.Embed(
+            title="Current Weather",
+            description=
+            f"Conditions observed at {observed_string or '[REDACTED]'}",
+            colour=0x7EC0EE)
         weather_now.add_field(name="Temperature",
-                              value=temperature_string,
+                              value=temperature_string or "n/a",
                               inline=True)
         weather_now.add_field(name="Condition",
-                              value=condition_string,
+                              value=condition_string or "n/a",
                               inline=True)
         weather_now.add_field(name="Pressure",
-                              value=pressure_string,
+                              value=pressure_string or "n/a",
                               inline=True)
         weather_now.add_field(name="Tendency",
-                              value=tendency_string,
+                              value=tendency_string or "n/a",
                               inline=True)
         weather_now.add_field(name="Wind Speed",
-                              value=wind_string,
+                              value=wind_string or "n/a",
                               inline=True)
         weather_now.add_field(name="Feels like",
                               value=feels_like_string,
@@ -171,33 +190,35 @@ class Helpers(commands.Cog):
 
         r_alert = await fetch(self.bot.config.gc_weather_alert_url, "content")
         alert_soup = BeautifulSoup(r_alert, "html.parser")
-        # Exists
-        alert_title = alert_soup.find("h1", string=re.compile("Alerts.*"))
+
+        alert_title = alert_soup.find("h1", string=ALERT_REGEX)
+        alert_title_text = alert_title.get_text().strip()
+
         # Only gets first <p> of warning. Subsequent paragraphs are ignored.
         try:
             alert_category = alert_title.find_next("h2")
             alert_date = alert_category.find_next("span")
             alert_heading = alert_date.find_next("strong")
             # This is a string for some reason.
-            alert_location = alert_heading.find_next(
-                string=re.compile("Montréal.*"))
+            alert_location = alert_heading.find_next(string=MTL_REGEX)
             # Only gets first <p> of warning. Subsequent paragraphs are ignored
-            alert_content = alert_location.find_next("p").get_text().strip()
-            alert_content = ". ".join(alert_content.split(".")).strip()
+            alert_content = ". ".join(
+                alert_location.find_next("p").get_text().strip().split(
+                    ".")).rstrip()
 
             weather_alert = discord.Embed(
-                title=alert_title.get_text().strip(),
+                title=alert_title_text,
                 description="**{}** at {}".format(
                     alert_category.get_text().strip(),
                     alert_date.get_text().strip()),
                 colour=0xFF0000)
-            weather_alert.add_field(name=alert_heading.get_text().strip(),
-                                    value="**{}**\n{}".format(
-                                        alert_location.strip(), alert_content),
-                                    inline=True)
+            weather_alert.add_field(
+                name=alert_heading.get_text().strip(),
+                value=f"**{alert_location.strip()}**\n{alert_content}",
+                inline=True)
 
-        except Exception:
-            weather_alert = discord.Embed(title=alert_title.get_text().strip(),
+        except AttributeError:
+            weather_alert = discord.Embed(title=alert_title_text,
                                           description="No alerts in effect.",
                                           colour=0xFF0000)
 
@@ -224,10 +245,11 @@ class Helpers(commands.Cog):
         Note: Bullet points without colons (':') are not parsed because I have
         yet to see one that actually has useful information.
         """
-        fac = r'([A-Za-z]{4})'
-        num = r'(\d{3}\s*(\w\d)?)'
         await ctx.trigger_typing()
-        result = re.compile(fac + r'\s*' + num,
+
+        # Course codes are in the format AAAA 000, or AAA1 000 in some rare
+        # cases. Courses across multiple semesters have a suffix like D1/D2.
+        result = re.compile(r"([A-Za-z]{3}[A-Za-z0-9])\s*(\d{3}\s*(\w\d)?)",
                             re.IGNORECASE | re.DOTALL).search(query)
         if not result:
             await ctx.send(
@@ -235,8 +257,8 @@ class Helpers(commands.Cog):
                 '<course name>`.')
             return
 
-        search_term = "{}-{}".format(result.group(1), result.group(2))
-        search_term = re.sub(r'\s+', r'', search_term)
+        search_term = re.sub(r"\s+", "",
+                             f"{result.group(1)}-{result.group(2)}")
         url = self.bot.config.course_tpl.format(search_term)
         r = await fetch(url, "content")
         soup = BeautifulSoup(r, "html.parser")
@@ -280,40 +302,35 @@ class Helpers(commands.Cog):
 
         await ctx.trigger_typing()
 
-        r = await fetch(MCGILL_KEY_DATES_URL, "content")
-        soup = BeautifulSoup(r, 'html.parser')
+        soup = BeautifulSoup(await fetch(MCGILL_KEY_DATES_URL, "content"),
+                             'html.parser')
 
         now = datetime.datetime.now()
-        current_year = now.year
-        current_month = now.month
-        if current_month > 4:
-            term = 'Fall'
-        else:
-            term = 'Winter'
-
-        text = soup.find_all('div', {'class': 'field-item even'})
+        current_year, current_month = now.year, now.month
+        is_fall: bool = current_month > 4
+        text = soup.find('div', {'class': 'field-item even'})
 
         # The layout is trash and the divs don't follow a pattern so
         # disintegrate all div tags.
-        for div in text[0].find_all('div'):
-            div.replaceWithChildren()
+        for div in text.find_all('div'):
+            if (div_cls := div.get("class")) and "note" in div_cls:
+                div.decompose()
+            else:
+                div.replaceWithChildren()
 
         headers = []
         sections = []
 
-        if term == 'Fall':
-            node = text[0].find_all('h2')[0].next_sibling
-        else:
-            node = text[0].find_all('h2')[1].next_sibling
+        node = text.find_all('h2')[not is_fall].next_sibling
 
         # Iterate through the tags and find unordered lists.
         # The content of each list will become the body of each section
         # while the contents of the <p> above it will become the headers.
         while node:
             if hasattr(node, 'name'):
-                if node.name == 'h2' and term == 'Fall':
+                if node.name == 'h2' and is_fall:
                     break
-                elif node.name == 'ul':
+                if node.name == 'ul':
                     sections.append(node.get_text())
                     previous = node.previous_sibling.previous_sibling
                     if previous.name == 'p':
@@ -324,13 +341,17 @@ class Helpers(commands.Cog):
 
             node = node.next_sibling
 
-        em = discord.Embed(title='McGill Important Dates {0} {1}'.format(
-            term, str(current_year)),
-                           description=MCGILL_KEY_DATES_URL,
-                           colour=0xDA291C)
+        em = discord.Embed(
+            title=
+            f"McGill Important Dates {'Fall' if is_fall else 'Winter'} {current_year}",
+            description=MCGILL_KEY_DATES_URL,
+            colour=0xDA291C)
 
         for i in range(len(headers)):
-            em.add_field(name=headers[i], value=sections[i], inline=False)
+            em.add_field(name=f"{headers[i][:255]}\u2026"
+                         if len(headers[i]) > 256 else headers[i],
+                         value=sections[i],
+                         inline=False)
 
         await ctx.send(embed=em)
 
@@ -348,7 +369,7 @@ class Helpers(commands.Cog):
             await ctx.send("No definition found for **%s**." % query)
             return
 
-        markdown_url = "[{}]({})".format(definitions[0]["word"], url)
+        markdown_url = f"[{definitions[0]['word']}]({url})"
         definitions_list_text = [
             "**\n{}**\n\n{}\n\n*{}*".format(
                 markdown_url,
@@ -395,12 +416,6 @@ class Helpers(commands.Cog):
             tex += "\\[" + sp[2 * i + 1] + "\\]"
 
         buf = BytesIO()
-        LATEX_PREAMBLE = ("\\documentclass[varwidth,12pt]{standalone}"
-                          "\\usepackage{alphabeta}"
-                          "\\usepackage[utf8]{inputenc}"
-                          "\\usepackage[LGR,T1]{fontenc}"
-                          "\\usepackage{amsmath,amsfonts,lmodern}"
-                          "\\begin{document}")
         preview(
             tex,
             preamble=LATEX_PREAMBLE,
@@ -484,8 +499,8 @@ class Helpers(commands.Cog):
         """Retrieves the CTF printers' statuses from tepid.science.mcgill.ca"""
         data = await fetch(self.bot.config.tepid_url, "json")
         for key, value in data.items():
-            await ctx.send("At least one printer in {} is {}!".format(
-                key, "up" if value else "down"))
+            await ctx.send(f"At least one printer in {key} is up!"
+                           if value else f"Both printers in {key} are down.")
 
     @commands.command()
     async def modpow(self, ctx, a, b, m):
@@ -499,6 +514,7 @@ class Helpers(commands.Cog):
     @commands.command(
         aliases=['foodspot', 'fs', 'food', 'foodspotting', 'food_spotting'])
     async def food_spot(self, ctx, *args):
+        # Written by @le-potate
         """Posts a food sale in #foodspotting.
         Use: `?foodspot Samosas in leacock`
         You can also attach one picture to your message (Write the command in
@@ -506,36 +522,35 @@ class Helpers(commands.Cog):
         if utils.get(ctx.author.roles,
                      name=self.bot.config.no_food_spotting_role):
             return
-        if not args:
-            message = "\u200b"
-        else:
-            message = "**{}**".format(" ".join(args))
+
+        # If no value is provided, use a zero-width space
         channel = utils.get(self.bot.get_guild(
             self.bot.config.server_id).text_channels,
                             name=self.bot.config.food_spotting_channel)
-        username = ctx.message.author
-        pfp = ctx.message.author.avatar_url
-        embed = discord.Embed()
-        try:
-            embed.set_image(url=ctx.message.attachments[0].url)
-        except Exception:
-            pass
+        embed = discord.Embed(title="Food spotted",
+                              description=" ".join(args) if args else "\u200b")
         embed.set_footer(
             text=("Added by {0} • Use '{1}foodspot' or '{1}fs' if you spot "
                   "food (See '{1}help foodspot')").format(
-                      username, self.bot.config.command_prefix[0]),
-            icon_url=pfp)
-        embed.add_field(name="`Food spotted`", value=message)
+                      ctx.message.author, self.bot.config.command_prefix[0]),
+            icon_url=ctx.message.author.avatar_url)
+
+        try:
+            embed.set_image(url=ctx.message.attachments[0].url)
+        except IndexError:    # No attachment
+            pass
+
         await channel.send(embed=embed)
 
     @commands.command()
-    async def choose(self, ctx, *, inputOpts: str):
-        """Randomly chooses one of the given options delimited by semicola.
+    async def choose(self, ctx, *, input_opts: str):
+        """
+        Randomly chooses one of the given options delimited by semicola or
+        commas.
         Usage: ?choose opt1;opt2
         """
-        opts = inputOpts.split(';')
-        sel = random.randint(0, (len(opts) - 1))
-        msg = "🤔\n" + opts[sel]
+        opts = input_opts.split(";" if ";" in input_opts else ",")
+        msg = f"🤔\n{opts[random.randint(0, (len(opts) - 1))]}"
         embed = discord.Embed(colour=0xDA291C, description=msg)
         await ctx.send(embed=embed)
 
@@ -549,19 +564,21 @@ class Helpers(commands.Cog):
         if not match:
             await ctx.send("Please use a valid 6-digit hex number.")
             return
+
         await ctx.trigger_typing()
+
         c = int(match.group(1), 16)
         r = (c & 0xFF0000) >> 16
         g = (c & 0xFF00) >> 8
         b = c & 0xFF
-        SIZE = 64
-        img = np.zeros((SIZE, SIZE, 3), np.uint8)
+        size = 64
+        img = np.zeros((size, size, 3), np.uint8)
         img[:, :] = (b, g, r)
         ext = "jpg"
-        retval, buffer = cv2.imencode('.{}'.format(ext), img,
-                                      [cv2.IMWRITE_JPEG_QUALITY, 0])
+        _r, buffer = cv2.imencode(f".{ext}", img,
+                                  [cv2.IMWRITE_JPEG_QUALITY, 0])
         buffer = BytesIO(buffer)
-        fn = "{}.{}".format(match.group(1), ext)
+        fn = f"{match.group(1)}.{ext}"
         await ctx.send(file=discord.File(fp=buffer, filename=fn))
 
     @commands.Cog.listener()
@@ -649,6 +666,128 @@ class Helpers(commands.Cog):
             await ctx.send(embed=embed)
 
         conn.close()
+
+    @commands.command(aliases=["ui", "av", "avi", "userinfo"])
+    async def user_info(self, ctx, user: discord.Member = None):
+        """
+        Show user info and avatar.
+        Displays the information of the user
+        that called the command, or another member's
+        if one is passed as an optional argument."""
+        if user is None:
+            user = ctx.author
+        ui_embed = discord.Embed(
+            colour=(user.id - sum(ord(char) for char in user.name)) % 0xFFFFFF)
+        ui_embed.add_field(name="username", value=str(user))
+        ui_embed.add_field(name="display name", value=user.display_name)
+        ui_embed.add_field(name="id", value=user.id)
+        ui_embed.add_field(name="joined server",
+                           value=user.joined_at.strftime("%m/%d/%Y, %H:%M:%S"))
+        ui_embed.add_field(
+            name="joined discord",
+            value=user.created_at.strftime("%m/%d/%Y, %H:%M:%S"))
+        ui_embed.add_field(
+            name="top role, colour",
+            value=f"`{user.top_role}`, " +
+            (str(user.colour).upper()
+             if user.colour != discord.Colour.default() else "default colour"))
+        ui_embed.add_field(name="avatar url",
+                           value=user.avatar_url,
+                           inline=False)
+        ui_embed.set_image(url=user.avatar_url)
+
+        await ctx.send(embed=ui_embed)
+
+    @commands.command(aliases=["trans"])
+    async def translate(self, ctx, command: str, *, inp_str: str = None):
+        """
+        Command used to translate some text from one language to another
+        Takes two arguments: the source/target languages and the text to translate
+        The first argument must be under the following format `src>dst`.
+        `src` indicates the language of the source text.
+        `dst` indicates which language you want the text to be translated into.
+        `src` must be either an empty string (to indicate that you want
+        to autodetect the source language) or a language code/name.
+        `dst` must be a language code/name different from `src` (it cannot be empty).
+        To get a list of all valid language codes and names, call `?translate codes`
+        Second argument is the text that you want to translate. This text is either
+        taken from the message to which the invoking message was replying to, or if the
+        invoking message is not a reply, then to the rest of the message after the first argument.
+        """
+        if command == "help":
+            await ctx.send("Command used to translate some text "
+                           "from one language to another\n"
+                           "Takes two arguments: the source/target "
+                           "languages and the text to translate\n"
+                           "The first argument must be under the "
+                           "following format `src>dst`.\n`src` indicates "
+                           "the language of the source text.\n`dst` "
+                           "indicates which language you want the text "
+                           "to be translated into.\n`src` must "
+                           "be either an empty string (to indicate "
+                           "that you want to autodetect the source "
+                           "language) or a language code/name.\n"
+                           "`dst` must be a language code/name "
+                           "different from `src` (it cannot be empty)\n"
+                           "Second argument is the text that you want to "
+                           "translate. This text is either taken from the "
+                           "message to which the invoking message was "
+                           "replying to, or if the invoking message is "
+                           "not a reply, then to the rest of the invoking "
+                           "message after the first argument.\n"
+                           "To get a list of all valid language codes "
+                           "and names, call `?translate codes`")
+        elif command == "codes":
+            await ctx.send(
+                "Here is a list of all language "
+                "codes and names:\n" +
+                ", ".join(f"`{code}`: {lang}"
+                          for code, lang in googletrans.LANGUAGES.items()))
+        elif code_match := TRANSLATE_REGEX.match(command):
+            if ctx.message.reference and ctx.message.reference.resolved:
+                inp_str = ctx.message.reference.resolved.content
+            if not inp_str:
+                await ctx.send(
+                    "Sorry, no string to translate has been detected")
+                return
+            src, dst = code_match.groups()
+            if src in googletrans.LANGCODES:
+                src = googletrans.LANGCODES[src]
+            if dst in googletrans.LANGCODES:
+                dst = googletrans.LANGCODES[dst]
+            translator = googletrans.Translator()
+            if not src:
+                detected_lang = translator.detect(inp_str)
+                src = detected_lang.lang if isinstance(
+                    detected_lang.lang, str) else detected_lang.lang[0]
+                cnf = detected_lang.confidence if isinstance(
+                    detected_lang.confidence,
+                    float) else detected_lang.confidence[0]
+                name_str = (
+                    f"translated text from {googletrans.LANGUAGES[src]}"
+                    f" (auto-detected with {round(cnf*100)}%"
+                    f" certainty) to {googletrans.LANGUAGES[dst]}")
+            else:
+                name_str = (
+                    f"translated text from {googletrans.LANGUAGES[src]}"
+                    f" to {googletrans.LANGUAGES[dst]}")
+            if src == dst:
+                await ctx.send(
+                    f"Inputted source (`{src}`) and target (`{dst}`) "
+                    f"languages are the same, which does not make sense")
+                return
+            embed = discord.Embed(colour=random.randint(0, 0xFFFFFF))
+            embed.add_field(name=name_str,
+                            value=translator.translate(inp_str,
+                                                       src=src,
+                                                       dest=dst).text)
+
+            await ctx.send(embed=embed)
+        else:
+            await ctx.send(f"First argument `{command}` could not be parsed "
+                           f"to a proper command string for this function.\n"
+                           f"To learn more about how to use this command, "
+                           f"call `?translate help`")
 
 
 def setup(bot):

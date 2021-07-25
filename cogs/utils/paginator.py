@@ -32,7 +32,8 @@ class Pages:
                  display_option=(1, 0),
                  editable_content=True,
                  editable_content_emoji='🚮',
-                 return_user_on_edit=False):
+                 return_user_on_edit=False,
+                 timeout=300):
         """Creates a paginator.
 
         Parameters
@@ -42,27 +43,54 @@ class Pages:
         current_page: int
             Specify which page to display.
         msg: discord.Message
-            This is helpful for edit function. Specify which message the bot needs to update if an element in the original message is modified.
+            This is helpful for edit function. Specify which message the bot
+            needs to update if an element in the original message is modified.
         item_list: list or dictionary
-            List of items to paginate. Using a dictionary is only useful for embeds option where there is a need for field names and values.
+            List of items to paginate. Using a dictionary is only useful for
+            embeds option where there is a need for field names and values.
         title: str
             Summary of content of the items.
         display_option: tuple
             The first record of the tuple may have these values:
-                0   : Messages will be in code blocks, the number of entries for each page is
-                    defined by user (autosize = False), and item_list will be a list of strings
-                    corresponding to the pages.
-                1   : Code blocks, autosize = True, item_list is a list of strings.
-                2   : Embed, autosize = False, item_list is a dictionary with two keys: names & values
-                    the values of which will be a list. (item_list = {'names': [], 'values': []})
+                0   : Messages will be in code blocks, the number of entries
+                    for each page is defined by user (autosize = False), and
+                    item_list will be a list of strings corresponding to
+                    the pages.
+                1   : Code blocks, autosize = True, item_list is a list
+                    of strings.
+                2   : Embed, autosize = False, item_list is a dictionary
+                    with two keys: names & values, the values of which will
+                    be a list. (item_list = {'names': [], 'values': []})
                 3   : Embed, autosize = False, item_list is a list of strings.
                 4   : Embed, autosize = True, item_list is a dictionary.
                 5   : Embed, autosize = True, item_list is a list of strings.
-            The second record is the user defined size of each page. For autosize = True, this value
-            is ignored.
+                6   : Embed, autosize = True, item_list is a list of embeds
+                      that will be used as pages
+            The second record is the user defined size of each page.
+            For autosize = True, this value is ignored.
         editable_content: bool
-            True if the items can be updated by the users (this is like an MVC).
+            True if the items can be updated by the users
+            If this is True, then the editable_content_emoji will be added on
+            the message. When a user clicks it, paginator.edit_mode
+            will be set to True, and the function will return.
+            (If return_user_on_edit is set to True, the user will be returned)
+            A recommended use is then to create a while paginator.edit_mode
+            loop after the await paginator.paginate() call, edit the content
+            there (for example, ask the user which item to delete and delete
+            it), then call paginator.paginate() again in the loop.
             False otherwise.
+        editable_content_emoji: string or discord.Emoji
+            If editable_content is True, this is the emoji that will be
+            added on the message and be used to edit content.
+        return_user_on_edit: bool
+            True if the user that clicked the editable_content_emoji react
+            should be returned when editing.
+            False otherwise.
+        timeout: int
+            The time in seconds before the message gets deleted.
+            The timeout is reset when a user turns pages.
+            It is not recommended to use a value much bigger than the default
+            one.
         """
         self.bot = ctx.bot
         self.guild = ctx.guild
@@ -85,6 +113,7 @@ class Pages:
         self.currentPage = current_page
         self.edit_mode = False
         self.return_user_on_edit = return_user_on_edit
+        self.timeout = timeout
 
     def _organize(self):
         organize_helper_map = {
@@ -94,6 +123,7 @@ class Pages:
             3: self._organize_embeds_list,
             4: self._organize_embeds_autosize_dict,
             5: self._organize_embeds_autosize_list,
+            6: self._organize_embeds_list_embeds,
         }
         pages_to_send = ['empty page']
         self.organize_helper = organize_helper_map[self.displayOption[0]]
@@ -179,6 +209,11 @@ class Pages:
     def _organize_embeds_autosize_list(self, pages_to_send):
         pass
 
+    def _organize_embeds_list_embeds(self, pages_to_send):
+        page_counter = len(self.itemList)
+        pages_to_send.extend(self.itemList)
+        return pages_to_send, page_counter
+
     async def _show_page(self, page):
         self.currentPage = max(0, min(page, self.lastPage))
         if self.message:
@@ -192,19 +227,22 @@ class Pages:
             else:
                 if self.displayOption[0] < 2:    # code blocks
                     await self.message.edit(
-                        content=self.pagesToSend[self.currentPage])
+                        content=self.pagesToSend[self.currentPage],
+                        delete_after=self.timeout)
                 else:    # embeds
                     await self.message.edit(
-                        embed=self.pagesToSend[self.currentPage])
+                        embed=self.pagesToSend[self.currentPage],
+                        delete_after=self.timeout)
                 return
         else:
             if self.displayOption[0] < 2:
                 self.message = await self.channel.send(
                     content=self.pagesToSend[self.currentPage],
-                    delete_after=300)
+                    delete_after=self.timeout)
             else:
                 self.message = await self.channel.send(
-                    embed=self.pagesToSend[self.currentPage], delete_after=300)
+                    embed=self.pagesToSend[self.currentPage],
+                    delete_after=self.timeout)
             for (emoji, _) in self.actions:
                 await self.message.add_reaction(emoji)
             return

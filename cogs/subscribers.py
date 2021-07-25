@@ -1,4 +1,4 @@
-# Copyright (C) idoneam (2016-2020)
+# Copyright (C) idoneam (2016-2021)
 #
 # This file is part of Canary
 #
@@ -35,7 +35,7 @@ import requests
 from .utils.subscribers import canary_subscriber
 
 CFIA_FEED_URL = "http://inspection.gc.ca/eng/1388422350443/1388422374046.xml"
-CFIA_RECALL_TAG_PATH = "pickles/recall_tag.obj"
+CFIA_RECALL_TAG_PATH = "data/runtime/recall_tag.obj"
 
 METRO_STATUS_API = "https://www.stm.info/en/ajax/etats-du-service"
 
@@ -55,7 +55,7 @@ METRO_INTERIM_STATUS = "No information"
 
 METRO_NORMAL_SERVICE_MESSAGE = "Normal métro service"
 
-os.makedirs("./pickles", exist_ok=True)
+os.makedirs("./data/runtime", exist_ok=True)
 
 
 class Subscribers(commands.Cog):

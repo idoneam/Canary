@@ -27,12 +27,15 @@ import subprocess
 from datetime import datetime
 from pytz import timezone
 from bot import bot
+import sqlite3
 
 from cogs.utils.checks import is_developer, is_moderator
 
 # List the extensions (modules) that should be loaded on startup.
 startup = [
+    "cogs.banner",
     "cogs.currency",
+    "cogs.customreactions",
     "cogs.games",
     "cogs.helpers",
     "cogs.images",
@@ -43,20 +46,8 @@ startup = [
     "cogs.reminder",
     "cogs.roles",
     "cogs.score",
-    "cogs.subscribers",
+    "cogs.subscribers",    # Do not remove this terminating comma.
 ]
-
-# TODO: SHOULD BE DB
-MARTY_RESPONSES = {
-    "dammit marty":
-    ":c",
-    "worm":
-    "walk without rhythm, and it won't attract the worm.",
-    "hey":
-    "whats going on?",
-    "this is so sad, marty play despacito":
-    "`Now playing:` https://www.youtube.com/watch?v=kJQP7kiw5Fk"
-}
 
 
 @bot.event
@@ -138,19 +129,6 @@ async def update(ctx):
     await ctx.send('`{}`'.format(status_message))
 
 
-@bot.event
-async def on_message(message):
-    if message.author == bot.user:
-        return
-
-    key = message.content.lower()
-    if key in MARTY_RESPONSES:
-        await message.channel.send(MARTY_RESPONSES[key])
-        return
-
-    await bot.process_commands(message)
-
-
 @bot.command()
 @is_moderator()
 async def backup(ctx):
@@ -164,6 +142,32 @@ async def backup(ctx):
                    file=discord.File(fp=bot.config.db_path,
                                      filename=backup_filename))
     bot.dev_logger.info('Database backup')
+
+
+@bot.listen()
+async def on_member_join(member):
+    member_id = member.id
+    name = str(member)
+    conn = sqlite3.connect(bot.config.db_path)
+    c = conn.cursor()
+    c.execute("INSERT OR REPLACE INTO Members VALUES (?,?)", (member_id, name))
+    conn.commit()
+    conn.close()
+
+
+@bot.listen()
+async def on_user_update(before, after):
+    if str(before) == str(after):
+        return
+
+    user_id = after.id
+    new_name = str(after)
+    conn = sqlite3.connect(bot.config.db_path)
+    c = conn.cursor()
+    c.execute("INSERT OR REPLACE INTO Members VALUES (?,?)",
+              (user_id, new_name))
+    conn.commit()
+    conn.close()
 
 
 def main():

@@ -206,13 +206,20 @@ class Roles(commands.Cog):
                                Roles.ALL_CATEGORIES)
 
     @commands.command()
-    async def roles(self, ctx):
-        """Returns list of all roles in server"""
-        role_names = [role.name for role in ctx.guild.roles]
+    async def roles(self, ctx, user: discord.Member = None):
+        """Returns list of all roles in server or
+        the list of a specific user's roles"""
+        role_names = [
+            role.name
+            for role in (ctx.guild.roles if user is None else user.roles)
+            if role != ctx.guild.default_role
+        ]
         role_names.reverse()
-        await Roles.paginate_roles(ctx,
-                                   role_names,
-                                   title="All roles in server")
+        await Roles.paginate_roles(
+            ctx,
+            role_names,
+            title=("all roles in server" if user is None else
+                   f"{user.display_name}'s roles") + f" ({len(role_names)})")
 
     @commands.command()
     async def inrole(self, ctx, *, query_role):
@@ -256,6 +263,22 @@ class Roles(commands.Cog):
 
         await ctx.guild.create_role(name=role, reason="Created with Canary")
         await ctx.send("Role created successfully.")
+
+    @commands.command()
+    async def inchannel(self, ctx):
+        """Returns list of users in current channel"""
+        channel = ctx.message.channel
+        members = channel.members
+
+        channel_users = list(map(lambda m: str(m) + "\n", members))
+        header = f"List of users in #{channel} - {len(members)}"
+
+        pages = Pages(ctx,
+                      item_list=channel_users,
+                      title=header,
+                      display_option=(3, 20),
+                      editable_content=False)
+        await pages.paginate()
 
 
 def setup(bot):
