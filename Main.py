@@ -27,6 +27,7 @@ import subprocess
 from datetime import datetime
 from pytz import timezone
 from bot import bot
+import sqlite3
 
 from cogs.utils.checks import is_developer, is_moderator
 
@@ -142,6 +143,32 @@ async def backup(ctx):
                    file=discord.File(fp=bot.config.db_path,
                                      filename=backup_filename))
     bot.dev_logger.info('Database backup')
+
+
+@bot.listen()
+async def on_member_join(member):
+    member_id = member.id
+    name = str(member)
+    conn = sqlite3.connect(bot.config.db_path)
+    c = conn.cursor()
+    c.execute("INSERT OR REPLACE INTO Members VALUES (?,?)", (member_id, name))
+    conn.commit()
+    conn.close()
+
+
+@bot.listen()
+async def on_user_update(before, after):
+    if str(before) == str(after):
+        return
+
+    user_id = after.id
+    new_name = str(after)
+    conn = sqlite3.connect(bot.config.db_path)
+    c = conn.cursor()
+    c.execute("INSERT OR REPLACE INTO Members VALUES (?,?)",
+              (user_id, new_name))
+    conn.commit()
+    conn.close()
 
 
 def main():
