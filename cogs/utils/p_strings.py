@@ -125,7 +125,7 @@ class PString:
                  string,
                  user=None,
                  channel=None,
-                 groups=None,
+                 groups=[],
                  additional_info=None):
         """
         A p-string is composed of a string with placeholders in it,
