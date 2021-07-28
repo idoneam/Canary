@@ -15,6 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Canary. If not, see <https://www.gnu.org/licenses/>.
 
+import requests
 import discord
 from discord import utils
 from discord.ext import commands
@@ -53,6 +54,15 @@ class Mod(commands.Cog):
         await channel_to_forward.send(msg)
         await ctx.message.delete()
 
+    @commands.command()
+    @is_moderator()
+    async def update_rules(self, ctx, *args):
+        rules_file = requests.get(url = self.bot.config.rules_url).text
+        channel = discord.utils.get(ctx.guild.channels, name=self.bot.config.rules_channel)
+        deleted = await channel.purge(limit=10000)
+        rules = rules_file.split("#NEWMSG")
+        for rule in rules:
+            await ctx.send(content=rule, embed=None)
 
 def setup(bot):
     bot.add_cog(Mod(bot))

@@ -67,6 +67,8 @@ class Parser:
 
         # Channels
         self.reception_channel = config['Channels']['ReceptionChannel']
+        self.rules_channel = config['Channels']['RulesChannel']
+        self.rules_url = config['Channels']['RulesURL']
         self.banner_of_the_week_channel = config['Channels'][
             'BannerOfTheWeekChannel']
         self.banner_submissions_channel = config['Channels'][
