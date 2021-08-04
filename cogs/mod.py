@@ -63,8 +63,10 @@ class Mod(commands.Cog):
         rules = rules_file.split("#NEWMSG")
         for rule in rules:
             # parse any channel references in the messages (i.e. "#bots", "#verified_general", etc)
-            flag = "#CHANNEL"
-            rule = self.parseAndReplace(rule, flag, self.lookupChannel, ctx)
+            rule = self.parseAndReplace(rule, "#CHANNEL", self.lookupChannel, ctx)
+
+            # parse any role references in the messages (i.e. "@Discord Moderators", "@irl", etc)
+            rule = self.parseAndReplace(rule, "#ROLE", self.lookupRole, ctx)
 
             await ctx.send(content=rule, embed=None)
 
@@ -77,6 +79,13 @@ class Mod(commands.Cog):
         else:
             return f"#{channelName}"
 
+    # Handler function for responding to #ROLE directive
+    def lookupRole(self, ctx, roleName: str):
+        role = discord.utils.get(ctx.guild.roles, name=roleName)
+        if hasattr(role, "id"):
+            return f"<@&{role.id}>"
+        else:
+            return f"@{roleName}"
 
     # Overengineered helper function that replaces every instance of "flag" with "handler(flagContents)"
     # i.e. goes through "mainStr" and wherever there's an instance of flag, it takes the contents
