@@ -113,9 +113,6 @@ You must set certain values in the `config.ini` file, in particular your Discor
     * `HangmanNormalWin`: Value of normal hangman win.
     * `HangmanCoolWin`: Value of cool hangman win.
     * `HangmanTimeOut`: Time before a hangman game will time out if not interacted with.
-* `[Sanitation]`:
-    * `TikTokSanitationOptOutRole`: Role used to opt out of tiktok link sanitation.
-    * `TikTokSilentRole`: Role used to no longer receive DMs explaining tiktok link sanitation.
 * `[AssignableRoles]`:
     * `Pronouns`: Comma separated list of pronoun roles in server.
     * `Fields`: Comma separated list of field of study roles in server.

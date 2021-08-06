@@ -14,6 +14,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Canary. If not, see <https://www.gnu.org/licenses/>.
+
 import discord
 from discord import utils
 from discord.ext import commands
@@ -42,10 +43,6 @@ class Sanitizer(commands.Cog):
 
     @commands.Cog.listener("on_message")
     async def tiktok_link_sanitizer(self, msg):
-        if (not isinstance(msg.author, discord.Member)) or utils.get(
-                msg.author.roles,
-                name=self.bot.config.sanitation["tt_optout"]):
-            return
         replace: bool = False
         msg_txt: str = str(msg.content)
         for short in TIKTOK_SHORTLINK.finditer(msg_txt):
