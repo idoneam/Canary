@@ -59,21 +59,13 @@ class Sanitizer(commands.Cog):
             replace = True
         if replace:
             await msg.delete()
-            await msg.channel.send(f"from: `{msg.author}`\n>>> {msg_txt}")
-            if not utils.get(msg.author.roles,
-                             name=self.bot.config.sanitation["tt_silent"]):
-                dm_channel = msg.author.dm_channel or await msg.author.create_dm(
-                )
-                await dm_channel.send(
-                    f"WARNING: a message you sent contained a tiktok link"
-                    " that could potentially contain sensitive information."
-                    "\nas such, it has been deleted and a sanitized version of"
-                    " the message was resent.\nto opt out of this feature, feel"
-                    f" free to request the `{self.bot.config.sanitation['tt_optout']}`"
-                    "role.\nto still have this feature enabled but to no longer receive"
-                    f" these message, feel free to request the `{self.bot.config.sanitation['tt_silent']}`"
-                    f" role.\nhere is the message in question:\n>>> {msg.content}"
-                )
+            await msg.channel.send(f"> from: `{msg.author}`\n{msg_txt}")
+            dm_channel = msg.author.dm_channel or await msg.author.create_dm()
+            await dm_channel.send(
+                f"⚠️***WARNING*** ⚠️:\na message you sent contained "
+                "a tiktok link that could potentially reveal sensitive information."
+                "\nas such, it has been deleted and a sanitized "
+                "version of the message was resent by this discord bot.")
 
 
 def setup(bot):
