@@ -4,7 +4,7 @@ FROM python:3.9-slim-buster
 RUN echo 'deb http://http.us.debian.org/debian/ testing non-free contrib main' >> /etc/apt/sources.list
 
 # Install base apt dependencies
-RUN apt-get update && apt-get install -y git
+RUN apt-get update && apt-get install -y git sqlite3
 
 # Install auxiliary dependencies (for GL, Tex, etc.)
 RUN apt-get install -y \
