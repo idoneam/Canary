@@ -22,9 +22,9 @@ import aiohttp
 
 TIKTOK_SHORTLINK = re.compile(r"https?:\/\/vm\.tiktok\.com\/[A-Za-z0-9]+")
 TIKTOK_MOBILE = re.compile(
-    r"(https?:\/\/m\.tiktok\.com\/v\/[0-9]+)\.html[A-Za-z0-9_&=%\.\?\-\/]+")
+    r"(https?:\/\/m\.tiktok\.com\/v\/[0-9]+)\.html\?[A-Za-z0-9_&=%\.\?\-\/]+")
 TIKTOK_DESKTOP = re.compile(
-    r"(https?:\/\/www\.tiktok\.com\/@[A-Za-z0-9_\.]+\/video\/[0-9]+)[A-Za-z0-9_&=%\.\?\-\/]+"
+    r"(https?:\/\/www\.tiktok\.com\/@[A-Za-z0-9_\.]+\/video\/[0-9]+)\?[A-Za-z0-9_&=%\.\?\-\/]+"
 )
 
 
@@ -60,7 +60,7 @@ class Sanitizer(commands.Cog):
         if replace:
             await msg.delete()
             await msg.channel.send(embed=discord.Embed().set_author(
-                name=str(msg.author), icon_url=str(msg.author.avatar_url)
+                name=msg.author.display_name, icon_url=str(msg.author.avatar_url)
             ).add_field(name="sanitized message", value=msg_txt).set_footer(
                 text=
                 "unsanitized tiktok URLs can contain potentially sensitive info"
