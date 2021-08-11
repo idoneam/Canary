@@ -109,6 +109,11 @@ You must set certain values in the `config.ini` file, in particular your Discor
     * `RollReturns`: The multiplier return for each interval. For example, a value of `0, 2, 4, 10` with the intervals
       described above gives a 0x return for `random <= 66`, a 2x return for `66 < random <= 90`, a 4x return for
       `90 < random <= 99`, and a 10x return for `random == 100`.
+* `[Images]`
+    * `MaxImageSize`: Maximum image size to allow to be sent without compression, in bytes.
+    * `ImageHistoryLimit`: Maximum amount of messages to check in history for an image before giving up.
+    * `MaxRadius`: Maximum radius used for various image transformation functions.
+    * `MaxIterations`: Maximum iterations allowed for various image transformation functions.
 * `[Games]`:
     * `HangmanNormalWin`: Value of normal hangman win.
     * `HangmanCoolWin`: Value of cool hangman win.
