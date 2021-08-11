@@ -60,7 +60,8 @@ class Sanitizer(commands.Cog):
         if replace:
             await msg.delete()
             await msg.channel.send(embed=discord.Embed().set_author(
-                name=msg.author.display_name, icon_url=str(msg.author.avatar_url)
+                name=msg.author.display_name,
+                icon_url=str(msg.author.avatar_url)
             ).add_field(name="sanitized message", value=msg_txt).set_footer(
                 text=
                 "unsanitized tiktok URLs can contain potentially sensitive info"
