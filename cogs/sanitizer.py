@@ -36,27 +36,37 @@ async def unroll_tiktok(link) -> str:
             return str(r.url)
 
 
+async def short_replace(msg, match) -> str:
+    short_match = match.group()
+    return msg.replace(short_match, await unroll_tiktok(short_match))
+
+
+async def mobile_replace(msg, match) -> str:
+    full, clean = match.group(0, 1)
+    return msg.replace(full, await unroll_tiktok(clean))
+
+
+async def desktop_replace(msg, match) -> str:
+    full, clean = match.group(0, 1)
+    return msg.replace(full, clean)
+
+
 class Sanitizer(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
     @commands.Cog.listener("on_message")
     async def tiktok_link_sanitizer(self, msg):
-        replace: bool = False
         msg_txt: str = str(msg.content)
-        for short in TIKTOK_SHORTLINK.finditer(msg_txt):
-            short_match = short.group()
-            msg_txt = msg_txt.replace(short_match, await
-                                      unroll_tiktok(short_match))
-            replace = True
-        for mobile in TIKTOK_MOBILE.finditer(msg_txt):
-            full, clean = mobile.group(0, 1)
-            msg_txt = msg_txt.replace(full, await unroll_tiktok(clean))
-            replace = True
-        for desktop in TIKTOK_DESKTOP.finditer(msg_txt):
-            full, clean = desktop.group(0, 1)
-            msg_txt = msg_txt.replace(full, clean)
-            replace = True
+        replace: bool = False
+
+        for reg, fun in [(TIKTOK_SHORTLINK, short_replace),
+                         (TIKTOK_MOBILE, mobile_replace),
+                         (TIKTOK_DESKTOP, desktop_replace)]:
+            for match in reg.finditer(msg_txt):
+                msg_txt = await fun(msg_txt, match)
+                replace = True
+
         if replace:
             await msg.delete()
             await msg.channel.send(embed=discord.Embed().set_author(
