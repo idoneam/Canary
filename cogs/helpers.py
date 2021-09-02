@@ -595,7 +595,7 @@ class Helpers(commands.Cog):
             conn.close()
 
     @commands.command(aliases=[
-        'previousroles', 'giverolesback', 'rolesback', "givebackroles"
+        "previousroles", "giverolesback", "rolesback", "givebackroles"
     ])
     async def previous_roles(self, ctx, user: discord.Member):
         """Show the list of roles that a user had before leaving, if possible.
@@ -650,8 +650,9 @@ class Helpers(commands.Cog):
                         try:
                             await user.add_roles(
                                 role,
-                                reason="{} used the previous_roles command".
-                                format(ok_user.name))
+                                reason=
+                                f"{ok_user.name} used the previous_roles command"
+                            )
                         except:
                             failed_roles.append(str(role))
                     embed = discord.Embed(
