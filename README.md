@@ -2,7 +2,6 @@
 
  [![Discord](https://img.shields.io/discord/236668784948019202.svg)](https://discord.gg/HDHvv58)
  [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
- [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
 Canary is a Python3 bot designed for the McGill University Community Discord Server. The bot provides helper functions to users, as well as fun functions, a quote database and custom greeting messages.
 
