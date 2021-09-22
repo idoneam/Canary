@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "Canary"
-version = "3.0.2"
+version = "3.0.3"
 description = ""
 license = "GPL-3.0-only"
 repository = "https://github.com/idoneam/Canary"
@@ -20,10 +20,10 @@ numpy = "^1.21.1"
 aiohttp = "~3.7.4"
 urllib3 = ">=1.25.3"
 feedparser = "^6.0.8"
-regex = "^2021.4.4"
+regex = "^2021.8.28"
 googletrans = "==4.0.0rc1"
 Pillow = "^8.3.1"
 
 [tool.poetry.dev-dependencies]
 yapf = "==0.31.0"
-pytest = "^6.2.4"
+pytest = "^6.2.5"
