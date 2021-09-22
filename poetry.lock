@@ -80,7 +80,7 @@ python-versions = "*"
 
 [[package]]
 name = "charset-normalizer"
-version = "2.0.3"
+version = "2.0.4"
 description = "The Real First Universal Charset Detector. Open, modern and actively maintained alternative to Chardet."
 category = "main"
 optional = false
@@ -164,7 +164,7 @@ python-versions = "*"
 
 [[package]]
 name = "hstspreload"
-version = "2021.7.5"
+version = "2021.8.1"
 description = "Chromium HSTS Preload list as a Python package"
 category = "main"
 optional = false
@@ -541,8 +541,8 @@ chardet = [
     {file = "chardet-3.0.4.tar.gz", hash = "sha256:84ab92ed1c4d4f16916e05906b6b75a6c0fb5db821cc65e70cbd64a3e2a5eaae"},
 ]
 charset-normalizer = [
-    {file = "charset-normalizer-2.0.3.tar.gz", hash = "sha256:c46c3ace2d744cfbdebceaa3c19ae691f53ae621b39fd7570f59d14fb7f2fd12"},
-    {file = "charset_normalizer-2.0.3-py3-none-any.whl", hash = "sha256:88fce3fa5b1a84fdcb3f603d889f723d1dd89b26059d0123ca435570e848d5e1"},
+    {file = "charset-normalizer-2.0.4.tar.gz", hash = "sha256:f23667ebe1084be45f6ae0538e4a5a865206544097e4e8bbcacf42cd02a348f3"},
+    {file = "charset_normalizer-2.0.4-py3-none-any.whl", hash = "sha256:0c8911edd15d19223366a194a513099a302055a962bca2cec0f54b8b63175d8b"},
 ]
 colorama = [
     {file = "colorama-0.4.4-py2.py3-none-any.whl", hash = "sha256:9f47eda37229f68eee03b24b9748937c7dc3868f906e8ba69fbcbdd3bc5dc3e2"},
@@ -572,8 +572,8 @@ hpack = [
     {file = "hpack-3.0.0.tar.gz", hash = "sha256:8eec9c1f4bfae3408a3f30500261f7e6a65912dc138526ea054f9ad98892e9d2"},
 ]
 hstspreload = [
-    {file = "hstspreload-2021.7.5-py3-none-any.whl", hash = "sha256:59fcb43897c2d63666a7e7cac2b2cb423e2c97e39fcf565c7ed814920e02bd8e"},
-    {file = "hstspreload-2021.7.5.tar.gz", hash = "sha256:ad5c82b2d6246dda4ca21d477fd9c009a88eb6bdf69456acf241f077d7e35d81"},
+    {file = "hstspreload-2021.8.1-py3-none-any.whl", hash = "sha256:6c1bf74072f5bc01d688fe66835eca6e4bb1352368bf0c9c68292696455f457f"},
+    {file = "hstspreload-2021.8.1.tar.gz", hash = "sha256:d51c2c2c183ec0001399b0473ffb200eb75451110b27897e65efd2fe1d70b9be"},
 ]
 httpcore = [
     {file = "httpcore-0.9.1-py3-none-any.whl", hash = "sha256:9850fe97a166a794d7e920590d5ec49a05488884c9fc8b5dba8561effab0c2a0"},
