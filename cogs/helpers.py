@@ -653,7 +653,7 @@ class Helpers(commands.Cog):
                                 reason=
                                 f"{ok_user.name} used the previous_roles command"
                             )
-                        except:
+                        except (discord.Forbidden, discord.HTTPException):
                             failed_roles.append(str(role))
                     embed = discord.Embed(
                         title="{}'s previous roles were successfully "
