@@ -61,7 +61,8 @@ LANG_CODES = "|".join(googletrans.LANGUAGES.keys())
 LANG_NAMES = "|".join(
     lang.split(" ")[0] for lang in googletrans.LANGCODES.keys())
 TRANSLATE_REGEX = re.compile(
-    f"^(|{LANG_NAMES}|{LANG_CODES})>({LANG_NAMES}|{LANG_CODES})$")
+    f"^(|{LANG_NAMES}|{LANG_CODES})>({LANG_NAMES}|{LANG_CODES})$",
+    re.IGNORECASE)
 
 LATEX_PREAMBLE = r"""\documentclass[varwidth,12pt]{standalone}
 \usepackage{alphabeta}
