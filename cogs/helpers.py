@@ -594,7 +594,9 @@ class Helpers(commands.Cog):
             conn.commit()
             conn.close()
 
-    @commands.command(aliases=['previousroles', 'giverolesback', 'rolesback'])
+    @commands.command(aliases=[
+        "previousroles", "giverolesback", "rolesback", "givebackroles"
+    ])
     async def previous_roles(self, ctx, user: discord.Member):
         """Show the list of roles that a user had before leaving, if possible.
         A moderator can click the OK react on the message to give these roles back
@@ -643,14 +645,23 @@ class Helpers(commands.Cog):
             while p.edit_mode:
                 if discord.utils.get(ok_user.roles,
                                      name=self.bot.config.moderator_role):
-                    await user.add_roles(
-                        *valid_roles,
-                        reason="{} used the previous_roles command".format(
-                            ok_user.name))
+                    failed_roles: list[str] = []
+                    for role in valid_roles:
+                        try:
+                            await user.add_roles(
+                                role,
+                                reason=
+                                f"{ok_user.name} used the previous_roles command"
+                            )
+                        except (discord.Forbidden, discord.HTTPException):
+                            failed_roles.append(str(role))
                     embed = discord.Embed(
                         title="{}'s previous roles were successfully "
                         "added back by {}".format(user.display_name,
                                                   ok_user.display_name))
+                    if failed_roles:
+                        embed.add_field(name="roles not given back",
+                                        value=", ".join(failed_roles))
                     await message.edit(embed=embed)
                     await message.clear_reaction("◀")
                     await message.clear_reaction("▶")
