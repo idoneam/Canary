@@ -22,7 +22,7 @@ urllib3 = ">=1.25.3"
 feedparser = "^6.0.8"
 regex = "^2021.9.30"
 googletrans = "==4.0.0rc1"
-Pillow = "^8.3.1"
+Pillow = "^8.3.2"
 
 [tool.poetry.dev-dependencies]
 yapf = "==0.31.0"
