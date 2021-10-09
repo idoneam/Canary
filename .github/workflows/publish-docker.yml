@@ -12,7 +12,10 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@v2
-      - run: poetry export -f requirements.txt > requirements.txt
+      - uses: actions/setup-python@v2
+        with:
+          python-version: '3.9'
+      - run: pip install poetry && poetry update && poetry export -f requirements.txt > requirements.txt
       - uses: docker/metadata-action@v3
         id: meta
         with:
