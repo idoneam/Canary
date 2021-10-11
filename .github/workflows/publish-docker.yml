@@ -19,7 +19,7 @@ jobs:
       - uses: docker/metadata-action@v3
         id: meta
         with:
-          images: ghcr.io/idoneam/canary
+          images: ghcr.io/idoneam/Canary
           tags: |
             type=semver,pattern={{major}}
             type=semver,pattern={{major}}.{{minor}}
