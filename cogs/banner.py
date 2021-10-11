@@ -423,7 +423,7 @@ class Banner(commands.Cog):
 
         There must be an ongoing Banner contest to use this command; check the Banner of the Week channel for more information.
         This command can be used in a picture caption or with a url as argument.
-        The image will be scaled to maximum fit and centered; you can add -strech to the command for the image to be stretched instead.
+        The image will be scaled to maximum fit and centered; you can add -stretch to the command for the image to be stretched instead.
         For better results, your picture must be at least 960x540 pixels in a 16:9 aspect ratio.
 
         You must be a verified user to use this command.
