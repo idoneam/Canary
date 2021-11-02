@@ -20,7 +20,7 @@ numpy = "^1.21.1"
 aiohttp = "~3.7.4"
 urllib3 = ">=1.25.3"
 feedparser = "^6.0.8"
-regex = "^2021.10.8"
+regex = "^2021.11.1"
 googletrans = "==4.0.0rc1"
 Pillow = "^8.3.2"
 
