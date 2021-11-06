@@ -719,17 +719,18 @@ class Helpers(commands.Cog):
         invoking message is not a reply, then to the rest of the message after the first argument.
         """
         if command == "help":
-            await ctx.send("Command used to translate text.\n"
-                           "Example usage: `?translate en>ru Rush B`\n"
-                           "It takes two arguments.\n"
-                           "The first argument must be of the format `source>destination`.\n"
-                           "`source` and `destination` must be language codes; "
-                           "alternatively, `source` may be left empty to auto-detect the "
-                           "source language.\n"
-                           "For a list of language codes, see `?translate codes`.\n"
-                           "The second argument is the text to translate. "
-                           "You may reply to a message using this command to translate it, "
-                           "or supply your own text as the second argument.")
+            await ctx.send(
+                "Command used to translate text.\n"
+                "Example usage: `?translate en>ru Rush B`\n"
+                "It takes two arguments.\n"
+                "The first argument must be of the format `source>destination`.\n"
+                "`source` and `destination` must be language codes; "
+                "alternatively, `source` may be left empty to auto-detect the "
+                "source language.\n"
+                "For a list of language codes, see `?translate codes`.\n"
+                "The second argument is the text to translate. "
+                "You may reply to a message using this command to translate it, "
+                "or supply your own text as the second argument.")
             return
 
         if command == "codes":
@@ -748,7 +749,7 @@ class Helpers(commands.Cog):
             return
 
         # Validation of language codes
-        codes = command.split(">")
+        codes = command.replace("_", "-").split(">")
         if len(codes) != 2:
             await ctx.send(f"Argument `{command}` is not properly formatted. "
                            f"See `?translate help` to learn more.")
@@ -762,25 +763,20 @@ class Helpers(commands.Cog):
         elif source not in googletrans.LANGUAGES:
             await ctx.send(f"`{source}` is not a valid language code. "
                            f"See `?translate codes` for language codes.")
+            return
         destination = codes[1].lower().strip()
         if destination not in googletrans.LANGUAGES:
             await ctx.send(f"`{destination}` is not a valid language code. "
                            f"See `?translate codes` for language codes.")
+            return
 
-        embed_name = (f"translated text from {googletrans.LANGUAGES[source]} "
-                     f"to {googletrans.LANGUAGES[destination]}")
-        if detection:
-            embed_name = (
-                f"translated text from {googletrans.LANGUAGES[source]} "
-                f"(auto-detected with {round(detection.confidence*100.)}% "
-                f"certainty) to {googletrans.LANGUAGES[destination]}")
-        embed = discord.Embed(colour=random.randint(0, 0xFFFFFF))
-        embed.add_field(name=embed_name,
-                        value=translator.translate(inp_str,
-                                                   source=source,
-                                                   dest=destination).text)
-
-        await ctx.send(embed=embed)
+        await ctx.send(embed=discord.Embed(
+            colour=random.randint(0, 0xFFFFFF)
+        ).add_field(
+            name=
+            f"translated text from {googletrans.LANGUAGES[source]} to {googletrans.LANGUAGES[destination]}",
+            value=translator.translate(inp_str, src=source,
+                                       dest=destination).text))
 
 
 def setup(bot):
