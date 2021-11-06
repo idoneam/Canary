@@ -719,28 +719,20 @@ class Helpers(commands.Cog):
         invoking message is not a reply, then to the rest of the message after the first argument.
         """
         if command == "help":
-            await ctx.send("Command used to translate some text "
-                           "from one language to another\n"
-                           "Takes two arguments: the source/target "
-                           "languages and the text to translate\n"
-                           "The first argument must be under the "
-                           "following format `src>dst`.\n`src` indicates "
-                           "the language of the source text.\n`dst` "
-                           "indicates which language you want the text "
-                           "to be translated into.\n`src` must "
-                           "be either an empty string (to indicate "
-                           "that you want to autodetect the source "
-                           "language) or a language code/name.\n"
-                           "`dst` must be a language code/name "
-                           "different from `src` (it cannot be empty)\n"
-                           "Second argument is the text that you want to "
-                           "translate. This text is either taken from the "
-                           "message to which the invoking message was "
-                           "replying to, or if the invoking message is "
-                           "not a reply, then to the rest of the invoking "
-                           "message after the first argument.\n"
-                           "To get a list of all valid language codes "
-                           "and names, call `?translate codes`")
+            await ctx.send("Command used to translate text.\n"
+                           "Example usage: `?translate en>ru Rush B`\n"
+                           "It takes two arguments.\n"
+                           "The first argument must be of the "
+                           "format `source>destination`.\n"
+                           "`source` and `destination` must be "
+                           "language codes; alternatively, `source` "
+                           "may be left empty to auto-detect the "
+                           "source language. \nFor a list of language "
+                           "codes, see `?translate codes`.\n"
+                           "The second argument is the text to "
+                           "translate. You may reply to a message using "
+                           "this command to translate it, "
+                           "or supply your own text as the second argument.")
             return
 
         if command == "codes":
