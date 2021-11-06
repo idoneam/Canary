@@ -748,57 +748,58 @@ class Helpers(commands.Cog):
                            "message after the first argument.\n"
                            "To get a list of all valid language codes "
                            "and names, call `?translate codes`")
-        elif command == "codes":
+            return
+
+        if command == "codes":
             await ctx.send(
                 "Here is a list of all language "
                 "codes and names:\n" +
                 ", ".join(f"`{code}`: {lang}"
                           for code, lang in googletrans.LANGUAGES.items()))
-        elif code_match := TRANSLATE_REGEX.match(command):
-            if ctx.message.reference and ctx.message.reference.resolved:
-                inp_str = ctx.message.reference.resolved.content
-            if not inp_str:
-                await ctx.send(
-                    "Sorry, no string to translate has been detected")
-                return
-            src, dst = code_match.groups()
-            if src in googletrans.LANGCODES:
-                src = googletrans.LANGCODES[src]
-            if dst in googletrans.LANGCODES:
-                dst = googletrans.LANGCODES[dst]
-            translator = googletrans.Translator()
-            if not src:
-                detected_lang = translator.detect(inp_str)
-                src = detected_lang.lang if isinstance(
-                    detected_lang.lang, str) else detected_lang.lang[0]
-                cnf = detected_lang.confidence if isinstance(
-                    detected_lang.confidence,
-                    float) else detected_lang.confidence[0]
-                name_str = (
-                    f"translated text from {googletrans.LANGUAGES[src]}"
-                    f" (auto-detected with {round(cnf*100)}%"
-                    f" certainty) to {googletrans.LANGUAGES[dst]}")
-            else:
-                name_str = (
-                    f"translated text from {googletrans.LANGUAGES[src]}"
-                    f" to {googletrans.LANGUAGES[dst]}")
-            if src == dst:
-                await ctx.send(
-                    f"Inputted source (`{src}`) and target (`{dst}`) "
-                    f"languages are the same, which does not make sense")
-                return
-            embed = discord.Embed(colour=random.randint(0, 0xFFFFFF))
-            embed.add_field(name=name_str,
-                            value=translator.translate(inp_str,
-                                                       src=src,
-                                                       dest=dst).text)
+            return
 
-            await ctx.send(embed=embed)
-        else:
-            await ctx.send(f"First argument `{command}` could not be parsed "
-                           f"to a proper command string for this function.\n"
-                           f"To learn more about how to use this command, "
-                           f"call `?translate help`")
+        if ctx.message.reference and ctx.message.reference.resolved:
+            inp_str = ctx.message.reference.resolved.content
+        if not inp_str:
+            await ctx.send(
+                "Sorry, no string to translate has been detected")
+            return
+
+        codes = command.split(">")
+        if len(codes) != 2:
+            await ctx.send(f"Argument `{command}` is not properly formatted. "
+                           f"See `?translate help` to learn more.")
+            return
+        source = codes[0].lower().strip()
+        translator = googletrans.Translator()
+        detection = None
+        if source == "":
+            detection = translator.detect(inp_str)
+            source = detection.lang
+        elif source not in googletrans.LANGUAGES:
+            await ctx.send(f"`{source}` is not a valid language code. "
+                           f"See `?translate codes` for language codes.")
+        destination = codes[1].lower().strip()
+        if destination not in googletrans.LANGUAGES:
+            await ctx.send(f"`{destination}` is not a valid language code. "
+                           f"See `?translate codes` for language codes.")
+
+        embedName = (
+            f"translated text from {googletrans.LANGUAGES[source]}"
+            f" to {googletrans.LANGUAGES[destination]}")
+        if detection:
+            embedName = (
+                f"translated text from {googletrans.LANGUAGES[source]}"
+                f" (auto-detected with {round(detection.confidence*100.)}%"
+                f" certainty) to {googletrans.LANGUAGES[destination]}")
+        embed = discord.Embed(colour=random.randint(0, 0xFFFFFF))
+        embed.add_field(name=embedName,
+                        value=translator.translate(
+                            inp_str,
+                            source=source,
+                            dest=destination).text)
+
+        await ctx.send(embed=embed)
 
 
 def setup(bot):
