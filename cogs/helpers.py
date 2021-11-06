@@ -57,13 +57,6 @@ LMGTFY_TEMPLATE = "https://letmegooglethat.com/?q={}"
 MTL_REGEX = re.compile("Montréal.*")
 ALERT_REGEX = re.compile("Alerts.*")
 
-LANG_CODES = "|".join(googletrans.LANGUAGES.keys())
-LANG_NAMES = "|".join(
-    lang.split(" ")[0] for lang in googletrans.LANGCODES.keys())
-TRANSLATE_REGEX = re.compile(
-    f"^(|{LANG_NAMES}|{LANG_CODES})>({LANG_NAMES}|{LANG_CODES})$",
-    re.IGNORECASE)
-
 LATEX_PREAMBLE = r"""\documentclass[varwidth,12pt]{standalone}
 \usepackage{alphabeta}
 \usepackage[utf8]{inputenc}
@@ -761,8 +754,7 @@ class Helpers(commands.Cog):
         if ctx.message.reference and ctx.message.reference.resolved:
             inp_str = ctx.message.reference.resolved.content
         if not inp_str:
-            await ctx.send(
-                "Sorry, no string to translate has been detected")
+            await ctx.send("Sorry, no string to translate has been detected")
             return
 
         codes = command.split(">")
@@ -784,20 +776,18 @@ class Helpers(commands.Cog):
             await ctx.send(f"`{destination}` is not a valid language code. "
                            f"See `?translate codes` for language codes.")
 
-        embedName = (
-            f"translated text from {googletrans.LANGUAGES[source]}"
-            f" to {googletrans.LANGUAGES[destination]}")
+        embedName = (f"translated text from {googletrans.LANGUAGES[source]} "
+                     f"to {googletrans.LANGUAGES[destination]}")
         if detection:
             embedName = (
-                f"translated text from {googletrans.LANGUAGES[source]}"
-                f" (auto-detected with {round(detection.confidence*100.)}%"
-                f" certainty) to {googletrans.LANGUAGES[destination]}")
+                f"translated text from {googletrans.LANGUAGES[source]} "
+                f"(auto-detected with {round(detection.confidence*100.)}% "
+                f"certainty) to {googletrans.LANGUAGES[destination]}")
         embed = discord.Embed(colour=random.randint(0, 0xFFFFFF))
         embed.add_field(name=embedName,
-                        value=translator.translate(
-                            inp_str,
-                            source=source,
-                            dest=destination).text)
+                        value=translator.translate(inp_str,
+                                                   source=source,
+                                                   dest=destination).text)
 
         await ctx.send(embed=embed)
 
