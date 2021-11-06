@@ -722,16 +722,13 @@ class Helpers(commands.Cog):
             await ctx.send("Command used to translate text.\n"
                            "Example usage: `?translate en>ru Rush B`\n"
                            "It takes two arguments.\n"
-                           "The first argument must be of the "
-                           "format `source>destination`.\n"
-                           "`source` and `destination` must be "
-                           "language codes; alternatively, `source` "
-                           "may be left empty to auto-detect the "
-                           "source language. \nFor a list of language "
-                           "codes, see `?translate codes`.\n"
-                           "The second argument is the text to "
-                           "translate. You may reply to a message using "
-                           "this command to translate it, "
+                           "The first argument must be of the format `source>destination`.\n"
+                           "`source` and `destination` must be language codes; "
+                           "alternatively, `source` may be left empty to auto-detect the "
+                           "source language.\n"
+                           "For a list of language codes, see `?translate codes`.\n"
+                           "The second argument is the text to translate. "
+                           "You may reply to a message using this command to translate it, "
                            "or supply your own text as the second argument.")
             return
 
@@ -743,12 +740,14 @@ class Helpers(commands.Cog):
                           for code, lang in googletrans.LANGUAGES.items()))
             return
 
+        # If the command was invoked by a reply, use the original message as input text.
         if ctx.message.reference and ctx.message.reference.resolved:
             inp_str = ctx.message.reference.resolved.content
         if not inp_str:
-            await ctx.send("Sorry, no string to translate has been detected")
+            await ctx.send("Sorry, no string to translate has been detected.")
             return
 
+        # Validation of language codes
         codes = command.split(">")
         if len(codes) != 2:
             await ctx.send(f"Argument `{command}` is not properly formatted. "
@@ -768,15 +767,15 @@ class Helpers(commands.Cog):
             await ctx.send(f"`{destination}` is not a valid language code. "
                            f"See `?translate codes` for language codes.")
 
-        embedName = (f"translated text from {googletrans.LANGUAGES[source]} "
+        embed_name = (f"translated text from {googletrans.LANGUAGES[source]} "
                      f"to {googletrans.LANGUAGES[destination]}")
         if detection:
-            embedName = (
+            embed_name = (
                 f"translated text from {googletrans.LANGUAGES[source]} "
                 f"(auto-detected with {round(detection.confidence*100.)}% "
                 f"certainty) to {googletrans.LANGUAGES[destination]}")
         embed = discord.Embed(colour=random.randint(0, 0xFFFFFF))
-        embed.add_field(name=embedName,
+        embed.add_field(name=embed_name,
                         value=translator.translate(inp_str,
                                                    source=source,
                                                    dest=destination).text)
