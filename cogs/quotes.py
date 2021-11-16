@@ -30,6 +30,7 @@ import re
 # Other utils
 import random
 from .utils.paginator import Pages
+from .utils.checks import is_moderator
 
 GEN_SPACE_SYMBOLS = re.compile(r"[,“”\".?!]")
 GEN_BLANK_SYMBOLS = re.compile(r"['()`]")
@@ -37,6 +38,18 @@ GEN_BLANK_SYMBOLS = re.compile(r"['()`]")
 IMAGE_REGEX = re.compile(r"https?://\S+\.(?:jpg|gif|png|jpeg)\S*")
 
 DEFAULT_AVATAR = "https://cdn.discordapp.com/embed/avatars/0.png"
+
+
+class UserToIdConverter(commands.Converter):
+    async def convert(self, ctx, argument):
+        try:
+            user = await commands.MemberConverter().convert(ctx, argument)
+            return user.id
+        except commands.BadArgument:
+            try:
+                return int(argument)
+            except ValueError:
+                raise commands.BadArgument("Could not find user")
 
 
 class Quotes(commands.Cog):
@@ -129,14 +142,16 @@ class Quotes(commands.Cog):
 
         def check(reaction, user):
             # returns True if all the following is true:
-            # The user who reacted is either the quoter or the quoted person
+            # The user who reacted is either the quoter, the quoted person, or a moderator
             # The user who reacted isn't the bot
             # The react is the delete emoji
             # The react is on the "Quote added." message
-            return (
-                user == ctx.message.author
-                or user == member) and user != self.bot.user and str(
-                    reaction.emoji) == '🚮' and reaction.message.id == msg.id
+            return all(
+                ((user == ctx.message.author or user == member
+                  or discord.utils.get(user.roles,
+                                       name=self.bot.config.moderator_role)),
+                 user != self.bot.user, str(reaction.emoji) == '🚮',
+                 reaction.message.id == msg.id))
 
         try:
             await self.bot.wait_for('reaction_add', check=check, timeout=120)
@@ -201,12 +216,14 @@ class Quotes(commands.Cog):
 
             def check(reaction, user):
                 # returns True if all the following is true:
+                # The user who reacted is the one that called the command or a moderator
                 # The user who reacted isn't the bot
                 # The react is the ok emoji
                 # The react is on the "Quote not found." message
-                return (user == ctx.message.author and user != self.bot.user
-                        ) and (str(reaction.emoji) == '🆗'
-                               and reaction.message.id == msg.id)
+                return all(((user == ctx.message.author or discord.utils.get(
+                    user.roles, name=self.bot.config.moderator_role)),
+                            user != self.bot.user, str(reaction.emoji) == '🆗',
+                            reaction.message.id == msg.id))
 
             try:
                 await self.bot.wait_for('reaction_add',
@@ -274,55 +291,61 @@ class Quotes(commands.Cog):
 
         p = Pages(ctx,
                   item_list=quote_list_text,
-                  title='Quotes from {}'.format(quote_author.display_name))
+                  title='Quotes from {}'.format(quote_author.display_name),
+                  return_user_on_edit=True)
 
-        await p.paginate()
+        user_deleting = await p.paginate()
 
         def msg_check(msg):
             try:
-                return (0 <= int(msg.content) <= len(quote_list)
-                        and msg.author.id == author_id
-                        and msg.channel == ctx.message.channel)
+                return all((0 <= int(msg.content) <= len(quote_list),
+                            msg.author == user_deleting,
+                            msg.channel == ctx.message.channel,
+                            msg.author != self.bot.user))
             except ValueError:
                 return False
 
         while p.edit_mode:
-            await ctx.send(
-                'Delete option selected. Enter a number to specify which '
-                'quote you want to delete, or enter 0 to return.',
-                delete_after=60)
-
-            try:
-                message = await self.bot.wait_for('message',
-                                                  check=msg_check,
-                                                  timeout=60)
-
-            except asyncio.TimeoutError:
+            if (user_deleting == author
+                    or discord.utils.get(user_deleting.roles,
+                                         name=self.bot.config.moderator_role)):
                 await ctx.send(
-                    'Command timeout. You may want to run the command again.',
+                    'Delete option selected. Enter a number to specify which '
+                    'quote you want to delete, or enter 0 to return.',
                     delete_after=60)
-                break
 
-            else:
-                index = int(message.content) - 1
-                if index == -1:
-                    await ctx.send('Exit delq.', delete_after=60)
+                try:
+                    message = await self.bot.wait_for('message',
+                                                      check=msg_check,
+                                                      timeout=60)
+
+                except asyncio.TimeoutError:
+                    await ctx.send(
+                        'Command timeout. You may want to run the command again.',
+                        delete_after=60)
+                    break
+
                 else:
-                    t = (quote_list[index][0], quote_list[index][2])
-                    del quote_list[index]
-                    c.execute('DELETE FROM Quotes WHERE ID = ? AND Quote = ?',
-                              t)
-                    conn.commit()
+                    index = int(message.content) - 1
+                    if index == -1:
+                        await ctx.send('Exit delq.', delete_after=60)
+                    else:
+                        t = (quote_list[index][0], quote_list[index][2])
+                        del quote_list[index]
+                        c.execute(
+                            'DELETE FROM Quotes WHERE ID = ? AND Quote = ?', t)
+                        conn.commit()
+                        self.rebuild_mc()
 
-                    await ctx.send('Quote deleted', delete_after=60)
-                    await message.delete()
+                        await ctx.send('Quote deleted', delete_after=60)
+                        await message.delete()
 
-                    p.itemList = [
-                        f'[{i}] {quote[2]}'
-                        for i, quote in enumerate(quote_list, 1)
-                    ]
+                        p.itemList = [
+                            f'[{i}] {quote[2]}'
+                            for i, quote in enumerate(quote_list, 1)
+                        ]
 
-                await p.paginate()
+            await p.paginate()
 
         conn.commit()
         conn.close()
@@ -388,10 +411,59 @@ class Quotes(commands.Cog):
         p = Pages(ctx,
                   item_list=quote_list_text,
                   title='Quotes that contain "{}"'.format(query),
-                  editable_content=False,
-                  current_page=pagenum)
+                  current_page=pagenum,
+                  return_user_on_edit=True)
 
-        await p.paginate()
+        user_deleting = await p.paginate()
+
+        def msg_check(msg):
+            try:
+                return all((0 <= int(msg.content) <= len(quote_list),
+                            msg.author == user_deleting,
+                            msg.channel == ctx.message.channel))
+            except ValueError:
+                return False
+
+        while p.edit_mode:
+            if discord.utils.get(user_deleting.roles,
+                                 name=self.bot.config.moderator_role):
+                await ctx.send(
+                    'Delete option selected. Enter a number to specify which '
+                    'quote you want to delete, or enter 0 to return.',
+                    delete_after=60)
+
+                try:
+                    message = await self.bot.wait_for('message',
+                                                      check=msg_check,
+                                                      timeout=60)
+
+                except asyncio.TimeoutError:
+                    await ctx.send(
+                        'Command timeout. You may want to run the command again.',
+                        delete_after=60)
+                    break
+
+                else:
+                    index = int(message.content) - 1
+                    if index == -1:
+                        await ctx.send('Exit delq.', delete_after=60)
+                    else:
+                        t = (quote_list[index][0], quote_list[index][2])
+                        del quote_list[index]
+                        c.execute(
+                            'DELETE FROM Quotes WHERE ID = ? AND Quote = ?', t)
+                        conn.commit()
+                        self.rebuild_mc()
+
+                        await ctx.send('Quote deleted', delete_after=60)
+                        await message.delete()
+
+                        p.itemList = [
+                            f'[{i}] {quote[2]}'
+                            for i, quote in enumerate(quote_list, 1)
+                        ]
+
+            await p.paginate()
 
     @commands.command(aliases=['gen'])
     async def generate(self, ctx, seed: str = None, min_length: int = 1):
@@ -465,6 +537,77 @@ class Quotes(commands.Cog):
                 retries += 1
 
             await ctx.send(' '.join(longest_sentence))
+
+    @commands.command()
+    @is_moderator()
+    async def purgequotes(self, ctx, user: str):
+        """
+        Mod-only: Purge all quote from user
+        Argument: A user (ID can be used even if the account is deleted)
+        """
+        try:
+            id = await UserToIdConverter().convert(ctx, user)
+        except commands.BadArgument as err:
+            await ctx.send(err)
+            return
+
+        def msg_check(msg):
+            return all(
+                (msg.author == ctx.message.author, msg.channel == ctx.channel))
+
+        conn = sqlite3.connect(self.bot.config.db_path)
+        c = conn.cursor()
+        c.execute('SELECT * FROM Quotes WHERE ID = ?', (id, ))
+        quote_list = c.fetchall()
+
+        if not quote_list:
+            await ctx.send('No quote found.')
+            return
+
+        quote_list_text = [
+            f'[{i}] {quote[2]}' for i, quote in enumerate(quote_list, 1)
+        ]
+
+        p = Pages(ctx,
+                  item_list=quote_list_text,
+                  title="List of quotes to be deleted",
+                  editable_content_emoji="🆗",
+                  return_user_on_edit=True)
+
+        confirm_message = await ctx.send(
+            f"Do you want to delete the following {len(quote_list)} quotes?\n"
+            f"Please press 🆗 to confirm (You will be asked to confirm one more time)"
+        )
+        user_deleting = await p.paginate()
+
+        while p.edit_mode:
+            if user_deleting == ctx.message.author:
+                if user_deleting == ctx.message.author:
+                    await ctx.send(
+                        "Please type `yes` to confirm the deletion. (Type anything otherwise)"
+                    )
+                    try:
+                        confirmation_msg = await self.bot.wait_for(
+                            'message', check=msg_check, timeout=60)
+                    except asyncio.TimeoutError:
+                        await ctx.send("Command timed out.")
+                        return
+
+                    confirmation_str = confirmation_msg.content
+                    if confirmation_str.lower() != "yes":
+                        await ctx.send("Exiting without deleting.")
+                        return
+
+                    c.execute('DELETE FROM Quotes WHERE ID = ?', (id, ))
+                    conn.commit()
+                    self.rebuild_mc()
+                    await ctx.send(
+                        f"Successfully deleted {len(quote_list)} quotes")
+                    break
+            await p.paginate()
+
+        await confirm_message.delete()
+        conn.close()
 
 
 def setup(bot):
