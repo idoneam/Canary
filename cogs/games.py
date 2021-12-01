@@ -23,15 +23,225 @@ from discord.ext import commands
 
 # Other utilities
 import re
+import os
+import sqlite3
+from time import time
+import pickle
+import random
+import asyncio
+from typing import Optional
+from functools import partial
 from .utils.dice_roll import dice_roll
 from .utils.clamp_default import clamp_default
+from .utils.hangman import HangmanState
+from .currency import HANGMAN_REWARD
 
 ROLL_PATTERN = re.compile(r'^(\d*)d(\d*)([+-]?\d*)$')
+CATEGORY_SYNONYMS = {
+    "movies": "movie",
+    "kino": "movie",
+    "elements": "element",
+    "countries": "country",
+    "animals": "animal",
+}
 
 
 class Games(commands.Cog):
-    def __init__(self, bot):
+    def __init__(self, bot, hangman_tbl_name: str):
         self.bot = bot
+        self.hm_cool_win: int = bot.config.games["hm_cool_win"]
+        self.hm_norm_win: int = bot.config.games["hm_norm_win"]
+        self.hm_timeout: int = bot.config.games["hm_timeout"]
+        self.hm_locks: dict[discord.TextChannel, asyncio.Lock] = dict()
+        with open(f"{os.getcwd()}/data/premade/{hangman_tbl_name}.obj",
+                  "rb") as hangman_pkl:
+            self.hangman_dict: dict[str, tuple[list[tuple[str, Optional[str]]],
+                                               str]] = pickle.load(hangman_pkl)
+
+    def help_str(self):
+        cat_list: str = ", ".join(
+            f"`{hm_cat}` (length: {len(self.hangman_dict[hm_cat][0])})"
+            for hm_cat in sorted(self.hangman_dict.keys()))
+        return ("rules: 5 wrong guesses are allowed, guesses "
+                "must be either the entire correct word or a "
+                "single letter (interpreted in a case insensitive manner)\n"
+                f"here is a list of valid category arguments: {cat_list}.\n"
+                "quit an ongoing game by typing `?{hm|hangman} quit`.\n"
+                "resend this message by typing `?{hm|hangman} help`.")
+
+    def hm_msg_check(self, hm_channel: discord.TextChannel, lowered: str,
+                     msg: discord.Message):
+        return msg.channel == hm_channel and (
+            (len(msg.content) == 1 and msg.content.isalpha())
+            or msg.content.lower() == lowered)
+
+    @commands.command(aliases=["hm"])
+    async def hangman(self, ctx, command: Optional[str] = None):
+        """
+        play a nice game of hangman with internet strangers!
+        guesses must be single letters (interpreted in a case insensitive manner) or the entire correct word.
+        can either be called with "?{hm|hangman}" or "?{hm|hangman} x", where x is a valid category argument.
+        see all categories by typing "?{hm|hangman} help".
+        quit an ongoing game by typing "?{hm|hangman} quit".
+
+        rules:
+            - 5 wrong guesses allowed
+            - for a guess to be registered, it must either be the full correct word or a single letter
+            - guesses are interpreted in a case insensitive manner
+        """
+
+        await ctx.trigger_typing()
+
+        if command == "help":
+            await ctx.send(self.help_str())
+            return
+
+        if command == "quit":
+            if ctx.message.channel in self.hm_locks:
+                self.hm_locks[ctx.message.channel].release()
+            else:
+                await ctx.send(
+                    "no game is currently being played in this channel")
+            return
+
+        category: str = CATEGORY_SYNONYMS.get(
+            command, command) or random.choice(list(self.hangman_dict.keys()))
+        try:
+            word_list, pretty_name = self.hangman_dict[category]
+        except KeyError:
+            await ctx.send(f"command `{command}` is not valid\n" +
+                           "\n".join(self.help_str().split("\n")[1:]))
+            return
+
+        if ctx.message.channel in self.hm_locks:
+            await ctx.send("command `hm|hangman` cannot "
+                           "be used to start a new game "
+                           "while one is already going on")
+            return
+
+        channel_lock = asyncio.Lock()
+        self.hm_locks[ctx.message.channel] = channel_lock
+        await channel_lock.acquire()
+
+        game_state = HangmanState(
+            "[REDACTED]" if command is None else pretty_name, word_list)
+        timeout_dict: dict[discord.Member, float] = {}
+        winner: Optional[discord.Member] = None
+        cool_win: bool = False
+
+        msg_check = partial(self.hm_msg_check, ctx.message.channel,
+                            game_state.lword)
+
+        await ctx.send(embed=game_state.embed)
+
+        while True:
+
+            msg_task = asyncio.create_task(
+                self.bot.wait_for("message",
+                                  check=msg_check,
+                                  timeout=self.hm_timeout))
+            quit_task = asyncio.create_task(channel_lock.acquire())
+            done, _ = await asyncio.wait([msg_task, quit_task],
+                                         return_when=asyncio.FIRST_COMPLETED)
+
+            if quit_task in done:
+                del self.hm_locks[ctx.message.channel]
+                msg_task.cancel()
+                await ctx.send("current hangman game ended.")
+                return
+
+            quit_task.cancel()
+
+            try:
+                curr_msg = await msg_task
+            except asyncio.exceptions.TimeoutError:
+                del self.hm_locks[ctx.message.channel]
+                game_state.add_msg("the game has timed out")
+                await ctx.send(embed=game_state.embed)
+                await ctx.send(
+                    f"sorry everyone, no one has interacted with the "
+                    f"hangman in {round(self.hm_timeout/60, 2)} minutes, "
+                    f"the game has timed out")
+                return
+
+            curr_guess = curr_msg.content.lower()
+
+            if curr_msg.author in timeout_dict and (
+                    time() - timeout_dict[curr_msg.author]) < 1.5:
+                game_state.add_msg(
+                    f"{curr_msg.author} you cannot guess right now!")
+                await ctx.send(embed=game_state.embed)
+                continue
+
+            if curr_guess == game_state.lword:
+                winner = curr_msg.author
+                cool_win = game_state.full()
+                if command is None:
+                    game_state.field_name = f"hangman (category: {pretty_name})"
+                game_state.add_msg(f"{winner} guessed the entire word!")
+                if game_state.img:
+                    game_state.embed.set_image(url=game_state.img)
+                await ctx.send(embed=game_state.embed)
+                await ctx.send(
+                    f"congratulations `{winner}`, you solved the hangman" +
+                    (f" (in a cool way), earning you {self.hm_cool_win} cheeps"
+                     if cool_win else
+                     f", earning you {self.hm_norm_win} cheeps"))
+                break
+
+            if curr_guess in game_state.previous_guesses:
+                timeout_dict[curr_msg.author] = time()
+                game_state.add_msg(
+                    f"{curr_msg.author}, '{curr_guess}' was already guessed")
+                await ctx.send(embed=game_state.embed)
+            elif curr_guess in game_state.not_guessed:
+                continue_game = game_state.correct(curr_guess)
+                game_state.add_msg(
+                    f"{curr_msg.author} guessed '{curr_guess}' correctly!")
+                await ctx.send(embed=game_state.embed)
+                if not continue_game:
+                    winner = curr_msg.author
+                    if command is None:
+                        game_state.field_name = f"hangman (category: {pretty_name})"
+                    game_state.add_msg(
+                        f"{winner} finished solving the hangman!")
+                    if game_state.img:
+                        game_state.embed.set_image(url=game_state.img)
+                    await ctx.send(embed=game_state.embed)
+                    await ctx.send(
+                        f"congratulations `{winner}`, you solved the hangman, "
+                        f"earning you {self.hm_norm_win} cheeps")
+                    break
+            else:
+                timeout_dict[curr_msg.author] = time()
+                continue_game = game_state.mistake(curr_guess)
+                game_state.add_msg(
+                    f"{curr_msg.author} guessed '{curr_guess}' wrong!")
+                await ctx.send(embed=game_state.embed)
+                if not continue_game:
+                    if command is None:
+                        game_state.field_name = f"hangman (category: {pretty_name})"
+                    game_state.add_msg(
+                        f"{curr_msg.author} used your last chance!")
+                    if game_state.img:
+                        game_state.embed.set_image(url=game_state.img)
+                    await ctx.send(embed=game_state.embed)
+                    await ctx.send(
+                        f"sorry everyone, `{curr_msg.author}` used your "
+                        f"last chance, the right answer was `{game_state.word}`"
+                    )
+                    break
+
+        del self.hm_locks[ctx.message.channel]
+
+        if winner is not None:
+            conn = sqlite3.connect(self.bot.config.db_path)
+            await self.bot.get_cog("Currency").create_bank_transaction(
+                conn.cursor(), winner,
+                self.hm_cool_win if cool_win else self.hm_norm_win,
+                HANGMAN_REWARD, {"cool": cool_win})
+            conn.commit()
+            conn.close()
 
     @commands.command()
     async def roll(self, ctx, arg: str = '', mpr: str = ''):
@@ -42,7 +252,7 @@ class Games(commands.Cog):
                                 to each roll rather than the sum of all rolls.
                                 All parameters are optional.
                                 Defaults to rolling one 20-sided die.
-                                
+
                                 Dice can have 1 to 100 sides
                                 Rolls 1 to 10000 dice at once
                                 Modifier can be any int between -100 and +100
@@ -96,4 +306,4 @@ class Games(commands.Cog):
 
 
 def setup(bot):
-    bot.add_cog(Games(bot))
+    bot.add_cog(Games(bot, "hangman_dict"))

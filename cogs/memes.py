@@ -21,9 +21,7 @@ import discord
 
 # Other utilities
 import random
-import requests
-import re
-from bs4 import BeautifulSoup
+import aiohttp
 from .utils.auto_incorrect import auto_incorrect
 
 
@@ -151,47 +149,52 @@ class Memes(commands.Cog):
 
         await ctx.trigger_typing()
 
-        num = None
-        if command is None:
-            req = requests.get("https://c.xkcd.com/comic/random")
-        elif command == "latest":
-            req = requests.get("https://xkcd.com/")
-        else:
-            try:
-                num = int(command)
-            except ValueError:
-                await ctx.send(
-                    f"invalid input: `{command}` does not parse to an integer")
-                return
-            req = requests.get(f"https://xkcd.com/{num}")
-            if num < 1:
-                await ctx.send(f"the number `{num}` is less than one, "
-                               f"such an xkcd issue cannot exist")
-                return
+        async with aiohttp.ClientSession() as session:
+            if command is None:
+                async with session.get("https://c.xkcd.com/comic/random") as r:
+                    if r.status != 200:
+                        await ctx.send(
+                            f"failure: random xkcd request returned `{r.status}`"
+                        )
+                        return
+                    url = str(r.url)
+            elif command == "latest":
+                url = "https://xkcd.com/"
+            else:
+                try:
+                    num = int(command)
+                except ValueError:
+                    await ctx.send(
+                        f"invalid input: `{command}` does not parse to an integer"
+                    )
+                    return
+                if num < 1:
+                    await ctx.send(
+                        f"invalid input: `{command}` does not parse to a positive integer"
+                    )
+                    return
+                url = f"https://xkcd.com/{num}/"
 
-        if req.status_code == 404:
-            num = None
-            req = requests.get("https://xkcd.com/")
+            async with session.get(f"{url}info.0.json") as r:
+                if r.status == 200:
+                    data = await r.json()
+                elif r.status == 404:
+                    async with session.get(
+                            "https://xkcd.com/info.0.json") as r:
+                        if r.status != 200:
+                            await ctx.send(
+                                f"failure: xkcd request returned `{r.status}`")
+                            return
+                        data = await r.json()
+                else:
+                    await ctx.send(
+                        f"failure: xkcd request returned `{r.status}`")
+                    return
 
-        if req.status_code != 200:
-            await ctx.send(f"xkcd number `{command}` could not be found "
-                           f"(request returned `{req.status_code}`)")
-            return
-
-        soup = BeautifulSoup(req.content, "html.parser")
-        if num is None:
-            title_num = re.findall(
-                r'^https://xkcd.com/([1-9][0-9]*)/$',
-                soup.find('meta', property='og:url')['content'])[0]
-        else:
-            title_num = str(num)
-
-        img_soup = soup.find("div", attrs={"id": "comic"}).find("img")
-        embd = discord.Embed(
-            title=f"{img_soup['alt']} (#{title_num})",
-            url=req.url).set_image(url=f"https:{img_soup['src']}").set_footer(
-                text=str(img_soup['title']))
-        await ctx.send(embed=embd)
+        await ctx.send(embed=discord.Embed(
+            title=
+            f"{data['title']} (#{data['num']}, {data['year']}-{data['month']:0>2}-{data['day']:0>2})",
+            url=url).set_image(url=data["img"]).set_footer(text=data["alt"]))
 
 
 def setup(bot):

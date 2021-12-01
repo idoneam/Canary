@@ -77,7 +77,7 @@ class CustomReactions(commands.Cog):
         c.execute('SELECT * FROM CustomReactions WHERE Proposal = 0')
         self.reaction_list = c.fetchall()
         prompts = [row[1].lower() for row in self.reaction_list]
-        responses = [row[2].lower() for row in self.reaction_list]
+        responses = [row[2] for row in self.reaction_list]
         anywhere_values = [row[5] for row in self.reaction_list]
         additional_info_list = [(row[4], row[6]) for row in self.reaction_list]
         self.p_strings = PStringEncodings(
@@ -99,7 +99,7 @@ class CustomReactions(commands.Cog):
         if message.author == self.bot.user:
             return
 
-        response = self.p_strings.parser(message.content,
+        response = self.p_strings.parser(message.content.lower(),
                                          user=message.author.mention,
                                          channel=str(message.channel))
         if response:
