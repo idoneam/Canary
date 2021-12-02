@@ -54,23 +54,39 @@ You must set certain values in the `config.ini` file, in particular your Discor
 * `[Discord]`
   * `Key`: Your Discord bot token.
 * `[Server]`
-  * `ServerID`: Your server ID.
-  * `CommandPrefix`: What a message should begin with to be considered a command.
-  * `BotName`: The name of your bot.
-  * `UpvoteEmoji`: The name of your upvote emoji (for the score function).
-  * `DownvoteEmoji`: The name of your downvote emoji.
-  * `ModeratorRole`: The name of the role that your moderators have (for functions like DMing users).
-  * `DeveloperRole`: The name of the role that your developers have (for functions like restarting the bot). This could be the same role than moderator.
-  * `ReceptionChannelID`: The ID of a channel that will receive messages sent to the bot through the `answer` command (and where messages sent by mods to users with the `dm` command will be logged)
+    * `ServerID`: Your server ID.
+    * `CommandPrefix`: What a message should begin with to be considered a command.
+    * `BotName`: The name of your bot.
+* `[Emoji]`
+    * `UpvoteEmoji`: The name of your upvote emoji (for the score function).
+    * `DownvoteEmoji`: The name of your downvote emoji.
+    * `BannerVoteEmoji`: The name of the emoji that is used to vote on Banner of the Week Contests.
+* `[Roles]`
+    * `ModeratorRole`: The name of the role that your moderators have (for functions like DMing users).
+    * `DeveloperRole`: The name of the role that your developers have (for functions like restarting the bot). This could be the same role than moderator.
+    * `McgillianRole`: The name of the role that verified McGillians have.
+    * `HonoraryMcGillianRole`: The name of the role that Honorary McGillians (verified Non-McGillians) have.
+    * `BannerRemindersRole`: The name of the role that is pinged when a Banner of the Week Contest starts.
+    * `BannerWinnerRole`: The name of the role that is given to users that win a Banner of the Week Contest.
+    * `TrashTierBannerRole`: The name of the role that is given to users that are banned from submitting in Banner of the Week Contests.
+    * `NoFoodSpottingRole`: The name of the role assigned to abusers of the foodspotting command that will prevent them from using it.
+* `[Channels]`
+    * `ReceptionChannel`: The name of the channel that will receive messages sent to the bot through the `answer` command (and where messages sent by mods to users with the `dm` command will be logged)
+    * `BannerOfTheWeekChannel`: The name of the channel where winning submissions for Banner of the Week Contests are sent.
+    * `BannerSubmissionsChannel`: The name of the channel where submissions for Banner of the Week Contests are sent. This is where users vote.
+    * `BannerConvertedChannel`: The name of the channel where the converted submissions for Banner of the Week Contests are sent. This is where the bot will fetch the winning banner.
+    * `FoodSpottingChannel`: The name of the channel where foodspotting posts are sent.
+    * `MetroStatusChannel`: The name of the channel where metro status alerts are sent.
+    * `BotsChannel`: The name of the channel for bot spamming.
 * `[Meta]`
   * `Repository`: The HTTPS remote for this repository, used by the `update` command as the remote when pulling.
 * `[Logging]`
-  * `LogLevel`: [See this for a list of levels](https://docs.python.org/3/library/logging.html#levels). Logs from exceptions and commands like `mix` and `bac` are at the `info` level. Logging messages from the level selected *and* from more severe levels will be sent to your logging file. For example, setting the level to `info` also sends logs from `warning`, `error` and `critical`, but not  from `debug`.
-  * `LogFile`: The file where the logging output will be sent (will be created there by the bot if it doesn't exist). Note that all logs are sent there, including those destined for devs and those destined for mods.
-  * `DevLogWebhookID`: Optional. If the ID of a webhook is input (and it's token below), logs destined for devs will also be sent to it. These values are contained in the discord webhook url: [discordapp.com/api/webhooks/WEBHOOK_ID/WEBHOOK_TOKEN](discordapp.com/api/webhooks/WEBHOOK_ID/WEBHOOK_TOKEN)
-  * `DevLogWebhookToken`: Optional. See above.
-  * `ModLogWebhookID`: Optional. If the ID of a webhook is input (and it's token below), logs destined for mods will also be sent to it. See the URL above to see how to find those values.
-  * `ModLogWebhookToken`: Optional. See above.
+    * `LogLevel`: [See this for a list of levels](https://docs.python.org/3/library/logging.html#levels). Logs from exceptions and commands like `mix` and `bac` are at the `info` level. Logging messages from the level selected *and* from more severe levels will be sent to your logging file. For example, setting the level to `info` also sends logs from `warning`, `error` and `critical`, but not  from `debug`.
+    * `LogFile`: The file where the logging output will be sent (will be created there by the bot if it doesn't exist). Note that all logs are sent there, including those destined for devs and those destined for mods.
+    * `DevLogWebhookID`: Optional. If the ID of a webhook is input (and it's token below), logs destined for devs will also be sent to it. These values are contained in the discord webhook url: [discordapp.com/api/webhooks/WEBHOOK_ID/WEBHOOK_TOKEN](discordapp.com/api/webhooks/WEBHOOK_ID/WEBHOOK_TOKEN)
+    * `DevLogWebhookToken`: Optional. See above.
+    * `ModLogWebhookID`: Optional. If the ID of a webhook is input (and it's token below), logs destined for mods will also be sent to it. See the URL above to see how to find those values.
+    * `ModLogWebhookToken`: Optional. See above.
 * `[DB]`
   * `Schema`: Location of the Schema file that creates tables in the database (This file already exists so you shouldn't have to change this unless you rename it or change its location).
   * `Path`: Your database file path (will be created there by the bot if it doesn't exist).
@@ -103,13 +119,21 @@ You must set certain values in the `config.ini` file, in particular your Discor
   * `RollReturns`: The multiplier return for each interval. For example, a value of `0, 2, 4, 10` with the intervals
       described above gives a 0x return for `random <= 66`, a 2x return for `66 < random <= 90`, a 4x return for
       `90 < random <= 99`, and a 10x return for `random == 100`.
-* `[Roles]`:
-  * `Pronouns`: Comma seperated list of pronoun roles in server.
-  * `Fields`: Comma seperated list of field of study roles in server.
-  * `Faculties`: Comma seperated list of faculty roles in server.
-  * `Years`: Comma seperated list of year roles in server.
-  * `Generics`: Comma seperated list of generic or meme roles in server.
-
+* `[Images]`
+    * `MaxImageSize`: Maximum image size to allow to be sent without compression, in bytes.
+    * `ImageHistoryLimit`: Maximum amount of messages to check in history for an image before giving up.
+    * `MaxRadius`: Maximum radius used for various image transformation functions.
+    * `MaxIterations`: Maximum iterations allowed for various image transformation functions.
+* `[Games]`:
+    * `HangmanNormalWin`: Value of normal hangman win.
+    * `HangmanCoolWin`: Value of cool hangman win.
+    * `HangmanTimeOut`: Time before a hangman game will time out if not interacted with.
+* `[AssignableRoles]`:
+    * `Pronouns`: Comma separated list of pronoun roles in server.
+    * `Fields`: Comma separated list of field of study roles in server.
+    * `Faculties`: Comma separated list of faculty roles in server.
+    * `Years`: Comma separated list of year roles in server.
+    * `Generics`: Comma separated list of generic or meme roles in server.
 </p>
 </details>
 

@@ -27,6 +27,7 @@ from typing import Dict, List, Optional, Tuple
 # For DB functionality
 import sqlite3
 import datetime
+from .utils.members import add_member_if_needed
 
 # For tables
 from tabulate import tabulate
@@ -54,9 +55,11 @@ ACTION_BET_FLIP = "bet_flip"
 ACTION_BET_ROLL = "bet_roll"
 ACTION_GIFTER = "gifter"
 ACTION_GIFTEE = "giftee"
+HANGMAN_REWARD = "hangman_reward"
 
 TRANSACTION_ACTIONS = (ACTION_INITIAL_CLAIM, ACTION_CLAIM, ACTION_BET_FLIP,
-                       ACTION_BET_ROLL, ACTION_GIFTER, ACTION_GIFTEE)
+                       ACTION_BET_ROLL, ACTION_GIFTER, ACTION_GIFTEE,
+                       HANGMAN_REWARD)
 
 
 class Currency(commands.Cog):
@@ -68,7 +71,7 @@ class Currency(commands.Cog):
     async def fetch_all_balances(self) -> List[Tuple[str, str, Decimal]]:
         conn = sqlite3.connect(self.bot.config.db_path)
         c = conn.cursor()
-        c.execute("SELECT BT.UserID, M.DisplayName, IFNULL(SUM(BT.Amount), 0) "
+        c.execute("SELECT BT.UserID, M.Name, IFNULL(SUM(BT.Amount), 0) "
                   "FROM BankTransactions AS BT, Members as M "
                   "WHERE BT.UserID = M.ID GROUP BY UserID")
 
@@ -106,6 +109,9 @@ class Currency(commands.Cog):
             return
 
         now = int(datetime.datetime.now().timestamp())
+
+        c.execute("PRAGMA foreign_keys = ON")
+        await add_member_if_needed(self, c, user.id)
         t = (user.id, self.currency_to_db(amount), action,
              json.dumps(metadata), now)
         c.execute(
