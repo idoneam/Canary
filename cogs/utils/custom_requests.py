@@ -25,6 +25,7 @@ class InvalidTypeException(Exception):
     """
     Thrown when an invalid type is passed.
     """
+
     pass
 
 

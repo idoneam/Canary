@@ -57,9 +57,15 @@ ACTION_GIFTER = "gifter"
 ACTION_GIFTEE = "giftee"
 HANGMAN_REWARD = "hangman_reward"
 
-TRANSACTION_ACTIONS = (ACTION_INITIAL_CLAIM, ACTION_CLAIM, ACTION_BET_FLIP,
-                       ACTION_BET_ROLL, ACTION_GIFTER, ACTION_GIFTEE,
-                       HANGMAN_REWARD)
+TRANSACTION_ACTIONS = (
+    ACTION_INITIAL_CLAIM,
+    ACTION_CLAIM,
+    ACTION_BET_FLIP,
+    ACTION_BET_ROLL,
+    ACTION_GIFTER,
+    ACTION_GIFTEE,
+    HANGMAN_REWARD,
+)
 
 
 class Currency(commands.Cog):
@@ -71,12 +77,13 @@ class Currency(commands.Cog):
     async def fetch_all_balances(self) -> List[Tuple[str, str, Decimal]]:
         conn = sqlite3.connect(self.bot.config.db_path)
         c = conn.cursor()
-        c.execute("SELECT BT.UserID, M.Name, IFNULL(SUM(BT.Amount), 0) "
-                  "FROM BankTransactions AS BT, Members as M "
-                  "WHERE BT.UserID = M.ID GROUP BY UserID")
+        c.execute(
+            "SELECT BT.UserID, M.Name, IFNULL(SUM(BT.Amount), 0) "
+            "FROM BankTransactions AS BT, Members as M "
+            "WHERE BT.UserID = M.ID GROUP BY UserID"
+        )
 
-        results = [(user_id, name, self.db_to_currency(balance))
-                   for user_id, name, balance in c.fetchall()]
+        results = [(user_id, name, self.db_to_currency(balance)) for user_id, name, balance in c.fetchall()]
 
         conn.close()
 
@@ -85,9 +92,7 @@ class Currency(commands.Cog):
     async def fetch_bank_balance(self, user: discord.Member) -> Decimal:
         conn = sqlite3.connect(self.bot.config.db_path)
         c = conn.cursor()
-        c.execute(
-            "SELECT IFNULL(SUM(Amount), 0) FROM BankTransactions WHERE "
-            "UserID = ?", (user.id, ))
+        c.execute("SELECT IFNULL(SUM(Amount), 0) FROM BankTransactions WHERE " "UserID = ?", (user.id,))
 
         balance = self.db_to_currency(c.fetchone()[0])
         if balance is None:
@@ -97,26 +102,20 @@ class Currency(commands.Cog):
 
         return balance
 
-    async def create_bank_transaction(self, c, user: discord.Member,
-                                      amount: Decimal, action: str,
-                                      metadata: Dict):
+    async def create_bank_transaction(self, c, user: discord.Member, amount: Decimal, action: str, metadata: Dict):
         # Don't create another connection in this function in order to properly
         # transaction-ify a series of bank "transactions".
 
         if action not in TRANSACTION_ACTIONS:
-            self.bot.logger.info(
-                "Error: Invalid bank transaction '{}'".format(action))
+            self.bot.logger.info("Error: Invalid bank transaction '{}'".format(action))
             return
 
         now = int(datetime.datetime.now().timestamp())
 
         c.execute("PRAGMA foreign_keys = ON")
         await add_member_if_needed(self, c, user.id)
-        t = (user.id, self.currency_to_db(amount), action,
-             json.dumps(metadata), now)
-        c.execute(
-            "INSERT INTO BankTransactions(UserID, Amount, Action, "
-            "Metadata, Date) VALUES(?, ?, ?, ?, ?)", t)
+        t = (user.id, self.currency_to_db(amount), action, json.dumps(metadata), now)
+        c.execute("INSERT INTO BankTransactions(UserID, Amount, Action, " "Metadata, Date) VALUES(?, ?, ?, ?, ?)", t)
 
     def parse_currency(self, amount: str, balance: Decimal):
         if amount.lower().strip() in CURRENCY_ALL:
@@ -129,10 +128,10 @@ class Currency(commands.Cog):
                 return None
 
     def currency_to_db(self, amount: Decimal):
-        return int(amount * Decimal(10**self.currency["precision"]))
+        return int(amount * Decimal(10 ** self.currency["precision"]))
 
     def db_to_currency(self, amount: int):
-        return Decimal(amount) / Decimal(10**self.currency["precision"])
+        return Decimal(amount) / Decimal(10 ** self.currency["precision"])
 
     def format_currency(self, amount: Decimal):
         return ("{:." + str(self.prec) + "f}").format(amount)
@@ -177,30 +176,31 @@ class Currency(commands.Cog):
         c = conn.cursor()
 
         c.execute(
-            "SELECT IFNULL(MAX(Date), 0) FROM BankTransactions "
-            "WHERE UserID = ? AND Action = ?",
-            (ctx.message.author.id, ACTION_INITIAL_CLAIM))
+            "SELECT IFNULL(MAX(Date), 0) FROM BankTransactions " "WHERE UserID = ? AND Action = ?",
+            (ctx.message.author.id, ACTION_INITIAL_CLAIM),
+        )
 
         claim_time = c.fetchone()[0]
 
         author_name = ctx.message.author.display_name
 
         if claim_time > 0:
-            await ctx.send("{} has already claimed their initial "
-                           "currency.".format(author_name))
+            await ctx.send("{} has already claimed their initial " "currency.".format(author_name))
             return
 
         metadata = {"channel": ctx.message.channel.id}
 
-        await self.create_bank_transaction(c, ctx.message.author,
-                                           self.currency["initial_amount"],
-                                           ACTION_INITIAL_CLAIM, metadata)
+        await self.create_bank_transaction(
+            c, ctx.message.author, self.currency["initial_amount"], ACTION_INITIAL_CLAIM, metadata
+        )
 
         conn.commit()
 
-        await ctx.send("{} claimed their initial {}!".format(
-            author_name,
-            self.format_symbol_currency(self.currency["initial_amount"])))
+        await ctx.send(
+            "{} claimed their initial {}!".format(
+                author_name, self.format_symbol_currency(self.currency["initial_amount"])
+            )
+        )
 
         conn.close()
 
@@ -217,32 +217,29 @@ class Currency(commands.Cog):
         c = conn.cursor()
 
         c.execute(
-            "SELECT IFNULL(MAX(Date), 0) FROM BankTransactions "
-            "WHERE UserID = ? AND Action = ?",
-            (ctx.message.author.id, ACTION_CLAIM))
+            "SELECT IFNULL(MAX(Date), 0) FROM BankTransactions " "WHERE UserID = ? AND Action = ?",
+            (ctx.message.author.id, ACTION_CLAIM),
+        )
 
         last_claimed = datetime.datetime.fromtimestamp(c.fetchone()[0])
         threshold = datetime.datetime.now() - CLAIM_WAIT_TIME
 
         if last_claimed < threshold:
-            author_name = (ctx.message.author.display_name
-                           if ctx.message.author else ":b:roken bot")
+            author_name = ctx.message.author.display_name if ctx.message.author else ":b:roken bot"
 
             metadata = {"channel": ctx.message.channel.id}
 
-            await self.create_bank_transaction(c, ctx.message.author,
-                                               CLAIM_AMOUNT, ACTION_CLAIM,
-                                               metadata)
+            await self.create_bank_transaction(c, ctx.message.author, CLAIM_AMOUNT, ACTION_CLAIM, metadata)
 
             conn.commit()
 
-            await ctx.send("{} claimed {}!".format(
-                author_name, self.format_symbol_currency(CLAIM_AMOUNT)))
+            await ctx.send("{} claimed {}!".format(author_name, self.format_symbol_currency(CLAIM_AMOUNT)))
 
         else:
             time_left = last_claimed - threshold
-            await ctx.send("Please wait {}h {}m to claim again!".format(
-                time_left.seconds // 3600, time_left.seconds // 60 % 60))
+            await ctx.send(
+                "Please wait {}h {}m to claim again!".format(time_left.seconds // 3600, time_left.seconds // 60 % 60)
+            )
 
         conn.close()
 
@@ -258,11 +255,9 @@ class Currency(commands.Cog):
         # TODO: TEST ACCOUNTS NOT IN THE SERVER?
 
         author = user if user else ctx.message.author
-        amount = self.format_symbol_currency(await
-                                             self.fetch_bank_balance(author))
+        amount = self.format_symbol_currency(await self.fetch_bank_balance(author))
 
-        await ctx.send("{} has {} in their account.".format(
-            author.display_name, amount))
+        await ctx.send("{} has {} in their account.".format(author.display_name, amount))
 
     @commands.command(aliases=["bf"])
     async def bet_flip(self, ctx, bet: str = None, face: str = None):
@@ -303,8 +298,7 @@ class Currency(commands.Cog):
         metadata = {"result": result, "channel": ctx.message.channel.id}
 
         amount = bet_dec if choice == result else -bet_dec
-        await self.create_bank_transaction(c, ctx.message.author, amount,
-                                           ACTION_BET_FLIP, metadata)
+        await self.create_bank_transaction(c, ctx.message.author, amount, ACTION_BET_FLIP, metadata)
         conn.commit()
 
         message = "Sorry! {} lost {} (result was **{}**)."
@@ -313,9 +307,7 @@ class Currency(commands.Cog):
 
         author_name = ctx.message.author.display_name
 
-        await ctx.send(
-            message.format(author_name, self.format_symbol_currency(bet_dec),
-                           result))
+        await ctx.send(message.format(author_name, self.format_symbol_currency(bet_dec), result))
 
         conn.close()
 
@@ -358,12 +350,10 @@ class Currency(commands.Cog):
             "result": result,
             "bet": str(bet_dec),
             "returned": self.format_currency(amount_returned),
-            "channel": ctx.message.channel.id
+            "channel": ctx.message.channel.id,
         }
 
-        await self.create_bank_transaction(c, ctx.message.author,
-                                           amount_returned - bet_dec,
-                                           ACTION_BET_ROLL, metadata)
+        await self.create_bank_transaction(c, ctx.message.author, amount_returned - bet_dec, ACTION_BET_ROLL, metadata)
 
         conn.commit()
 
@@ -371,14 +361,12 @@ class Currency(commands.Cog):
         if amount_returned == bet_dec:
             message = "{un} broke even (result was **{re}**)."
         elif amount_returned > bet_dec:
-            message = "Congratulations! {un} won [net] {am} (result was " \
-                      "**{re}**)."
+            message = "Congratulations! {un} won [net] {am} (result was " "**{re}**)."
 
         author_name = ctx.message.author.display_name
 
         amount_msg_multiplier = -1 if amount_returned < bet_dec else 1
-        bet_str = self.format_symbol_currency(amount_msg_multiplier *
-                                              (amount_returned - bet_dec))
+        bet_str = self.format_symbol_currency(amount_msg_multiplier * (amount_returned - bet_dec))
 
         await ctx.send(message.format(un=author_name, am=bet_str, re=result))
 
@@ -412,8 +400,7 @@ class Currency(commands.Cog):
             return
 
         if amount_dec <= 0:
-            await ctx.send("You cannot give {}!".format(
-                self.format_symbol_currency(amount_dec)))
+            await ctx.send("You cannot give {}!".format(self.format_symbol_currency(amount_dec)))
             return
 
         if amount_dec > balance:
@@ -429,29 +416,20 @@ class Currency(commands.Cog):
         grn = ctx.message.author.display_name
         gen = user.display_name
 
-        gifter_metadata = {
-            "giftee": user.id,
-            "channel": ctx.message.channel.id
-        }
+        gifter_metadata = {"giftee": user.id, "channel": ctx.message.channel.id}
 
-        giftee_metadata = {
-            "gifter": ctx.message.author.id,
-            "channel": ctx.message.channel.id
-        }
+        giftee_metadata = {"gifter": ctx.message.author.id, "channel": ctx.message.channel.id}
 
         conn = sqlite3.connect(self.bot.config.db_path)
         c = conn.cursor()
 
-        await self.create_bank_transaction(c, ctx.message.author, -amount_dec,
-                                           ACTION_GIFTER, gifter_metadata)
+        await self.create_bank_transaction(c, ctx.message.author, -amount_dec, ACTION_GIFTER, gifter_metadata)
 
-        await self.create_bank_transaction(c, user, amount_dec, ACTION_GIFTEE,
-                                           giftee_metadata)
+        await self.create_bank_transaction(c, user, amount_dec, ACTION_GIFTEE, giftee_metadata)
 
         conn.commit()
 
-        await ctx.send("{} gave {} to {}!".format(
-            grn, self.format_symbol_currency(amount_dec), gen))
+        await ctx.send("{} gave {} to {}!".format(grn, self.format_symbol_currency(amount_dec), gen))
 
         conn.close()
 
@@ -463,14 +441,10 @@ class Currency(commands.Cog):
 
         await ctx.trigger_typing()
 
-        balances = sorted(await self.fetch_all_balances(),
-                          reverse=True,
-                          key=lambda b: b[2])
+        balances = sorted(await self.fetch_all_balances(), reverse=True, key=lambda b: b[2])
 
         if len(balances) == 0:
-            await ctx.send(
-                "Leaderboards are not yet available for this server, please "
-                "collect some currency.")
+            await ctx.send("Leaderboards are not yet available for this server, please " "collect some currency.")
             return
 
         table = []
@@ -480,18 +454,11 @@ class Currency(commands.Cog):
         for (_user_id, name, balance) in balances:
             table.append((counter, name, self.format_symbol_currency(balance)))
             if counter % 7 == 0 or counter == len(balances):
-                table_list.append(
-                    tabulate(table[:counter],
-                             headers=["Rank", "Name", "Balance"],
-                             tablefmt="fancy_grid"))
+                table_list.append(tabulate(table[:counter], headers=["Rank", "Name", "Balance"], tablefmt="fancy_grid"))
                 del table[:]
             counter += 1
 
-        p = Pages(ctx,
-                  item_list=table_list,
-                  title="Currency ranking",
-                  display_option=(0, 1),
-                  editable_content=False)
+        p = Pages(ctx, item_list=table_list, title="Currency ranking", display_option=(0, 1), editable_content=False)
 
         await p.paginate()
 

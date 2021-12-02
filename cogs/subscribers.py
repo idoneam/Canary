@@ -63,8 +63,7 @@ class Subscribers(commands.Cog):
         self.bot = bot
 
         # Compiled recall regular expression for filtering
-        self._recall_filter = re.compile(self.bot.config.recall_filter,
-                                         re.IGNORECASE)
+        self._recall_filter = re.compile(self.bot.config.recall_filter, re.IGNORECASE)
 
         # Default values by line number for status
         self._metro_statuses = {
@@ -79,19 +78,19 @@ class Subscribers(commands.Cog):
 
     @commands.Cog.listener()
     async def on_ready(self):
-        self._recall_channel = utils.get(self.bot.get_guild(
-            self.bot.config.server_id).text_channels,
-                                         name=self.bot.config.recall_channel)
+        self._recall_channel = utils.get(
+            self.bot.get_guild(self.bot.config.server_id).text_channels, name=self.bot.config.recall_channel
+        )
 
         self._metro_status_channel = utils.get(
-            self.bot.get_guild(self.bot.config.server_id).text_channels,
-            name=self.bot.config.metro_status_channel)
+            self.bot.get_guild(self.bot.config.server_id).text_channels, name=self.bot.config.metro_status_channel
+        )
 
         # Register all subscribers
         self.bot.loop.create_task(self.cfia_rss())
         self.bot.loop.create_task(self.metro_status())
 
-    @canary_subscriber(12 * 3600)    # run every 12 hours
+    @canary_subscriber(12 * 3600)  # run every 12 hours
     async def cfia_rss(self):
         # Written by @jidicula
         """
@@ -104,7 +103,7 @@ class Subscribers(commands.Cog):
         try:
             with open(CFIA_RECALL_TAG_PATH, "rb") as id_unpickle:
                 recalls = pickle.load(id_unpickle)
-        except Exception:    # TODO: Specify exception
+        except Exception:  # TODO: Specify exception
             recalls = {}
 
         new_recalls = False
@@ -117,14 +116,13 @@ class Subscribers(commands.Cog):
 
             new_recalls = True
             recalls[recall_id] = ""
-            recall_warning = discord.Embed(title=recall["title"],
-                                           description=recall["link"])
+            recall_warning = discord.Embed(title=recall["title"], description=recall["link"])
             soup = BeautifulSoup(recall["summary"], "html.parser")
 
             try:
                 img_url = soup.img["src"]
                 summary = soup.p.find_parent().text.strip()
-            except Exception:    # TODO: Specify exception
+            except Exception:  # TODO: Specify exception
                 img_url = ""
                 summary = recall["summary"]
 
@@ -149,7 +147,7 @@ class Subscribers(commands.Cog):
         status = response_data["metro"][line_number]["data"]["text"]
         return line_name, status
 
-    @canary_subscriber(60)    # Run every 60 seconds
+    @canary_subscriber(60)  # Run every 60 seconds
     async def metro_status(self):
         # Written by @jidicula
         """
@@ -165,8 +163,7 @@ class Subscribers(commands.Cog):
             return
 
         for line_number, cached_status in self._metro_statuses.items():
-            line_name, current_status = Subscribers._check_metro_status(
-                line_number, response_data)
+            line_name, current_status = Subscribers._check_metro_status(line_number, response_data)
             if current_status in (cached_status, METRO_INTERIM_STATUS):
                 # Don't send message if the status hasn't changed or the status
                 # is currently in the middle of changing on the API side.
@@ -174,9 +171,8 @@ class Subscribers(commands.Cog):
 
             self._metro_statuses[line_number] = current_status
             metro_status_update = discord.Embed(
-                title=line_name,
-                description=current_status,
-                colour=METRO_COLOURS[line_number])
+                title=line_name, description=current_status, colour=METRO_COLOURS[line_number]
+            )
 
             await self._metro_status_channel.send(embed=metro_status_update)
 

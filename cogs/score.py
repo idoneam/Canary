@@ -35,7 +35,7 @@ from .utils.arg_converter import ArgConverter
 # For pagination
 from .utils.paginator import Pages
 
-f = open('data/premade/emoji.json', encoding="utf8")
+f = open("data/premade/emoji.json", encoding="utf8")
 EMOJI = json.load(f)
 
 
@@ -46,8 +46,8 @@ class TotalEmojiConverter(commands.Converter):
         except commands.BadArgument:
             if not any(argument in d.values() for d in EMOJI.values()):
                 raise commands.BadArgument(
-                    "Not in the current list of Discord Unicode Emojis "
-                    "and no Custom Emoji found")
+                    "Not in the current list of Discord Unicode Emojis " "and no Custom Emoji found"
+                )
             return argument
 
 
@@ -64,8 +64,7 @@ class FromConverter(commands.Converter):
             try:
                 return await MemberConverter().convert(ctx, arg)
             except commands.BadArgument:
-                raise commands.BadArgument(
-                    "Member specified for `from` flag could not be found")
+                raise commands.BadArgument("Member specified for `from` flag could not be found")
 
 
 class ToConverter(commands.Converter):
@@ -81,8 +80,7 @@ class ToConverter(commands.Converter):
             try:
                 return await MemberConverter().convert(ctx, arg)
             except commands.BadArgument:
-                raise commands.BadArgument(
-                    "Member specified for `to` flag could not be found")
+                raise commands.BadArgument("Member specified for `to` flag could not be found")
 
 
 class EmojiTypeConverter(commands.Converter):
@@ -90,13 +88,10 @@ class EmojiTypeConverter(commands.Converter):
         if "emojitype" not in argument.lower():
             raise commands.BadArgument("No `emojitype` flag")
         if len(argument) < 11:
-            raise commands.BadArgument("No argument specified for "
-                                       "`emojitype` flag")
+            raise commands.BadArgument("No argument specified for " "`emojitype` flag")
         result = argument[10:].lower()
-        if result not in ("all", "unicode", "custom", "here", "nothere",
-                          "score"):
-            raise commands.BadArgument(
-                "Unknown emoji type specified for `emojitype` flag")
+        if result not in ("all", "unicode", "custom", "here", "nothere", "score"):
+            raise commands.BadArgument("Unknown emoji type specified for `emojitype` flag")
         return result
 
 
@@ -107,8 +102,7 @@ class EmojiNameConverter(commands.Converter):
         if "emojiname" not in argument.lower():
             raise commands.BadArgument("No `emojiname` flag")
         if len(argument) < 11:
-            raise commands.BadArgument("No argument specified for "
-                                       "`emojiname` flag")
+            raise commands.BadArgument("No argument specified for " "`emojiname` flag")
         return f":{argument[10:]}:"
 
 
@@ -123,8 +117,7 @@ class SelfConverter(commands.Converter):
             return True
         if arg == "false" or arg == "0":
             return False
-        raise commands.BadArgument(
-            "`self` flag should take a boolean as input")
+        raise commands.BadArgument("`self` flag should take a boolean as input")
 
 
 class BeforeConverter(commands.Converter):
@@ -132,13 +125,11 @@ class BeforeConverter(commands.Converter):
         if "before" not in argument.lower():
             raise commands.BadArgument("No `before` flag")
         if len(argument) < 8:
-            raise commands.BadArgument(
-                "No argument specified for `before` flag")
+            raise commands.BadArgument("No argument specified for `before` flag")
         try:
             return int(argument[7:])
         except ValueError:
-            raise commands.BadArgument("`before` flag should take an "
-                                       "integer as input")
+            raise commands.BadArgument("`before` flag should take an " "integer as input")
 
 
 class AfterConverter(commands.Converter):
@@ -146,13 +137,11 @@ class AfterConverter(commands.Converter):
         if "after" not in argument.lower():
             raise commands.BadArgument("No `after` flag")
         if len(argument) < 7:
-            raise commands.BadArgument(
-                "No argument specified for `after` flag")
+            raise commands.BadArgument("No argument specified for `after` flag")
         try:
             return int(argument[6:])
         except ValueError:
-            raise commands.BadArgument("`after` flag should take an "
-                                       "integer as input")
+            raise commands.BadArgument("`after` flag should take an " "integer as input")
 
 
 class Score(commands.Cog):
@@ -165,18 +154,11 @@ class Score(commands.Cog):
     @commands.Cog.listener()
     async def on_ready(self):
         self.guild = self.bot.get_guild(self.bot.config.server_id)
-        self.UPMARTLET = discord.utils.get(self.guild.emojis,
-                                           name=self.bot.config.upvote_emoji)
-        self.DOWNMARTLET = discord.utils.get(
-            self.guild.emojis, name=self.bot.config.downvote_emoji)
+        self.UPMARTLET = discord.utils.get(self.guild.emojis, name=self.bot.config.upvote_emoji)
+        self.DOWNMARTLET = discord.utils.get(self.guild.emojis, name=self.bot.config.downvote_emoji)
 
     @staticmethod
-    async def _get_converted_args_dict(ctx,
-                                       args,
-                                       from_xnor_to=False,
-                                       from_nand_to=False,
-                                       member=True,
-                                       emoji=True):
+    async def _get_converted_args_dict(ctx, args, from_xnor_to=False, from_nand_to=False, member=True, emoji=True):
         # this will make an arg_converter with the possible values the
         # score, ranking, and emoji_ranking function can take, then do
         # additional checks to restrict it further
@@ -199,7 +181,7 @@ class Score(commands.Cog):
             "emojitype": (EmojiTypeConverter(), None),
             "self": (SelfConverter(), False),
             "before": (BeforeConverter(), None),
-            "after": (AfterConverter(), None)
+            "after": (AfterConverter(), None),
         }
         if emoji:
             converters_dict["emoji"] = (TotalEmojiConverter(), None)
@@ -221,41 +203,39 @@ class Score(commands.Cog):
 
         # additional checks
         if member:
-            if args_dict["member"] and (args_dict["from_member"]
-                                        or args_dict["to_member"]):
+            if args_dict["member"] and (args_dict["from_member"] or args_dict["to_member"]):
                 raise commands.BadArgument(
                     "Invalid input: A user cannot be specified without flag "
                     "if there is also a user specified for the `from` or "
-                    "`to` flag")
+                    "`to` flag"
+                )
             # default value
-            if not args_dict["from_member"] and not args_dict[
-                    "to_member"] and not args_dict["member"]:
+            if not args_dict["from_member"] and not args_dict["to_member"] and not args_dict["member"]:
                 args_dict["member"] = ctx.message.author
 
         if emoji:
-            if sum(
-                    map(bool, (args_dict["emoji"], args_dict["emojitype"],
-                               args_dict["emojiname"]))) > 1:
+            if sum(map(bool, (args_dict["emoji"], args_dict["emojitype"], args_dict["emojiname"]))) > 1:
                 raise commands.BadArgument(
                     "Invalid input: Only one of either an emoji, "
-                    "the emojitype flag or the emojiname flag can be used")
+                    "the emojitype flag or the emojiname flag can be used"
+                )
             # default value
-            if not any((args_dict["emoji"], args_dict["emojitype"],
-                        args_dict["emojiname"])):
+            if not any((args_dict["emoji"], args_dict["emojitype"], args_dict["emojiname"])):
                 args_dict["emojitype"] = "score"
 
-        if (from_xnor_to and not (
-            (args_dict["from_member"] and args_dict["to_member"]) or
-            (not args_dict["from_member"] and not args_dict["to_member"]))):
+        if from_xnor_to and not (
+            (args_dict["from_member"] and args_dict["to_member"])
+            or (not args_dict["from_member"] and not args_dict["to_member"])
+        ):
             raise commands.BadArgument(
                 "Invalid input: For this function, if a `from` flag is "
-                "input, a `to` flag must also be input and vice versa")
+                "input, a `to` flag must also be input and vice versa"
+            )
 
-        if (from_nand_to and args_dict["from_member"]
-                and args_dict["to_member"]):
+        if from_nand_to and args_dict["from_member"] and args_dict["to_member"]:
             raise commands.BadArgument(
-                "Invalid input: For this function, only one of either a"
-                "`from` flag or a `to` flag can be input")
+                "Invalid input: For this function, only one of either a" "`from` flag or a `to` flag can be input"
+            )
 
         return args_dict
 
@@ -286,14 +266,12 @@ class Score(commands.Cog):
         elif args_dict["emojitype"] == "custom":
             where_list.append("instr(ReactionName, '<') = 1")
         elif args_dict["emojitype"] == "here":
-            where_list.append(f"ReactionName IN "
-                              f"({','.join(['?']*len(guild_emojis))})")
+            where_list.append(f"ReactionName IN " f"({','.join(['?']*len(guild_emojis))})")
             values_list = values_list + guild_emojis
         elif args_dict["emojitype"] == "nothere":
             # must be a custom react
             where_list.append("instr(ReactionName, '<') = 1")
-            where_list.append(f"ReactionName NOT IN "
-                              f"({','.join(['?']*len(guild_emojis))})")
+            where_list.append(f"ReactionName NOT IN " f"({','.join(['?']*len(guild_emojis))})")
             values_list = values_list + guild_emojis
         # elif args_dict["emojitype"] == "all", there are no restrictions
         # elif args_dict["emojitype"] == "score", this must be dealt with
@@ -342,12 +320,13 @@ class Score(commands.Cog):
 
         if remove:
             c.execute(
-                "DELETE FROM Reactions WHERE ReacterID = ? AND ReacteeID = ? "
-                "AND ReactionName = ? AND MessageID = ?",
-                (reacter_id, reactee_id, str(emoji), message_id))
+                "DELETE FROM Reactions WHERE ReacterID = ? AND ReacteeID = ? " "AND ReactionName = ? AND MessageID = ?",
+                (reacter_id, reactee_id, str(emoji), message_id),
+            )
         else:
-            c.execute("INSERT OR IGNORE INTO Reactions VALUES (?,?,?,?)",
-                      (reacter_id, reactee_id, str(emoji), message_id))
+            c.execute(
+                "INSERT OR IGNORE INTO Reactions VALUES (?,?,?,?)", (reacter_id, reactee_id, str(emoji), message_id)
+            )
         conn.commit()
         conn.close()
 
@@ -400,9 +379,7 @@ class Score(commands.Cog):
             -"score" (The emojis used as upvotes and downvotes)
         """
         try:
-            args_dict = await self._get_converted_args_dict(ctx,
-                                                            args,
-                                                            from_xnor_to=True)
+            args_dict = await self._get_converted_args_dict(ctx, args, from_xnor_to=True)
         except commands.BadArgument as err:
             await ctx.send(err)
             return
@@ -412,17 +389,19 @@ class Score(commands.Cog):
         conn = sqlite3.connect(self.bot.config.db_path)
         c = conn.cursor()
         if args_dict["emojitype"] != "score":
-            c.execute(
-                f"SELECT count(ReacteeID) FROM Reactions "
-                f"WHERE {where_str}", t)
+            c.execute(f"SELECT count(ReacteeID) FROM Reactions " f"WHERE {where_str}", t)
             react_count = c.fetchone()[0]
         else:
-            c.execute((f"SELECT COUNT(IIF (ReactionName = ?1, 1, NULL)) - "
-                       f"COUNT(IIF (ReactionName = ?2, 1, NULL)) "
-                       f"FROM Reactions "
-                       f"WHERE {where_str} "
-                       f"AND (ReactionName = ?1 OR ReactionName=?2) "),
-                      (str(self.UPMARTLET), str(self.DOWNMARTLET), *t))
+            c.execute(
+                (
+                    f"SELECT COUNT(IIF (ReactionName = ?1, 1, NULL)) - "
+                    f"COUNT(IIF (ReactionName = ?2, 1, NULL)) "
+                    f"FROM Reactions "
+                    f"WHERE {where_str} "
+                    f"AND (ReactionName = ?1 OR ReactionName=?2) "
+                ),
+                (str(self.UPMARTLET), str(self.DOWNMARTLET), *t),
+            )
             react_count = c.fetchone()[0]
 
         await ctx.send(react_count)
@@ -436,7 +415,7 @@ class Score(commands.Cog):
         Basic examples:
         `?ranking`: Ranking of the total score (upmartlets - downmartlets) of each user
         `?ranking emoji`: Ranking of the score of each user for an emoji
-        
+
         Arguments (Without the quotes and order doesn't matter):
         - Optional: `from:@user` AND `to:@user` (not both)
             -If from flag: gives the score received by every user from this user. `from:all` can be used.
@@ -449,7 +428,7 @@ class Score(commands.Cog):
             -If emojitype flag, gives the score for this emojitype (see below for types)
             -If emojiname flag or :name:, gives the score for all custom emojis of this name
             -If nothing, gives the total upmartlet - downmartlet score
-            
+
         - Optional: `self:bool` (true or false)
             -If true, self-upvotes are counted
             -This is set to self:false by default
@@ -469,10 +448,7 @@ class Score(commands.Cog):
         c = conn.cursor()
 
         try:
-            args_dict = await self._get_converted_args_dict(ctx,
-                                                            args,
-                                                            from_nand_to=True,
-                                                            member=False)
+            args_dict = await self._get_converted_args_dict(ctx, args, from_nand_to=True, member=False)
         except commands.BadArgument as err:
             await ctx.send(err)
             return
@@ -484,40 +460,47 @@ class Score(commands.Cog):
         if args_dict["emojitype"] != "score":
             # get the WHERE conditions and the values
             where_str, t = self._where_str_and_values_from_args_dict(args_dict)
-            c.execute((f"SELECT printf('%d. %s', "
-                       f"ROW_NUMBER() OVER (ORDER BY count(*) DESC), M.Name), "
-                       f"printf('%d %s', count(*), "
-                       f"IIF (count(*)!=1, 'times', 'time')) "
-                       f"FROM Reactions AS R, Members as M "
-                       f"WHERE {where_str} "
-                       f"AND R.{select_id} = M.ID "
-                       f"GROUP BY R.{select_id} "
-                       f"ORDER BY count(*) DESC"), t)
+            c.execute(
+                (
+                    f"SELECT printf('%d. %s', "
+                    f"ROW_NUMBER() OVER (ORDER BY count(*) DESC), M.Name), "
+                    f"printf('%d %s', count(*), "
+                    f"IIF (count(*)!=1, 'times', 'time')) "
+                    f"FROM Reactions AS R, Members as M "
+                    f"WHERE {where_str} "
+                    f"AND R.{select_id} = M.ID "
+                    f"GROUP BY R.{select_id} "
+                    f"ORDER BY count(*) DESC"
+                ),
+                t,
+            )
 
             counts = list(zip(*c.fetchall()))
             if not counts:
-                await ctx.send(embed=discord.Embed(
-                    title="This reaction was never used on this server."))
+                await ctx.send(embed=discord.Embed(title="This reaction was never used on this server."))
                 return
             names, values = counts
 
         else:
             # get the WHERE conditions and the values
-            where_str, t = self._where_str_and_values_from_args_dict(
-                args_dict, prefix="R")
-            c.execute((f"SELECT printf('%d. %s', "
-                       f"ROW_NUMBER() OVER (ORDER BY TotalCount DESC), Name), "
-                       f"TotalCount FROM "
-                       f"(SELECT M.Name, "
-                       f"COUNT(IIF (ReactionName = ?1, 1, NULL)) - "
-                       f"COUNT(IIF (ReactionName = ?2, 1, NULL)) "
-                       f"AS TotalCount "
-                       f"FROM Reactions AS R, Members as M "
-                       f"WHERE {where_str} "
-                       f"AND (ReactionName = ?1 OR ReactionName=?2) "
-                       f"AND R.{select_id} = M.ID "
-                       f"GROUP BY R.{select_id})"),
-                      (str(self.UPMARTLET), str(self.DOWNMARTLET), *t))
+            where_str, t = self._where_str_and_values_from_args_dict(args_dict, prefix="R")
+            c.execute(
+                (
+                    f"SELECT printf('%d. %s', "
+                    f"ROW_NUMBER() OVER (ORDER BY TotalCount DESC), Name), "
+                    f"TotalCount FROM "
+                    f"(SELECT M.Name, "
+                    f"COUNT(IIF (ReactionName = ?1, 1, NULL)) - "
+                    f"COUNT(IIF (ReactionName = ?2, 1, NULL)) "
+                    f"AS TotalCount "
+                    f"FROM Reactions AS R, Members as M "
+                    f"WHERE {where_str} "
+                    f"AND (ReactionName = ?1 OR ReactionName=?2) "
+                    f"AND R.{select_id} = M.ID "
+                    f"GROUP BY R.{select_id})"
+                ),
+                (str(self.UPMARTLET), str(self.DOWNMARTLET), *t),
+            )
             counts = list(zip(*c.fetchall()))
             if not counts:
                 await ctx.send(embed=discord.Embed(title="No results found"))
@@ -527,11 +510,7 @@ class Score(commands.Cog):
 
         conn.close()
         paginator_dict = {"names": names, "values": values}
-        p = Pages(ctx,
-                  item_list=paginator_dict,
-                  title="Score ranking",
-                  display_option=(2, 9),
-                  editable_content=False)
+        p = Pages(ctx, item_list=paginator_dict, title="Score ranking", display_option=(2, 9), editable_content=False)
 
         await p.paginate()
 
@@ -570,27 +549,27 @@ class Score(commands.Cog):
         c = conn.cursor()
 
         try:
-            args_dict = await self._get_converted_args_dict(ctx,
-                                                            args,
-                                                            from_xnor_to=True,
-                                                            member=False,
-                                                            emoji=False)
+            args_dict = await self._get_converted_args_dict(ctx, args, from_xnor_to=True, member=False, emoji=False)
         except commands.BadArgument as err:
             await ctx.send(err)
             return
 
         if args_dict["emojitype"] == "score":
-            await ctx.send("Invalid input: Emojitype flag cannot use "
-                           "type score for this function")
+            await ctx.send("Invalid input: Emojitype flag cannot use " "type score for this function")
         # get the WHERE conditions and the values
         where_str, t = self._where_str_and_values_from_args_dict(args_dict)
-        c.execute((f"SELECT printf('%d. %s', "
-                   f"ROW_NUMBER() OVER (ORDER BY count(*) DESC), "
-                   f"ReactionName), printf('%d %s', count(*), "
-                   f"IIF (count(*)!=1, 'times', 'time')) "
-                   f"FROM Reactions "
-                   f"WHERE {where_str} "
-                   f"GROUP BY ReactionName "), t)
+        c.execute(
+            (
+                f"SELECT printf('%d. %s', "
+                f"ROW_NUMBER() OVER (ORDER BY count(*) DESC), "
+                f"ReactionName), printf('%d %s', count(*), "
+                f"IIF (count(*)!=1, 'times', 'time')) "
+                f"FROM Reactions "
+                f"WHERE {where_str} "
+                f"GROUP BY ReactionName "
+            ),
+            t,
+        )
 
         counts = list(zip(*c.fetchall()))
         if not counts:
@@ -601,11 +580,7 @@ class Score(commands.Cog):
 
         conn.close()
         paginator_dict = {"names": names, "values": values}
-        p = Pages(ctx,
-                  item_list=paginator_dict,
-                  title="Emoji ranking",
-                  display_option=(2, 9),
-                  editable_content=False)
+        p = Pages(ctx, item_list=paginator_dict, title="Emoji ranking", display_option=(2, 9), editable_content=False)
 
         await p.paginate()
 
