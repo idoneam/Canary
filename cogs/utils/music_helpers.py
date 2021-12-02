@@ -62,7 +62,14 @@ def mk_title_string(inf_dict) -> str:
     return (
         inf_dict.get("title", "title not found")
         if url is None
-        else f"[{inf_dict.get('title', 'title not found')}]({url})"
+        else "[{}]({})".format(
+            inf_dict.get("title", "title not found")
+            .replace("*", "\\*")
+            .replace("|", "\\|")
+            .replace("_", "\\_")
+            .replace("~", "\\~"),
+            url,
+        )
     )
 
 

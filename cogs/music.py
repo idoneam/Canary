@@ -274,7 +274,7 @@ class Music(commands.Cog):
                     return await ctx.send("bot is currently playing music for users in another voice channel.")
                 ctx.voice_client.pause()
                 await ctx.voice_client.move_to(ctx.author.voice.channel)
-                if not url:
+                if url is None:
                     ctx.voice_client.resume()
             elif url is None:
                 return await ctx.send("bot is currently playing a track and you did not specify a new track to play.")

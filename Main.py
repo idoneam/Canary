@@ -175,5 +175,6 @@ def main():
 if __name__ == "__main__":
     if os.name == "posix":
         import uvloop
+
         uvloop.install()
     main()
