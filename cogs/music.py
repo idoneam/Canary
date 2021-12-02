@@ -25,12 +25,13 @@ from functools import partial
 from collections import deque
 from typing import Optional, Iterable
 import discord
-import youtube_dl
+import yt_dlp
 from discord.ext import commands
 from .utils.music_helpers import (FFMPEG_BEFORE_OPTS, FFMPEG_OPTS, YTDL,
                                   QUEUE_ACTIONS, check_playing, parse_time,
                                   mk_title_string, mk_duration_string,
-                                  time_func, mk_change_embed, check_banned)
+                                  time_func, mk_change_embed, check_banned,
+                                  conv_arg, MusicArgConvertError)
 
 
 class Music(commands.Cog):
@@ -54,7 +55,7 @@ class Music(commands.Cog):
         try:
             data = await self.bot.loop.run_in_executor(
                 None, partial(YTDL.extract_info, url, download=False))
-        except youtube_dl.utils.DownloadError:
+        except yt_dlp.utils.DownloadError:
             return None
         entries = data.get("entries", [data])
         if not entries:
@@ -119,10 +120,174 @@ class Music(commands.Cog):
         return (self.track_queue, idx) if (idx < len(self.track_queue)) else (
             self.backup, idx - len(self.track_queue))
 
-    @commands.command()
+    @commands.command(aliases = ["m"])
+    async def music(self, ctx, subcommand: str, *, args: Optional[str] = None):
+        """
+        monocommand used for music features.
+        write `?music help subcommand` for details on how each command works (arguments are shown as semicolon separated list).
+        available subcommands are:
+        - play
+        - playback_speed | ps
+        - goto_time | gt
+        - backwards_time | bt | rewind
+        - loop
+        - print_queue | pq
+        - status | now_playing | np
+        - remove | pop
+        - insert
+        - clear_queue | cq
+        - clear_history | ch
+        - volume | vol | v
+        - stop
+        - next | next
+        - back | previous
+        - pause
+        - resume
+        - help
+        """
+        try:
+            match subcommand:
+                case "play":
+                    await self.play(ctx, args)
+                case "playback_speed" | "ps":
+                    await self.playback_speed(ctx, conv_arg(float, args, True))
+                case "goto_time" | "gt":
+                    await self.goto_time(ctx, conv_arg(lambda x: x, args, True))
+                case "forward_time" | "ft":
+                    await self.forward_time(ctx, conv_arg(lambda x: x, args, True))
+                case "backwards_time" | "bt" | "rewind":
+                    await self.backwards_time(ctx, conv_arg(lambda x: "30" if x is None else x, args, False))
+                case "loop":
+                    await self.loop(ctx, conv_arg(lambda x: x, args, True))
+                case "print_queue" | "pq":
+                    await self.print_queue(ctx, conv_arg(lambda x: 0 if x is None else int(x), args, False))
+                case "status" | "now_playing" | "np":
+                    await self.music_status(ctx)
+                case "remove" | "pop":
+                    await self.remove_track(ctx, conv_arg(int, args, True))
+                case "insert":
+                    await self.insert_track(ctx, *conv_arg(lambda x: (lambda y, z: (int(y), z))(*x.split(maxsplit=1)), args, True))
+                case "clear_queue" | "cq":
+                    await self.clear_queue(ctx)
+                case "clear_hist" | "ch":
+                    await self.clear_hist(ctx)
+                case "queue" | "q":
+                    await self.queue_track(ctx, conv_arg(lambda x: x, args, True))
+                case "volume" | "vol" | "v":
+                    await self.volume(ctx, conv_arg(lambda x: float(x.strip("%")), args, True))
+                case "stop":
+                    await self.stop(ctx)
+                case "skip" | "next":
+                    await self.skip(ctx, conv_arg(lambda x: 0 if x is None else int(x), args, False))
+                case "back" | "previous":
+                    await self.backtrack(ctx, conv_arg(lambda x: None if x is None else int(x), args, False))
+                case "pause":
+                    await self.pause(ctx)
+                case "resume":
+                    await self.resume(ctx)
+                case "help":
+                    match args:
+                        case "play":
+                            await ctx.send(
+                                "streams from a youtube url or track name, or if none is given, from the queue\n"
+                                "arguments: (optional: link or title of track)"
+                            )
+                        case "playback_speed" | "ps":
+                            await ctx.send(
+                                "changes track playback speed (clamped 0.25 between 4)\n"
+                                "arguments: (float)"
+                            )
+                        case "goto_time" | "gt":
+                            await ctx.send(
+                                "go to a specific timestamp in currently playing track\n"
+                                "arguments: (timestamp of format H:M:S)"
+                            )
+                        case "forward_time" | "ft":
+                            await ctx.send(
+                                "move forwards in currently playing track\n"
+                                "arguments: (timestamp of format H:M:S)"
+                            )
+                        case "backwards_time" | "bt" | "rewind":
+                            await ctx.send(
+                                "move backwards in currently playing track\n"
+                                "arguments: (timestamp of format H:M:S [defaults to 30 seconds])"
+                            )
+                        case "loop":
+                            await ctx.send(
+                                "changes looping state\n"
+                                "arguments: (either `track` or `queue`)"
+                            )
+                        case "print_queue" | "pq":
+                            await ctx.send(
+                                "displays the current track queue\n"
+                                "arguments: (optional: start index of message)"
+                            )
+                        case "status" | "now_playing" | "np":
+                            await ctx.send(
+                                "displays current status of the bot\n"
+                                "arguments: none"""
+                            )
+                        case "remove" | "pop":
+                            await ctx.send(
+                                "remove a track from the track queue by index\n"
+                                "arguments: (integer)"
+                            )
+                        case "insert":
+                            await ctx.send(
+                                "insert a track into the track queue at a given index\n"
+                                "arguments: (integer; link or title of track)"
+                            )
+                        case "clear_queue" | "cq":
+                            await ctx.send(
+                                "clears current track queue\n"
+                                "arguments: none"
+                            )
+                        case "clear_hist" | "ch":
+                            await ctx.send(
+                                "clears current track history\n"
+                                "arguments: none"
+                            )
+                        case "queue" | "q":
+                            await ctx.send(
+                                "adds a track to the end of the queue\n"
+                                "arguments: (link or title of track)"
+                            )
+                        case "volume" | "vol" | "v":
+                            await ctx.send(
+                                "set volume to a different level (clamped between 0% and 500%)\n"
+                                "arguments: (float)"
+                            )
+                        case "stop":
+                            await ctx.send(
+                                "stops and disconnects the bot from voice\n"
+                                "arguments: none"
+                            )
+                        case "skip" | "next":
+                            await ctx.send(
+                                "skips some amount of songs in the queue\n"
+                                "arguments: (optional: int [defaults to 0, going forward a single track])"
+                            )
+                        case "back" | "previous":
+                            await ctx.send(
+                                "goes backwards in history by some amount of tracks\n"
+                                "arguments: (optional: int [defaults to 0 if track has been playing for more than 10 seconds, otherwise 1])"
+                            )
+                        case "pause":
+                            await ctx.send(
+                                "pauses currently playing track\n"
+                                "arguments: none"
+                            )
+                        case "resume":
+                            await ctx.send(
+                                "resumes currently paused track.\n"
+                                "arguments: none"
+                            )
+
+        except MusicArgConvertError:
+            pass #for proper argument parsing
+
     @check_banned
-    async def play(self, ctx, *, url: str = None):
-        """Streams from a youtube url or track name, or if none is given, from the queue"""
+    async def play(self, ctx, url: Optional[str] = None):
 
         in_main: bool = ctx.voice_client is None
 
@@ -179,15 +344,17 @@ class Music(commands.Cog):
             now_playing = None
             if self.skip_opts is None:
                 await ctx.trigger_typing()
+
                 if ctx.voice_client is None:
                     break
-                if (not self.track_queue) and (self.looping_track is False):
+
+                if self.looping_track:
+                    self.play_track(ctx)
+                elif not self.track_queue:
                     if not self.looping_queue:
                         break
                     self.track_queue = self.backup
                     self.backup = deque()
-                if self.looping_track:
-                    self.play_track(ctx)
                 else:
                     self.playing = self.track_queue.popleft()
                     self.backup.append(self.playing)
@@ -219,10 +386,8 @@ class Music(commands.Cog):
         self.volume_level = self.bot.config.music["start_vol"]
         self.speed_flag = "atempo=1"
 
-    @commands.command(aliases=["ps"])
     @check_playing
     async def playback_speed(self, ctx, speed: float):
-        """Change track playback speed (clamped 0.25 between 4)"""
 
         self.speed_val = max(0.25, min(speed, 4.0))
         self.speed_flag = f"atempo={self.speed_val}" if 0.5 < self.speed_val < 2 else f"atempo=sqrt({self.speed_val}),atempo=sqrt({self.speed_val})"
@@ -232,52 +397,46 @@ class Music(commands.Cog):
         ctx.voice_client.stop()
         await ctx.send(f"changed playback speed to {self.speed_val}")
 
-    @commands.command(aliases=["gt"])
     @check_playing
+    @check_banned
     @time_func
     def goto_time(self, seconds: int, _: bool):
-        """Go to a specific timestamp in currently playing track"""
 
         return seconds
 
-    @commands.command(aliases=["ft"])
     @check_playing
+    @check_banned
     @time_func
     def forward_time(self, seconds: int, paused: bool):
-        """Move forwards in currently playing track"""
 
         return max(0, round(self.compute_curr_time(paused) + seconds))
 
-    @commands.command(aliases=["bt"])
     @check_playing
+    @check_banned
     @time_func
-    def backward_time(self, seconds: int, paused: bool):
-        """Move backwards in currently playing track"""
+    def backwards_time(self, seconds: int, paused: bool):
 
         return max(0, round(self.compute_curr_time(paused) - seconds))
 
-    @commands.command(aliases=["tl", "song_loop", "sl"])
-    @check_playing
-    async def track_loop(self, ctx):
-        """Changes track looping state"""
 
-        self.looping_track = not self.looping_track
-        await ctx.send(
-            f"current track will now{' ' if self.looping_track else ' no longer '}loop."
-        )
+    @check_banned
+    async def loop(self, ctx, target: str):
 
-    @commands.command(aliases=["ql"])
-    async def queue_loop(self, ctx):
-        """Changes queue looping state"""
 
-        self.looping_queue = not self.looping_queue
-        await ctx.send(
-            f"queue will now{' ' if self.looping_queue else ' no longer '}loop."
-        )
+        match target:
+            case "queue" | "q":
+                self.looping_queue = not self.looping_queue
+                await ctx.send(
+                    f"queue will now{' ' if self.looping_queue else ' no longer '}loop."
+                )
+            case "track" | "t":
+                self.looping_track = not self.looping_track
+                await ctx.send(
+                    f"invididual track will now{' ' if self.looping_track else ' no longer '}loop."
+                )
 
-    @commands.command(aliases=["pq"])
-    async def print_queue(self, ctx: commands.Context, start_idx: int = 0):
-        """Displays the current track queue"""
+
+    async def print_queue(self, ctx, start_idx: int):
 
         queue_embed = discord.Embed(
             colour=random.randint(0, 0xFFFFFF),
@@ -335,9 +494,7 @@ class Music(commands.Cog):
                                                                  q_len)
             await react.remove(author)
 
-    @commands.command(aliases=["ms", "currently_playing", "cps"])
     async def music_status(self, ctx):
-        """Displays current status of the bot"""
 
         status_embed = discord.Embed(colour=random.randint(0, 0xFFFFFF),
                                      title="music status")
@@ -381,9 +538,7 @@ class Music(commands.Cog):
             )
         await ctx.send(embed=status_embed)
 
-    @commands.command(aliases=["rs", "rt"])
     async def remove_track(self, ctx, track_index: int):
-        """Remove a track from the track queue by index"""
 
         ltup = self.from_total(track_index)
         if ltup is None:
@@ -397,10 +552,8 @@ class Music(commands.Cog):
         del track_list[del_index]
         await ctx.send(embed=removed)
 
-    @commands.command(aliases=["iqs", "iqt"])
     @check_banned
-    async def insert_track(self, ctx, track_index: int, *, url: str):
-        """Insert a track into the track queue at a given index"""
+    async def insert_track(self, ctx, track_index: int, url: str):
 
         await ctx.trigger_typing()
 
@@ -422,26 +575,21 @@ class Music(commands.Cog):
             f"inserted {'song' if single else 'playlist'} at index {track_index}",
             f"submitted by: {author_str}"))
 
-    @commands.command(aliases=["cq"])
+    @check_banned
     async def clear_queue(self, ctx):
-        """Clears current track queue"""
 
         self.track_queue.clear()
         if self.looping_queue:
             self.backup.clear()
         await ctx.send("cleared current track queue.")
 
-    @commands.command(aliases=["ch"])
     async def clear_hist(self, ctx):
-        """Clears current track history"""
 
         self.backup.clear()
         await ctx.send("cleared current track history.")
 
-    @commands.command(aliases=["qs", "queue_song", "qt"])
     @check_banned
-    async def queue_track(self, ctx, *, url):
-        """Queue up a new track or a playlist"""
+    async def queue_track(self, ctx, url: str):
 
         await ctx.trigger_typing()
 
@@ -455,31 +603,25 @@ class Music(commands.Cog):
             data, entries, f"queued up {'song' if single else 'playlist'}",
             f"submitted by: {author_str}"))
 
-    @commands.command(aliases=["vol", "v"])
     @check_playing
+    @check_banned
     async def volume(self, ctx, new_vol: float):
-        """Set volume to a different level"""
 
-        self.volume_level = new_vol
-        ctx.voice_client.source.volume = new_vol / 100
+        self.volume_level = max(0, min(500, new_vol))
+        ctx.voice_client.source.volume = self.volume_level / 100
         await ctx.send(f"changed volume to {self.volume_level}%.")
 
-    @commands.command()
     @check_playing
+    @check_banned
     async def stop(self, ctx):
-        """Stops and disconnects the bot from voice"""
 
         self.looping_track = False
         ctx.voice_client.stop()
         await ctx.voice_client.disconnect()
 
-    @commands.command(aliases=["next"])
     @check_playing
-    async def skip(self, ctx, queue_amount: int = 0):
-        """
-        Skips currently playing track and skips the amount
-        provided in argument (if any) from the queue
-        """
+    @check_banned
+    async def skip(self, ctx, queue_amount: int):
 
         if queue_amount < 0:
             return await ctx.send("cannot skip a negative amount of tracks.")
@@ -496,12 +638,13 @@ class Music(commands.Cog):
             f"skipped current track{f' and {queue_amount} more from the queue' if queue_amount else ''}."
         )
 
-    @commands.command(aliases=["prev", "previous", "rev"])
     @check_playing
-    async def rewind(self, ctx, queue_amount: int = 1):
-        """
-        Rewinds to some amount of tracks previously
-        """
+    @check_banned
+    async def backtrack(self, ctx, queue_amount: Optional[int]):
+
+        if queue_amount is None:
+            queue_amount = 0 if self.compute_curr_time(ctx.voice_client.is_paused()) > 10 else 1
+
         queue_amount += 1
 
         if queue_amount < 1:
@@ -516,22 +659,18 @@ class Music(commands.Cog):
         ctx.voice_client.stop()
         await ctx.send(
             f"moved backwards by {queue_amount - 1} track{'s' if queue_amount == 2 else ''} in the queue."
+            if queue_amount > 1 else "restarted currently playing track."
         )
 
-    @commands.command()
     @check_playing
+    @check_banned
     async def pause(self, ctx):
-        """Pauses currently playing track"""
 
         ctx.voice_client.pause()
         self.pause_start = time.perf_counter()
         await ctx.send("paused current track.")
 
-    @commands.command()
     async def resume(self, ctx):
-        """Resumes currently playing track.
-        If no one else is present in the current channel, and
-        author is in a different channel, moves to that one"""
 
         if ctx.voice_client is None or not ctx.voice_client.is_paused():
             await ctx.send("bot is not currently paused in a voice channel.")

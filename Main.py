@@ -28,6 +28,7 @@ from datetime import datetime
 from pytz import timezone
 from bot import bot
 import sqlite3
+import uvloop
 
 from cogs.utils.checks import is_developer, is_moderator
 
@@ -181,4 +182,5 @@ def main():
 
 
 if __name__ == "__main__":
+    uvloop.install()
     main()

@@ -1,14 +1,17 @@
 import time
 from functools import wraps
 from typing import Iterable
-import youtube_dl
+import yt_dlp
 import discord
 import random
+
+class MusicArgConvertError(ValueError):
+    pass
 
 FFMPEG_OPTS = "-nostats -loglevel quiet -vn"
 FFMPEG_BEFORE_OPTS = "-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5"
 
-YTDL = youtube_dl.YoutubeDL({
+YTDL = yt_dlp.YoutubeDL({
     "format": "bestaudio/best",
     "restrictfilenames": True,
     "noplaylist": True,
@@ -24,6 +27,14 @@ QUEUE_ACTIONS = {
     "▶": lambda i, l: ((i + 1) % l, True),
     "⏩": lambda i, l: (l - 1, i != l - 1),
 }
+
+def conv_arg(conv, trg, raise_on_none):
+    if raise_on_none and trg is None:
+        raise MusicArgConvertError
+    try:
+        return conv(trg)
+    except ValueError as e:
+        raise MusicArgConvertError(e)
 
 
 def check_playing(func):
