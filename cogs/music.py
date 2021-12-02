@@ -117,7 +117,7 @@ class Music(commands.Cog):
         return (self.track_queue, idx) if (idx < len(self.track_queue)) else (self.backup, idx - len(self.track_queue))
 
     @commands.command(aliases=["m"])
-    async def music(self, ctx, subcommand: str, *, args: Optional[str] = None):
+    async def music(self, ctx, subcommand: Optional[str] = None, *, args: Optional[str] = None):
         """
         monocommand used for music features.
         write `?music help subcommand` for details on how each command works (arguments are shown as semicolon separated list).
@@ -183,6 +183,8 @@ class Music(commands.Cog):
                     await self.pause(ctx)
                 case "resume":
                     await self.resume(ctx)
+                case None:
+                    await ctx.send(self.music.help)
                 case "help":
                     match args:
                         case "play":
@@ -251,7 +253,8 @@ class Music(commands.Cog):
                             await ctx.send("pauses currently playing track\n" "arguments: none")
                         case "resume":
                             await ctx.send("resumes currently paused track.\n" "arguments: none")
-
+                        case None:
+                            await ctx.send(self.music.help)
         except MusicArgConvertError:
             pass  # for proper argument parsing
 

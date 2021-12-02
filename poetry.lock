@@ -156,6 +156,7 @@ python-versions = ">=3.5.3"
 
 [package.dependencies]
 aiohttp = ">=3.6.0,<3.8.0"
+PyNaCl = {version = ">=1.3.0,<1.5", optional = true, markers = "extra == \"voice\""}
 
 [package.extras]
 docs = ["sphinx (==3.0.3)", "sphinxcontrib-trio (==1.1.2)", "sphinxcontrib-websupport"]
@@ -636,7 +637,7 @@ websockets = "*"
 [metadata]
 lock-version = "1.1"
 python-versions = "~3.10.0"
-content-hash = "3ec2d20d45a9e65b68c49d43c484dd700410a7843dedfaca2e3f1b038aaf29c9"
+content-hash = "a5f390b11a2d3bc0799b6501f1fadef61018d5782be1551d1f251272b82fd95f"
 
 [metadata.files]
 aiohttp = [
