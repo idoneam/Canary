@@ -57,10 +57,6 @@ LMGTFY_TEMPLATE = "https://letmegooglethat.com/?q={}"
 MTL_REGEX = re.compile("Montréal.*")
 ALERT_REGEX = re.compile("Alerts.*")
 
-LANG_CODES = "|".join(googletrans.LANGUAGES.keys())
-LANG_NAMES = "|".join(lang.split(" ")[0] for lang in googletrans.LANGCODES.keys())
-TRANSLATE_REGEX = re.compile(f"^(|{LANG_NAMES}|{LANG_CODES})>({LANG_NAMES}|{LANG_CODES})$", re.IGNORECASE)
-
 LATEX_PREAMBLE = r"""\documentclass[varwidth,12pt]{standalone}
 \usepackage{alphabeta}
 \usepackage[utf8]{inputenc}
@@ -669,78 +665,61 @@ class Helpers(commands.Cog):
         """
         if command == "help":
             await ctx.send(
-                "Command used to translate some text "
-                "from one language to another\n"
-                "Takes two arguments: the source/target "
-                "languages and the text to translate\n"
-                "The first argument must be under the "
-                "following format `src>dst`.\n`src` indicates "
-                "the language of the source text.\n`dst` "
-                "indicates which language you want the text "
-                "to be translated into.\n`src` must "
-                "be either an empty string (to indicate "
-                "that you want to autodetect the source "
-                "language) or a language code/name.\n"
-                "`dst` must be a language code/name "
-                "different from `src` (it cannot be empty)\n"
-                "Second argument is the text that you want to "
-                "translate. This text is either taken from the "
-                "message to which the invoking message was "
-                "replying to, or if the invoking message is "
-                "not a reply, then to the rest of the invoking "
-                "message after the first argument.\n"
-                "To get a list of all valid language codes "
-                "and names, call `?translate codes`"
+                "Command used to translate text.\n"
+                "Example usage: `?translate en>ru Rush B`\n"
+                "It takes two arguments.\n"
+                "The first argument must be of the format `source>destination`.\n"
+                "`source` and `destination` must be language codes; "
+                "alternatively, `source` may be left empty to auto-detect the "
+                "source language.\n"
+                "For a list of language codes, see `?translate codes`.\n"
+                "The second argument is the text to translate. "
+                "You may reply to a message using this command to translate it, "
+                "or supply your own text as the second argument."
             )
-        elif command == "codes":
+            return
+
+        if command == "codes":
             await ctx.send(
                 "Here is a list of all language "
                 "codes and names:\n" + ", ".join(f"`{code}`: {lang}" for code, lang in googletrans.LANGUAGES.items())
             )
-        elif code_match := TRANSLATE_REGEX.match(command):
-            if ctx.message.reference and ctx.message.reference.resolved:
-                inp_str = ctx.message.reference.resolved.content
-            if not inp_str:
-                await ctx.send("Sorry, no string to translate has been detected")
-                return
-            src, dst = code_match.groups()
-            if src in googletrans.LANGCODES:
-                src = googletrans.LANGCODES[src]
-            if dst in googletrans.LANGCODES:
-                dst = googletrans.LANGCODES[dst]
-            translator = googletrans.Translator()
-            if not src:
-                detected_lang = translator.detect(inp_str)
-                src = detected_lang.lang if isinstance(detected_lang.lang, str) else detected_lang.lang[0]
-                cnf = (
-                    detected_lang.confidence
-                    if isinstance(detected_lang.confidence, float)
-                    else detected_lang.confidence[0]
-                )
-                name_str = (
-                    f"translated text from {googletrans.LANGUAGES[src]}"
-                    f" (auto-detected with {round(cnf*100)}%"
-                    f" certainty) to {googletrans.LANGUAGES[dst]}"
-                )
-            else:
-                name_str = f"translated text from {googletrans.LANGUAGES[src]}" f" to {googletrans.LANGUAGES[dst]}"
-            if src == dst:
-                await ctx.send(
-                    f"Inputted source (`{src}`) and target (`{dst}`) "
-                    f"languages are the same, which does not make sense"
-                )
-                return
-            embed = discord.Embed(colour=random.randint(0, 0xFFFFFF))
-            embed.add_field(name=name_str, value=translator.translate(inp_str, src=src, dest=dst).text)
+            return
 
-            await ctx.send(embed=embed)
-        else:
+        # If the command was invoked by a reply, use the original message as input text.
+        if ctx.message.reference and ctx.message.reference.resolved:
+            inp_str = ctx.message.reference.resolved.content
+        if not inp_str:
+            await ctx.send("Sorry, no string to translate has been detected.")
+            return
+
+        # Validation of language codes
+        codes = command.replace("_", "-").split(">")
+        if len(codes) != 2:
+            await ctx.send(f"Argument `{command}` is not properly formatted. " f"See `?translate help` to learn more.")
+            return
+        source = codes[0].lower().strip()
+        translator = googletrans.Translator()
+        detection = None
+        if source == "":
+            detection = translator.detect(inp_str)
+            source = detection.lang
+        elif source not in googletrans.LANGUAGES:
+            await ctx.send(f"`{source}` is not a valid language code. " f"See `?translate codes` for language codes.")
+            return
+        destination = codes[1].lower().strip()
+        if destination not in googletrans.LANGUAGES:
             await ctx.send(
-                f"First argument `{command}` could not be parsed "
-                f"to a proper command string for this function.\n"
-                f"To learn more about how to use this command, "
-                f"call `?translate help`"
+                f"`{destination}` is not a valid language code. " f"See `?translate codes` for language codes."
             )
+            return
+
+        await ctx.send(
+            embed=discord.Embed(colour=random.randint(0, 0xFFFFFF)).add_field(
+                name=f"translated text from {googletrans.LANGUAGES[source]} to {googletrans.LANGUAGES[destination]}",
+                value=translator.translate(inp_str, src=source, dest=destination).text,
+            )
+        )
 
 
 def setup(bot):
