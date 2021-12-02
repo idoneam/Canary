@@ -46,7 +46,7 @@ startup = [
     "cogs.reminder",
     "cogs.roles",
     "cogs.score",
-    "cogs.subscribers",    # Do not remove this terminating comma.
+    "cogs.subscribers",  # Do not remove this terminating comma.
 ]
 
 
@@ -56,10 +56,9 @@ async def on_ready():
         webhook_string = " and to the log webhook"
     else:
         webhook_string = ""
-    sys.stdout.write(f'Bot is ready, program output will be written to a '
-                     f'log file{webhook_string}.\n')
+    sys.stdout.write(f"Bot is ready, program output will be written to a " f"log file{webhook_string}.\n")
     sys.stdout.flush()
-    bot.dev_logger.info(f'Logged in as {bot.user.name} ({bot.user.id})')
+    bot.dev_logger.info(f"Logged in as {bot.user.name} ({bot.user.id})")
 
 
 @bot.command()
@@ -98,8 +97,8 @@ async def restart(ctx):
     """
     Restart the bot
     """
-    bot.dev_logger.info('Bot restart')
-    await ctx.send('https://streamable.com/dli1')
+    bot.dev_logger.info("Bot restart")
+    await ctx.send("https://streamable.com/dli1")
     python = sys.executable
     os.execl(python, python, *sys.argv)
 
@@ -110,8 +109,8 @@ async def sleep(ctx):
     """
     Shut down the bot
     """
-    bot.dev_logger.info('Received sleep command. Shutting down bot')
-    await ctx.send('Bye')
+    bot.dev_logger.info("Received sleep command. Shutting down bot")
+    await ctx.send("Bye")
     await bot.logout()
 
 
@@ -121,12 +120,10 @@ async def update(ctx):
     """
     Update the bot by pulling changes from the git repository
     """
-    bot.dev_logger.info('Update Git repository')
-    shell_output = subprocess.check_output("git pull {}".format(
-        bot.config.repository),
-                                           shell=True)
+    bot.dev_logger.info("Update Git repository")
+    shell_output = subprocess.check_output("git pull {}".format(bot.config.repository), shell=True)
     status_message = shell_output.decode("unicode_escape")
-    await ctx.send('`{}`'.format(status_message))
+    await ctx.send("`{}`".format(status_message))
 
 
 @bot.command()
@@ -135,13 +132,10 @@ async def backup(ctx):
     """
     Send the current database file to the owner
     """
-    current_time = datetime.now(
-        tz=timezone('America/New_York')).strftime('%Y%m%d-%H:%M')
-    backup_filename = 'Martlet{}.db'.format(current_time)
-    await ctx.send(content='Here you go',
-                   file=discord.File(fp=bot.config.db_path,
-                                     filename=backup_filename))
-    bot.dev_logger.info('Database backup')
+    current_time = datetime.now(tz=timezone("America/New_York")).strftime("%Y%m%d-%H:%M")
+    backup_filename = "Martlet{}.db".format(current_time)
+    await ctx.send(content="Here you go", file=discord.File(fp=bot.config.db_path, filename=backup_filename))
+    bot.dev_logger.info("Database backup")
 
 
 @bot.listen()
@@ -164,8 +158,7 @@ async def on_user_update(before, after):
     new_name = str(after)
     conn = sqlite3.connect(bot.config.db_path)
     c = conn.cursor()
-    c.execute("INSERT OR REPLACE INTO Members VALUES (?,?)",
-              (user_id, new_name))
+    c.execute("INSERT OR REPLACE INTO Members VALUES (?,?)", (user_id, new_name))
     conn.commit()
     conn.close()
 
@@ -175,8 +168,7 @@ def main():
         try:
             bot.load_extension(extension)
         except Exception as e:
-            bot.dev_logger.warning(f'Failed to load extension {extension}\n'
-                                   f'{type(e).__name__}: {e}')
+            bot.dev_logger.warning(f"Failed to load extension {extension}\n" f"{type(e).__name__}: {e}")
     bot.run(bot.config.discord_key)
 
 

@@ -23,17 +23,19 @@ import math
 
 
 class Pages:
-    def __init__(self,
-                 ctx,
-                 current_page=1,
-                 msg=None,
-                 item_list=[],
-                 title='Paginator',
-                 display_option=(1, 0),
-                 editable_content=True,
-                 editable_content_emoji='🚮',
-                 return_user_on_edit=False,
-                 timeout=300):
+    def __init__(
+        self,
+        ctx,
+        current_page=1,
+        msg=None,
+        item_list=[],
+        title="Paginator",
+        display_option=(1, 0),
+        editable_content=True,
+        editable_content_emoji="🚮",
+        return_user_on_edit=False,
+        timeout=300,
+    ):
         """Creates a paginator.
 
         Parameters
@@ -102,11 +104,11 @@ class Pages:
         self.displayOption = display_option
         self._organize()
         self.actions = [
-            ('⏪', self._first_page),
-            ('◀', self._prev_page),
-            ('▶', self._next_page),
-            ('⏩', self._last_page),
-            ('⏹', self._halt),
+            ("⏪", self._first_page),
+            ("◀", self._prev_page),
+            ("▶", self._next_page),
+            ("⏩", self._last_page),
+            ("⏹", self._halt),
         ]
         if editable_content:
             self.actions.append((editable_content_emoji, self._edit))
@@ -125,7 +127,7 @@ class Pages:
             5: self._organize_embeds_autosize_list,
             6: self._organize_embeds_list_embeds,
         }
-        pages_to_send = ['empty page']
+        pages_to_send = ["empty page"]
         self.organize_helper = organize_helper_map[self.displayOption[0]]
         self.pagesToSend, self.lastPage = self.organize_helper(pages_to_send)
 
@@ -135,12 +137,10 @@ class Pages:
         for i in range(page_counter):
             index_start = item_per_page * i
             index_end = item_per_page * (i + 1)
-            content = '\n'.join(self.itemList[index_start:index_end]).replace(
-                '```', '')
+            content = "\n".join(self.itemList[index_start:index_end]).replace("```", "")
             pages_to_send.append(
-                '```markdown\n' + content +
-                '\n\n~ Page {:02d} of {:02d} ~'.format(i + 1, page_counter) +
-                '```')
+                "```markdown\n" + content + "\n\n~ Page {:02d} of {:02d} ~".format(i + 1, page_counter) + "```"
+            )
         return pages_to_send, page_counter
 
     def _organize_code_blocks_autosize(self, pages_to_send):
@@ -148,37 +148,35 @@ class Pages:
         for i in range(len(self.itemList)):
             # truncate quotes that are too long
             if len(self.itemList[i]) > 1200:
-                self.itemList[i] = self.itemList[i][:1200] + '...'
+                self.itemList[i] = self.itemList[i][:1200] + "..."
             length += len(self.itemList[i])
             if length > 1894:
                 pages_to_send.append(
-                    '```markdown\n' + self.title + ':\n\n' +
-                    '\n'.join(self.itemList[cache:i]).replace('```', ''))
+                    "```markdown\n" + self.title + ":\n\n" + "\n".join(self.itemList[cache:i]).replace("```", "")
+                )
                 cache = i
                 length = len(self.itemList[i])
                 page_counter += 1
-            elif i == len(self.itemList) - 1:    # edge case
+            elif i == len(self.itemList) - 1:  # edge case
                 pages_to_send.append(
-                    '```markdown\n' + self.title + ':\n\n' +
-                    '\n'.join(self.itemList[cache:i + 1]).replace('```', ''))
+                    "```markdown\n" + self.title + ":\n\n" + "\n".join(self.itemList[cache : i + 1]).replace("```", "")
+                )
                 page_counter += 1
         for i in range(len(pages_to_send)):
-            pages_to_send[i] += '\n\n~ Page {:02d} of {:02d} ~'.format(
-                i, page_counter) + '```'
+            pages_to_send[i] += "\n\n~ Page {:02d} of {:02d} ~".format(i, page_counter) + "```"
         return pages_to_send, page_counter
 
     def _organize_embeds_dict(self, pages_to_send):
         item_per_page = self.displayOption[1]
-        page_counter = math.ceil(len(self.itemList['names']) / item_per_page)
+        page_counter = math.ceil(len(self.itemList["names"]) / item_per_page)
         em = discord.Embed(title=self.title, colour=0xDA291C)
         for i in range(page_counter):
-            em.set_footer(
-                text='Page {:02d} of {:02d}'.format(i + 1, page_counter))
+            em.set_footer(text="Page {:02d} of {:02d}".format(i + 1, page_counter))
             index_start = item_per_page * i
             index_end = item_per_page * (i + 1)
             for name, val in zip(
-                    self.itemList['names'][index_start:index_end],
-                    self.itemList['values'][index_start:index_end]):
+                self.itemList["names"][index_start:index_end], self.itemList["values"][index_start:index_end]
+            ):
                 em.add_field(name=name, value=val)
             pages_to_send.append(em)
             em = discord.Embed(title=self.title, colour=0xDA291C)
@@ -189,13 +187,12 @@ class Pages:
         page_counter = math.ceil(len(self.itemList) / item_per_page)
         em = discord.Embed(title=self.title, colour=0xDA291C)
         for i in range(page_counter):
-            em.set_footer(
-                text='Page {:02d} of {:02d}'.format(i + 1, page_counter))
+            em.set_footer(text="Page {:02d} of {:02d}".format(i + 1, page_counter))
             index_start = item_per_page * i
             index_end = item_per_page * (i + 1)
-            em.description = ''.join(self.itemList[index_start:index_end])
+            em.description = "".join(self.itemList[index_start:index_end])
             if len(em.description) > 1200:
-                em.description = em.description[:1200] + '...'
+                em.description = em.description[:1200] + "..."
             pages_to_send.append(em)
             em = discord.Embed(title=self.title, colour=0xDA291C)
         return pages_to_send, page_counter
@@ -225,24 +222,20 @@ class Pages:
                 except:
                     pass
             else:
-                if self.displayOption[0] < 2:    # code blocks
-                    await self.message.edit(
-                        content=self.pagesToSend[self.currentPage],
-                        delete_after=self.timeout)
-                else:    # embeds
-                    await self.message.edit(
-                        embed=self.pagesToSend[self.currentPage],
-                        delete_after=self.timeout)
+                if self.displayOption[0] < 2:  # code blocks
+                    await self.message.edit(content=self.pagesToSend[self.currentPage], delete_after=self.timeout)
+                else:  # embeds
+                    await self.message.edit(embed=self.pagesToSend[self.currentPage], delete_after=self.timeout)
                 return
         else:
             if self.displayOption[0] < 2:
                 self.message = await self.channel.send(
-                    content=self.pagesToSend[self.currentPage],
-                    delete_after=self.timeout)
+                    content=self.pagesToSend[self.currentPage], delete_after=self.timeout
+                )
             else:
                 self.message = await self.channel.send(
-                    embed=self.pagesToSend[self.currentPage],
-                    delete_after=self.timeout)
+                    embed=self.pagesToSend[self.currentPage], delete_after=self.timeout
+                )
             for (emoji, _) in self.actions:
                 await self.message.add_reaction(emoji)
             return
@@ -286,8 +279,7 @@ class Pages:
         await self._show_page(self.currentPage)
         while not self.edit_mode and self.message:
             try:
-                reaction, user = await self.bot.wait_for(
-                    'reaction_add', check=self._react_check)
+                reaction, user = await self.bot.wait_for("reaction_add", check=self._react_check)
             except:
                 try:
                     await self.message.delete()
