@@ -33,8 +33,7 @@ async def _get_name_from_id(self, user_id) -> str:
 
 
 async def add_member_if_needed(self, c, user_id) -> None:
-    c.execute("SELECT Name FROM Members WHERE ID = ?", (user_id, ))
+    c.execute("SELECT Name FROM Members WHERE ID = ?", (user_id,))
     if not c.fetchone():
         name = await _get_name_from_id(self, user_id)
-        c.execute("INSERT OR IGNORE INTO Members VALUES (?,?)",
-                  (user_id, name))
+        c.execute("INSERT OR IGNORE INTO Members VALUES (?,?)", (user_id, name))

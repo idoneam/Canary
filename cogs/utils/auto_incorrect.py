@@ -10,7 +10,7 @@ def _swap(s, i):
     """
     si = s[i]
     sj = s[i + 1]
-    s = s[:i] + sj + si + s[i + 2:]
+    s = s[:i] + sj + si + s[i + 2 :]
     return s
 
 
@@ -26,7 +26,7 @@ def _omit(s, i):
     Given string s and index i, it omits the i-th character.
     By @lazho
     """
-    return s[:i] + s[i + 1:]
+    return s[:i] + s[i + 1 :]
 
 
 REPLACE_CASES = {
@@ -54,7 +54,7 @@ REPLACE_CASES = {
     "like": "liek",
     "fucking": "ducking",
     "sick": "dick",
-    "gum": "cum"
+    "gum": "cum",
 }
 
 

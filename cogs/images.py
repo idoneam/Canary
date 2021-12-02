@@ -41,72 +41,63 @@ class Images(commands.Cog):
         """
         Transform Cartesian to polar coordinates.
         """
-        await ih.filter_image(self.bot.loop, ih.polar, ctx, self.hist_lim,
-                              self.max_size)
+        await ih.filter_image(self.bot.loop, ih.polar, ctx, self.hist_lim, self.max_size)
 
     @commands.command()
     async def cart(self, ctx):
         """
         Transform from polar to Cartesian coordinates.
         """
-        await ih.filter_image(self.bot.loop, ih.cart, ctx, self.hist_lim,
-                              self.max_size)
+        await ih.filter_image(self.bot.loop, ih.cart, ctx, self.hist_lim, self.max_size)
 
     @commands.command()
     async def blur(self, ctx, iterations: int = 1):
         """
         Blur the image
         """
-        await ih.filter_image(self.bot.loop, ih.blur, ctx, self.hist_lim,
-                              self.max_size, iterations, self.max_itr)
+        await ih.filter_image(self.bot.loop, ih.blur, ctx, self.hist_lim, self.max_size, iterations, self.max_itr)
 
-    @commands.command(aliases=['left', 'right'])
+    @commands.command(aliases=["left", "right"])
     async def hblur(self, ctx, radius: int = 10):
         """
         Blur the image horizontally
         """
-        await ih.filter_image(self.bot.loop, ih.hblur, ctx, self.hist_lim,
-                              self.max_size, radius, self.max_rad)
+        await ih.filter_image(self.bot.loop, ih.hblur, ctx, self.hist_lim, self.max_size, radius, self.max_rad)
 
-    @commands.command(aliases=['up', 'down'])
+    @commands.command(aliases=["up", "down"])
     async def vblur(self, ctx, radius: int = 10):
         """
         Blur the image vertically
         """
-        await ih.filter_image(self.bot.loop, ih.vblur, ctx, self.hist_lim,
-                              self.max_size, radius, self.max_rad)
+        await ih.filter_image(self.bot.loop, ih.vblur, ctx, self.hist_lim, self.max_size, radius, self.max_rad)
 
-    @commands.command(aliases=['zoom', 'radial'])
+    @commands.command(aliases=["zoom", "radial"])
     async def rblur(self, ctx, radius: int = 10):
         """
         Radial blur
         """
-        await ih.filter_image(self.bot.loop, ih.rblur, ctx, self.hist_lim,
-                              self.max_size, radius, self.max_rad)
+        await ih.filter_image(self.bot.loop, ih.rblur, ctx, self.hist_lim, self.max_size, radius, self.max_rad)
 
-    @commands.command(aliases=['circle', 'circular', 'spin'])
+    @commands.command(aliases=["circle", "circular", "spin"])
     async def cblur(self, ctx, radius: int = 10):
         """
         Circular blur
         """
-        await ih.filter_image(self.bot.loop, ih.cblur, ctx, self.hist_lim,
-                              self.max_size, radius, self.max_rad)
+        await ih.filter_image(self.bot.loop, ih.cblur, ctx, self.hist_lim, self.max_size, radius, self.max_rad)
 
-    @commands.command(aliases=['df', 'dfry', 'fry'])
+    @commands.command(aliases=["df", "dfry", "fry"])
     async def deepfry(self, ctx, iterations: int = 1):
         """
         Deep fry an image, mhmm
         """
-        await ih.filter_image(self.bot.loop, ih.deepfry, ctx, self.hist_lim,
-                              self.max_size, iterations, self.max_itr)
+        await ih.filter_image(self.bot.loop, ih.deepfry, ctx, self.hist_lim, self.max_size, iterations, self.max_itr)
 
     @commands.command()
     async def noise(self, ctx, iterations: int = 1):
         """
         Add some noise to tha image!!
         """
-        await ih.filter_image(self.bot.loop, ih.noise, ctx, self.hist_lim,
-                              self.max_size, iterations, self.max_itr)
+        await ih.filter_image(self.bot.loop, ih.noise, ctx, self.hist_lim, self.max_size, iterations, self.max_itr)
 
 
 def setup(bot):
