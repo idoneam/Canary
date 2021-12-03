@@ -303,25 +303,23 @@ class Music(commands.Cog):
 
         while True:
             await self.track_lock.acquire()
-            now_playing = None
+
+            if ctx.voice_client is not None and len(ctx.voice_client.channel.members) == 1:
+                break
+
             if self.skip_opts is None:
-                await ctx.trigger_typing()
 
                 if ctx.voice_client is None:
                     break
 
                 if self.looping_track:
+                    await ctx.trigger_typing()
+                    if self.playing is None:
+                        self.playing = self.track_queue.popleft()
+                        self.backup.append(self.playing)
                     self.play_track(ctx)
-                elif not self.track_queue:
-                    if not self.looping_queue:
-                        break
-                    self.track_queue = self.backup
-                    self.backup = deque()
-                else:
-                    self.playing = self.track_queue.popleft()
-                    self.backup.append(self.playing)
-                    now_playing = (
-                        discord.Embed(colour=random.randint(0, 0xFFFFFF), title="now playing")
+                    await ctx.send(
+                        embed=discord.Embed(colour=random.randint(0, 0xFFFFFF), title="now playing")
                         .add_field(
                             name="track title",
                             value=mk_title_string(self.playing[0]),
@@ -329,8 +327,25 @@ class Music(commands.Cog):
                         )
                         .set_footer(text=f"submitted by: {self.playing[1]}")
                     )
+                elif not self.track_queue:
+                    if not self.looping_queue:
+                        break
+                    self.track_queue = self.backup
+                    self.backup = deque()
+                else:
+                    await ctx.trigger_typing()
+                    self.playing = self.track_queue.popleft()
+                    self.backup.append(self.playing)
                     self.play_track(ctx)
-                    await ctx.send(embed=now_playing)
+                    await ctx.send(
+                        embed=discord.Embed(colour=random.randint(0, 0xFFFFFF), title="now playing")
+                        .add_field(
+                            name="track title",
+                            value=mk_title_string(self.playing[0]),
+                            inline=False,
+                        )
+                        .set_footer(text=f"submitted by: {self.playing[1]}")
+                    )
             else:
                 skip_str, delta = self.skip_opts
                 self.play_track(ctx, skip_str=skip_str, delta=delta)
@@ -341,9 +356,13 @@ class Music(commands.Cog):
 
         if ctx.voice_client is not None:
             await ctx.voice_client.disconnect()
-            await ctx.send("queue is empty, finished playing all tracks.")
+            await ctx.send(
+                "no one is in the voice channel, disconnecting."
+                if self.track_queue
+                else "finished playing all tracks, disconnecting."
+            )
         else:
-            await ctx.send("stopped playing, disconnected.")
+            await ctx.send("disconnected from voice channel.")
 
         self.playing = None
         self.track_lock.release()
