@@ -122,9 +122,10 @@ class Music(commands.Cog):
         monocommand used for music features.
         write `?music help subcommand` for details on how each command works (arguments are shown as semicolon separated list).
         available subcommands are:
-        - play
+        - play (note: this will interrupt the currently playing song)
         - playback_speed | ps
         - goto_time | gt
+        - forward_time | ft
         - backwards_time | bt | rewind
         - loop
         - print_queue | pq
@@ -133,6 +134,7 @@ class Music(commands.Cog):
         - insert
         - clear_queue | cq
         - clear_history | ch
+        - queue | q
         - volume | vol | v
         - stop
         - next | next
@@ -303,6 +305,8 @@ class Music(commands.Cog):
 
         while True:
             await self.track_lock.acquire()
+            if self.playing is not None:
+                self.backup.append(self.playing)
 
             if ctx.voice_client is not None and len(ctx.voice_client.channel.members) == 1:
                 break
@@ -316,7 +320,6 @@ class Music(commands.Cog):
                     await ctx.trigger_typing()
                     if self.playing is None:
                         self.playing = self.track_queue.popleft()
-                        self.backup.append(self.playing)
                     self.play_track(ctx)
                     await ctx.send(
                         embed=discord.Embed(colour=random.randint(0, 0xFFFFFF), title="now playing")
@@ -335,7 +338,6 @@ class Music(commands.Cog):
                 else:
                     await ctx.trigger_typing()
                     self.playing = self.track_queue.popleft()
-                    self.backup.append(self.playing)
                     self.play_track(ctx)
                     await ctx.send(
                         embed=discord.Embed(colour=random.randint(0, 0xFFFFFF), title="now playing")
@@ -426,7 +428,7 @@ class Music(commands.Cog):
             queue_embed.add_field(name="track queue status", value="track queue is currently empty")
             return await ctx.send(embed=queue_embed)
 
-        queue_copy = list(self.total_queue() if self.looping_queue else self.track_queue)
+        queue_copy = list(self.total_queue())
 
         q_len = len(queue_copy)
 
