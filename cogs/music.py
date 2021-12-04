@@ -94,7 +94,7 @@ class Music(commands.Cog):
     def total_len(self) -> int:
         return len(self.track_queue) + len(self.backup) if self.looping_queue else len(self.track_queue)
 
-    def play_track(self, ctx, *, after=None, skip_str: Optional[str] = None, delta: int = 0):
+    def play_track(self, ctx, *, skip_str: Optional[str] = None, delta: int = 0):
         ctx.voice_client.play(
             discord.PCMVolumeTransformer(
                 discord.FFmpegPCMAudio(
@@ -104,7 +104,7 @@ class Music(commands.Cog):
                 ),
                 self.volume_level / 100,
             ),
-            after=after or self.release_lock,
+            after=self.release_lock,
         )
         self.track_start_time = time.perf_counter() - delta
 
@@ -137,7 +137,7 @@ class Music(commands.Cog):
         - queue | q
         - volume | vol | v
         - stop
-        - next | next
+        - skip | next
         - back | previous
         - pause
         - resume
@@ -307,7 +307,6 @@ class Music(commands.Cog):
             await self.track_lock.acquire()
             if self.playing is not None:
                 self.backup.append(self.playing)
-
             if ctx.voice_client is not None and len(ctx.voice_client.channel.members) == 1:
                 break
 
@@ -335,6 +334,7 @@ class Music(commands.Cog):
                         break
                     self.track_queue = self.backup
                     self.backup = deque()
+                    self.track_lock.release()
                 else:
                     await ctx.trigger_typing()
                     self.playing = self.track_queue.popleft()
