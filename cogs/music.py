@@ -249,7 +249,7 @@ class Music(commands.Cog):
                 return await ctx.send("bot is currently playing a track and you did not specify a new track to play.")
 
         if url:
-            await ctx.trigger_typing()
+            msg = await ctx.send("fetching request data, please be patient.")
             ret = await self.get_info(url)
             if ret is None:
                 return await ctx.send("could not find track/playlist.")
@@ -257,8 +257,13 @@ class Music(commands.Cog):
             author_str = str(ctx.author)
             self.track_queue.extendleft((track, author_str) for track in reversed(entries))
             self.looping_track = False
-            if not single:
-                await ctx.send(embed=mk_change_embed(data, entries, "playing playlist", f"submitted by: {author_str}"))
+            if single:
+                await msg.delete()
+            else:
+                await msg.edit(
+                    content=None,
+                    embed=mk_change_embed(data, entries, "playing playlist", f"submitted by: {author_str}"),
+                )
             if not in_main:
                 ctx.voice_client.stop()
 
@@ -279,7 +284,6 @@ class Music(commands.Cog):
                     break
 
                 if self.looping_track:
-                    await ctx.trigger_typing()
                     if self.playing is None:
                         self.playing = self.track_queue.popleft()
                         self.track_history.append(self.playing)
@@ -296,7 +300,6 @@ class Music(commands.Cog):
                     self.track_history = deque()
                     self.track_lock.release()
                 else:
-                    await ctx.trigger_typing()
                     self.playing = self.track_queue.popleft()
                     self.track_history.append(self.playing)
                     self.play_track(ctx)
@@ -516,28 +519,28 @@ class Music(commands.Cog):
         arguments: (integer)
         """
 
-        await ctx.trigger_typing()
-
         ltup = self.from_total(track_index)
         if ltup is None:
             return await ctx.send("insertion index out of bounds.")
         track_list, ins_index = ltup
 
+        msg = await ctx.send("fetching request data, please be patient.")
         ret = await self.get_info(url)
         if ret is None:
-            return await ctx.send("could not find track/playlist.")
+            return await msg.edit(content="could not find track/playlist.")
         data, entries, single = ret
         author_str = str(ctx.author)
         for track in reversed(entries):
             track_list.insert(ins_index, (track, author_str))
 
-        await ctx.send(
+        await msg.edit(
+            content=None,
             embed=mk_change_embed(
                 data,
                 entries,
                 f"inserted {'song' if single else 'playlist'} at index {track_index}",
                 f"submitted by: {author_str}",
-            )
+            ),
         )
 
     @check_banned
@@ -571,18 +574,18 @@ class Music(commands.Cog):
         if url is None:
             return await self.print_queue(ctx, 0)
 
-        await ctx.trigger_typing()
-
+        msg = await ctx.send("fetching request data, please be patient.")
         ret = await self.get_info(url)
         if ret is None:
-            return await ctx.send("could not find track/playlist.")
+            return await msg.edit(content="could not find track/playlist.")
         data, entries, single = ret
         author_str = str(ctx.author)
         self.track_queue.extend((track, author_str) for track in entries)
-        await ctx.send(
+        await msg.edit(
+            content=None,
             embed=mk_change_embed(
                 data, entries, f"queued up {'song' if single else 'playlist'}", f"submitted by: {author_str}"
-            )
+            ),
         )
 
     @check_playing
