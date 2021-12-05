@@ -400,7 +400,7 @@ class Music(commands.Cog):
             title=f"track queue as of {ctx.message.created_at.strftime('%Y-%m-%d %H:%M:%S')}",
         )
 
-        if not self.track_queue:
+        if not self.total_queue():
             queue_embed.add_field(name="track queue status", value="track queue is currently empty")
             return await ctx.send(embed=queue_embed)
 
@@ -414,7 +414,7 @@ class Music(commands.Cog):
         curr_index: int = start_idx % q_len
         change_state: bool = True
         queue_embed.description = (
-            f"duration: {mk_duration_string(self.track_queue)}, "
+            f"duration: {mk_duration_string(self.total_queue())}, "
             f"length: {self.total_len()} tracks"
             f"{' (looping)' if self.looping_queue else ''}"
         )
