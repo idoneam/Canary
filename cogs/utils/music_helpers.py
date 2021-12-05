@@ -37,7 +37,7 @@ QUEUE_ACTIONS = {
 }
 
 
-def conv_arg(conv, trg, raise_on_none):
+def conv_arg(conv, raise_on_none, trg):
     if raise_on_none and trg is None:
         raise MusicArgConvertError
     try:
