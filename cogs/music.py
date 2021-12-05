@@ -114,7 +114,11 @@ class Music(commands.Cog):
         if idx >= q_len or idx < -q_len:
             return None
         idx = idx % q_len
-        return (self.track_queue, idx) if (idx < len(self.track_queue)) else (self.track_history, idx - len(self.track_queue))
+        return (
+            (self.track_queue, idx)
+            if (idx < len(self.track_queue))
+            else (self.track_history, idx - len(self.track_queue))
+        )
 
     def subc_decision(self, subc: str) -> tuple[Callable, Optional[Callable]]:
         match subc:
