@@ -34,6 +34,7 @@ from .utils.music_helpers import (
     YTDL,
     QUEUE_ACTIONS,
     check_playing,
+    insert_converter,
     parse_time,
     mk_title_string,
     mk_duration_string,
@@ -141,7 +142,7 @@ class Music(commands.Cog):
             case "remove" | "pop":
                 return (self.remove_track, conv_arg(int, True))
             case "insert":
-                return (self.insert_track, conv_arg(lambda x: (lambda y, z: (int(y), z))(*x.split(maxsplit=1)), True))
+                return (self.insert_track, conv_arg(insert_converter, True))
             case "clear_queue" | "cq":
                 return (self.clear_queue, None)
             case "clear_hist" | "ch":

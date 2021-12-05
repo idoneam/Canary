@@ -49,6 +49,14 @@ def conv_arg(conv, raise_on_none):
     return inner
 
 
+def insert_converter(arg: str):
+    try:
+        idx, url = arg.split(maxsplit=1)
+    except ValueError as e:
+        raise MusicArgConvertError(e)
+    return (int(idx), url)
+
+
 def check_playing(func):
     @wraps(func)
     async def wrapper(self, ctx, *args, **kwargs):
