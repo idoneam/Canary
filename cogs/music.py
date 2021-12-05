@@ -415,7 +415,7 @@ class Music(commands.Cog):
                 await ctx.send(f"queue will now{' ' if self.looping_queue else ' no longer '}loop.")
             case "track" | "t":
                 self.looping_track = not self.looping_track
-                await ctx.send(f"invididual track will now{' ' if self.looping_track else ' no longer '}loop.")
+                await ctx.send(f"individual track will now{' ' if self.looping_track else ' no longer '}loop.")
 
     async def print_queue(self, ctx, start_idx: int):
 
