@@ -49,7 +49,7 @@ class Music(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.track_queue: deque = deque()
-        self.backup: deque = deque()
+        self.track_history: deque = deque()
         self.looping_queue: bool = False
         self.track_lock: asyncio.Lock = asyncio.Lock()
         self.playing = None
@@ -87,13 +87,13 @@ class Music(commands.Cog):
         self.pause_start = None
 
     def compute_curr_time(self, paused: bool) -> float:
-        return (self.pause_start - self.track_start_time) if paused else (time.perf_counter() - self.track_start_time)
+        return (self.pause_start if paused else time.perf_counter()) - self.track_start_time
 
     def total_queue(self) -> Iterable:
-        return chain(self.track_queue, self.backup) if self.looping_queue else self.track_queue
+        return chain(self.track_queue, self.track_history) if self.looping_queue else self.track_queue
 
     def total_len(self) -> int:
-        return len(self.track_queue) + len(self.backup) if self.looping_queue else len(self.track_queue)
+        return len(self.track_queue) + len(self.track_history) if self.looping_queue else len(self.track_queue)
 
     def play_track(self, ctx, *, skip_str: Optional[str] = None, delta: int = 0):
         ctx.voice_client.play(
@@ -110,18 +110,17 @@ class Music(commands.Cog):
         self.track_start_time = time.perf_counter() - delta
 
     def from_total(self, idx):
-
         q_len: int = self.total_len()
         if idx >= q_len or idx < -q_len:
             return None
         idx = idx % q_len
-        return (self.track_queue, idx) if (idx < len(self.track_queue)) else (self.backup, idx - len(self.track_queue))
+        return (self.track_queue, idx) if (idx < len(self.track_queue)) else (self.track_history, idx - len(self.track_queue))
 
     def subc_decision(self, subc: str) -> tuple[Callable, Optional[Callable]]:
         match subc:
             case "play":
                 return (self.play, lambda x: x)
-            case "playback_speed" | "ps":
+            case "playback_speed" | "ps" | "speed":
                 return (self.playback_speed, conv_arg(float, True))
             case "goto_time" | "gt":
                 return (self.goto_time, conv_arg(lambda x: x, True))
@@ -167,7 +166,7 @@ class Music(commands.Cog):
         write `?music help subcommand` for details on how each command works (arguments are shown as semicolon separated list).
         available subcommands are:
         - play (note: this will interrupt the currently playing song)
-        - playback_speed | ps
+        - playback_speed | speed | ps
         - goto_time | gt
         - forward_time | ft
         - backwards_time | bt | rewind
@@ -194,10 +193,10 @@ class Music(commands.Cog):
             if args is None:
                 return await ctx.send(self.music.help)
             try:
-                tup = self.subc_decision(args)
+                fn, _ = self.subc_decision(args)
             except ValueError:
                 return await ctx.send(f"music subcommand `{args}` could not be found.")
-            return await ctx.send(getdoc(tup[0]))
+            return await ctx.send(getdoc(fn))
 
         try:
             fn, conv = self.subc_decision(subcommand)
@@ -279,7 +278,7 @@ class Music(commands.Cog):
                     await ctx.trigger_typing()
                     if self.playing is None:
                         self.playing = self.track_queue.popleft()
-                        self.backup.append(self.playing)
+                        self.track_history.append(self.playing)
                     self.play_track(ctx)
                     await ctx.send(
                         embed=mk_change_embed(
@@ -289,13 +288,13 @@ class Music(commands.Cog):
                 elif not self.track_queue:
                     if not self.looping_queue:
                         break
-                    self.track_queue = self.backup
-                    self.backup = deque()
+                    self.track_queue = self.track_history
+                    self.track_history = deque()
                     self.track_lock.release()
                 else:
                     await ctx.trigger_typing()
                     self.playing = self.track_queue.popleft()
-                    self.backup.append(self.playing)
+                    self.track_history.append(self.playing)
                     self.play_track(ctx)
                     await ctx.send(
                         embed=mk_change_embed(
@@ -336,6 +335,10 @@ class Music(commands.Cog):
         self.speed_flag = (
             f"atempo={self.speed_val}"
             if 0.5 < self.speed_val < 2
+            # note: ffmpeg only allows speed changes between 0.5 and 2
+            # however, ffmpeg does allow for successive chaining if speed changes
+            # thus, for speed changes outside of [0.5,2], we chain two changes
+            # using the sqrt of the input value, since successive changes are multiplicative
             else f"atempo=sqrt({self.speed_val}),atempo=sqrt({self.speed_val})"
         )
         parsed = parse_time(str(round(self.compute_curr_time(ctx.voice_client.is_paused()))))
@@ -385,7 +388,7 @@ class Music(commands.Cog):
             case "queue" | "q":
                 self.looping_queue = not self.looping_queue
                 await ctx.send(f"queue will now{' ' if self.looping_queue else ' no longer '}loop.")
-            case "track" | "t":
+            case "track" | "t" | "song":
                 self.looping_track = not self.looping_track
                 await ctx.send(f"individual track will now{' ' if self.looping_track else ' no longer '}loop.")
 
@@ -542,7 +545,7 @@ class Music(commands.Cog):
 
         self.track_queue.clear()
         if self.looping_queue:
-            self.backup.clear()
+            self.track_history.clear()
         await ctx.send("cleared current track queue.")
 
     async def clear_hist(self, ctx):
@@ -551,7 +554,7 @@ class Music(commands.Cog):
         arguments: none
         """
 
-        self.backup.clear()
+        self.track_history.clear()
         await ctx.send("cleared current track history.")
 
     @check_banned
@@ -612,12 +615,15 @@ class Music(commands.Cog):
 
         if queue_amount < 0:
             return await ctx.send("cannot skip a negative amount of tracks.")
+
         len_q: int = len(self.track_queue)
         if (not self.looping_queue) and queue_amount > len_q:
             return await ctx.send(f"cannot skip more tracks than there are tracks in the queue ({len_q}).")
+
         self.looping_track = False
         for _ in range(queue_amount % (len_q + 1)):
-            self.backup.append(self.track_queue.popleft())
+            self.track_history.append(self.track_queue.popleft())
+
         ctx.voice_client.stop()
         await ctx.send(f"skipped current track{f' and {queue_amount} more from the queue' if queue_amount else ''}.")
 
@@ -636,12 +642,12 @@ class Music(commands.Cog):
 
         if queue_amount < 1:
             return await ctx.send("cannot rewind to less than one track ago.")
-        if queue_amount > len(self.backup):
-            return await ctx.send(f"cannot rewind to more than {len(self.backup)} tracks.")
+        if queue_amount > len(self.track_history):
+            return await ctx.send(f"cannot rewind to more than {len(self.track_history)} tracks.")
 
         self.looping_track = False
         for _ in range(queue_amount):
-            self.track_queue.appendleft(self.backup.pop())
+            self.track_queue.appendleft(self.track_history.pop())
         ctx.voice_client.stop()
         await ctx.send(
             f"moved backwards by {queue_amount - 1} track{'s' if queue_amount == 2 else ''} in the queue."

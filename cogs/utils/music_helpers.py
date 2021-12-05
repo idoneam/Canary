@@ -93,13 +93,13 @@ def mk_duration_string(track_iter: Iterable) -> str:
 
 
 def parse_time(time_str: str) -> int:
-    total: int = 0
+    total_seconds: int = 0
     for index, substr in enumerate(reversed(time_str.split(":"))):
         if substr.isdigit():
-            total += int(substr) * (60 ** index)
+            total_seconds += int(substr) * (60 ** index)
         else:
             raise ValueError
-    return total
+    return total_seconds
 
 
 def time_func(func):
@@ -115,6 +115,8 @@ def time_func(func):
         ctx.voice_client.stop()
         await ctx.send(f"moved to `{self.skip_opts[0]}` in currently playing track.")
 
+    # note: not using functools.wraps so that
+    # function type signature gets changed
     wrapper.__name__ = func.__name__
     wrapper.__doc__ = func.__doc__
 
