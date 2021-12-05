@@ -125,27 +125,27 @@ class Music(commands.Cog):
         match subc:
             case "play":
                 return (self.play, lambda x: x)
-            case "playback_speed" | "ps" | "speed":
+            case "playback_speed" | "playbackspeed" | "ps" | "speed":
                 return (self.playback_speed, conv_arg(float, True))
-            case "goto_time" | "gt":
+            case "goto_time" | "gototime" | "gt":
                 return (self.goto_time, conv_arg(lambda x: x, True))
-            case "forward_time" | "ft":
+            case "forward_time" | "forwardtime" | "ft":
                 return (self.forward_time, conv_arg(lambda x: x, True))
-            case "backwards_time" | "bt" | "rewind":
-                return (self.backwards_time, conv_arg(lambda x: "30" if x is None else x, False))
+            case "backward_time" | "backwardtime" | "bt" | "rewind":
+                return (self.backward_time, conv_arg(lambda x: "30" if x is None else x, False))
             case "loop":
                 return (self.loop, conv_arg(lambda x: x, True))
-            case "print_queue" | "pq":
+            case "print_queue" | "printqueue" | "pq":
                 return (self.print_queue, conv_arg(lambda x: 0 if x is None else int(x), False))
-            case "status" | "now_playing" | "np":
+            case "status" | "now_playing" | "nowplaying" | "np":
                 return (self.music_status, None)
             case "remove" | "pop":
                 return (self.remove_track, conv_arg(int, True))
             case "insert":
                 return (self.insert_track, conv_arg(insert_converter, True))
-            case "clear_queue" | "cq":
+            case "clear_queue" | "clearqueue" | "cq":
                 return (self.clear_queue, None)
-            case "clear_hist" | "ch":
+            case "clear_hist" | "clearhist" | "ch":
                 return (self.clear_hist, None)
             case "queue" | "q":
                 return (self.queue_track, lambda x: x)
@@ -168,28 +168,28 @@ class Music(commands.Cog):
     async def music(self, ctx, subcommand: Optional[str] = None, *, args: Optional[str] = None):
         """
         monocommand used for music features.
-        write `?music help subcommand` for details on how each command works (arguments are shown as semicolon separated list).
+        use `music help subcommand` for details on how each command works (arguments are shown as semicolon separated list).
         available subcommands are:
-        - play (note: this will interrupt the currently playing song)
-        - playback_speed | speed | ps
-        - goto_time | gt
-        - forward_time | ft
-        - backwards_time | bt | rewind
-        - loop
-        - print_queue | pq
-        - status | now_playing | np
-        - remove | pop
-        - insert
-        - clear_queue | cq
-        - clear_history | ch
-        - queue | q
-        - volume | vol | v
-        - stop
-        - skip | next
-        - back | previous
-        - pause
-        - resume
-        - help
+        - `play` (note: this will interrupt the currently playing song)
+        - `playback_speed` | `playbackspeed` | `speed` | `ps`
+        - `goto_time` | `gototime` | `gt`
+        - `forward_time` | `forwardtime` | `ft`
+        - `backward_time` | `backwardtime` | `bt` | `rewind`
+        - `loop`
+        - `print_queue` | `printqueue` | `pq`
+        - `status` | `now_playing` | `nowplaying` | `np`
+        - `remove` | `pop`
+        - `insert`
+        - `clear_queue` | `clearqueue` | `cq`
+        - `clear_history` | `clearhistory` | `ch`
+        - `queue` | `q`
+        - `volume` | `vol` | `v`
+        - `stop`
+        - `skip` | `next`
+        - `back` | `previous`
+        - `pause`
+        - `resume`
+        - `help`
         """
 
         if subcommand is None:
@@ -377,7 +377,7 @@ class Music(commands.Cog):
     @check_playing
     @check_banned
     @time_func
-    def backwards_time(self, seconds: int, paused: bool):
+    def backward_time(self, seconds: int, paused: bool):
         """
         move backwards in currently playing track
         arguments: (timestamp of format H:M:S [defaults to 30 seconds])

@@ -147,7 +147,7 @@ def check_banned(func):
     @wraps(func)
     async def wrapper(self, ctx, *args, **kwargs):
         if discord.utils.get(ctx.author.roles, name=self.ban_role):
-            return await ctx.send("you cannot decide which tracks to play.")
+            return await ctx.send(f"you have the role `{self.ban_role}`, you are not allowed to do this.")
         return await func(self, ctx, *args, **kwargs)
 
     return wrapper
