@@ -25,6 +25,10 @@ YTDL = yt_dlp.YoutubeDL(
     }
 )
 
+# dict used in print_queue subcommand, determines the next index
+# based on the react (keys) and whether the message needs to change
+# first argument (i) stands for index
+# second argument (l) stands for length of list
 QUEUE_ACTIONS = {
     "⏪": lambda i, _l: (0, i != 0),
     "◀": lambda i, l: ((i - 1) % l, True),
