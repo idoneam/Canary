@@ -37,13 +37,16 @@ QUEUE_ACTIONS = {
 }
 
 
-def conv_arg(conv, raise_on_none, trg):
-    if raise_on_none and trg is None:
-        raise MusicArgConvertError
-    try:
-        return conv(trg)
-    except ValueError as e:
-        raise MusicArgConvertError(e)
+def conv_arg(conv, raise_on_none):
+    def inner(trg):
+        if raise_on_none and trg is None:
+            raise MusicArgConvertError
+        try:
+            return conv(trg)
+        except ValueError as e:
+            raise MusicArgConvertError(e)
+
+    return inner
 
 
 def check_playing(func):

@@ -119,46 +119,46 @@ class Music(commands.Cog):
 
     def subc_decision(self, subc: str) -> tuple[Callable, Optional[Callable]]:
         match subc:
-                case "play":
-                    return (self.play, lambda x: x)
-                case "playback_speed" | "ps":
-                    return (self.playback_speed, partial(conv_arg, float, True))
-                case "goto_time" | "gt":
-                    return (self.goto_time, partial(conv_arg, lambda x: x, True))
-                case "forward_time" | "ft":
-                    return (self.forward_time, partial(conv_arg, lambda x: x , True))
-                case "backwards_time" | "bt" | "rewind":
-                    return (self.backwards_time, partial(conv_arg, lambda x: "30" if x is None else x, False))
-                case "loop":
-                    return (self.loop, partial(conv_arg, lambda x: x, True))
-                case "print_queue" | "pq":
-                    return (self.print_queue, partial(conv_arg, lambda x: 0 if x is None else int(x), False))
-                case "status" | "now_playing" | "np":
-                    return (self.music_status, None)
-                case "remove" | "pop":
-                    return (self.remove_track, partial(conv_arg, int, True))
-                case "insert":
-                    return (self.insert_track, partial(conv_arg, lambda x: (lambda y, z: (int(y), z))(*x.split(maxsplit=1)), True))
-                case "clear_queue" | "cq":
-                    return (self.clear_queue, None)
-                case "clear_hist" | "ch":
-                    return (self.clear_hist, None)
-                case "queue" | "q":
-                    return (self.queue_track, partial(conv_arg, lambda x: x, True))
-                case "volume" | "vol" | "v":
-                    return (self.volume, partial(conv_arg, lambda x: float(x.strip("%")), True))
-                case "stop":
-                    return (self.stop, None)
-                case "skip" | "next":
-                    return (self.skip, partial(conv_arg, lambda x: 0 if x is None else int(x), False))
-                case "back" | "previous":
-                    return (self.backtrack, partial(conv_arg, lambda x: None if x is None else int(x), False))
-                case "pause":
-                    return (self.pause, None)
-                case "resume":
-                    return (self.resume, None)
-                case _: raise ValueError
-
+            case "play":
+                return (self.play, lambda x: x)
+            case "playback_speed" | "ps":
+                return (self.playback_speed, conv_arg(float, True))
+            case "goto_time" | "gt":
+                return (self.goto_time, conv_arg(lambda x: x, True))
+            case "forward_time" | "ft":
+                return (self.forward_time, conv_arg(lambda x: x, True))
+            case "backwards_time" | "bt" | "rewind":
+                return (self.backwards_time, conv_arg(lambda x: "30" if x is None else x, False))
+            case "loop":
+                return (self.loop, conv_arg(lambda x: x, True))
+            case "print_queue" | "pq":
+                return (self.print_queue, conv_arg(lambda x: 0 if x is None else int(x), False))
+            case "status" | "now_playing" | "np":
+                return (self.music_status, None)
+            case "remove" | "pop":
+                return (self.remove_track, conv_arg(int, True))
+            case "insert":
+                return (self.insert_track, conv_arg(lambda x: (lambda y, z: (int(y), z))(*x.split(maxsplit=1)), True))
+            case "clear_queue" | "cq":
+                return (self.clear_queue, None)
+            case "clear_hist" | "ch":
+                return (self.clear_hist, None)
+            case "queue" | "q":
+                return (self.queue_track, lambda x: x)
+            case "volume" | "vol" | "v":
+                return (self.volume, conv_arg(lambda x: float(x.strip("%")), True))
+            case "stop":
+                return (self.stop, None)
+            case "skip" | "next":
+                return (self.skip, conv_arg(lambda x: 0 if x is None else int(x), False))
+            case "back" | "previous":
+                return (self.backtrack, conv_arg(lambda x: None if x is None else int(x), False))
+            case "pause":
+                return (self.pause, None)
+            case "resume":
+                return (self.resume, None)
+            case _:
+                raise ValueError
 
     @commands.command(aliases=["m"])
     async def music(self, ctx, subcommand: Optional[str] = None, *, args: Optional[str] = None):
@@ -187,6 +187,7 @@ class Music(commands.Cog):
         - resume
         - help
         """
+
         if subcommand is None:
             return await ctx.send(self.music.help)
         if subcommand == "help":
@@ -211,9 +212,10 @@ class Music(commands.Cog):
             pass  # for proper argument parsing
         else:
             match converted:
-                case (*_,): await fn(ctx, *converted)
-                case _: await fn(ctx, converted)
-
+                case (*_,):
+                    await fn(ctx, *converted)
+                case _:
+                    await fn(ctx, converted)
 
     @check_banned
     async def play(self, ctx, url: Optional[str] = None):
@@ -264,8 +266,7 @@ class Music(commands.Cog):
 
         while True:
             await self.track_lock.acquire()
-            if self.playing is not None:
-                self.backup.append(self.playing)
+
             if ctx.voice_client is not None and len(ctx.voice_client.channel.members) == 1:
                 break
 
@@ -278,15 +279,12 @@ class Music(commands.Cog):
                     await ctx.trigger_typing()
                     if self.playing is None:
                         self.playing = self.track_queue.popleft()
+                        self.backup.append(self.playing)
                     self.play_track(ctx)
                     await ctx.send(
-                        embed=discord.Embed(colour=random.randint(0, 0xFFFFFF), title="now playing")
-                        .add_field(
-                            name="track title",
-                            value=mk_title_string(self.playing[0]),
-                            inline=False,
+                        embed=mk_change_embed(
+                            self.playing[0], [self.playing[0]], "now playing", f"submitted by: {self.playing[1]}"
                         )
-                        .set_footer(text=f"submitted by: {self.playing[1]}")
                     )
                 elif not self.track_queue:
                     if not self.looping_queue:
@@ -297,15 +295,12 @@ class Music(commands.Cog):
                 else:
                     await ctx.trigger_typing()
                     self.playing = self.track_queue.popleft()
+                    self.backup.append(self.playing)
                     self.play_track(ctx)
                     await ctx.send(
-                        embed=discord.Embed(colour=random.randint(0, 0xFFFFFF), title="now playing")
-                        .add_field(
-                            name="track title",
-                            value=mk_title_string(self.playing[0]),
-                            inline=False,
+                        embed=mk_change_embed(
+                            self.playing[0], [self.playing[0]], "now playing", f"submitted by: {self.playing[1]}"
                         )
-                        .set_footer(text=f"submitted by: {self.playing[1]}")
                     )
             else:
                 skip_str, delta = self.skip_opts
@@ -420,7 +415,7 @@ class Music(commands.Cog):
         change_state: bool = True
         queue_embed.description = (
             f"duration: {mk_duration_string(self.track_queue)}, "
-            f"length: {len(self.track_queue)} tracks"
+            f"length: {self.total_len()} tracks"
             f"{' (looping)' if self.looping_queue else ''}"
         )
         queue_msg = await ctx.send(embed=queue_embed)
@@ -560,11 +555,14 @@ class Music(commands.Cog):
         await ctx.send("cleared current track history.")
 
     @check_banned
-    async def queue_track(self, ctx, url: str):
+    async def queue_track(self, ctx, url: Optional[str]):
         """
         adds a track to the end of the queue
         arguments: (link or title of track)
         """
+
+        if url is None:
+            return await self.print_queue(ctx, 0)
 
         await ctx.trigger_typing()
 
