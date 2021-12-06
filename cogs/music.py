@@ -501,6 +501,10 @@ class Music(commands.Cog):
         await ctx.send(embed=status_embed)
 
     async def remove_track(self, ctx, track_index: int):
+        """
+        remove a track from the track queue by index
+        arguments: (integer)
+        """
 
         ltup = self.from_total(track_index)
         if ltup is None:
@@ -519,8 +523,8 @@ class Music(commands.Cog):
     @check_banned
     async def insert_track(self, ctx, track_index: int, url: str):
         """
-        remove a track from the track queue by index
-        arguments: (integer)
+        insert a track into the track queue at a given index
+        arguments: (integer; link or title of track)
         """
 
         ltup = self.from_total(track_index)
