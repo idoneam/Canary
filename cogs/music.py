@@ -425,8 +425,8 @@ class Music(commands.Cog):
         curr_index: int = start_idx % q_len
         change_state: bool = True
         queue_embed.description = (
-            f"duration: {mk_duration_string(self.total_queue())}, "
-            f"length: {self.total_len()} tracks"
+            f"duration: {mk_duration_string(queue_copy)}, "
+            f"length: {q_len} track{'' if q_len == 1 else 's'}"
             f"{' (looping)' if self.looping_queue else ''}"
         )
         queue_msg = await ctx.send(embed=queue_embed)
@@ -485,7 +485,10 @@ class Music(commands.Cog):
                 name="playback speed", value=str(self.speed_val), inline=True
             ).add_field(
                 name="loop length" if self.looping_queue else "remaining queue length",
-                value=f"{mk_duration_string(self.total_queue())}" f" ({self.total_len()} tracks)",
+                value=(
+                    f"{mk_duration_string(self.total_queue())} "
+                    f"({self.total_len()} track{'' if self.total_len() == 1 else 's'})"
+                ),
                 inline=True,
             ).add_field(
                 name="track submitter", value=str(self.playing[1]), inline=True
