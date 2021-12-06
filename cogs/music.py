@@ -253,7 +253,7 @@ class Music(commands.Cog):
             msg = await ctx.send("fetching request data, please be patient.")
             ret = await self.get_info(url)
             if ret is None:
-                return await ctx.send("could not find track/playlist.")
+                return await msg.edit(content="could not find track/playlist.")
             data, entries, single = ret
             author_str = str(ctx.author)
             self.track_queue.extendleft((track, author_str) for track in reversed(entries))
