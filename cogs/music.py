@@ -411,11 +411,11 @@ class Music(commands.Cog):
             title=f"track queue as of {ctx.message.created_at.strftime('%Y-%m-%d %H:%M:%S')}",
         )
 
-        if not self.total_queue():
+        queue_copy = list(self.total_queue())
+
+        if not queue_copy:
             queue_embed.add_field(name="track queue status", value="track queue is currently empty")
             return await ctx.send(embed=queue_embed)
-
-        queue_copy = list(self.total_queue())
 
         q_len = len(queue_copy)
 
