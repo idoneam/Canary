@@ -31,7 +31,6 @@ import sqlite3
 
 from cogs.utils.checks import is_developer, is_moderator
 
-# List the extensions (modules) that should be loaded on startup.
 startup = [
     "cogs.banner",
     "cogs.currency",
@@ -42,6 +41,7 @@ startup = [
     "cogs.info",
     "cogs.memes",
     "cogs.mod",
+    "cogs.music",
     "cogs.quotes",
     "cogs.reminder",
     "cogs.roles",
@@ -173,4 +173,8 @@ def main():
 
 
 if __name__ == "__main__":
+    if os.name == "posix":
+        import uvloop
+
+        uvloop.install()
     main()

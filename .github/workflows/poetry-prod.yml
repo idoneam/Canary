@@ -10,8 +10,6 @@ on:
 
 jobs:
   poetry-prod-build:
-    env:
-      POETRY_VERSION: "1.1.4"
     runs-on: ${{ matrix.os }}
     defaults:
       run:
@@ -22,7 +20,7 @@ jobs:
           - 'ubuntu-20.04'
           - 'ubuntu-18.04'
         python-version:
-          - '3.9'
+          - '3.10'
     steps:
       - uses: actions/checkout@v2
 
@@ -32,9 +30,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Install Poetry
-        run: |
-          curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python -  --version $POETRY_VERSION
-          echo "$HOME/.poetry/bin" >> $GITHUB_PATH
+        run: pip install --upgrade poetry pip setuptools wheel
 
       - name: Get Poetry version
         run: poetry --version
@@ -42,5 +38,11 @@ jobs:
       - name: Check pyproject.toml validity
         run: poetry check --no-interaction
 
-      - name: Install Canary Production Dependencies
+      - name: install canary production dependencies (macos)
+        if: matrix.os == 'macos-11.0'
+        run: curl https://files.pythonhosted.org/packages/fe/0a/96e00caf7a4d9ce79c8eeac1ae3880833e11913e5719a85b259103bcb1c6/opencv_python-4.5.4.60-cp310-cp310-macosx_11_0_x86_64.whl > opencv_python-4.5.4.60-cp310-cp310-macosx_10_16_x86_64.whl && poetry run pip install opencv_python-4.5.4.60-cp310-cp310-macosx_10_16_x86_64.whl && poetry install --no-dev --no-interaction
+
+      - name: install canary production dependencies (non macos)
+        if: matrix.os != 'macos-11.0'
         run: poetry install --no-dev --no-interaction
+
