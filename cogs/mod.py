@@ -65,8 +65,7 @@ class Mod(commands.Cog):
         conn = sqlite3.connect(self.bot.config.db_path)
         c = conn.cursor()
         c.execute("SELECT Value FROM Settings WHERE Key = ?", ("CrabboMsgID",))
-        check_msg = c.fetchone()
-        if check_msg:
+        if c.fetchone():
             await ctx.send("secret crabbo has already been started.")
             conn.close()
             return
