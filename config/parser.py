@@ -166,6 +166,8 @@ class Parser:
             "generics": config["AssignableRoles"]["Generics"],
         }
 
+        self.music = {"ban_role": config["Music"]["BanRole"], "start_vol": float(config["Music"]["StartVol"])}
+
         for rc in roles:
             roles[rc] = [r.strip() for r in roles[rc].split(",")]
 

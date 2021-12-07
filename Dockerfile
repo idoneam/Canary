@@ -12,6 +12,7 @@ RUN apt-get install -y \
   texlive-latex-extra \
   texlive-lang-greek \
   dvipng \
+  ffmpeg \
   gcc
 
 # Configure Git settings for update command

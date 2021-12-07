@@ -182,13 +182,13 @@ across the host and the container.
 We format our code using PSF's [black](https://github.com/psf/black). Our builds will reject code that do not conform to the standards defined in [`pyproject.toml`](https://black.readthedocs.io/en/stable/pyproject_toml.html) . You may format your code using:
 
 ```
-poetry run black .
+poetry run black . -t py310 --fast
 ```
 
 and ensure your code conforms to our linting with :
 
 ```
-poetry run black --diff .
+poetry run black --diff . -t py310 --fast
 ```
 
 ## Contributions
