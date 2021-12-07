@@ -107,10 +107,9 @@ class Mod(commands.Cog):
             )
             return
         random.shuffle(crabbos)
-        offset = random.randint(1, num_crabbos - 1)
         for index, crabbo in enumerate(crabbos):
             await self.bot.get_user(crabbo.id).send(
-                f"🦀🦀🦀\nyou have been selected to give a gift to: {crabbos[(index+offset)%num_crabbos]}\n🦀🦀🦀"
+                f"🦀🦀🦀\nyou have been selected to give a gift to: {crabbos[(index+1)%num_crabbos]}\n🦀🦀🦀"
             )
 
         await ctx.message.delete()
