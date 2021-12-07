@@ -31,27 +31,29 @@ class Mod(commands.Cog):
     @commands.command()
     async def answer(self, ctx, *args):
         if isinstance(ctx.message.channel, discord.DMChannel):
-            channel_to_send = utils.get(self.bot.get_guild(
-                self.bot.config.server_id).text_channels,
-                                        name=self.bot.config.reception_channel)
+            channel_to_send = utils.get(
+                self.bot.get_guild(self.bot.config.server_id).text_channels, name=self.bot.config.reception_channel
+            )
             # to work regardless of whether the person uses apostrophes
             msg = f"{ctx.author.name} 📣 {' '.join(args)}"
             await channel_to_send.send(content=msg)
             await ctx.send("```Message sent```")
 
-    @commands.command(aliases=['dm'])
+    @commands.command(aliases=["dm"])
     @is_moderator()
     async def pm(self, ctx, user: discord.User, *, message):
         """
         PM a user on the server using the bot
         """
-        await user.send(content=f'{message}\n*To answer write* '
-                        f'`{self.bot.config.command_prefix[0]}answer '
-                        f'"your message here"`')
-        channel_to_forward = utils.get(self.bot.get_guild(
-            self.bot.config.server_id).text_channels,
-                                       name=self.bot.config.reception_channel)
-        msg = f'🐦 ({ctx.author.name}) to {user.name}: {message}'
+        await user.send(
+            content=f"{message}\n*To answer write* "
+            f"`{self.bot.config.command_prefix[0]}answer "
+            f'"your message here"`'
+        )
+        channel_to_forward = utils.get(
+            self.bot.get_guild(self.bot.config.server_id).text_channels, name=self.bot.config.reception_channel
+        )
+        msg = f"🐦 ({ctx.author.name}) to {user.name}: {message}"
         await channel_to_forward.send(msg)
         await ctx.message.delete()
 

@@ -18,8 +18,8 @@ def site_save(link):
                     with open(fname, "w") as crash_file:
                         crash_file.write(await fetch(link))
                     self.bot.dev_logger.handlers[0].webhook.send(
-                        file=discord.File(fname),
-                        username=self.bot.dev_logger.handlers[0].username)
+                        file=discord.File(fname), username=self.bot.dev_logger.handlers[0].username
+                    )
                     os.remove(fname)
                 raise exception
 

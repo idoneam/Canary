@@ -21,9 +21,7 @@ import discord
 
 # Other utilities
 import random
-import requests
-import re
-from bs4 import BeautifulSoup
+import aiohttp
 from .utils.auto_incorrect import auto_incorrect
 
 
@@ -49,13 +47,17 @@ class Memes(commands.Cog):
         msg = auto_incorrect(input_str)
         self.bot.mod_logger.info(
             f"?bac invoked: Author: '{ctx.message.author}', "
-            f"Message: '{ctx.message.content}'" +
-            ((f", Used on {str(ctx.message.reference.resolved.author)}"
-              f"'s message: '{ctx.message.reference.resolved.content}'"
-              ) if replying else ""))
-        await ctx.send(msg,
-                       reference=ctx.message.reference,
-                       mention_author=False)
+            f"Message: '{ctx.message.content}'"
+            + (
+                (
+                    f", Used on {str(ctx.message.reference.resolved.author)}"
+                    f"'s message: '{ctx.message.reference.resolved.content}'"
+                )
+                if replying
+                else ""
+            )
+        )
+        await ctx.send(msg, reference=ctx.message.reference, mention_author=False)
         await ctx.message.delete()
 
     @commands.command()
@@ -71,29 +73,31 @@ class Memes(commands.Cog):
         """
         License
         """
-        await ctx.send("This bot is free software: you can redistribute"
-                       " it and/or modify it under the terms of the GNU"
-                       " General Public License as published by the "
-                       "Free Software Foundation, either version 3 of "
-                       "the License, or (at your option) any later "
-                       "version. **This bot is distributed in the hope "
-                       "that it will be useful**, but WITHOUT ANY "
-                       "WARRANTY; without even the implied warranty of "
-                       "MERCHANTABILITY or **FITNESS FOR A PARTICULAR "
-                       "PURPOSE**.  See the GNU General Public License "
-                       "for more details. This bot is developed "
-                       "primarily by student volunteers with better "
-                       "things to do. A copy of the GNU General Public "
-                       "License is provided in the LICENSE.txt file "
-                       "along with this bot. The GNU General Public "
-                       "License can also be found at "
-                       "<http://www.gnu.org/licenses/>.")
+        await ctx.send(
+            "This bot is free software: you can redistribute"
+            " it and/or modify it under the terms of the GNU"
+            " General Public License as published by the "
+            "Free Software Foundation, either version 3 of "
+            "the License, or (at your option) any later "
+            "version. **This bot is distributed in the hope "
+            "that it will be useful**, but WITHOUT ANY "
+            "WARRANTY; without even the implied warranty of "
+            "MERCHANTABILITY or **FITNESS FOR A PARTICULAR "
+            "PURPOSE**.  See the GNU General Public License "
+            "for more details. This bot is developed "
+            "primarily by student volunteers with better "
+            "things to do. A copy of the GNU General Public "
+            "License is provided in the LICENSE.txt file "
+            "along with this bot. The GNU General Public "
+            "License can also be found at "
+            "<http://www.gnu.org/licenses/>."
+        )
         await ctx.message.delete()
 
     @commands.command()
     async def cheep(self, ctx):
         """:^)"""
-        await ctx.send('CHEEP CHEEP')
+        await ctx.send("CHEEP CHEEP")
 
     @commands.command()
     async def mix(self, ctx, *, input_str: str = None):
@@ -109,26 +113,30 @@ class Memes(commands.Cog):
             if not replying:
                 return
             input_str = ctx.message.reference.resolved.content
-        msg = "".join((c.upper() if random.randint(0, 1) else c.lower())
-                      for c in input_str)
+        msg = "".join((c.upper() if random.randint(0, 1) else c.lower()) for c in input_str)
         self.bot.mod_logger.info(
             f"?mix invoked: Author: '{ctx.message.author}', "
-            f"Message: '{ctx.message.content}'" +
-            ((f", Used on {str(ctx.message.reference.resolved.author)}"
-              f"'s message: '{ctx.message.reference.resolved.content}'"
-              ) if replying else ""))
-        await ctx.send(msg,
-                       reference=ctx.message.reference,
-                       mention_author=False)
+            f"Message: '{ctx.message.content}'"
+            + (
+                (
+                    f", Used on {str(ctx.message.reference.resolved.author)}"
+                    f"'s message: '{ctx.message.reference.resolved.content}'"
+                )
+                if replying
+                else ""
+            )
+        )
+        await ctx.send(msg, reference=ctx.message.reference, mention_author=False)
         await ctx.message.delete()
 
-    @commands.command(aliases=['boot'])
+    @commands.command(aliases=["boot"])
     async def pyramid(self, ctx, num: int = 2, emoji: str = "👢"):
         """
         Draws a pyramid of boots, default is 2 unless user specifies an integer
         number of levels of boots between -8 and 8. Also accepts any other
         emoji, word or multiword (in quotes) string.
         """
+
         def pyramidy(n, m):
             # Limit emoji/string to 8 characters or Discord/potate mald
             return f"{' ' * ((m - n) * 3)}{(emoji[:8] + ' ') * n}"
@@ -151,47 +159,46 @@ class Memes(commands.Cog):
 
         await ctx.trigger_typing()
 
-        num = None
-        if command is None:
-            req = requests.get("https://c.xkcd.com/comic/random")
-        elif command == "latest":
-            req = requests.get("https://xkcd.com/")
-        else:
-            try:
-                num = int(command)
-            except ValueError:
-                await ctx.send(
-                    f"invalid input: `{command}` does not parse to an integer")
-                return
-            req = requests.get(f"https://xkcd.com/{num}")
-            if num < 1:
-                await ctx.send(f"the number `{num}` is less than one, "
-                               f"such an xkcd issue cannot exist")
-                return
+        async with aiohttp.ClientSession() as session:
+            if command is None:
+                async with session.get("https://c.xkcd.com/comic/random") as r:
+                    if r.status != 200:
+                        await ctx.send(f"failure: random xkcd request returned `{r.status}`")
+                        return
+                    url = str(r.url)
+            elif command == "latest":
+                url = "https://xkcd.com/"
+            else:
+                try:
+                    num = int(command)
+                except ValueError:
+                    await ctx.send(f"invalid input: `{command}` does not parse to an integer")
+                    return
+                if num < 1:
+                    await ctx.send(f"invalid input: `{command}` does not parse to a positive integer")
+                    return
+                url = f"https://xkcd.com/{num}/"
 
-        if req.status_code == 404:
-            num = None
-            req = requests.get("https://xkcd.com/")
+            async with session.get(f"{url}info.0.json") as r:
+                if r.status == 200:
+                    data = await r.json()
+                elif r.status == 404:
+                    async with session.get("https://xkcd.com/info.0.json") as r:
+                        if r.status != 200:
+                            await ctx.send(f"failure: xkcd request returned `{r.status}`")
+                            return
+                        data = await r.json()
+                else:
+                    await ctx.send(f"failure: xkcd request returned `{r.status}`")
+                    return
 
-        if req.status_code != 200:
-            await ctx.send(f"xkcd number `{command}` could not be found "
-                           f"(request returned `{req.status_code}`)")
-            return
-
-        soup = BeautifulSoup(req.content, "html.parser")
-        if num is None:
-            title_num = re.findall(
-                r'^https://xkcd.com/([1-9][0-9]*)/$',
-                soup.find('meta', property='og:url')['content'])[0]
-        else:
-            title_num = str(num)
-
-        img_soup = soup.find("div", attrs={"id": "comic"}).find("img")
-        embd = discord.Embed(
-            title=f"{img_soup['alt']} (#{title_num})",
-            url=req.url).set_image(url=f"https:{img_soup['src']}").set_footer(
-                text=str(img_soup['title']))
-        await ctx.send(embed=embd)
+        await ctx.send(
+            embed=discord.Embed(
+                title=f"{data['title']} (#{data['num']}, {data['year']}-{data['month']:0>2}-{data['day']:0>2})", url=url
+            )
+            .set_image(url=data["img"])
+            .set_footer(text=data["alt"])
+        )
 
 
 def setup(bot):
