@@ -10,6 +10,7 @@ RUN apt-get update && apt-get install -y git sqlite3
 RUN apt-get install -y \
   libgl1-mesa-glx \
   texlive-latex-extra \
+  texlive-fonts-extra \
   texlive-lang-greek \
   dvipng \
   ffmpeg \
