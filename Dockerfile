@@ -1,4 +1,4 @@
-FROM python:3.9-slim-buster
+FROM python:3.10-slim-bullseye
 
 # Add testing to get newer SQLite (ugh)
 RUN echo 'deb http://http.us.debian.org/debian/ testing non-free contrib main' >> /etc/apt/sources.list
@@ -24,4 +24,4 @@ COPY requirements.txt /mnt/
 RUN pip install -r /mnt/requirements.txt
 
 WORKDIR /mnt/canary
-CMD ["python3.9", "Main.py"]
+CMD ["python3.10", "Main.py"]

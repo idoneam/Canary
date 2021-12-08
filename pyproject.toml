@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "Canary"
-version = "3.1.0"
+version = "3.1.1"
 description = ""
 license = "GPL-3.0-only"
 repository = "https://github.com/idoneam/Canary"
