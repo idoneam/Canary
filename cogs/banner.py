@@ -25,7 +25,7 @@ from io import BytesIO
 import datetime
 import sqlite3
 import requests
-from PIL import Image, UnidentifiedImageError
+from PIL import Image, UnidentifiedImageError, ImageSequence
 import json
 from .utils.checks import is_moderator
 import asyncio
@@ -452,54 +452,74 @@ class Banner(commands.Cog):
                     if arg != "-stretch" and arg != "-stretched":
                         url = arg
 
+        user_image_file = BytesIO(requests.get(url).content)
+        if user_image_file.getbuffer().nbytes >= 10000000:
+            await ctx.send("Image must be less than 10 MB.")
+            return
+
         try:
             with Image.open("./data/premade/banner_converter.png") as overlay_mask, Image.open(
                 "./data/premade/banner_preview.png"
-            ) as preview_mask, Image.open(BytesIO(requests.get(url).content)).convert("RGBA") as user_image:
+            ) as preview_mask, Image.open(user_image_file) as user_image:
+
+                animated = user_image.is_animated
 
                 overlay_mask_user_canvas_size = overlay_mask.size
                 preview_mask_user_canvas_size = (240, 135)
                 preview_mask_user_box_start = (5, 5)
 
-                if stretch:
-                    overlay = Image.alpha_composite(user_image.resize(overlay_mask_user_canvas_size), overlay_mask)
-                    preview_user_image = Image.new("RGBA", preview_mask.size, (0, 0, 0, 0))
-                    preview_user_image.paste(
-                        user_image.resize(preview_mask_user_canvas_size), preview_mask_user_box_start
-                    )
-                    preview = Image.alpha_composite(preview_user_image, preview_mask)
-                else:
-                    overlay_ratio = max(
-                        overlay_mask_user_canvas_size[0] / user_image.size[0],
-                        overlay_mask_user_canvas_size[1] / user_image.size[1],
-                    )
-                    overlay_user_image = Image.new("RGBA", overlay_mask_user_canvas_size, (0, 0, 0, 0))
-                    overlay_user_size = (
-                        int(user_image.size[0] * overlay_ratio),
-                        int(user_image.size[1] * overlay_ratio),
-                    )
-                    overlay_mask_user_image_start = (
-                        int(overlay_mask_user_canvas_size[0] / 2 - overlay_user_size[0] / 2),
-                        int(overlay_mask_user_canvas_size[1] / 2 - overlay_user_size[1] / 2),
-                    )
-                    overlay_user_image.paste(user_image.resize(overlay_user_size), overlay_mask_user_image_start)
-                    overlay = Image.alpha_composite(overlay_user_image, overlay_mask)
+                overlay_frames = []
+                preview_frames = []
+                if animated:
+                    durations = []
+                    await ctx.send("Converting animated banner, this may take some time...")
 
-                    preview_ratio = max(
-                        preview_mask_user_canvas_size[0] / user_image.size[0],
-                        preview_mask_user_canvas_size[1] / user_image.size[1],
-                    )
-                    preview_user_image = Image.new("RGBA", preview_mask.size, (0, 0, 0, 0))
-                    preview_user_size = (
-                        int(user_image.size[0] * preview_ratio),
-                        int(user_image.size[1] * preview_ratio),
-                    )
-                    preview_mask_user_image_start = (
-                        5 + int(preview_mask_user_canvas_size[0] / 2 - preview_user_size[0] / 2),
-                        5 + int(preview_mask_user_canvas_size[1] / 2 - preview_user_size[1] / 2),
-                    )
-                    preview_user_image.paste(user_image.resize(preview_user_size), preview_mask_user_image_start)
-                    preview = Image.alpha_composite(preview_user_image, preview_mask)
+                for frame in ImageSequence.Iterator(user_image):
+                    if animated:
+                        durations.append(frame.info["duration"])
+                    frame = frame.copy()
+                    rgba_frame = frame.convert("RGBA")
+                    if stretch:
+                        overlay_frames.append(
+                            Image.alpha_composite(rgba_frame.resize(overlay_mask_user_canvas_size), overlay_mask)
+                        )
+                        preview_user_image = Image.new("RGBA", preview_mask.size, (0, 0, 0, 0))
+                        preview_user_image.paste(
+                            rgba_frame.resize(preview_mask_user_canvas_size), preview_mask_user_box_start
+                        )
+                        preview_frames.append(Image.alpha_composite(preview_user_image, preview_mask))
+                    else:
+                        overlay_ratio = max(
+                            overlay_mask_user_canvas_size[0] / rgba_frame.size[0],
+                            overlay_mask_user_canvas_size[1] / rgba_frame.size[1],
+                        )
+                        overlay_user_image = Image.new("RGBA", overlay_mask_user_canvas_size, (0, 0, 0, 0))
+                        overlay_user_size = (
+                            int(rgba_frame.size[0] * overlay_ratio),
+                            int(rgba_frame.size[1] * overlay_ratio),
+                        )
+                        overlay_mask_user_image_start = (
+                            int(overlay_mask_user_canvas_size[0] / 2 - overlay_user_size[0] / 2),
+                            int(overlay_mask_user_canvas_size[1] / 2 - overlay_user_size[1] / 2),
+                        )
+                        overlay_user_image.paste(rgba_frame.resize(overlay_user_size), overlay_mask_user_image_start)
+                        overlay_frames.append(Image.alpha_composite(overlay_user_image, overlay_mask))
+
+                        preview_ratio = max(
+                            preview_mask_user_canvas_size[0] / rgba_frame.size[0],
+                            preview_mask_user_canvas_size[1] / rgba_frame.size[1],
+                        )
+                        preview_user_image = Image.new("RGBA", preview_mask.size, (0, 0, 0, 0))
+                        preview_user_size = (
+                            int(rgba_frame.size[0] * preview_ratio),
+                            int(rgba_frame.size[1] * preview_ratio),
+                        )
+                        preview_mask_user_image_start = (
+                            5 + int(preview_mask_user_canvas_size[0] / 2 - preview_user_size[0] / 2),
+                            5 + int(preview_mask_user_canvas_size[1] / 2 - preview_user_size[1] / 2),
+                        )
+                        preview_user_image.paste(rgba_frame.resize(preview_user_size), preview_mask_user_image_start)
+                        preview_frames.append(Image.alpha_composite(preview_user_image, preview_mask))
         except UnidentifiedImageError or requests.exceptions.MissingSchema:
             await ctx.send(f"Image couldn't be opened.")
             return
@@ -518,24 +538,30 @@ class Banner(commands.Cog):
                 )
             replaced_message = True
 
-        with BytesIO() as image_binary:
-            overlay.save(image_binary, "PNG")
-            image_binary.seek(0)
-            converted_message = await self.banner_converted_channel.send(
-                f"{ctx.author.mention}'s submission for the week of "
-                f"{self.week_name}{' (resubmission)' if replaced_message else ''}:",
-                file=discord.File(fp=image_binary, filename="converted_banner.png"),
-            )
+        async def send_picture(frames, channel, filename):
+            with BytesIO() as image_binary:
+                if animated:
+                    frames[0].save(
+                        image_binary, "GIF", save_all=True, append_images=frames[1:], loop=0, duration=durations
+                    )
+                else:
+                    frames[0].save(image_binary, "PNG")
+                image_binary.seek(0)
+                message = await channel.send(
+                    f"{ctx.author.mention}'s submission for the week of "
+                    f"{self.week_name}{' (resubmission)' if replaced_message else ''}:",
+                    file=discord.File(fp=image_binary, filename=filename),
+                )
+                return message
 
-        with BytesIO() as image_binary:
-            preview.save(image_binary, "PNG")
-            image_binary.seek(0)
-            preview_message = await self.banner_submissions_channel.send(
-                f"{ctx.author.mention}'s submission for the week of "
-                f"{self.week_name}{' (resubmission)' if replaced_message else ''}:",
-                file=discord.File(fp=image_binary, filename="banner_preview.png"),
-            )
-            await preview_message.add_reaction(self.banner_vote_emoji)
+        filetype = "gif" if animated else "png"
+        converted_message = await send_picture(
+            overlay_frames, self.banner_converted_channel, f"converted_banner.{filetype}"
+        )
+        preview_message = await send_picture(
+            preview_frames, self.banner_submissions_channel, f"banner_preview.{filetype}"
+        )
+        await preview_message.add_reaction(self.banner_vote_emoji)
 
         c.execute(
             "REPLACE INTO BannerSubmissions VALUES (?, ?, ?)", (ctx.author.id, preview_message.id, converted_message.id)
