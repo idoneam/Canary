@@ -16,8 +16,7 @@ Github provides a user-friendly interface for managing issues for a repository. 
 
 ### Git branches
 
-- **dev**: This is the development branch where all changes are integrated together before being merged into master. You should fork your issue branch from here, and make your PR to merge with this branch. *While technically possible for admins, pushing directly to this branch is strictly forbidden.* Small codestyle and spelling fixes should be committed to the `task/cleanup` branch, and a PR made from there. Once that PR is merged, `task/cleanup` is **NOT** deleted.
-- **master**: This is the deployment branch, direct push are blocked for both admin and regular members. Ideally, code contained in this branch should be the least error-prone.
+- **dev**: This is the development branch where all changes are integrated together before being release via tags. You should fork your issue branch from here, and make your PR to merge with this branch. *While technically possible for admins, pushing directly to this branch is strictly forbidden.* Small codestyle and spelling fixes should be committed to the `task/cleanup` branch, and a PR made from there. Once that PR is merged, `task/cleanup` is **NOT** deleted.
 - **Feature/Issue branches**: Anytime you want to work on resolving an issue or implementing a new feature, branch off of the `dev` branch into one of these branches. Name the branch `issue-x` where `x` is the issue number with the issue you are trying to resolve/feature you are trying to implement. You can be more descriptive so other people know what exactly you are working on. Example: `issue-42` or `issue-30/paginator` are both acceptable.
 
 ### Testing

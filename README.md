@@ -7,9 +7,7 @@ Canary is a Python3 bot designed for the McGill University Community Discord Ser
 
 ## Build Statuses
 
-| **Master**  | [![Prod Dependencies](https://github.com/idoneam/Canary/workflows/Prod%20Dependencies/badge.svg?branch=master)](https://github.com/idoneam/Canary/actions?query=workflow%3A%22Prod+Dependencies%22+branch%3Amaster) |
-| ------- | --------------------------------------------------------------------------------------------------------------- |
-| **Dev** | [![Dev Dependencies](https://github.com/idoneam/Canary/workflows/Dev%20Dependencies/badge.svg?branch=dev)](https://github.com/idoneam/Canary/actions?query=workflow%3A%22Dev+Dependencies%22+branch%3Adev)  |
+[![Dev Dependencies](https://github.com/idoneam/Canary/workflows/Dev%20Dependencies/badge.svg?branch=dev)](https://github.com/idoneam/Canary/actions?query=workflow%3A%22Dev+Dependencies%22+branch%3Adev)
 
 ## Installation
 
@@ -193,4 +191,4 @@ poetry run black --diff . -t py310 --fast
 
 ## Contributions
 
-Contributions are welcome, feel free to fork our repository and open a pull request or open an issue. Please [review our contribution guidelines](https://github.com/idoneam/Canary/blob/master/.github/contributing.md) before contributing.
+Contributions are welcome, feel free to fork our repository and open a pull request or open an issue. Please [review our contribution guidelines](https://github.com/idoneam/Canary/blob/dev/.github/contributing.md) before contributing.
