@@ -2,7 +2,7 @@ name: Prod Dependencies
 on:
   pull_request:
     branches:
-      - master
+      - 'dev'
     paths:
       - 'pyproject.toml'
       - 'poetry.lock'
