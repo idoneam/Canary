@@ -40,7 +40,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Install latest version of Poetry
-        run: pip install --upgrade poetry pip setuptools wheel
+        run: curl -sSL https://install.python-poetry.org | python3 -
 
       - name: Get Poetry version
         run: poetry --version
@@ -48,11 +48,6 @@ jobs:
       - name: Check pyproject.toml validity
         run: poetry check --no-interaction
 
-      - name: install canary development dependencies (macos)
-        if: matrix.os == 'macos-11.0'
-        run: curl https://files.pythonhosted.org/packages/fe/0a/96e00caf7a4d9ce79c8eeac1ae3880833e11913e5719a85b259103bcb1c6/opencv_python-4.5.4.60-cp310-cp310-macosx_11_0_x86_64.whl > opencv_python-4.5.4.60-cp310-cp310-macosx_10_16_x86_64.whl && poetry run pip install opencv_python-4.5.4.60-cp310-cp310-macosx_10_16_x86_64.whl && poetry install --no-interaction
-
-      - name: install canary development dependencies (non macos)
-        if: matrix.os != 'macos-11.0'
+      - name: install canary development dependencies
         run: poetry install --no-interaction
 
