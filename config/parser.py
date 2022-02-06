@@ -106,7 +106,6 @@ class Parser:
         self.course_search_tpl = config["Helpers"]["CourseSearchTemplate"]
         self.gc_weather_url = config["Helpers"]["GCWeatherURL"]
         self.gc_weather_alert_url = config["Helpers"]["GCWeatherAlertURL"]
-        self.wttr_in_tpl = config["Helpers"]["WttrINTemplate"]
         self.tepid_url = config["Helpers"]["TepidURL"]
 
         # Subscription configuration

@@ -94,7 +94,6 @@ You must set certain values in the `config.ini` file, in particular your Discor
   * `CourseSearchTemplate`: McGill course search URL. **Changes every school year.**
   * `GCWeatherURL`: Government of Canada weather URL. **Region-specific.**
   * `GCWeatherAlertURL`: Government of Canada weather alerts URL. **Region-specific.**
-  * `WttrINTemplate`: [http://wttr.in/](http://wttr.in/) URL template. **Region-specific.**
   * `TepidURL`: [TEPID](https://github.com/ctf/TEPID-Server) screensaver endpoint for printer status.
 * `[Subscribers]`
   * `FoodRecallChannel`: Channel where you want CFIA recall notices posted.

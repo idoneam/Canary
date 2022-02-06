@@ -48,8 +48,6 @@ CFIA_FEED_URL = "http://inspection.gc.ca/eng/1388422350443/1388422374046.xml"
 
 MCGILL_KEY_DATES_URL = "https://www.mcgill.ca/importantdates/key-dates"
 
-WTTR_IN_MOON_URL = "http://wttr.in/moon.png"
-
 URBAN_DICT_TEMPLATE = "http://api.urbandictionary.com/v0/define?term={}"
 
 LMGTFY_TEMPLATE = "https://letmegooglethat.com/?q={}"
@@ -219,16 +217,6 @@ class Helpers(commands.Cog):
         # Sending final message
         await ctx.send(embed=weather_now)
         await ctx.send(embed=weather_alert)
-
-    @commands.command()
-    async def wttr(self, ctx):
-        """Retrieves Montreal's weather forecast from wttr.in"""
-        await ctx.send(self.bot.config.wttr_in_tpl.format(round(time.time())))
-
-    @commands.command(aliases=["wttrmoon"])
-    async def wttr_moon(self, ctx):
-        """Retrieves the current moon phase from wttr.in/moon"""
-        await ctx.send(WTTR_IN_MOON_URL)
 
     @commands.command()
     async def course(self, ctx, *, query: str):
