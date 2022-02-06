@@ -25,6 +25,7 @@ googletrans = "==4.0.0rc1"
 yt-dlp = "^2021.12.27"
 Pillow = "^8.3.2"
 uvloop = {version="0.16.0", markers = "sys_platform == 'linux' or sys_platform == 'darwin'"}
+lxml = "^4.7.1"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.3"
