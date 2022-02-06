@@ -6,13 +6,7 @@ updates:
     interval: daily
     time: "10:00"
   open-pull-requests-limit: 10
-  reviewers:
-  - davidlougheed
-  - le-potate
-  - namemcguffin
   assignees:
-  - davidlougheed
-  - le-potate
-  - namemcguffin
+  - idoneam/dependabot-assignees
   labels:
   - dependencies
