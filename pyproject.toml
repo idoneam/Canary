@@ -23,7 +23,7 @@ feedparser = "^6.0.8"
 regex = "^2021.11.10"
 googletrans = "==4.0.0rc1"
 yt-dlp = "^2021.12.27"
-Pillow = "^8.3.2"
+Pillow = "^9.0.1"
 uvloop = {version="0.16.0", markers = "sys_platform == 'linux' or sys_platform == 'darwin'"}
 
 [tool.poetry.dev-dependencies]
