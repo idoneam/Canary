@@ -10,7 +10,7 @@ authors = []
 [tool.poetry.dependencies]
 python = "~3.10.0"
 beautifulsoup4 = "==4.10.0"
-sympy = "^1.9"
+sympy = "^1.10"
 requests = ">=2.20.0"
 tabulate = "==0.8.9"
 "discord.py" = {extras = ["voice"], version = "~1.6.0"}
