@@ -46,6 +46,8 @@ jobs:
       - name: Add Poetry to PATH on Windows
         if: matrix.os == 'windows-latest'
         run: |
+          echo "%USERPROFILE%\AppData\Roaming\Python\Scripts"
+          set USERPROFILE
           echo "%USERPROFILE%\AppData\Roaming\Python\Scripts" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
           Get-Content -Path $env:GITHUB_PATH
         shell: powershell
