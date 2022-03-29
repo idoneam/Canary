@@ -28,7 +28,7 @@ uvloop = {version="0.16.0", markers = "sys_platform == 'linux' or sys_platform =
 
 [tool.poetry.dev-dependencies]
 pytest = "^7.0.1"
-black = "^21.12b0"
+black = "^22.3"
 
 [tool.black]
 line-length = 120
