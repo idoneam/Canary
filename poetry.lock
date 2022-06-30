@@ -525,11 +525,11 @@ python-versions = ">=3.6"
 
 [[package]]
 name = "sympy"
-version = "1.9"
+version = "1.10.1"
 description = "Computer algebra system (CAS) in Python"
 category = "main"
 optional = false
-python-versions = ">=3.6"
+python-versions = ">=3.7"
 
 [package.dependencies]
 mpmath = ">=0.19"
@@ -623,7 +623,7 @@ websockets = "*"
 [metadata]
 lock-version = "1.1"
 python-versions = "~3.10.0"
-content-hash = "03c8e6ad0fee205ad902229df7efd1d0e9f30a142577714cabf628cdedf32c2e"
+content-hash = "da2e188c29b0129dc8673684e9229d048ba1614cc5a0de6b0309fa54da84a7ee"
 
 [metadata.files]
 aiohttp = [
@@ -1206,8 +1206,8 @@ soupsieve = [
     {file = "soupsieve-2.3.1.tar.gz", hash = "sha256:b8d49b1cd4f037c7082a9683dfa1801aa2597fb11c3a1155b7a5b94829b4f1f9"},
 ]
 sympy = [
-    {file = "sympy-1.9-py3-none-any.whl", hash = "sha256:8bc5de4608b7aa4e7ffd1b25452ae87ccc5f6ca667c661aafb854a1ade337d0c"},
-    {file = "sympy-1.9.tar.gz", hash = "sha256:c7a880e229df96759f955d4f3970d4cabce79f60f5b18830c08b90ce77cd5fdc"},
+    {file = "sympy-1.10.1-py3-none-any.whl", hash = "sha256:df75d738930f6fe9ebe7034e59d56698f29e85f443f743e51e47df0caccc2130"},
+    {file = "sympy-1.10.1.tar.gz", hash = "sha256:5939eeffdf9e152172601463626c022a2c27e75cf6278de8d401d50c9d58787b"},
 ]
 tabulate = [
     {file = "tabulate-0.8.9-py3-none-any.whl", hash = "sha256:d7c013fe7abbc5e491394e10fa845f8f32fe54f8dc60c6622c6cf482d25d47e4"},
