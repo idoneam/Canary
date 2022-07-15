@@ -24,11 +24,12 @@ CREATE TABLE IF NOT EXISTS "Quotes" (
     `Quote` TEXT,
     `Date`  TEXT
 );
+
 CREATE TABLE IF NOT EXISTS `Members` (
-    `ID`          INTEGER UNIQUE,
-    `DisplayName` TEXT,
-    `Score`       INTEGER
+    `ID`    INTEGER PRIMARY KEY,
+    `Name`  TEXT
 );
+
 CREATE TABLE IF NOT EXISTS 'Reminders' (
     'ID'           INTEGER,
     'Name'         TEXT,
@@ -49,8 +50,19 @@ CREATE TABLE IF NOT EXISTS `BankTransactions` (
     FOREIGN KEY(`UserID`) REFERENCES `Members`(`ID`)
 );
 
+CREATE TABLE IF NOT EXISTS `Reactions` (
+    `ReacterID`     INTEGER,
+    `ReacteeID`     INTEGER,
+    `ReactionName`  TEXT,
+    `MessageID`     INTEGER,
+
+    FOREIGN KEY(`ReacterID`) REFERENCES `Members`(`ID`),
+    FOREIGN KEY(`ReacteeID`) REFERENCES `Members`(`ID`)
+);
+CREATE UNIQUE INDEX IF NOT EXISTS `unique_reaction` ON `Reactions` (`ReacterID`, `ReacteeID`, `ReactionName`, `MessageID`);
+
 CREATE TABLE IF NOT EXISTS `CustomReactions` (
-	`CustomReactionID`  INTEGER PRIMARY KEY,
+    `CustomReactionID`  INTEGER PRIMARY KEY,
     `Prompt`            TEXT,
     `Response`          TEXT,
     `UserID`            INTEGER,
