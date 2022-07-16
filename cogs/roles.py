@@ -443,7 +443,9 @@ class Roles(commands.Cog):
         await ctx.send(reason_message)
 
         if failed_roles:
-            await ctx.send(f"The following role{'s' if len(failed_roles) > 0 else ''} could not be removed: {', '.join(failed_roles)}")
+            await ctx.send(
+                f"The following role{'s' if len(failed_roles) > 0 else ''} could not be removed: {', '.join(failed_roles)}"
+            )
 
     @commands.command(aliases=["unpenalty"])
     @is_moderator()
