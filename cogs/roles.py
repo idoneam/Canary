@@ -288,7 +288,7 @@ class Roles(commands.Cog):
 
     def _has_penalty_role(self, user: discord.Member):
         penalty_role = utils.get(user.guild.roles, name=self.penalty_role)
-        return penalty_role and next((r for r in user.roles if r == penalty_role), None) is None
+        return penalty_role and next((r for r in user.roles if r == penalty_role), None) is not None
 
     def _is_in_penalty_table(self, user: discord.Member):
         conn = sqlite3.connect(self.bot.config.db_path)
@@ -311,10 +311,8 @@ class Roles(commands.Cog):
     @commands.Cog.listener()
     async def on_member_join(self, user: discord.Member):
         # If the user was already in the penalty box, restore the penalty role
-
         if not self._is_in_penalty_table(user):
             return
-
         penalty_role = utils.get(user.guild.roles, name=self.penalty_role)
         if penalty_role:
             await user.add_roles(penalty_role, reason="Restored penalty status")
@@ -376,7 +374,7 @@ class Roles(commands.Cog):
             if not discord.utils.get(ok_user.roles, name=self.bot.config.moderator_role):
                 # User is not moderator, simply paginate and return
                 await p.paginate()
-                return
+                continue
 
             # Add a loading message until role-restoring is done
             await message.edit(embed=discord.Embed(title="Restoring roles..."))
@@ -400,6 +398,7 @@ class Roles(commands.Cog):
             await message.clear_reaction("◀")
             await message.clear_reaction("▶")
             await message.clear_reaction("🆗")
+            return
 
     @commands.command(aliases=["previousroles", "giverolesback", "rolesback", "givebackroles"])
     async def previous_roles(self, ctx, user: discord.Member):
@@ -430,11 +429,21 @@ class Roles(commands.Cog):
         reason_message = f"{ctx.author} put {user} in the penalty box"
 
         # Remove all roles
-        await user.remove_roles(*(r for r in user.roles if r.name != "@everyone"), reason=reason_message)
+        failed_roles: list[str] = []
+        for role in user.roles:
+            if role.name == "@everyone":
+                continue
+            try:
+                await user.remove_roles(role, reason=f"{ctx.author} put {user} in the penalty box")
+            except (discord.Forbidden, discord.HTTPException):
+                failed_roles.append(str(role))
 
         # Add the penalty role to the user
         await user.add_roles(penalty_role, reason=reason_message)
         await ctx.send(reason_message)
+
+        if failed_roles:
+            await ctx.send(f"The following role{'s' if len(failed_roles) > 0 else ''} could not be removed: {', '.join(failed_roles)}")
 
     @commands.command(aliases=["unpenalty"])
     @is_moderator()
