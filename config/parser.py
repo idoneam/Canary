@@ -60,7 +60,7 @@ class Parser:
         self.banner_winner_role = config["Roles"]["BannerWinnerRole"]
         self.trash_tier_banner_role = config["Roles"]["TrashTierBannerRole"]
         self.no_food_spotting_role = config["Roles"]["NoFoodSpottingRole"]
-        self.penalty_role = config["Server"]["PenaltyRole"]
+        self.penalty_role = config["Roles"]["PenaltyRole"]
         self.crabbo_role = config["Roles"]["CrabboRole"]
 
         # Channels
