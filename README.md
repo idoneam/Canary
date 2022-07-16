@@ -68,6 +68,8 @@ You must set certain values in the `config.ini` file, in particular your Discor
     * `BannerWinnerRole`: The name of the role that is given to users that win a Banner of the Week Contest.
     * `TrashTierBannerRole`: The name of the role that is given to users that are banned from submitting in Banner of the Week Contests.
     * `NoFoodSpottingRole`: The name of the role assigned to abusers of the foodspotting command that will prevent them from using it.
+    * `PenaltyRole`: **(Optional)** The name of the role used for placing users in a "penalty box" (which presumably 
+       removes some permissions; exact role implementation is up to the server's administrators.)
     * `SecretCrabbo`: The name of the role for users that wish to be pinged for secret crabbo celebrations.
 * `[Channels]`
     * `ReceptionChannel`: The name of the channel that will receive messages sent to the bot through the `answer` command (and where messages sent by mods to users with the `dm` command will be logged)

@@ -85,7 +85,7 @@ async def get_attachment(ctx: commands.Context, lim: int):
 
 def cv_linear_polar(image, flags):
     h, w = image.shape[:2]
-    r = math.sqrt(w ** 2 + h ** 2) / 2
+    r = math.sqrt(w**2 + h**2) / 2
     return cv2.linearPolar(image, (w / 2, h / 2), r, flags)
 
 
@@ -130,7 +130,7 @@ def cblur(image, radius: int, max_rad: int):
 
     # determine values for padding
     height, width = image.shape[:2]
-    r = math.sqrt(width ** 2 + height ** 2) // 2
+    r = math.sqrt(width**2 + height**2) // 2
     v_pad = int(r - height / 2)
     h_pad = int(r - width / 2)
 

@@ -105,7 +105,7 @@ class Helpers(commands.Cog):
         """
 
         wind_speed_mps = ws_kph * 1000 / 3600
-        wind_chill = 13.12 + 0.6215 * temp - 11.37 * ws_kph ** 0.16 + 0.3965 * temp * ws_kph ** 0.16
+        wind_chill = 13.12 + 0.6215 * temp - 11.37 * ws_kph**0.16 + 0.3965 * temp * ws_kph**0.16
         vapour_pressure = humidity / 100 * 6.105 * math.exp((17.27 * temp) / (237.7 + temp))
         apparent_temperature = temp + 0.33 * vapour_pressure - 0.7 * wind_speed_mps - 4.00
         feels_like = temp
@@ -539,88 +539,6 @@ class Helpers(commands.Cog):
         buffer = BytesIO(buffer)
         fn = f"{match.group(1)}.{ext}"
         await ctx.send(file=discord.File(fp=buffer, filename=fn))
-
-    @commands.Cog.listener()
-    async def on_member_remove(self, member):
-        roles_id = [role.id for role in member.roles if role.name != "@everyone"]
-        if roles_id:
-            conn = sqlite3.connect(self.bot.config.db_path)
-            c = conn.cursor()
-            # store roles as a string of IDs separated by spaces
-            t = (member.id, " ".join(str(e) for e in roles_id))
-            c.execute("REPLACE INTO PreviousRoles VALUES (?, ?)", t)
-            conn.commit()
-            conn.close()
-
-    @commands.command(aliases=["previousroles", "giverolesback", "rolesback", "givebackroles"])
-    async def previous_roles(self, ctx, user: discord.Member):
-        """Show the list of roles that a user had before leaving, if possible.
-        A moderator can click the OK react on the message to give these roles back
-        """
-        conn = sqlite3.connect(self.bot.config.db_path)
-        c = conn.cursor()
-        fetched_roles = c.execute("SELECT Roles FROM PreviousRoles WHERE ID = ?", (user.id,)).fetchone()
-        # the above returns a tuple with a string of IDs separated by spaces
-        if fetched_roles is not None:
-            roles_id = fetched_roles[0].split(" ")
-            valid_roles = []
-            for role_id in roles_id:
-                role = self.bot.get_guild(self.bot.config.server_id).get_role(int(role_id))
-                if role:
-                    valid_roles.append(role)
-
-            roles_name = ["[{}] {}\n".format(i, role.name) for i, role in enumerate(valid_roles, 1)]
-
-            embed = discord.Embed(title="Loading...")
-            message = await ctx.send(embed=embed)
-
-            if len(valid_roles) > 20:
-                await message.add_reaction("◀")
-                await message.add_reaction("▶")
-            await message.add_reaction("🆗")
-
-            p = Pages(
-                ctx,
-                item_list=roles_name,
-                title="{} had the following roles before leaving.\n"
-                "A {} can add these roles back by reacting with 🆗".format(
-                    user.display_name, self.bot.config.moderator_role
-                ),
-                msg=message,
-                display_option=(3, 20),
-                editable_content=True,
-                editable_content_emoji="🆗",
-                return_user_on_edit=True,
-            )
-            ok_user = await p.paginate()
-
-            while p.edit_mode:
-                if discord.utils.get(ok_user.roles, name=self.bot.config.moderator_role):
-                    failed_roles: list[str] = []
-                    for role in valid_roles:
-                        try:
-                            await user.add_roles(role, reason=f"{ok_user.name} used the previous_roles command")
-                        except (discord.Forbidden, discord.HTTPException):
-                            failed_roles.append(str(role))
-                    embed = discord.Embed(
-                        title="{}'s previous roles were successfully "
-                        "added back by {}".format(user.display_name, ok_user.display_name)
-                    )
-                    if failed_roles:
-                        embed.add_field(name="roles not given back", value=", ".join(failed_roles))
-                    await message.edit(embed=embed)
-                    await message.clear_reaction("◀")
-                    await message.clear_reaction("▶")
-                    await message.clear_reaction("🆗")
-                    return
-                else:
-                    ok_user = await p.paginate()
-
-        else:
-            embed = discord.Embed(title="Could not find any roles for this user")
-            await ctx.send(embed=embed)
-
-        conn.close()
 
     @commands.command(aliases=["ui", "av", "avi", "userinfo"])
     async def user_info(self, ctx, user: discord.Member = None):
