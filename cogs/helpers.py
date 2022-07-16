@@ -105,7 +105,7 @@ class Helpers(commands.Cog):
         """
 
         wind_speed_mps = ws_kph * 1000 / 3600
-        wind_chill = 13.12 + 0.6215 * temp - 11.37 * ws_kph ** 0.16 + 0.3965 * temp * ws_kph ** 0.16
+        wind_chill = 13.12 + 0.6215 * temp - 11.37 * ws_kph**0.16 + 0.3965 * temp * ws_kph**0.16
         vapour_pressure = humidity / 100 * 6.105 * math.exp((17.27 * temp) / (237.7 + temp))
         apparent_temperature = temp + 0.33 * vapour_pressure - 0.7 * wind_speed_mps - 4.00
         feels_like = temp
