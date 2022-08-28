@@ -1,4 +1,4 @@
-# Copyright (C) idoneam (2016-2021)
+# Copyright (C) idoneam (2016-2022)
 #
 # This file is part of Canary
 #
@@ -40,7 +40,10 @@ import random
 from .utils.paginator import Pages
 from .utils.custom_requests import fetch
 from .utils.site_save import site_save
+from .utils.checks import is_moderator, is_developer
 import sqlite3
+from .utils.arg_converter import ArgConverter, StrConverter
+from discord.ext.commands import MessageConverter
 
 MCGILL_EXAM_URL = "https://www.mcgill.ca/exams/dates"
 
@@ -64,10 +67,17 @@ LATEX_PREAMBLE = r"""\documentclass[varwidth,12pt]{standalone}
 \usepackage{amsmath,amsfonts,lmodern}
 \begin{document}"""
 
+MAIN_WEBHOOKS_PREFIX = "Main webhook for #"
+
 
 class Helpers(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        self.guild = None
+
+    @commands.Cog.listener()
+    async def on_ready(self):
+        self.guild = self.bot.get_guild(self.bot.config.server_id)
 
     @commands.command(aliases=["exams"])
     async def exam(self, ctx):
@@ -105,7 +115,7 @@ class Helpers(commands.Cog):
         """
 
         wind_speed_mps = ws_kph * 1000 / 3600
-        wind_chill = 13.12 + 0.6215 * temp - 11.37 * ws_kph**0.16 + 0.3965 * temp * ws_kph**0.16
+        wind_chill = 13.12 + 0.6215 * temp - 11.37 * ws_kph ** 0.16 + 0.3965 * temp * ws_kph ** 0.16
         vapour_pressure = humidity / 100 * 6.105 * math.exp((17.27 * temp) / (237.7 + temp))
         apparent_temperature = temp + 0.33 * vapour_pressure - 0.7 * wind_speed_mps - 4.00
         feels_like = temp
@@ -638,6 +648,193 @@ class Helpers(commands.Cog):
                 value=translator.translate(inp_str, src=source, dest=destination).text,
             )
         )
+
+    @commands.max_concurrency(1, per=commands.BucketType.user, wait=False)
+    @commands.command()
+    @is_developer()
+    async def create_main_webhooks(self, ctx):
+        """
+        Create the general-use webhooks for each channel. Ignores channels that already have them
+        """
+        ignored = 0
+        for channel in self.guild.text_channels:
+            try:
+                webhook = discord.utils.find(
+                    lambda w: w.user == self.bot.user and w.name[: len(MAIN_WEBHOOKS_PREFIX)] == MAIN_WEBHOOKS_PREFIX,
+                    await channel.webhooks(),
+                )
+                if not webhook:
+                    # max length for webhook name is 80
+                    await channel.create_webhook(
+                        name=f"{MAIN_WEBHOOKS_PREFIX}{channel.name[:(80 - len(MAIN_WEBHOOKS_PREFIX))]}"
+                    )
+                    await ctx.send(f"Created webhook for {channel.mention}")
+                else:
+                    await ctx.send(f"Webhook for {channel.mention} already exists")
+            except discord.errors.Forbidden:
+                ignored += 1
+                continue
+        await ctx.send(f"Ignored {ignored} channel{'s' if ignored == 1 else ''} without bot permissions")
+        await ctx.send("Job completed.")
+
+    async def spoilerize_utility(self, ctx, message, reason: str = None, moderator: bool = False):
+        if not moderator and ctx.author != message.author:
+            return
+        # get the webhook for this channel
+        webhook = discord.utils.find(
+            lambda w: w.user == self.bot.user and w.name[: len(MAIN_WEBHOOKS_PREFIX)] == MAIN_WEBHOOKS_PREFIX,
+            await ctx.channel.webhooks(),
+        )
+        if not webhook:
+            await ctx.send(f"Could not find main webhook for channel {ctx.channel.mention}")
+            return
+
+        # get author, content, attachments and embeds
+        author = message.author
+        content = message.content
+        attachments = message.attachments
+
+        # spoilerize content
+        if content:
+            content = f"||{content.strip()}||"
+
+        # convert attachments to spoilerized files:
+        files = []
+        for attachment in attachments:
+            file = await attachment.to_file(spoiler=True)
+            files.append(file)
+
+        # if there is nothing to send at this point, silently return
+        if not content and not files:
+            return
+
+        user_str = "A moderator" if moderator else ctx.author
+        if content and not files:
+            footer_txt = f"{user_str} spoilerized this message"
+        elif files and not content:
+            footer_txt = f"{user_str} spoilerized the attachment{'s' if len(files) > 1 else ''} below"
+        else:
+            footer_txt = f"{user_str} spoilerized this message and the attachment{'s' if len(files) > 1 else ''} below"
+
+        if reason:
+            footer_txt = f"{footer_txt} • Reason: {reason}"
+
+        embed = discord.Embed(description=content).set_footer(text=footer_txt)
+        await webhook.send(embed=embed, username=author.display_name, avatar_url=author.avatar_url)
+        if files:
+            await webhook.send(files=files, username=author.display_name, avatar_url=author.avatar_url)
+
+        conn = sqlite3.connect(self.bot.config.db_path)
+        c = conn.cursor()
+        c.execute("REPLACE INTO SpoilerizedMessages VALUES (?, ?)", (message.id, author.id))
+        conn.commit()
+        conn.close()
+
+        # delete original message
+        await message.delete()
+
+    @commands.Cog.listener()
+    async def on_raw_reaction_add(self, payload):
+        if payload.guild_id == self.guild.id and payload.emoji == "🚮":
+            conn = sqlite3.connect(self.bot.config.db_path)
+            conn.execute(
+                "SELECT * From SpoilerizedMessages WHERE MessageID=? AND UserID=?",
+                (payload.message_id, payload.member.id),
+            )
+            found = c.fetchone()
+            conn.close()
+            if found:
+                await payload.member.fetch_message(id).delete()
+
+    @commands.command(alias=["spoiler"])
+    async def spoilerize(self, ctx, *args):
+        """
+        Spoilerize a message or a range of messages (max 30 messages)
+
+        To spoilerize a message, this can either be used as a reply to it, or the message ID can be specified.
+        To spoilerize a range of messages, two message IDs must be given.
+        The reason for the spoilerization can also be provided. The order of the arguments doesn't matter.
+
+        Moderators can spoilerize any messages, while users can only spoilerize their own messages (if a range is used,
+        other users' messages are not spoilerized but count towards the limit of 30).
+
+        Basic examples:
+        -As a reply: ?spoilerize
+        -As a reply, with a reason: ?spoilerize spoiler for movie
+        -Specify message_id, with a reason: ?spoilerize message_id CW: violent content
+        -Specify range:, without a reason ?spoilerize oldest_messaage_id newest_message_id
+        """
+        moderator = discord.utils.get(ctx.author.roles, name=self.bot.config.moderator_role)
+
+        converters_dict = {
+            "id_1": (MessageConverter(), None),
+            "id_2": (MessageConverter(), None),
+            "reason": (StrConverter(), None),
+        }
+
+        arg_converter = ArgConverter(converters_dict)
+        try:
+            args_dict = await arg_converter.convert(ctx, args)
+        except commands.BadArgument as err:
+            raise commands.BadArgument(str(err))
+        msg_1 = args_dict["id_1"]
+        msg_2 = args_dict["id_2"]
+        reason = args_dict["reason"]
+
+        if msg_1 and ctx.message.reference and ctx.message.reference.resolved:
+            await ctx.send("Cannot specify a message ID to spoilerize and use the command as a reply at the same time")
+            return
+        elif msg_1 and not msg_2:
+            await self.spoilerize_utility(ctx, msg_1, reason, moderator)
+        elif msg_1 and msg_2:
+            # check that the messages are in this channel
+            if msg_1.channel != ctx.channel or msg_2.channel != ctx.channel:
+                await ctx.send("The specified messages must be in the same channel as where the command is used")
+            # check that the 2nd message is more recent than the first:
+            if msg_2.id <= msg_1.id:
+                msg_1, msg_2 = msg_2, msg_1
+
+            limit = 30
+            # to avoid problems, we are using a limit of 30 messages.
+            # since this doesn't fetch msg_1 and msg_2, we only need to fetch 28 messages.
+            # however, 29 is specified here so that we can know if there were too many messages
+            messages = [message async for message in ctx.channel.history(after=msg_1, before=msg_2, limit=limit - 1)]
+            limit_reached = len(messages) == limit - 1
+
+            messages.insert(0, msg_1)
+            if not limit_reached:
+                messages.append(msg_2)
+
+            for message in messages:
+                if message == ctx.message:
+                    continue
+                await self.spoilerize_utility(ctx, message, reason, moderator)
+
+            if limit_reached:
+                await ctx.send(
+                    "Could not spoilerize all messages: Max 30 at the same time (this message will be deleted in 15 seconds).",
+                    delete_after=15,
+                )
+            else:
+                if moderator:
+                    await ctx.send(
+                        f"Completed spoilerization of {len(messages)} messages (this message will be deleted in 15 seconds).",
+                        delete_after=15,
+                    )
+                else:
+                    # if non-moderator, we don't specify the number of messages
+                    # because we don't track how many were ignored (messages from other users).
+                    await ctx.send(
+                        f"Completed spoilerization (this message will be deleted in 15 seconds).", delete_after=15
+                    )
+        elif not msg_1 and ctx.message.reference and ctx.message.reference.resolved:
+            await self.spoilerize_utility(ctx, ctx.message.reference.resolved, reason, moderator)
+        else:
+            await ctx.send(
+                "You must either use this command as a reply or specify the ID of the message to spoilerize."
+            )
+
+        await ctx.message.delete()
 
 
 def setup(bot):
