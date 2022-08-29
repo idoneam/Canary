@@ -499,7 +499,7 @@ class Helpers(commands.Cog):
         )
         embed = discord.Embed(title="Food spotted", description=" ".join(args) if args else "\u200b")
         embed.set_footer(
-            text=("Added by {0} • Use '{1}foodspot' or '{1}fs' if you spot " "food (See '{1}help foodspot')").format(
+            text=("Added by {0} • Use '{1}foodspot' or '{1}fs' if you spot " "food (See '{1}help foodspot')").format(
                 ctx.message.author, self.bot.config.command_prefix[0]
             ),
             icon_url=ctx.message.author.avatar_url,
@@ -719,14 +719,21 @@ class Helpers(commands.Cog):
         if reason:
             footer_txt = f"{footer_txt} • Reason: {reason}"
 
+        footer_txt = f"{footer_txt} • Delete with 🚮"
+
         embed = discord.Embed(description=content).set_footer(text=footer_txt)
-        await webhook.send(embed=embed, username=author.display_name, avatar_url=author.avatar_url)
+        spoilerized_messages = [
+            await webhook.send(embed=embed, username=author.display_name, avatar_url=author.avatar_url, wait=True)
+        ]
         if files:
-            await webhook.send(files=files, username=author.display_name, avatar_url=author.avatar_url)
+            spoilerized_messages.append(
+                await webhook.send(files=files, username=author.display_name, avatar_url=author.avatar_url, wait=True)
+            )
 
         conn = sqlite3.connect(self.bot.config.db_path)
         c = conn.cursor()
-        c.execute("REPLACE INTO SpoilerizedMessages VALUES (?, ?)", (message.id, author.id))
+        for spoilerized_message in spoilerized_messages:
+            c.execute("REPLACE INTO SpoilerizedMessages VALUES (?, ?)", (spoilerized_message.id, author.id))
         conn.commit()
         conn.close()
 
@@ -735,16 +742,19 @@ class Helpers(commands.Cog):
 
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload):
-        if payload.guild_id == self.guild.id and payload.emoji == "🚮":
+        if payload.guild_id == self.guild.id and str(payload.emoji) == "🚮":
             conn = sqlite3.connect(self.bot.config.db_path)
-            conn.execute(
+            c = conn.cursor()
+            c.execute(
                 "SELECT * From SpoilerizedMessages WHERE MessageID=? AND UserID=?",
-                (payload.message_id, payload.member.id),
+                (int(payload.message_id), int(payload.member.id)),
             )
             found = c.fetchone()
-            conn.close()
             if found:
-                await payload.member.fetch_message(id).delete()
+                channel = utils.get(self.guild.text_channels, id=payload.channel_id)
+                message = await channel.fetch_message(payload.message_id)
+                await message.delete()
+            conn.close()
 
     @commands.command(alias=["spoiler"])
     async def spoilerize(self, ctx, *args):
@@ -758,6 +768,8 @@ class Helpers(commands.Cog):
         Moderators can spoilerize any messages, while users can only spoilerize their own messages (if a range is used,
         other users' messages are not spoilerized but count towards the limit of 30).
 
+        The original author of a spoilerized message can delete it by using the 🚮 react.
+
         Basic examples:
         -As a reply: ?spoilerize
         -As a reply, with a reason: ?spoilerize spoiler for movie
@@ -769,8 +781,12 @@ class Helpers(commands.Cog):
         converters_dict = {
             "id_1": (MessageConverter(), None),
             "id_2": (MessageConverter(), None),
-            "reason": (StrConverter(), None),
         }
+
+        # todo: arg_converter should probably be made in a way that
+        # makes taking multi-words strings possible without this workaround
+        for i in range(len(args)):
+            converters_dict[f"reason_{i}"] = (StrConverter(), None)
 
         arg_converter = ArgConverter(converters_dict)
         try:
@@ -779,7 +795,7 @@ class Helpers(commands.Cog):
             raise commands.BadArgument(str(err))
         msg_1 = args_dict["id_1"]
         msg_2 = args_dict["id_2"]
-        reason = args_dict["reason"]
+        reason = " ".join([args_dict[f"reason_{i}"] for i in range(len(args)) if args_dict[f"reason_{i}"]])
 
         if msg_1 and ctx.message.reference and ctx.message.reference.resolved:
             await ctx.send("Cannot specify a message ID to spoilerize and use the command as a reply at the same time")
