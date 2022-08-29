@@ -19,14 +19,68 @@ import discord
 import sqlite3
 import random
 from discord import utils
-from discord.ext import commands
+from discord.ext import commands, tasks
 
 from .utils.checks import is_moderator
+from datetime import datetime, timedelta
 
 
 class Mod(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        self.guild = None
+        self.verification_channel = None
+        self.last_verification_purge_datetime = None
+
+    @commands.Cog.listener()
+    async def on_ready(self):
+        self.guild = self.bot.get_guild(self.bot.config.server_id)
+        self.verification_channel = utils.get(self.guild.text_channels, name=self.bot.config.verification_channel)
+
+        # arbitrary min date because choosing dates that predate discord will cause an httpexception
+        # when fetching message history after that date later on
+        self.last_verification_purge_datetime = datetime(2018, 1, 1)
+        conn = sqlite3.connect(self.bot.config.db_path)
+        c = conn.cursor()
+        c.execute("SELECT Value FROM Settings WHERE Key = ?", ("last_verification_purge_timestamp",))
+        fetched = c.fetchone()
+        if fetched:
+            last_purge_timestamp = float(fetched[0])
+            if last_purge_timestamp:
+                self.last_verification_purge_datetime = datetime.fromtimestamp(last_purge_timestamp)
+        else:
+            # the verification purge info setting has not been added to db yet
+            c.execute(
+                "INSERT INTO Settings VALUES (?, ?)",
+                ("last_verification_purge_timestamp", self.last_verification_purge_datetime.timestamp()),
+            )
+            conn.commit()
+        conn.close()
+
+        self.check_verification_purge.start()
+
+    @tasks.loop(minutes=60)
+    async def check_verification_purge(self):
+        # todo: make general scheduled events db instead
+        if not all((self.guild, self.verification_channel, self.last_verification_purge_datetime)):
+            return
+
+        if datetime.now() < self.last_verification_purge_datetime + timedelta(days=7):
+            return
+
+        conn = sqlite3.connect(self.bot.config.db_path)
+        c = conn.cursor()
+        # delete everything since the day of the last purge, including that day itself
+        await self.verification_purge_utility(self.last_verification_purge_datetime - timedelta(days=1))
+        # update info
+        c.execute("SELECT Value FROM Settings WHERE Key = ?", ("last_verification_purge_timestamp",))
+        fetched = c.fetchone()
+        if fetched:
+            c.execute(
+                "REPLACE INTO Settings VALUES (?, ?)", ("last_verification_purge_timestamp", datetime.now().timestamp())
+            )
+            conn.commit()
+        conn.close()
 
     @commands.command()
     async def answer(self, ctx, *args):
@@ -110,6 +164,48 @@ class Mod(commands.Cog):
             )
 
         await ctx.message.delete()
+
+    async def verification_purge_utility(self, after):
+        # after can be None, a datetime or a discord message
+        await self.verification_channel.send("Starting verification purge")
+        channel = self.verification_channel
+        deleted = 0
+        async for message in channel.history(oldest_first=True, limit=None, after=after):
+            if len(message.attachments) > 0 or len(message.embeds) > 0:
+                content = message.content
+                if len(message.embeds) > 0:
+                    thumbnail_found = False
+                    for embed in message.embeds:
+                        if embed.thumbnail:
+                            thumbnail_found = True
+                            content = content.replace(embed.thumbnail.url, "")
+                    if not thumbnail_found:
+                        continue
+                if content:
+                    await channel.send(
+                        f"{message.author} sent the following purged message on "
+                        f"{message.created_at.strftime('%Y/%m/%d, %H:%M:%S')}: {content}"
+                    )
+                await message.delete()
+                deleted += 1
+
+        await self.verification_channel.send(
+            f"Verification purge completed. Deleted {deleted} message{'s' if deleted != 1 else ''}"
+        )
+
+    @commands.command()
+    @is_moderator()
+    async def verification_purge(self, ctx, id: int = None):
+        """ "
+        Manually start the purge of pictures in the verification channel.
+
+        If a message ID is provided, every pictures after that message will be removed.
+        If no message ID is provided, this will be done for the whole channel (may take time).
+        """
+        message = None
+        if id:
+            message = await self.verification_channel.fetch_message(id)
+        verification_purge_utility(self, message)
 
 
 def setup(bot):

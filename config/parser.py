@@ -71,6 +71,7 @@ class Parser:
         self.food_spotting_channel = config["Channels"]["FoodSpottingChannel"]
         self.metro_status_channel = config["Channels"]["MetroStatusChannel"]
         self.bots_channel = config["Channels"]["BotsChannel"]
+        self.verification_channel = config["Channels"]["VerificationChannel"]
 
         # Meta
         self.repository = config["Meta"]["Repository"]

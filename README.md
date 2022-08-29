@@ -79,6 +79,7 @@ You must set certain values in the `config.ini` file, in particular your Discor
     * `FoodSpottingChannel`: The name of the channel where foodspotting posts are sent.
     * `MetroStatusChannel`: The name of the channel where metro status alerts are sent.
     * `BotsChannel`: The name of the channel for bot spamming.
+    * `VerificationChannel`: The name of the channel where verification pictures are sent.
 * `[Meta]`
   * `Repository`: The HTTPS remote for this repository, used by the `update` command as the remote when pulling.
 * `[Logging]`
