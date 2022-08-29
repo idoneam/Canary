@@ -287,7 +287,6 @@ class Mod(commands.Cog):
         muted_role_before = self.muted_role in before.roles
         muted_role_after = self.muted_role in after.roles
 
-        print(after in self.muted_users_to_appeal_channels)
         # if muted role was added, mute the user, except if the user is already muted properly
         if (
             not muted_role_before
