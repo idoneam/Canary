@@ -22,7 +22,14 @@ from discord import utils
 from discord.ext import commands
 
 from .utils.checks import is_moderator
-from .utils.role_restoration import save_existing_roles, fetch_saved_roles, has_muted_role, is_in_muted_table, remove_from_muted_table, role_restoring_page
+from .utils.role_restoration import (
+    save_existing_roles,
+    fetch_saved_roles,
+    has_muted_role,
+    is_in_muted_table,
+    remove_from_muted_table,
+    role_restoring_page,
+)
 from bidict import bidict
 import datetime
 
@@ -41,7 +48,12 @@ class Mod(commands.Cog):
         conn = sqlite3.connect(self.bot.config.db_path)
         c = conn.cursor()
         c.execute("SELECT * FROM MutedUsers")
-        self.muted_users_to_appeal_channels = bidict([(self.bot.get_user(user_id), self.bot.get_channel(appeal_channel_id)) for (user_id, appeal_channel_id, roles, date) in c.fetchall()])
+        self.muted_users_to_appeal_channels = bidict(
+            [
+                (self.bot.get_user(user_id), self.bot.get_channel(appeal_channel_id))
+                for (user_id, appeal_channel_id, roles, date) in c.fetchall()
+            ]
+        )
         conn.close()
         self.appeals_log_channel = utils.get(self.guild.text_channels, name=self.bot.config.appeals_log_channel)
         self.muted_role = utils.get(self.guild.roles, name=self.bot.config.muted_role)
@@ -135,8 +147,11 @@ class Mod(commands.Cog):
         confirmation_channel = ctx.channel if ctx else self.appeals_log_channel
         appeals_category = utils.get(self.guild.categories, name=self.bot.config.appeals_category)
         moderator_role = utils.get(self.guild.roles, name=self.bot.config.moderator_role)
-        reason_message = f"{ctx.author} used the mute function on {user}" \
-                         if ctx else f"Mute function used on {user} (by adding role directly)"
+        reason_message = (
+            f"{ctx.author} used the mute function on {user}"
+            if ctx
+            else f"Mute function used on {user} (by adding role directly)"
+        )
         now = datetime.datetime.now()
 
         # create appeals channel if not exists (it might if the user was already muted)
@@ -145,23 +160,31 @@ class Mod(commands.Cog):
             channel = self.muted_users_to_appeal_channels[user]
         if channel not in self.guild.text_channels:
             channel_name = f"appeal-{user.name[0]}{user.discriminator}-{now.strftime('%Y-%m-%d')}"
-            channel = await self.guild.create_text_channel(channel_name,
-                                                           reason=reason_message,
-                                                           category=appeals_category,
-                                                           slowmode_delay=30)
+            channel = await self.guild.create_text_channel(
+                channel_name, reason=reason_message, category=appeals_category, slowmode_delay=30
+            )
 
             # note that we can only deny permissions that the bot knows about, so if discord.py isn't updated to the latest
             # version some permissions will have to be set manually by moderators
-            await channel.set_permissions(self.guild.default_role, overwrite=discord.PermissionOverwrite.from_pair(allow=[],
-                                                                                                                   deny=discord.Permissions.all()))
-            await channel.set_permissions(user,
-                                          overwrite=discord.PermissionOverwrite(read_messages=True, send_messages=True,
-                                                                                read_message_history=True))
-            await channel.set_permissions(moderator_role, overwrite=discord.PermissionOverwrite.from_pair(
-                allow=discord.Permissions.all_channel(), deny=[]))
-            await channel.send("You have been muted from this server. You may appeal this decision here. "
-                               "Please note that all messages written in this channel are automatically logged "
-                               "to another channel accessible by Discord Moderators only, including edits.")
+            await channel.set_permissions(
+                self.guild.default_role,
+                overwrite=discord.PermissionOverwrite.from_pair(allow=[], deny=discord.Permissions.all()),
+            )
+            await channel.set_permissions(
+                user,
+                overwrite=discord.PermissionOverwrite(
+                    read_messages=True, send_messages=True, read_message_history=True
+                ),
+            )
+            await channel.set_permissions(
+                moderator_role,
+                overwrite=discord.PermissionOverwrite.from_pair(allow=discord.Permissions.all_channel(), deny=[]),
+            )
+            await channel.send(
+                "You have been muted from this server. You may appeal this decision here. "
+                "Please note that all messages written in this channel are automatically logged "
+                "to another channel accessible by Discord Moderators only, including edits."
+            )
 
         # save existing roles and add muted user to database (with the attached appeal channel)
         # note that this function is such that if the user was already in the db, only the appeal channel is updated
@@ -192,12 +215,16 @@ class Mod(commands.Cog):
                 f"The following role{'s' if len(failed_roles) > 0 else ''} could not be removed: {', '.join(failed_roles)}"
             )
         await self.appeals_log_channel.send(
-            f"User {user.mention} ({user}) has been muted. Appeal channel: {channel.mention}")
+            f"User {user.mention} ({user}) has been muted. Appeal channel: {channel.mention}"
+        )
 
     async def unmute_utility(self, user: discord.Member, ctx=None):
         confirmation_channel = ctx.channel if ctx else self.appeals_log_channel
-        reason_message = f"{ctx.author} used the unmute function on {user}" \
-            if ctx else f"Unmute function used on {user} (by removing role directly)"
+        reason_message = (
+            f"{ctx.author} used the unmute function on {user}"
+            if ctx
+            else f"Unmute function used on {user} (by removing role directly)"
+        )
 
         # Restore old roles from the database
         valid_roles = fetch_saved_roles(self, self.guild, user, muted=True)
@@ -205,7 +232,16 @@ class Mod(commands.Cog):
         # if there is no ctx, it means that the user was unmuted because a mod removed the role manually
         # to know which mod did it, we would have to go through the audit log and try the find the log entry. Instead,
         # we just say marty did it, and mods can check in the discord log themselves.
-        await role_restoring_page(self, ctx, user, valid_roles, bot=self.bot, guild=self.guild, channel=confirmation_channel, restored_by=self.bot.user)
+        await role_restoring_page(
+            self,
+            ctx,
+            user,
+            valid_roles,
+            bot=self.bot,
+            guild=self.guild,
+            channel=confirmation_channel,
+            restored_by=self.bot.user,
+        )
 
         # Remove entry from the database
         remove_from_muted_table(self, user)
@@ -253,17 +289,28 @@ class Mod(commands.Cog):
 
         print(after in self.muted_users_to_appeal_channels)
         # if muted role was added, mute the user, except if the user is already muted properly
-        if not muted_role_before and muted_role_after and not (is_in_muted_table(self, after) and
-                                                                  has_muted_role(self, after) and
-                                                                  after in self.muted_users_to_appeal_channels and
-                                                                  self.muted_users_to_appeal_channels[after]
-                                                                  in self.guild.text_channels):
+        if (
+            not muted_role_before
+            and muted_role_after
+            and not (
+                is_in_muted_table(self, after)
+                and has_muted_role(self, after)
+                and after in self.muted_users_to_appeal_channels
+                and self.muted_users_to_appeal_channels[after] in self.guild.text_channels
+            )
+        ):
             await self.mute_utility(after)
 
         # if muted role was removed, unmute the user, except if the user is already unmuted properly
-        if muted_role_before and not muted_role_after and (is_in_muted_table(self, after) or
-                                                           has_muted_role(self, after) or
-                                                           after in self.muted_users_to_appeal_channels):
+        if (
+            muted_role_before
+            and not muted_role_after
+            and (
+                is_in_muted_table(self, after)
+                or has_muted_role(self, after)
+                or after in self.muted_users_to_appeal_channels
+            )
+        ):
             await self.unmute_utility(after)
 
     # the next three functions are used for appeals logging

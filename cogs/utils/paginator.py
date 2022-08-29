@@ -38,7 +38,7 @@ class Pages:
         bot=None,
         guild=None,
         channel=None,
-        user=None
+        user=None,
     ):
         """Creates a paginator.
 

@@ -67,7 +67,9 @@ def fetch_saved_roles(self, guild, user: discord.Member, muted: bool = False) ->
         # Return list of all valid roles restored from the DB
         #  - filter(None, ...) strips false-y elements
         return (
-            list(filter(None, (guild.get_role(int(role_id)) for role_id in fetched_roles[0].split(" ") if role_id != '')))
+            list(
+                filter(None, (guild.get_role(int(role_id)) for role_id in fetched_roles[0].split(" ") if role_id != ""))
+            )
             if fetched_roles
             else None
         )
@@ -101,7 +103,9 @@ def remove_from_muted_table(self, user: discord.Member):
         conn.close()
 
 
-async def role_restoring_page(self, ctx, user: discord.Member, roles: Optional[list], bot=None, guild=None, channel=None, restored_by=None):
+async def role_restoring_page(
+    self, ctx, user: discord.Member, roles: Optional[list], bot=None, guild=None, channel=None, restored_by=None
+):
     # If used in a situation where there is no context, bot, guild, channel and user can be provided
     # directly as an alternative (with ctx=None).
     if ctx:
@@ -123,11 +127,13 @@ async def role_restoring_page(self, ctx, user: discord.Member, roles: Optional[l
         await message.add_reaction("▶")
     await message.add_reaction("🆗")
 
-    title = (f"{user.display_name} had the following roles before "
-             f"{'leaving' if not muted else 'being muted'}."
-             f"\nA {self.bot.config.moderator_role} can add these roles "
-             f"back by reacting with 🆗"
-             f"{'' if not muted else ' (Delete this message to continue unmuting without adding the roles back'}")
+    title = (
+        f"{user.display_name} had the following roles before "
+        f"{'leaving' if not muted else 'being muted'}."
+        f"\nA {self.bot.config.moderator_role} can add these roles "
+        f"back by reacting with 🆗"
+        f"{'' if not muted else ' (Delete this message to continue unmuting without adding the roles back'}"
+    )
     p = Pages(
         ctx,
         item_list=roles_name,
@@ -140,7 +146,7 @@ async def role_restoring_page(self, ctx, user: discord.Member, roles: Optional[l
         bot=bot,
         guild=guild,
         channel=channel,
-        user=restored_by
+        user=restored_by,
     )
     ok_user = await p.paginate()
 
