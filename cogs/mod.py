@@ -49,9 +49,9 @@ class Mod(commands.Cog):
     @commands.Cog.listener()
     async def on_ready(self):
         self.guild = self.bot.get_guild(self.bot.config.server_id)
-        
+
         await self.verification_purge_startup()
-        
+
         conn = sqlite3.connect(self.bot.config.db_path)
         c = conn.cursor()
         c.execute("SELECT * FROM MutedUsers")
@@ -247,7 +247,7 @@ class Mod(commands.Cog):
         if id is not None:
             message = await self.verification_channel.fetch_message(id)
         await self.verification_purge_utility(message)
-        
+
     async def mute_utility(self, user: discord.Member, ctx=None):
         # note that this is made such that if a user is already muted
         # we make sure the user still has the role, is still in the db, and still has a channel
