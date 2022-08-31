@@ -35,29 +35,33 @@ class Mod(commands.Cog):
     @commands.Cog.listener()
     async def on_ready(self):
         self.guild = self.bot.get_guild(self.bot.config.server_id)
-        self.verification_channel = utils.get(self.guild.text_channels, name=self.bot.config.verification_channel)
-        if self.verification_channel:
-            # arbitrary min date because choosing dates that predate discord will cause an httpexception
-            # when fetching message history after that date later on
-            self.last_verification_purge_datetime = datetime(2018, 1, 1)
-            conn = sqlite3.connect(self.bot.config.db_path)
-            c = conn.cursor()
-            c.execute("SELECT Value FROM Settings WHERE Key = ?", ("last_verification_purge_timestamp",))
-            fetched = c.fetchone()
-            if fetched:
-                last_purge_timestamp = float(fetched[0])
-                if last_purge_timestamp:
-                    self.last_verification_purge_datetime = datetime.fromtimestamp(last_purge_timestamp)
-            else:
-                # the verification purge info setting has not been added to db yet
-                c.execute(
-                    "INSERT INTO Settings VALUES (?, ?)",
-                    ("last_verification_purge_timestamp", self.last_verification_purge_datetime.timestamp()),
-                )
-                conn.commit()
-            conn.close()
+        await self.verification_purge_startup()
 
-            self.check_verification_purge.start()
+    async def verification_purge_startup(self):
+        self.verification_channel = utils.get(self.guild.text_channels, name=self.bot.config.verification_channel)
+        if not self.verification_channel:
+            return
+        # arbitrary min date because choosing dates that predate discord will cause an httpexception
+        # when fetching message history after that date later on
+        self.last_verification_purge_datetime = datetime(2018, 1, 1)
+        conn = sqlite3.connect(self.bot.config.db_path)
+        c = conn.cursor()
+        c.execute("SELECT Value FROM Settings WHERE Key = ?", ("last_verification_purge_timestamp",))
+        fetched = c.fetchone()
+        if fetched:
+            last_purge_timestamp = float(fetched[0])
+            if last_purge_timestamp:
+                self.last_verification_purge_datetime = datetime.fromtimestamp(last_purge_timestamp)
+        else:
+            # the verification purge info setting has not been added to db yet
+            c.execute(
+                "INSERT INTO Settings VALUES (?, ?)",
+                ("last_verification_purge_timestamp", self.last_verification_purge_datetime.timestamp()),
+            )
+            conn.commit()
+        conn.close()
+
+        await self.check_verification_purge.start()
 
     @tasks.loop(minutes=60)
     async def check_verification_purge(self):
