@@ -20,8 +20,6 @@ import sqlite3
 
 from discord import utils
 from discord.ext import commands
-from enum import Enum
-from typing import Optional, Tuple, Union
 
 from .paginator import Pages
 from .mock_context import MockContext
@@ -55,7 +53,7 @@ def save_existing_roles(bot, user: discord.Member, muted: bool = False, appeal_c
         conn.close()
 
 
-def fetch_saved_roles(bot, guild, user: discord.Member, muted: bool = False) -> Optional[list]:
+def fetch_saved_roles(bot, guild, user: discord.Member, muted: bool = False) -> list[discord.Role] | None:
     conn = sqlite3.connect(bot.config.db_path)
     try:
         c = conn.cursor()
@@ -105,7 +103,11 @@ def remove_from_muted_table(bot, user: discord.Member):
 
 
 async def role_restoring_page(
-    bot, ctx: Union[discord.ext.commands.Context, MockContext], user: discord.Member, roles: Optional[list], muted=False
+    bot,
+    ctx: discord.ext.commands.Context | MockContext,
+    user: discord.Member,
+    roles: list[discord.Role] | None,
+    muted: bool = False
 ):
     channel = ctx.channel
     if roles is None:
