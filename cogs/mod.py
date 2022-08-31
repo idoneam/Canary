@@ -28,9 +28,9 @@ from datetime import datetime, timedelta
 class Mod(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.guild = None
-        self.verification_channel = None
-        self.last_verification_purge_datetime = None
+        self.guild: discord.Guild | None = None
+        self.verification_channel: discord.TextChannel | None = None
+        self.last_verification_purge_datetime: datetime | None = None
 
     @commands.Cog.listener()
     async def on_ready(self):
