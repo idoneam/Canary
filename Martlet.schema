@@ -98,3 +98,7 @@ CREATE TABLE IF NOT EXISTS `BannerSubmissions` (
     `ConvertedMessageID`  INTEGER
 );
 
+CREATE TABLE IF NOT EXISTS `SpoilerizedMessages` (
+	`MessageID`           INTEGER UNIQUE,
+	`UserID`              INTEGER
+);
