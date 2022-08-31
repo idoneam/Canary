@@ -264,22 +264,17 @@ class Roles(commands.Cog):
         A moderator can click the OK react on the message to give these roles back
         """
 
-        if is_in_muted_table(self, user):
+        if is_in_muted_table(self.bot, user):
             await ctx.send("Cannot restore roles to a muted user")
             return
 
-        valid_roles = fetch_saved_roles(self, ctx.guild, user)
-        await role_restoring_page(self, ctx, user, valid_roles)
+        valid_roles = fetch_saved_roles(self.bot, ctx.guild, user)
+        await role_restoring_page(self.bot, ctx, user, valid_roles)
 
     @commands.Cog.listener()
     async def on_member_remove(self, user: discord.Member):
-        if is_in_muted_table(self, user):
-            # Check if the user is muted.
-            # If so, save all roles BUT the muted role into the PreviousRoles table
-            save_existing_roles(self, user, muted=True)
-        else:
-            # Save existing roles
-            save_existing_roles(self, user)
+        # If the user is muted, this saves all roles BUT the muted role into the PreviousRoles table
+        save_existing_roles(self.bot, user, muted=is_in_muted_table(self.bot, user))
 
 
 def setup(bot):

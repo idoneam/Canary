@@ -82,19 +82,19 @@ CREATE TABLE IF NOT EXISTS `PreviousRoles` (
 -- and stores old roles akin to the way PreviousRoles does it
 CREATE TABLE IF NOT EXISTS `MutedUsers` (
     `UserID`              INTEGER UNIQUE,
-	`AppealChannelID`     INTEGER UNIQUE,
+    `AppealChannelID`     INTEGER UNIQUE,
     `Roles`               TEXT, -- space-separated list of role IDs
-	`Date`                INTEGER
+    `Date`                INTEGER
 );
 
 CREATE TABLE IF NOT EXISTS `Settings` (
-	`Key`       TEXT PRIMARY KEY,
-	`Value`     TEXT
+    `Key`       TEXT PRIMARY KEY,
+    `Value`     TEXT
 );
 
 CREATE TABLE IF NOT EXISTS `BannerSubmissions` (
-	`UserID`              INTEGER UNIQUE,
-	`PreviewMessageID`    INTEGER,
-	`ConvertedMessageID`  INTEGER
+    `UserID`              INTEGER UNIQUE,
+    `PreviewMessageID`    INTEGER,
+    `ConvertedMessageID`  INTEGER
 );
 

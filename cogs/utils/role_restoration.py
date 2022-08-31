@@ -21,26 +21,27 @@ import sqlite3
 from discord import utils
 from discord.ext import commands
 from enum import Enum
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Union
 
 from .paginator import Pages
+from .mock_context import MockContext
 from bot import muted_role as muted_role_name
 import datetime
 
 
-def save_existing_roles(self, user: discord.Member, muted: bool = False, appeal_channel: discord.TextChannel = None):
+def save_existing_roles(bot, user: discord.Member, muted: bool = False, appeal_channel: discord.TextChannel = None):
     roles_id = [role.id for role in user.roles if role.name not in ("@everyone", muted_role_name)]
 
     if not roles_id and not muted:
         return
 
-    conn = sqlite3.connect(self.bot.config.db_path)
+    conn = sqlite3.connect(bot.config.db_path)
     try:
         c = conn.cursor()
         # store roles as a string of IDs separated by spaces
         if muted:
             now = datetime.datetime.now()
-            if is_in_muted_table(self, user):
+            if is_in_muted_table(bot, user):
                 t = (appeal_channel.id, user.id)
                 c.execute(f"UPDATE INTO MutedUsers SET AppealChannelID = ? WHERE UserID = ?", t)
             else:
@@ -54,8 +55,8 @@ def save_existing_roles(self, user: discord.Member, muted: bool = False, appeal_
         conn.close()
 
 
-def fetch_saved_roles(self, guild, user: discord.Member, muted: bool = False) -> Optional[list]:
-    conn = sqlite3.connect(self.bot.config.db_path)
+def fetch_saved_roles(bot, guild, user: discord.Member, muted: bool = False) -> Optional[list]:
+    conn = sqlite3.connect(bot.config.db_path)
     try:
         c = conn.cursor()
         if muted:
@@ -78,13 +79,13 @@ def fetch_saved_roles(self, guild, user: discord.Member, muted: bool = False) ->
         conn.close()
 
 
-def has_muted_role(self, user: discord.Member):
+def has_muted_role(user: discord.Member):
     muted_role = utils.get(user.guild.roles, name=muted_role_name)
     return muted_role and next((r for r in user.roles if r == muted_role), None) is not None
 
 
-def is_in_muted_table(self, user: discord.Member):
-    conn = sqlite3.connect(self.bot.config.db_path)
+def is_in_muted_table(bot, user: discord.Member):
+    conn = sqlite3.connect(bot.config.db_path)
     try:
         c = conn.cursor()
         muted = c.execute("SELECT * FROM MutedUsers WHERE UserID = ?", (user.id,)).fetchone()
@@ -93,8 +94,8 @@ def is_in_muted_table(self, user: discord.Member):
         conn.close()
 
 
-def remove_from_muted_table(self, user: discord.Member):
-    conn = sqlite3.connect(self.bot.config.db_path)
+def remove_from_muted_table(bot, user: discord.Member):
+    conn = sqlite3.connect(bot.config.db_path)
     try:
         c = conn.cursor()
         c.execute("DELETE FROM MutedUsers WHERE UserID = ?", (user.id,))
@@ -104,12 +105,9 @@ def remove_from_muted_table(self, user: discord.Member):
 
 
 async def role_restoring_page(
-    self, ctx, user: discord.Member, roles: Optional[list], bot=None, guild=None, channel=None, restored_by=None
+    bot, ctx: Union[discord.ext.commands.Context, MockContext], user: discord.Member, roles: Optional[list], muted=False
 ):
-    # If used in a situation where there is no context, bot, guild, channel and user can be provided
-    # directly as an alternative (with ctx=None).
-    if ctx:
-        channel = ctx.channel
+    channel = ctx.channel
     if roles is None:
         # No row found in DB, as opposed to empty list
         if not muted:  # don't say anything if this is while unmuting
@@ -130,9 +128,9 @@ async def role_restoring_page(
     title = (
         f"{user.display_name} had the following roles before "
         f"{'leaving' if not muted else 'being muted'}."
-        f"\nA {self.bot.config.moderator_role} can add these roles "
+        f"\nA {bot.config.moderator_role} can add these roles "
         f"back by reacting with 🆗"
-        f"{'' if not muted else ' (Delete this message to continue unmuting without adding the roles back'}"
+        f"{'' if not muted else ' (Delete this message to continue unmuting without adding the roles back)'}"
     )
     p = Pages(
         ctx,
@@ -143,15 +141,11 @@ async def role_restoring_page(
         editable_content=True,
         editable_content_emoji="🆗",
         return_user_on_edit=True,
-        bot=bot,
-        guild=guild,
-        channel=channel,
-        user=restored_by,
     )
     ok_user = await p.paginate()
 
     while p.edit_mode:
-        if not discord.utils.get(ok_user.roles, name=self.bot.config.moderator_role):
+        if not discord.utils.get(ok_user.roles, name=bot.config.moderator_role):
             # User is not moderator, simply paginate and return
             await p.paginate()
             continue

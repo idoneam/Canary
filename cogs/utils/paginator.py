@@ -35,17 +35,13 @@ class Pages:
         editable_content_emoji="🚮",
         return_user_on_edit=False,
         timeout=300,
-        bot=None,
-        guild=None,
-        channel=None,
-        user=None,
     ):
         """Creates a paginator.
 
         Parameters
         -----------
-        ctx: discord.ext.commands.Context
-            The current context (guild, channel, etc for bot to send messages).
+        ctx: Union[discord.ext.commands.Context, MockContext]
+            The current context (guild, channel, etc for the bot to send messages).
         current_page: int
             Specify which page to display.
         msg: discord.Message
@@ -97,20 +93,11 @@ class Pages:
             The timeout is reset when a user turns pages.
             It is not recommended to use a value much bigger than the default
             one.
-        bot, guild, channel, user:
-            If paginator is used in a situation where there is no context, these
-            values can be provided directly as an alternative (with ctx=None).
         """
-        if ctx:
-            self.bot = ctx.bot
-            self.guild = ctx.guild
-            self.channel = ctx.channel
-            self.user = ctx.author
-        else:
-            self.bot = bot
-            self.guild = guild
-            self.channel = channel
-            self.user = user
+        self.bot = ctx.bot
+        self.guild = ctx.guild
+        self.channel = ctx.channel
+        self.user = ctx.author
         self.message = msg
         self.itemList = item_list
         self.title = title

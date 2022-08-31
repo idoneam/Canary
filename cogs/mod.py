@@ -30,6 +30,7 @@ from .utils.role_restoration import (
     remove_from_muted_table,
     role_restoring_page,
 )
+from .utils.mock_context import MockContext
 from bidict import bidict
 import datetime
 
@@ -189,7 +190,7 @@ class Mod(commands.Cog):
         # save existing roles and add muted user to database (with the attached appeal channel)
         # note that this function is such that if the user was already in the db, only the appeal channel is updated
         # (i.e, the situation where a mod had manually deleted the appeal channel)
-        save_existing_roles(self, user, muted=True, appeal_channel=channel)
+        save_existing_roles(self.bot, user, muted=True, appeal_channel=channel)
 
         # Remove all roles
         failed_roles: list[str] = []
@@ -227,24 +228,21 @@ class Mod(commands.Cog):
         )
 
         # Restore old roles from the database
-        valid_roles = fetch_saved_roles(self, self.guild, user, muted=True)
+        valid_roles = fetch_saved_roles(self.bot, self.guild, user, muted=True)
         # for the following, if ctx is provided then the optional bot, guild, channel and restored_by values are ignored
         # if there is no ctx, it means that the user was unmuted because a mod removed the role manually
         # to know which mod did it, we would have to go through the audit log and try the find the log entry. Instead,
         # we just say marty did it, and mods can check in the discord log themselves.
         await role_restoring_page(
-            self,
-            ctx,
+            self.bot,
+            MockContext(bot=self.bot, guild=self.guild, channel=confirmation_channel, author=self.bot.user),
             user,
             valid_roles,
-            bot=self.bot,
-            guild=self.guild,
-            channel=confirmation_channel,
-            restored_by=self.bot.user,
+            muted=True,
         )
 
         # Remove entry from the database
-        remove_from_muted_table(self, user)
+        remove_from_muted_table(self.bot, user)
 
         # Delete appeal channel
         if user in self.muted_users_to_appeal_channels:
@@ -292,8 +290,8 @@ class Mod(commands.Cog):
             not muted_role_before
             and muted_role_after
             and not (
-                is_in_muted_table(self, after)
-                and has_muted_role(self, after)
+                is_in_muted_table(self.bot, after)
+                and has_muted_role(after)
                 and after in self.muted_users_to_appeal_channels
                 and self.muted_users_to_appeal_channels[after] in self.guild.text_channels
             )
@@ -305,8 +303,8 @@ class Mod(commands.Cog):
             muted_role_before
             and not muted_role_after
             and (
-                is_in_muted_table(self, after)
-                or has_muted_role(self, after)
+                is_in_muted_table(self.bot, after)
+                or has_muted_role(after)
                 or after in self.muted_users_to_appeal_channels
             )
         ):
@@ -350,11 +348,10 @@ class Mod(commands.Cog):
                 log_message = f"User {message.author} deleted message {message.id} in the appeal channel for muted user {muted_user.mention} ({muted_user}), {message.channel.mention}"
             await self.appeals_log_channel.send(log_message)
 
-    # the next two functions are used to save the roles
     @commands.Cog.listener()
     async def on_member_join(self, user: discord.Member):
         # If the user was already muted, restore the muted role
-        if is_in_muted_table(self, user):
+        if is_in_muted_table(self.bot, user):
             await user.add_roles(muted_role, reason="Restored muted status")
 
 
