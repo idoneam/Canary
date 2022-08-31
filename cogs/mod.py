@@ -15,9 +15,11 @@
 # You should have received a copy of the GNU General Public License
 # along with Canary. If not, see <https://www.gnu.org/licenses/>.
 
+import datetime
 import discord
 import sqlite3
 import random
+from bidict import bidict
 from discord import utils
 from discord.ext import commands
 
@@ -31,17 +33,15 @@ from .utils.role_restoration import (
     role_restoring_page,
 )
 from .utils.mock_context import MockContext
-from bidict import bidict
-import datetime
 
 
 class Mod(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.guild = None
-        self.muted_users_to_appeal_channels = {}
-        self.appeals_log_channel = None
-        self.muted_role = None
+        self.guild: discord.Guild | None = None
+        self.muted_users_to_appeal_channels: bidict = bidict()
+        self.appeals_log_channel: discord.TextChannel | None = None
+        self.muted_role: discord.Role | None = None
 
     @commands.Cog.listener()
     async def on_ready(self):
@@ -156,7 +156,7 @@ class Mod(commands.Cog):
         now = datetime.datetime.now()
 
         # create appeals channel if not exists (it might if the user was already muted)
-        channel = None
+        channel: discord.TextChannel | None = None
         if self.muted_users_to_appeal_channels:
             channel = self.muted_users_to_appeal_channels[user]
         if channel not in self.guild.text_channels:
@@ -165,8 +165,8 @@ class Mod(commands.Cog):
                 channel_name, reason=reason_message, category=appeals_category, slowmode_delay=30
             )
 
-            # note that we can only deny permissions that the bot knows about, so if discord.py isn't updated to the latest
-            # version some permissions will have to be set manually by moderators
+            # note that we can only deny permissions that the bot knows about, so if discord.py isn't updated to the
+            # latest version some permissions will have to be set manually by moderators
             await channel.set_permissions(
                 self.guild.default_role,
                 overwrite=discord.PermissionOverwrite.from_pair(allow=[], deny=discord.Permissions.all()),
@@ -213,13 +213,14 @@ class Mod(commands.Cog):
         await confirmation_channel.send(reason_message)
         if failed_roles:
             await confirmation_channel.send(
-                f"The following role{'s' if len(failed_roles) > 0 else ''} could not be removed: {', '.join(failed_roles)}"
+                f"The following role{'s' if len(failed_roles) > 0 else ''} could not be removed: "
+                f"{', '.join(failed_roles)}"
             )
         await self.appeals_log_channel.send(
             f"User {user.mention} ({user}) has been muted. Appeal channel: {channel.mention}"
         )
 
-    async def unmute_utility(self, user: discord.Member, ctx=None):
+    async def unmute_utility(self, user: discord.Member, ctx: discord.ext.commands.Context | MockContext | None = None):
         confirmation_channel = ctx.channel if ctx else self.appeals_log_channel
         reason_message = (
             f"{ctx.author} used the unmute function on {user}"
@@ -274,7 +275,8 @@ class Mod(commands.Cog):
     @is_moderator()
     async def unmute(self, ctx, user: discord.Member):
         """
-        Unmute a user and delete the appeal channel (mod-only). The user's previous roles are restored after confirmation.
+        Unmute a user and delete the appeal channel (mod-only). The user's previous roles are restored after
+        confirmation.
 
         Can also be done by removing the muted role directly.
         """
@@ -313,46 +315,75 @@ class Mod(commands.Cog):
     # the next three functions are used for appeals logging
     @commands.Cog.listener()
     async def on_message(self, message):
-        if message.channel in self.muted_users_to_appeal_channels.values():
-            muted_user = self.muted_users_to_appeal_channels.inverse[message.channel]
-            if message.author == muted_user:
-                # only pings if the user is the one that is muted
-                log_message = f"Muted user {message.author.mention} ({message.author}) sent the following message ({message.id}) in {message.channel.mention}:\n{message.content}"
-            else:
-                log_message = f"User {message.author} sent the following message ({message.id}) in the appeal channel for muted user {muted_user.mention} ({muted_user}), {message.channel.mention}:\n{message.content}"
-            if len(log_message) > 2000:
-                log_message = log_message[:1995] + "[...]"
-            await self.appeals_log_channel.send(log_message)
+        if message.channel not in self.muted_users_to_appeal_channels.values():
+            return
+
+        muted_user = self.muted_users_to_appeal_channels.inverse[message.channel]
+        if message.author == muted_user:
+            # only pings if the user is the one that is muted
+            log_message = (
+                f"Muted user {message.author.mention} ({message.author}) sent the following message ({message.id}) "
+                f"in {message.channel.mention}:\n{message.content}"
+            )
+        else:
+            log_message = (
+                f"User {message.author} sent the following message ({message.id}) in the appeal channel for muted "
+                f"user {muted_user.mention} ({muted_user}), {message.channel.mention}:\n{message.content}"
+            )
+
+        if len(log_message) > 2000:
+            log_message = log_message[:1995] + "[...]"
+
+        await self.appeals_log_channel.send(log_message)
 
     @commands.Cog.listener()
     async def on_message_edit(self, before, after):
-        if after.channel in self.muted_users_to_appeal_channels.values():
-            muted_user = self.muted_users_to_appeal_channels.inverse[after.channel]
-            if after.author == muted_user:
-                # only pings if the user is the one that is muted
-                log_message = f"Muted user {after.author.mention} ({after.author}) edited message {after.id} in {after.channel.mention}. New content:\n{after.content}"
-            else:
-                log_message = f"User {after.author} edited message {after.id} in the appeal channel for muted user {muted_user.mention} ({muted_user}), {after.channel.mention}. New content:\n{after.content}"
-            if len(log_message) > 2000:
-                log_message = log_message[:1995] + "[...]"
-            await self.appeals_log_channel.send(log_message)
+        if after.channel not in self.muted_users_to_appeal_channels.values():
+            return
+
+        muted_user = self.muted_users_to_appeal_channels.inverse[after.channel]
+        if after.author == muted_user:
+            # only pings if the user is the one that is muted
+            log_message = (
+                f"Muted user {after.author.mention} ({after.author}) edited message {after.id} in "
+                f"{after.channel.mention}. New content:\n{after.content}"
+            )
+        else:
+            log_message = (
+                  f"User {after.author} edited message {after.id} in the appeal channel for muted user "
+                  f"{muted_user.mention} ({muted_user}), {after.channel.mention}. New content:\n{after.content}"
+            )
+
+        if len(log_message) > 2000:
+            log_message = log_message[:1995] + "[...]"
+
+        await self.appeals_log_channel.send(log_message)
 
     @commands.Cog.listener()
     async def on_message_delete(self, message):
-        if message.channel in self.muted_users_to_appeal_channels.values():
-            muted_user = self.muted_users_to_appeal_channels.inverse[message.channel]
-            if message.author == muted_user:
-                # only pings if the user is the one that is muted
-                log_message = f"Muted user {message.author.mention} ({message.author}) deleted message {message.id} in {message.channel.mention}"
-            else:
-                log_message = f"User {message.author} deleted message {message.id} in the appeal channel for muted user {muted_user.mention} ({muted_user}), {message.channel.mention}"
-            await self.appeals_log_channel.send(log_message)
+        if message.channel not in self.muted_users_to_appeal_channels.values():
+            return
+
+        muted_user = self.muted_users_to_appeal_channels.inverse[message.channel]
+        if message.author == muted_user:
+            # only pings if the user is the one that is muted
+            log_message = (
+                f"Muted user {message.author.mention} ({message.author}) deleted message {message.id} in "
+                f"{message.channel.mention}"
+            )
+        else:
+            log_message = (
+                f"User {message.author} deleted message {message.id} in the appeal channel for muted user "
+                f"{muted_user.mention} ({muted_user}), {message.channel.mention}"
+            )
+
+        await self.appeals_log_channel.send(log_message)
 
     @commands.Cog.listener()
     async def on_member_join(self, user: discord.Member):
         # If the user was already muted, restore the muted role
         if is_in_muted_table(self.bot, user):
-            await user.add_roles(muted_role, reason="Restored muted status")
+            await user.add_roles(self.muted_role, reason="Restored muted status")
 
 
 def setup(bot):
