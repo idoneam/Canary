@@ -107,7 +107,7 @@ async def role_restoring_page(
     ctx: discord.ext.commands.Context | MockContext,
     user: discord.Member,
     roles: list[discord.Role] | None,
-    muted: bool = False
+    muted: bool = False,
 ):
     channel = ctx.channel
     if roles is None:

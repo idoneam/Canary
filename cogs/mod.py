@@ -350,8 +350,8 @@ class Mod(commands.Cog):
             )
         else:
             log_message = (
-                  f"User {after.author} edited message {after.id} in the appeal channel for muted user "
-                  f"{muted_user.mention} ({muted_user}), {after.channel.mention}. New content:\n{after.content}"
+                f"User {after.author} edited message {after.id} in the appeal channel for muted user "
+                f"{muted_user.mention} ({muted_user}), {after.channel.mention}. New content:\n{after.content}"
             )
 
         if len(log_message) > 2000:
