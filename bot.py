@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) idoneam (2016-2020)
+# Copyright (C) idoneam (2016-2022)
 #
 # This file is part of Canary
 #
@@ -27,7 +27,7 @@ import traceback
 import requests
 from discord import Webhook, RequestsWebhookAdapter, Intents
 
-__all__ = ["bot", "developer_role", "moderator_role"]
+__all__ = ["bot", "developer_role", "moderator_role", "muted_role"]
 
 _parser = parser.Parser()
 command_prefix = _parser.command_prefix
@@ -157,3 +157,4 @@ intents.presences = True
 bot = Canary(case_insensitive=True, intents=intents)
 moderator_role = bot.config.moderator_role
 developer_role = bot.config.developer_role
+muted_role = bot.config.muted_role
