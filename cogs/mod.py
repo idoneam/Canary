@@ -36,28 +36,28 @@ class Mod(commands.Cog):
     async def on_ready(self):
         self.guild = self.bot.get_guild(self.bot.config.server_id)
         self.verification_channel = utils.get(self.guild.text_channels, name=self.bot.config.verification_channel)
+        if self.verification_channel:
+            # arbitrary min date because choosing dates that predate discord will cause an httpexception
+            # when fetching message history after that date later on
+            self.last_verification_purge_datetime = datetime(2018, 1, 1)
+            conn = sqlite3.connect(self.bot.config.db_path)
+            c = conn.cursor()
+            c.execute("SELECT Value FROM Settings WHERE Key = ?", ("last_verification_purge_timestamp",))
+            fetched = c.fetchone()
+            if fetched:
+                last_purge_timestamp = float(fetched[0])
+                if last_purge_timestamp:
+                    self.last_verification_purge_datetime = datetime.fromtimestamp(last_purge_timestamp)
+            else:
+                # the verification purge info setting has not been added to db yet
+                c.execute(
+                    "INSERT INTO Settings VALUES (?, ?)",
+                    ("last_verification_purge_timestamp", self.last_verification_purge_datetime.timestamp()),
+                )
+                conn.commit()
+            conn.close()
 
-        # arbitrary min date because choosing dates that predate discord will cause an httpexception
-        # when fetching message history after that date later on
-        self.last_verification_purge_datetime = datetime(2018, 1, 1)
-        conn = sqlite3.connect(self.bot.config.db_path)
-        c = conn.cursor()
-        c.execute("SELECT Value FROM Settings WHERE Key = ?", ("last_verification_purge_timestamp",))
-        fetched = c.fetchone()
-        if fetched:
-            last_purge_timestamp = float(fetched[0])
-            if last_purge_timestamp:
-                self.last_verification_purge_datetime = datetime.fromtimestamp(last_purge_timestamp)
-        else:
-            # the verification purge info setting has not been added to db yet
-            c.execute(
-                "INSERT INTO Settings VALUES (?, ?)",
-                ("last_verification_purge_timestamp", self.last_verification_purge_datetime.timestamp()),
-            )
-            conn.commit()
-        conn.close()
-
-        self.check_verification_purge.start()
+            self.check_verification_purge.start()
 
     @tasks.loop(minutes=60)
     async def check_verification_purge(self):
@@ -165,15 +165,15 @@ class Mod(commands.Cog):
 
         await ctx.message.delete()
 
-    async def verification_purge_utility(self, after):
+    async def verification_purge_utility(self, after: datetime | discord.Message | None):
         # after can be None, a datetime or a discord message
         await self.verification_channel.send("Starting verification purge")
         channel = self.verification_channel
         deleted = 0
         async for message in channel.history(oldest_first=True, limit=None, after=after):
-            if len(message.attachments) > 0 or len(message.embeds) > 0:
+            if message.attachments or message.embeds:
                 content = message.content
-                if len(message.embeds) > 0:
+                if message.embeds:
                     thumbnail_found = False
                     for embed in message.embeds:
                         if embed.thumbnail:
@@ -202,10 +202,19 @@ class Mod(commands.Cog):
         If a message ID is provided, every pictures after that message will be removed.
         If no message ID is provided, this will be done for the whole channel (may take time).
         """
+        if not self.bot.config.verification_channel:
+            await ctx.send("No verification channel set in config file")
+            return
+        if not self.verification_channel:
+            # if no verification_channel was found on startup, we try to see if it exists now
+            self.verification_channel = utils.get(self.guild.text_channels, name=self.bot.config.verification_channel)
+            if not self.verification_channel:
+                await ctx.send(f"Cannot find verification channel named {self.bot.config.verification_channel}")
+                return
         message = None
-        if id:
+        if id is not None:
             message = await self.verification_channel.fetch_message(id)
-        verification_purge_utility(self, message)
+        await self.verification_purge_utility(message)
 
 
 def setup(bot):
