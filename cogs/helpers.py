@@ -73,7 +73,7 @@ MAIN_WEBHOOKS_PREFIX = "Main webhook for #"
 class Helpers(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.guild = None
+        self.guild: discord.Guild | None = None
 
     @commands.Cog.listener()
     async def on_ready(self):
@@ -663,17 +663,16 @@ class Helpers(commands.Cog):
                     lambda w: w.user == self.bot.user and w.name[: len(MAIN_WEBHOOKS_PREFIX)] == MAIN_WEBHOOKS_PREFIX,
                     await channel.webhooks(),
                 )
-                if not webhook:
-                    # max length for webhook name is 80
-                    await channel.create_webhook(
-                        name=f"{MAIN_WEBHOOKS_PREFIX}{channel.name[:(80 - len(MAIN_WEBHOOKS_PREFIX))]}"
-                    )
-                    await ctx.send(f"Created webhook for {channel.mention}")
-                else:
+                if webhook:
                     await ctx.send(f"Webhook for {channel.mention} already exists")
+                    continue
+                # max length for webhook name is 80
+                await channel.create_webhook(
+                    name=f"{MAIN_WEBHOOKS_PREFIX}{channel.name[:(80 - len(MAIN_WEBHOOKS_PREFIX))]}"
+                )
+                await ctx.send(f"Created webhook for {channel.mention}")
             except discord.errors.Forbidden:
                 ignored += 1
-                continue
         await ctx.send(f"Ignored {ignored} channel{'s' if ignored == 1 else ''} without bot permissions")
         await ctx.send("Job completed.")
 
@@ -742,19 +741,22 @@ class Helpers(commands.Cog):
 
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload):
-        if payload.guild_id == self.guild.id and str(payload.emoji) == "🚮":
-            conn = sqlite3.connect(self.bot.config.db_path)
-            c = conn.cursor()
-            c.execute(
-                "SELECT * From SpoilerizedMessages WHERE MessageID=? AND UserID=?",
-                (int(payload.message_id), int(payload.member.id)),
-            )
-            found = c.fetchone()
-            if found:
-                channel = utils.get(self.guild.text_channels, id=payload.channel_id)
-                message = await channel.fetch_message(payload.message_id)
-                await message.delete()
-            conn.close()
+        if payload.guild_id != self.guild.id or str(payload.emoji) != "🚮":
+            return
+        # if the put_litter_in_its_place react was used check if it was
+        # on a spoilerized message by its original author, and if so delete it
+        conn = sqlite3.connect(self.bot.config.db_path)
+        c = conn.cursor()
+        c.execute(
+            "SELECT * From SpoilerizedMessages WHERE MessageID=? AND UserID=?",
+            (int(payload.message_id), int(payload.member.id)),
+        )
+        found = c.fetchone()
+        if found:
+            channel = utils.get(self.guild.text_channels, id=payload.channel_id)
+            message = await channel.fetch_message(payload.message_id)
+            await message.delete()
+        conn.close()
 
     @commands.command(alias=["spoiler"])
     async def spoilerize(self, ctx, *args):
@@ -800,12 +802,14 @@ class Helpers(commands.Cog):
         if msg_1 and ctx.message.reference and ctx.message.reference.resolved:
             await ctx.send("Cannot specify a message ID to spoilerize and use the command as a reply at the same time")
             return
-        elif msg_1 and not msg_2:
+
+        if msg_1 and not msg_2:
             await self.spoilerize_utility(ctx, msg_1, reason, moderator)
         elif msg_1 and msg_2:
             # check that the messages are in this channel
             if msg_1.channel != ctx.channel or msg_2.channel != ctx.channel:
                 await ctx.send("The specified messages must be in the same channel as where the command is used")
+                return
             # check that the 2nd message is more recent than the first:
             if msg_2.id <= msg_1.id:
                 msg_1, msg_2 = msg_2, msg_1
@@ -847,7 +851,8 @@ class Helpers(commands.Cog):
             await self.spoilerize_utility(ctx, ctx.message.reference.resolved, reason, moderator)
         else:
             await ctx.send(
-                "You must either use this command as a reply or specify the ID of the message to spoilerize."
+                "You must either use this command as a reply or specify the ID of the message to spoilerize "
+                "(the message must be in the same channel as the command)."
             )
 
         await ctx.message.delete()
