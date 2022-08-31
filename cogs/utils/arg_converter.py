@@ -1,4 +1,4 @@
-# Copyright (C) idoneam (2016-2021)
+# Copyright (C) idoneam (2016-2022)
 #
 # This file is part of Canary
 #
@@ -144,3 +144,22 @@ class ArgConverter:
             else:
                 converted_arguments_dict[key] = self._converters_dict[key][1]
         return converted_arguments_dict
+
+
+# Default converters
+class IntConverter(commands.Converter):
+    @staticmethod
+    async def convert(ctx, argument):
+        try:
+            return int(argument)
+        except ValueError:
+            raise commands.BadArgument("Expected integer as input")
+
+
+class StrConverter(commands.Converter):
+    @staticmethod
+    async def convert(ctx, argument):
+        try:
+            return str(argument)
+        except ValueError:
+            raise commands.BadArgument("Expected string as input")

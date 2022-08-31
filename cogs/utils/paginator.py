@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) idoneam (2016-2019)
+# Copyright (C) idoneam (2016-2022)
 #
 # This file is part of Canary
 #
@@ -40,8 +40,8 @@ class Pages:
 
         Parameters
         -----------
-        ctx: discord.ext.commands.Context
-            The current context (guild, channel, etc for bot to send messages).
+        ctx: Union[discord.ext.commands.Context, MockContext]
+            The current context (guild, channel, etc for the bot to send messages).
         current_page: int
             Specify which page to display.
         msg: discord.Message

@@ -1,4 +1,4 @@
-# Copyright (C) idoneam (2016-2021)
+# Copyright (C) idoneam (2016-2022)
 #
 # This file is part of Canary
 #
@@ -25,8 +25,7 @@ from typing import Optional, Tuple
 
 from .utils.checks import is_moderator
 from .utils.paginator import Pages
-
-PENALTY_ROLE_ERROR = "Mis-configured penalty role in config.ini"
+from .utils.role_restoration import save_existing_roles, fetch_saved_roles, is_in_muted_table, role_restoring_page
 
 
 class RoleTransaction(Enum):
@@ -55,7 +54,6 @@ class Roles(commands.Cog):
         self.bot = bot
         self.roles = self.bot.config.roles
         self.mod_role = self.bot.config.moderator_role
-        self.penalty_role = self.bot.config.penalty_role
 
     @staticmethod
     async def paginate_roles(ctx, roles, title="All roles in server"):
@@ -248,235 +246,6 @@ class Roles(commands.Cog):
         await ctx.guild.create_role(name=role, reason="Created with Canary")
         await ctx.send("Role created successfully.")
 
-    def _save_existing_roles(self, user: discord.Member, penalty: bool = False):
-        table = "PenaltyUsers" if penalty else "PreviousRoles"
-
-        roles_id = [role.id for role in user.roles if role.name not in ("@everyone", self.penalty_role)]
-
-        if not roles_id and not penalty:
-            return
-
-        conn = sqlite3.connect(self.bot.config.db_path)
-        try:
-            c = conn.cursor()
-            # store roles as a string of IDs separated by spaces
-            t = (user.id, " ".join(str(e) for e in roles_id))
-            c.execute(f"REPLACE INTO {table} VALUES (?, ?)", t)
-            conn.commit()
-        finally:
-            conn.close()
-
-    def _fetch_saved_roles(self, guild, user: discord.Member, penalty: bool = False) -> Optional[list]:
-        table = "PenaltyUsers" if penalty else "PreviousRoles"
-
-        conn = sqlite3.connect(self.bot.config.db_path)
-        try:
-            c = conn.cursor()
-            fetched_roles = c.execute(f"SELECT Roles FROM {table} WHERE ID = ?", (user.id,)).fetchone()
-            # the above returns a tuple with a string of IDs separated by spaces
-
-            # Return list of all valid roles restored from the DB
-            #  - filter(None, ...) strips false-y elements
-            return (
-                list(filter(None, (guild.get_role(int(role_id)) for role_id in fetched_roles[0].split(" "))))
-                if fetched_roles
-                else None
-            )
-
-        finally:
-            conn.close()
-
-    def _has_penalty_role(self, user: discord.Member):
-        penalty_role = utils.get(user.guild.roles, name=self.penalty_role)
-        return penalty_role and next((r for r in user.roles if r == penalty_role), None) is not None
-
-    def _is_in_penalty_table(self, user: discord.Member):
-        conn = sqlite3.connect(self.bot.config.db_path)
-        try:
-            c = conn.cursor()
-            penalty = c.execute("SELECT * FROM PenaltyUsers WHERE ID = ?", (user.id,)).fetchone()
-            return penalty is not None
-        finally:
-            conn.close()
-
-    def _remove_from_penalty_table(self, user: discord.Member):
-        conn = sqlite3.connect(self.bot.config.db_path)
-        try:
-            c = conn.cursor()
-            c.execute("DELETE FROM PenaltyUsers WHERE ID = ?", (user.id,))
-            conn.commit()
-        finally:
-            conn.close()
-
-    @commands.Cog.listener()
-    async def on_member_join(self, user: discord.Member):
-        # If the user was already in the penalty box, restore the penalty role
-        if not self._is_in_penalty_table(user):
-            return
-        penalty_role = utils.get(user.guild.roles, name=self.penalty_role)
-        if penalty_role:
-            await user.add_roles(penalty_role, reason="Restored penalty status")
-
-    @commands.Cog.listener()
-    async def on_member_remove(self, user: discord.Member):
-        penalty_role = utils.get(user.guild.roles, name=self.penalty_role)
-
-        if not penalty_role:
-            return
-
-        if not self._has_penalty_role(user):
-            # Check if user has penalty entry but no penalty role. If so,
-            # remove their penalty entry. This can occur if a mod manually
-            # removed the penalty role instead of using ?unmute.
-            self._remove_from_penalty_table(user)
-
-        elif not self._is_in_penalty_table(user):
-            # Check if the user has no penalty entry but the penalty role.
-            # If so, save all roles BUT the penalty role into the
-            # PreviousRoles table, and add a penalty entry to the database.
-            self._save_existing_roles(user, penalty=True)
-
-        # Save existing roles
-        self._save_existing_roles(user)
-
-    async def _role_restoring_page(self, ctx, user: discord.Member, roles: Optional[list]):
-        if roles is None:
-            # No row found in DB, as opposed to empty list
-            embed = discord.Embed(title=f"Could not find any roles for {user.display_name}")
-            await ctx.send(embed=embed)
-            return
-
-        roles_name = [f"[{i}] {role.name}\n" for i, role in enumerate(roles, 1)]
-
-        embed = discord.Embed(title="Loading...")
-        message = await ctx.send(embed=embed)
-
-        if len(roles) > 20:
-            await message.add_reaction("◀")
-            await message.add_reaction("▶")
-        await message.add_reaction("🆗")
-
-        p = Pages(
-            ctx,
-            item_list=roles_name,
-            title=f"{user.display_name} had the following roles before leaving."
-            f"\nA {self.bot.config.moderator_role} can add these roles "
-            f"back by reacting with 🆗",
-            msg=message,
-            display_option=(3, 20),
-            editable_content=True,
-            editable_content_emoji="🆗",
-            return_user_on_edit=True,
-        )
-        ok_user = await p.paginate()
-
-        while p.edit_mode:
-            if not discord.utils.get(ok_user.roles, name=self.bot.config.moderator_role):
-                # User is not moderator, simply paginate and return
-                await p.paginate()
-                continue
-
-            # Add a loading message until role-restoring is done
-            await message.edit(embed=discord.Embed(title="Restoring roles..."))
-
-            # User is a moderator, so restore the roles
-            failed_roles: list[str] = []
-            for role in roles:
-                try:
-                    await user.add_roles(role, reason=f"{ok_user.name} restored roles via command")
-                except (discord.Forbidden, discord.HTTPException):
-                    failed_roles.append(str(role))
-            if failed_roles:
-                embed.add_field(
-                    name=f"Role{'s' if len(failed_roles) > 0 else ''} not given back", value=", ".join(failed_roles)
-                )
-
-            embed = discord.Embed(
-                title=f"{user.display_name}'s previous roles were " f"successfully added back by {ok_user.display_name}"
-            )
-            await message.edit(embed=embed)
-            await message.clear_reaction("◀")
-            await message.clear_reaction("▶")
-            await message.clear_reaction("🆗")
-            return
-
-    @commands.command(aliases=["previousroles", "giverolesback", "rolesback", "givebackroles"])
-    async def previous_roles(self, ctx, user: discord.Member):
-        """Show the list of roles that a user had before leaving, if possible.
-        A moderator can click the OK react on the message to give these roles back
-        """
-
-        if self._is_in_penalty_table(user):
-            await ctx.send("Cannot restore roles to a user in the penalty box")
-            return
-
-        valid_roles = self._fetch_saved_roles(ctx.guild, user)
-        await self._role_restoring_page(ctx, user, valid_roles)
-
-    @commands.command(aliases=["penalty"])
-    @is_moderator()
-    async def mute(self, ctx, user: discord.Member):
-        penalty_role = utils.get(ctx.guild.roles, name=self.penalty_role)
-
-        if penalty_role is None:
-            self.bot.dev_logger.error(PENALTY_ROLE_ERROR)
-            await ctx.send(PENALTY_ROLE_ERROR)
-            return
-
-        # Save existing roles
-        self._save_existing_roles(user, penalty=True)
-
-        reason_message = f"{ctx.author} put {user} in the penalty box"
-
-        # Remove all roles
-        failed_roles: list[str] = []
-        for role in user.roles:
-            if role.name == "@everyone":
-                continue
-            try:
-                await user.remove_roles(role, reason=f"{ctx.author} put {user} in the penalty box")
-            except (discord.Forbidden, discord.HTTPException):
-                failed_roles.append(str(role))
-
-        # Add the penalty role to the user
-        await user.add_roles(penalty_role, reason=reason_message)
-        await ctx.send(reason_message)
-
-        if failed_roles:
-            await ctx.send(
-                f"The following role{'s' if len(failed_roles) > 0 else ''} could not be removed: {', '.join(failed_roles)}"
-            )
-
-    @commands.command(aliases=["unpenalty"])
-    @is_moderator()
-    async def unmute(self, ctx, user: discord.Member):
-        penalty_role = utils.get(ctx.guild.roles, name=self.penalty_role)
-
-        if penalty_role is None:
-            self.bot.dev_logger.error(PENALTY_ROLE_ERROR)
-            await ctx.send(PENALTY_ROLE_ERROR)
-            return
-
-        if self._is_in_penalty_table(user) and not self._has_penalty_role(user):
-            # User had penalty role manually removed already
-            self._remove_from_penalty_table(user)
-            await ctx.send(f"{user.display_name} was already unmuted manually;" f" removed role history from database")
-            return
-
-        reason_message = f"{ctx.author} removed {user} from the penalty box"
-
-        # Restore old roles from the database
-        valid_roles = self._fetch_saved_roles(ctx.guild, user, penalty=True)
-        await self._role_restoring_page(ctx, user, valid_roles)
-
-        # Remove the penalty role
-        await user.remove_roles(penalty_role, reason=reason_message)
-
-        # Remove entry from the database
-        self._remove_from_penalty_table(user)
-
-        await ctx.send(reason_message)
-
     @commands.command(aliases=["inchannel"])
     async def in_channel(self, ctx):
         """Returns list of users in current channel"""
@@ -488,6 +257,24 @@ class Roles(commands.Cog):
 
         pages = Pages(ctx, item_list=channel_users, title=header, display_option=(3, 20), editable_content=False)
         await pages.paginate()
+
+    @commands.command(aliases=["previousroles", "giverolesback", "rolesback", "givebackroles"])
+    async def previous_roles(self, ctx, user: discord.Member):
+        """Show the list of roles that a user had before leaving, if possible.
+        A moderator can click the OK react on the message to give these roles back
+        """
+
+        if is_in_muted_table(self.bot, user):
+            await ctx.send("Cannot restore roles to a muted user")
+            return
+
+        valid_roles = fetch_saved_roles(self.bot, ctx.guild, user)
+        await role_restoring_page(self.bot, ctx, user, valid_roles)
+
+    @commands.Cog.listener()
+    async def on_member_remove(self, user: discord.Member):
+        # If the user is muted, this saves all roles BUT the muted role into the PreviousRoles table
+        save_existing_roles(self.bot, user, muted=is_in_muted_table(self.bot, user))
 
 
 def setup(bot):
