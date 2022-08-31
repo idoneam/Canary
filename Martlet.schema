@@ -1,5 +1,5 @@
 /*
- * Copyright (C) idoneam (2016-2019)
+ * Copyright (C) idoneam (2016-2022)
  *
  * This file is part of Canary
  *
@@ -96,3 +96,7 @@ CREATE TABLE IF NOT EXISTS `BannerSubmissions` (
 	`ConvertedMessageID`  INTEGER
 );
 
+CREATE TABLE IF NOT EXISTS `SpoilerizedMessages` (
+	`MessageID`           INTEGER UNIQUE,
+	`UserID`              INTEGER
+);
