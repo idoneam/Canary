@@ -88,7 +88,7 @@ class Mod(commands.Cog):
             conn.commit()
         conn.close()
 
-        await self.check_verification_purge.start()
+        self.check_verification_purge.start()
 
     @tasks.loop(minutes=60)
     async def check_verification_purge(self):

@@ -41,7 +41,7 @@ def save_existing_roles(bot, user: discord.Member, muted: bool = False, appeal_c
             now = datetime.datetime.now()
             if is_in_muted_table(bot, user):
                 t = (appeal_channel.id, user.id)
-                c.execute(f"UPDATE INTO MutedUsers SET AppealChannelID = ? WHERE UserID = ?", t)
+                c.execute(f"UPDATE MutedUsers SET AppealChannelID = ? WHERE UserID = ?", t)
             else:
                 t = (user.id, appeal_channel.id, " ".join(str(e) for e in roles_id), now)
                 c.execute(f"REPLACE INTO MutedUsers VALUES (?, ?, ?, ?)", t)
