@@ -79,6 +79,7 @@ You must set certain values in the `config.ini` file, in particular your Discor
     * `FoodSpottingChannel`: The name of the channel where foodspotting posts are sent.
     * `MetroStatusChannel`: The name of the channel where metro status alerts are sent.
     * `BotsChannel`: The name of the channel for bot spamming.
+    * `VerificationChannel`: The name of the channel where verification pictures are sent.
     * `AppealsLogChannel`: The name of the channel where messages sent in individual appeal channels are logged.
     * `AppealsCategory`: The name of the channel category where individual appeal channels are created.
 * `[Meta]`
