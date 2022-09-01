@@ -259,7 +259,7 @@ class Mod(commands.Cog):
             if ctx
             else f"Mute function used on {user} (by adding role directly)"
         )
-        now = datetime.datetime.now()
+        now = datetime.now()
 
         # create appeals channel if not exists (it might if the user was already muted)
         channel: discord.TextChannel | None = None
