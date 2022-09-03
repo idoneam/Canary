@@ -229,6 +229,18 @@ class Banner(commands.Cog):
 
         You must be a moderator to use this command.
         """
+
+        if not self.guild:
+            return
+
+        if not self.banner_submissions_channel:
+            await ctx.send("No banner submissions channel set.")
+            return
+
+        if not self.banner_converted_channel:
+            await ctx.send("No converted banner channel set.")
+            return
+
         if not self.start_datetime:
             await ctx.send("There is no banner contest right now.")
             return

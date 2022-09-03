@@ -112,10 +112,13 @@ class Quotes(commands.Cog):
                 return
             member = member or ctx.message.reference.resolved.author
             quote = ctx.message.reference.resolved.content
+
+        if member is None:
+            return
+
         conn = sqlite3.connect(self.bot.config.db_path)
         c = conn.cursor()
-        t = (member.id, member.name, quote, str(ctx.message.created_at))
-        c.execute("INSERT INTO Quotes VALUES (?,?,?,?)", t)
+        c.execute("INSERT INTO Quotes VALUES (?,?,?,?)", (member.id, member.name, quote, str(ctx.message.created_at)))
         msg = await ctx.send("Quote added.")
 
         conn.commit()
@@ -145,8 +148,7 @@ class Quotes(commands.Cog):
             await msg.remove_reaction("🚮", self.bot.user)
 
         else:
-            t = (member.id, quote)
-            c.execute("DELETE FROM Quotes WHERE ID = ? AND Quote = ?", t)
+            c.execute("DELETE FROM Quotes WHERE ID = ? AND Quote = ?", (member.id, quote))
             conn.commit()
             self.rebuild_mc()
             await msg.delete()
@@ -401,7 +403,7 @@ class Quotes(commands.Cog):
             await ctx.send("Could not generate anything with that seed.", delete_after=60)
             return
 
-        longest_sentence = []
+        longest_sentence: list[str] = []
         retries = 0
 
         while len(longest_sentence) < min_length and retries < 200:

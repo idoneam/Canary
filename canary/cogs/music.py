@@ -50,19 +50,19 @@ from .utils.music_helpers import (
 class Music(commands.Cog):
     def __init__(self, bot: Canary):
         self.bot: Canary = bot
-        self.track_queue: deque = deque()
-        self.track_history: deque = deque()
+        self.track_queue: deque[tuple[dict, str]] = deque()
+        self.track_history: deque[tuple[dict, str]] = deque()
         self.looping_queue: bool = False
         self.track_lock: asyncio.Lock = asyncio.Lock()
-        self.playing = None
-        self.looping_track = False
+        self.playing: tuple[dict, str] | None = None
+        self.looping_track: bool = False
         self.volume_level: float = self.bot.config.music["start_vol"]
         self.speed_flag: str = "atempo=1"
         self.speed_val: float = 1.0
         self.skip_opts: Optional[tuple[str, int]] = None
         self.track_start_time: float = 0.0
-        self.ban_role = self.bot.config.music["ban_role"]
-        self.pause_start: Optional[float] = None
+        self.ban_role: str = self.bot.config.music["ban_role"]
+        self.pause_start: float | None = None
 
     async def get_info(self, url: str):
         try:
@@ -98,6 +98,9 @@ class Music(commands.Cog):
         return len(self.track_queue) + len(self.track_history) if self.looping_queue else len(self.track_queue)
 
     def play_track(self, ctx, *, skip_str: Optional[str] = None, delta: int = 0):
+        if self.playing is None:
+            return
+
         ctx.voice_client.play(
             discord.PCMVolumeTransformer(
                 discord.FFmpegPCMAudio(
@@ -223,9 +226,9 @@ class Music(commands.Cog):
                     await fn(ctx, converted)
 
     @check_banned
-    async def play(self, ctx, url: Optional[str] = None):
+    async def play(self, ctx: commands.Context, url: Optional[str] = None):
         """
-        streams from a youtube url or track name, or if none is given, from the queue
+        streams from a YouTube url or track name, or if none is given, from the queue
         arguments: (optional: link or title of track)
         """
 

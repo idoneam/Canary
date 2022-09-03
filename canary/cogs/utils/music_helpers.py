@@ -71,7 +71,7 @@ def insert_converter(arg: str):
         idx, url = arg.split(maxsplit=1)
     except ValueError as e:
         raise MusicArgConvertError(e)
-    return (int(idx), url)
+    return int(idx), url
 
 
 def check_playing(func):
@@ -89,7 +89,7 @@ def check_playing(func):
     return wrapper
 
 
-def mk_title_string(inf_dict) -> str:
+def mk_title_string(inf_dict: dict) -> str:
     url = inf_dict.get("webpage_url")
     return (
         inf_dict.get("title", "title not found")

@@ -87,7 +87,13 @@ class Helpers(commands.Cog):
         r = await fetch(MCGILL_EXAM_URL, "content")
 
         soup = BeautifulSoup(r, "html.parser")
-        link = soup.find("a", href=re.compile("exams/files/exams"))["href"]
+
+        if (link_el := soup.find("a", href=re.compile(r"exams/files/exams"))) is None:
+            return await ctx.send("Error: could not find exam link on McGill's website")
+
+        link = link_el["href"]
+        if isinstance(link, list):  # Attribute access can return str or list[str]
+            link = link[0]
 
         if link[:2] == "//":
             link = "https:" + link
@@ -155,13 +161,21 @@ class Helpers(commands.Cog):
         tendency_string = retrieve_string("Tendency:")
         wind_string = retrieve_string("Wind:")
         humidity_string = retrieve_string("Humidity:")
+
+        feels_like_values = {
+            "temp": re.search(r"-?\d+\.\d", temperature_string),
+            "humidity": re.search(r"\d+", humidity_string),
+            "ws_kph": re.search(r"\d+", wind_string),
+        }
+
         feels_like_string = (
-            Helpers._calculate_feels_like(
-                temp=float(re.search(r"-?\d+\.\d", temperature_string).group()),
-                humidity=float(re.search(r"\d+", humidity_string).group()),
-                ws_kph=float(re.search(r"\d+", wind_string).group()),
-            )
-            if humidity_string and temperature_string and wind_string
+            Helpers._calculate_feels_like(**{k: float(v.group()) for k, v in feels_like_values.items()})
+            if all((
+                humidity_string,
+                temperature_string,
+                wind_string,
+                *feels_like_values.values(),
+            ))
             else "n/a"
         )
 
@@ -177,42 +191,55 @@ class Helpers(commands.Cog):
         weather_now.add_field(name="Wind Speed", value=wind_string or "n/a", inline=True)
         weather_now.add_field(name="Feels like", value=feels_like_string, inline=True)
 
+        # Send weather first, then figure out alerts
+        await ctx.send(embed=weather_now)
+
         # Weather alerts
+
+        def no_alerts_embed(title: str | None = None):
+            return discord.Embed(title=title, description="No alerts in effect.", colour=0xFF0000)
 
         r_alert = await fetch(self.bot.config.gc_weather_alert_url, "content")
         alert_soup = BeautifulSoup(r_alert, "html.parser")
 
         alert_title = alert_soup.find("h1", string=ALERT_REGEX)
+
+        if not alert_title:
+            return await ctx.send(embed=no_alerts_embed())
+
         alert_title_text = alert_title.get_text().strip()
+        no_alerts = no_alerts_embed(alert_title_text)
 
         # Only gets first <p> of warning. Subsequent paragraphs are ignored.
-        try:
-            alert_category = alert_title.find_next("h2")
-            alert_date = alert_category.find_next("span")
-            alert_heading = alert_date.find_next("strong")
-            # This is a string for some reason.
-            alert_location = alert_heading.find_next(string=MTL_REGEX)
-            # Only gets first <p> of warning. Subsequent paragraphs are ignored
-            alert_content = ". ".join(alert_location.find_next("p").get_text().strip().split(".")).rstrip()
 
-            weather_alert = discord.Embed(
-                title=alert_title_text,
-                description="**{}** at {}".format(alert_category.get_text().strip(), alert_date.get_text().strip()),
-                colour=0xFF0000,
-            )
-            weather_alert.add_field(
-                name=alert_heading.get_text().strip(),
-                value=f"**{alert_location.strip()}**\n{alert_content}",
-                inline=True,
-            )
+        if (alert_category := alert_title.find_next("h2")) is None:
+            return await ctx.send(embed=no_alerts)
+        if (alert_date := alert_category.find_next("span")) is None:
+            return await ctx.send(embed=no_alerts)
+        if (alert_heading := alert_date.find_next("strong")) is None:
+            return await ctx.send(embed=no_alerts)
+        # This is a string for some reason.
+        if (alert_location := alert_heading.find_next(string=MTL_REGEX)) is None:
+            return await ctx.send(embed=no_alerts)
 
-        except AttributeError:
-            weather_alert = discord.Embed(title=alert_title_text, description="No alerts in effect.", colour=0xFF0000)
+        # Only gets first <p> of warning. Subsequent paragraphs are ignored
+        if (alert_paragraph := alert_location.find_next("p")) is None:
+            return await ctx.send(embed=no_alerts)
 
-        # TODO Finish final message. Test on no-alert condition.
+        alert_content = ". ".join(alert_paragraph.get_text().strip().split(".")).rstrip()
+
+        weather_alert = discord.Embed(
+            title=alert_title_text,
+            description=f"**{alert_category.get_text().strip()}** at {alert_date.get_text().strip()}",
+            colour=0xFF0000,
+        )
+        weather_alert.add_field(
+            name=alert_heading.get_text().strip(),
+            value=f"**{alert_location.strip()}**\n{alert_content}",
+            inline=True,
+        )
 
         # Sending final message
-        await ctx.send(embed=weather_now)
         await ctx.send(embed=weather_alert)
 
     @commands.command()
@@ -368,13 +395,13 @@ class Helpers(commands.Cog):
         await p.paginate()
 
     @commands.command()
-    async def lmgtfy(self, ctx, *, query):
+    async def lmgtfy(self, ctx: commands.Context, *, query: str):
         """Generates a Let Me Google that For You link."""
         url = LMGTFY_TEMPLATE.format(query.replace("+", "%2B").replace(" ", "+"))
         await ctx.send(url)
 
     @commands.command()
-    async def tex(self, ctx, *, query: str):
+    async def tex(self, ctx: commands.Context, *, query: str):
         """Parses and prints LaTeX equations."""
         await ctx.trigger_typing()
 
@@ -419,7 +446,7 @@ class Helpers(commands.Cog):
         keyword = query.replace(" ", "+")
         pagelimit = 5
         pagenum = 0
-        courses = []
+        courses: list = []
 
         await ctx.trigger_typing()
 
@@ -438,7 +465,7 @@ class Helpers(commands.Cog):
             await ctx.send("No course found for: {}.".format(query))
             return
 
-        course_list = {"names": [], "values": []}
+        course_list: dict[str, list[str]] = {"names": [], "values": []}
         for course in courses:
             # split results into titles + information
             title = course.find_all("h4")[0].get_text().split(" ")
@@ -653,8 +680,11 @@ class Helpers(commands.Cog):
     @is_developer()
     async def create_main_webhooks(self, ctx: commands.Context):
         """
-        Create the general-use webhooks for each channel. Ignores channels that already have them
+        Create the general-use webhooks for each channel. The command ignores channels that already have webhooks.
         """
+        if not self.guild:
+            return
+
         ignored = 0
         for channel in self.guild.text_channels:
             try:
@@ -672,6 +702,7 @@ class Helpers(commands.Cog):
                 await ctx.send(f"Created webhook for {channel.mention}")
             except discord.errors.Forbidden:
                 ignored += 1
+
         await ctx.send(f"Ignored {ignored} channel{'s' if ignored == 1 else ''} without bot permissions")
         await ctx.send("Job completed.")
 

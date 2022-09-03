@@ -47,7 +47,7 @@ REMINDER_LETTER_REPLACEMENTS = (
         ("no", "0"),
         ("none", "0"),
         ("zero", "0"),
-        *(zip(ONES_NAMES, range(1, 10))),
+        *zip(ONES_NAMES, range(1, 10)),
         ("ten", "10"),
         ("eleven", "11"),
         ("twelve", "12"),

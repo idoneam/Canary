@@ -59,9 +59,10 @@ class CustomReactions(commands.Cog):
     # Written by @le-potate
     def __init__(self, bot: Canary):
         self.bot: Canary = bot
-        self.reaction_list = []
-        self.proposal_list = []
+        self.reaction_list: list[str] = []
+        self.proposal_list: list[str] = []
         self.p_strings: PStringEncodings | None = None
+
         self.rebuild_lists()
 
     def rebuild_lists(self):

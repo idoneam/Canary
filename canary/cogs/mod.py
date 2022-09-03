@@ -49,6 +49,9 @@ class Mod(commands.Cog):
     async def on_ready(self):
         self.guild = self.bot.get_guild(self.bot.config.server_id)
 
+        if not self.guild:
+            return
+
         await self.verification_purge_startup()
 
         conn = sqlite3.connect(self.bot.config.db_path)
@@ -68,6 +71,7 @@ class Mod(commands.Cog):
         self.verification_channel = utils.get(self.guild.text_channels, name=self.bot.config.verification_channel)
         if not self.verification_channel:
             return
+
         # arbitrary min date because choosing dates that predate discord will cause an httpexception
         # when fetching message history after that date later on
         self.last_verification_purge_datetime = datetime(2018, 1, 1)
@@ -114,7 +118,7 @@ class Mod(commands.Cog):
         conn.close()
 
     @commands.command()
-    async def answer(self, ctx, *args):
+    async def answer(self, ctx: commands.Context, *args):
         if isinstance(ctx.message.channel, discord.DMChannel):
             channel_to_send = utils.get(
                 self.bot.get_guild(self.bot.config.server_id).text_channels, name=self.bot.config.reception_channel
@@ -126,7 +130,7 @@ class Mod(commands.Cog):
 
     @commands.command(aliases=["dm"])
     @is_moderator()
-    async def pm(self, ctx, user: discord.User, *, message):
+    async def pm(self, ctx: commands.Context, user: discord.User, *, message):
         """
         PM a user on the server using the bot
         """
@@ -144,7 +148,7 @@ class Mod(commands.Cog):
 
     @commands.command()
     @is_moderator()
-    async def initiate_crabbo(self, ctx):
+    async def initiate_crabbo(self, ctx: commands.Context):
         """Initiates secret crabbo ceremony"""
 
         conn = sqlite3.connect(self.bot.config.db_path)
@@ -167,7 +171,7 @@ class Mod(commands.Cog):
 
     @commands.command()
     @is_moderator()
-    async def finalize_crabbo(self, ctx):
+    async def finalize_crabbo(self, ctx: commands.Context):
         """Sends crabbos their secret crabbo"""
 
         conn = sqlite3.connect(self.bot.config.db_path)
@@ -197,6 +201,9 @@ class Mod(commands.Cog):
         await ctx.message.delete()
 
     async def verification_purge_utility(self, after: datetime | discord.Message | None):
+        if not self.verification_channel:
+            return
+
         # after can be None, a datetime or a discord message
         await self.verification_channel.send("Starting verification purge")
         channel = self.verification_channel
@@ -227,27 +234,37 @@ class Mod(commands.Cog):
     @commands.command()
     @is_moderator()
     async def verification_purge(self, ctx, id: int = None):
-        """ "
+        """
         Manually start the purge of pictures in the verification channel.
 
         If a message ID is provided, every pictures after that message will be removed.
         If no message ID is provided, this will be done for the whole channel (may take time).
         """
+
+        if not self.guild:
+            return
+
         if not self.bot.config.verification_channel:
             await ctx.send("No verification channel set in config file")
             return
+
         if not self.verification_channel:
             # if no verification_channel was found on startup, we try to see if it exists now
             self.verification_channel = utils.get(self.guild.text_channels, name=self.bot.config.verification_channel)
             if not self.verification_channel:
                 await ctx.send(f"Cannot find verification channel named {self.bot.config.verification_channel}")
                 return
+
         message = None
         if id is not None:
             message = await self.verification_channel.fetch_message(id)
+
         await self.verification_purge_utility(message)
 
     async def mute_utility(self, user: discord.Member, ctx=None):
+        if not self.guild:
+            return
+
         # note that this is made such that if a user is already muted
         # we make sure the user still has the role, is still in the db, and still has a channel
         confirmation_channel = ctx.channel if ctx else self.appeals_log_channel
