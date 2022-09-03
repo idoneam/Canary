@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "Canary"
-version = "3.1.1"
+version = "3.3.0"
 description = ""
 license = "GPL-3.0-only"
 repository = "https://github.com/idoneam/Canary"
@@ -14,7 +14,7 @@ sympy = "^1.9"
 requests = ">=2.20.0"
 tabulate = "==0.8.9"
 "discord.py" = {extras = ["voice"], version = "~1.6.0"}
-opencv-python = "==4.5.4.60"
+opencv-python = "==4.6.0.66"
 pytz = ">=2020.5"
 numpy = "^1.21.1"
 aiohttp = "~3.7.4"
@@ -22,13 +22,14 @@ urllib3 = ">=1.25.3"
 feedparser = "^6.0.8"
 regex = "^2021.11.10"
 googletrans = "==4.0.0rc1"
-yt-dlp = "^2021.12.1"
+yt-dlp = "^2021.12.27"
 Pillow = "^8.3.2"
 uvloop = {version="0.16.0", markers = "sys_platform == 'linux' or sys_platform == 'darwin'"}
+bidict = "^0.22.0"
 
 [tool.poetry.dev-dependencies]
-pytest = "^6.2.3"
-black = "^21.12b0"
+pytest = "^7.0.1"
+black = "^22.6"
 
 [tool.black]
 line-length = 120

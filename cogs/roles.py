@@ -1,4 +1,4 @@
-# Copyright (C) idoneam (2016-2020)
+# Copyright (C) idoneam (2016-2022)
 #
 # This file is part of Canary
 #
@@ -16,6 +16,7 @@
 # along with Canary. If not, see <https://www.gnu.org/licenses/>.
 
 import discord
+import sqlite3
 
 from discord import utils
 from discord.ext import commands
@@ -24,6 +25,7 @@ from typing import Optional, Tuple
 
 from .utils.checks import is_moderator
 from .utils.paginator import Pages
+from .utils.role_restoration import save_existing_roles, fetch_saved_roles, is_in_muted_table, role_restoring_page
 
 
 class RoleTransaction(Enum):
@@ -139,14 +141,19 @@ class Roles(commands.Cog):
         else:
             await ctx.send("Must `add` or `remove` a role.")
 
+    async def add_role(self, ctx, requested_role: Optional[str], categories: Tuple[str, ...]):
+        """
+        Wrapper for toggle_role to make calling it cleaner
+        """
+        return await self.toggle_role(ctx, RoleTransaction.ADD, requested_role, categories)
+
     @commands.command(aliases=["pronouns"])
     async def pronoun(self, ctx, *, pronoun: Optional[str] = None):
         """
         Self-assign a pronoun role to a user.
         If no argument is given, returns a list of roles that can be used with this command.
         """
-
-        await self.toggle_role(ctx, RoleTransaction.ADD, pronoun, ("pronouns",))
+        await self.add_role(ctx, pronoun, ("pronouns",))
 
     @commands.command(aliases=["fields", "program", "programs", "major", "majors"])
     async def field(self, ctx, *, field: Optional[str] = None):
@@ -154,7 +161,7 @@ class Roles(commands.Cog):
         Self-assign a field of study role to a user.
         If no argument is given, returns a list of roles that can be used with this command.
         """
-        await self.toggle_role(ctx, RoleTransaction.ADD, field, ("fields",))
+        await self.add_role(ctx, field, ("fields",))
 
     @commands.command(aliases=["faculties"])
     async def faculty(self, ctx, *, faculty: Optional[str] = None):
@@ -162,7 +169,7 @@ class Roles(commands.Cog):
         Self-assign a faculty of study role to a user.
         If no argument is given, returns a list of roles that can be used with this command.
         """
-        await self.toggle_role(ctx, RoleTransaction.ADD, faculty, ("faculties",))
+        await self.add_role(ctx, faculty, ("faculties",))
 
     @commands.command(aliases=["years"])
     async def year(self, ctx, year: Optional[str] = None):
@@ -170,7 +177,7 @@ class Roles(commands.Cog):
         Self-assign a year of study role to a user.
         If no argument is given, returns a list of roles that can be used with this command.
         """
-        await Roles.toggle_role(self, ctx, RoleTransaction.ADD, year, ("years",))
+        await Roles.add_role(self, ctx, year, ("years",))
 
     @commands.command(aliases=["iam", "generic", "generics"])
     async def i_am(self, ctx, *, role: Optional[str]):
@@ -178,7 +185,7 @@ class Roles(commands.Cog):
         Self-assign a generic role to a user.
         If no argument is given, returns a list of roles that can be used with this command.
         """
-        await self.toggle_role(ctx, RoleTransaction.ADD, role, Roles.ALL_CATEGORIES)
+        await self.add_role(ctx, role, Roles.ALL_CATEGORIES)
 
     @commands.command(aliases=["iamn"])
     async def i_am_not(self, ctx, *, role: Optional[str]):
@@ -201,8 +208,8 @@ class Roles(commands.Cog):
             title=("all roles in server" if user is None else f"{user.display_name}'s roles") + f" ({len(role_names)})",
         )
 
-    @commands.command()
-    async def inrole(self, ctx, *, query_role):
+    @commands.command(aliases=["inrole"])
+    async def in_role(self, ctx, *, query_role):
         """Returns list of users in the specified role"""
 
         role = next((role for role in ctx.guild.roles if role.name.lower() == query_role.lower()), None)
@@ -239,8 +246,8 @@ class Roles(commands.Cog):
         await ctx.guild.create_role(name=role, reason="Created with Canary")
         await ctx.send("Role created successfully.")
 
-    @commands.command()
-    async def inchannel(self, ctx):
+    @commands.command(aliases=["inchannel"])
+    async def in_channel(self, ctx):
         """Returns list of users in current channel"""
         channel = ctx.message.channel
         members = channel.members
@@ -250,6 +257,24 @@ class Roles(commands.Cog):
 
         pages = Pages(ctx, item_list=channel_users, title=header, display_option=(3, 20), editable_content=False)
         await pages.paginate()
+
+    @commands.command(aliases=["previousroles", "giverolesback", "rolesback", "givebackroles"])
+    async def previous_roles(self, ctx, user: discord.Member):
+        """Show the list of roles that a user had before leaving, if possible.
+        A moderator can click the OK react on the message to give these roles back
+        """
+
+        if is_in_muted_table(self.bot, user):
+            await ctx.send("Cannot restore roles to a muted user")
+            return
+
+        valid_roles = fetch_saved_roles(self.bot, ctx.guild, user)
+        await role_restoring_page(self.bot, ctx, user, valid_roles)
+
+    @commands.Cog.listener()
+    async def on_member_remove(self, user: discord.Member):
+        # If the user is muted, this saves all roles BUT the muted role into the PreviousRoles table
+        save_existing_roles(self.bot, user, muted=is_in_muted_table(self.bot, user))
 
 
 def setup(bot):

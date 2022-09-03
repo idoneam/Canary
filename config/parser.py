@@ -1,6 +1,4 @@
-# -*- coding: utf-8 -*-
-#
-# Copyright (C) idoneam (2016-2019)
+# Copyright (C) idoneam (2016-2022)
 #
 # This file is part of Canary
 #
@@ -62,6 +60,7 @@ class Parser:
         self.banner_winner_role = config["Roles"]["BannerWinnerRole"]
         self.trash_tier_banner_role = config["Roles"]["TrashTierBannerRole"]
         self.no_food_spotting_role = config["Roles"]["NoFoodSpottingRole"]
+        self.muted_role = config["Roles"]["MutedRole"]
         self.crabbo_role = config["Roles"]["CrabboRole"]
 
         # Channels
@@ -72,6 +71,9 @@ class Parser:
         self.food_spotting_channel = config["Channels"]["FoodSpottingChannel"]
         self.metro_status_channel = config["Channels"]["MetroStatusChannel"]
         self.bots_channel = config["Channels"]["BotsChannel"]
+        self.verification_channel = config["Channels"]["VerificationChannel"]
+        self.appeals_log_channel = config["Channels"]["AppealsLogChannel"]
+        self.appeals_category = config["Channels"]["AppealsCategory"]
 
         # Meta
         self.repository = config["Meta"]["Repository"]

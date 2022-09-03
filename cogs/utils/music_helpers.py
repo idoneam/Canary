@@ -104,7 +104,7 @@ def parse_time(time_str: str) -> int:
     total_seconds: int = 0
     for index, substr in enumerate(reversed(time_str.split(":"))):
         if substr.isdigit():
-            total_seconds += int(substr) * (60 ** index)
+            total_seconds += int(substr) * (60**index)
         else:
             raise ValueError
     return total_seconds

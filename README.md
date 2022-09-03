@@ -7,9 +7,7 @@ Canary is a Python3 bot designed for the McGill University Community Discord Ser
 
 ## Build Statuses
 
-| **Master**  | [![Prod Dependencies](https://github.com/idoneam/Canary/workflows/Prod%20Dependencies/badge.svg?branch=master)](https://github.com/idoneam/Canary/actions?query=workflow%3A%22Prod+Dependencies%22+branch%3Amaster) |
-| ------- | --------------------------------------------------------------------------------------------------------------- |
-| **Dev** | [![Dev Dependencies](https://github.com/idoneam/Canary/workflows/Dev%20Dependencies/badge.svg?branch=dev)](https://github.com/idoneam/Canary/actions?query=workflow%3A%22Dev+Dependencies%22+branch%3Adev)  |
+[![Dev Dependencies](https://github.com/idoneam/Canary/workflows/Dev%20Dependencies/badge.svg?branch=dev)](https://github.com/idoneam/Canary/actions?query=workflow%3A%22Dev+Dependencies%22+branch%3Adev)
 
 ## Installation
 
@@ -70,6 +68,8 @@ You must set certain values in the `config.ini` file, in particular your Discor
     * `BannerWinnerRole`: The name of the role that is given to users that win a Banner of the Week Contest.
     * `TrashTierBannerRole`: The name of the role that is given to users that are banned from submitting in Banner of the Week Contests.
     * `NoFoodSpottingRole`: The name of the role assigned to abusers of the foodspotting command that will prevent them from using it.
+    * `MutedRole`: **(Optional)** The name of the role used to mute users and create an appeal channel for them. (The role presumably 
+       also removes some permissions; exact role implementation is up to the server's administrators.)
     * `SecretCrabbo`: The name of the role for users that wish to be pinged for secret crabbo celebrations.
 * `[Channels]`
     * `ReceptionChannel`: The name of the channel that will receive messages sent to the bot through the `answer` command (and where messages sent by mods to users with the `dm` command will be logged)
@@ -79,6 +79,9 @@ You must set certain values in the `config.ini` file, in particular your Discor
     * `FoodSpottingChannel`: The name of the channel where foodspotting posts are sent.
     * `MetroStatusChannel`: The name of the channel where metro status alerts are sent.
     * `BotsChannel`: The name of the channel for bot spamming.
+    * `VerificationChannel`: The name of the channel where verification pictures are sent.
+    * `AppealsLogChannel`: The name of the channel where messages sent in individual appeal channels are logged.
+    * `AppealsCategory`: The name of the channel category where individual appeal channels are created.
 * `[Meta]`
   * `Repository`: The HTTPS remote for this repository, used by the `update` command as the remote when pulling.
 * `[Logging]`
@@ -200,4 +203,4 @@ poetry run black --diff . -t py310 --fast
 
 ## Contributions
 
-Contributions are welcome, feel free to fork our repository and open a pull request or open an issue. Please [review our contribution guidelines](https://github.com/idoneam/Canary/blob/master/.github/contributing.md) before contributing.
+Contributions are welcome, feel free to fork our repository and open a pull request or open an issue. Please [review our contribution guidelines](https://github.com/idoneam/Canary/blob/dev/.github/contributing.md) before contributing.

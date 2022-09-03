@@ -1,5 +1,5 @@
 /*
- * Copyright (C) idoneam (2016-2019)
+ * Copyright (C) idoneam (2016-2022)
  *
  * This file is part of Canary
  *
@@ -72,19 +72,33 @@ CREATE TABLE IF NOT EXISTS `CustomReactions` (
     `Proposal`          INTEGER
 );
 
+-- Used for when users leave/return
 CREATE TABLE IF NOT EXISTS `PreviousRoles` (
     `ID`          INTEGER UNIQUE,
-    `Roles`       TEXT
+    `Roles`       TEXT -- space-separated list of role IDs
+);
+
+-- Used for when users are muted; stores the ID of the Appeal Channel created for that user
+-- and stores old roles akin to the way PreviousRoles does it
+CREATE TABLE IF NOT EXISTS `MutedUsers` (
+    `UserID`              INTEGER UNIQUE,
+    `AppealChannelID`     INTEGER UNIQUE,
+    `Roles`               TEXT, -- space-separated list of role IDs
+    `Date`                INTEGER
 );
 
 CREATE TABLE IF NOT EXISTS `Settings` (
-	`Key`       TEXT PRIMARY KEY,
-	`Value`     TEXT
+    `Key`       TEXT PRIMARY KEY,
+    `Value`     TEXT
 );
 
 CREATE TABLE IF NOT EXISTS `BannerSubmissions` (
-	`UserID`              INTEGER UNIQUE,
-	`PreviewMessageID`    INTEGER,
-	`ConvertedMessageID`  INTEGER
+    `UserID`              INTEGER UNIQUE,
+    `PreviewMessageID`    INTEGER,
+    `ConvertedMessageID`  INTEGER
 );
 
+CREATE TABLE IF NOT EXISTS `SpoilerizedMessages` (
+	`MessageID`           INTEGER UNIQUE,
+	`UserID`              INTEGER
+);
