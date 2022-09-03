@@ -1,6 +1,5 @@
 import os
 from time import time
-from typing import Optional
 import discord
 from .custom_requests import fetch
 from functools import wraps

@@ -418,8 +418,7 @@ class Quotes(commands.Cog):
                 old_word = current_word
                 current_word = np.random.choice(c_words, p=p_dist)
 
-                # Don't allow termination until the minimum length is met
-                # or we don't have any other option.
+                # Don't allow termination until the minimum length is met, or we don't have any other option.
                 while (
                     current_word == "TERM"
                     and len(sentence) < min_length

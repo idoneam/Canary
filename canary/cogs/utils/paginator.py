@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-#
 # Copyright (C) idoneam (2016-2022)
 #
 # This file is part of Canary

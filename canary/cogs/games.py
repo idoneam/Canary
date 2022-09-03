@@ -23,11 +23,10 @@ from discord.ext import commands
 import re
 import os
 import sqlite3
-from time import time
 import pickle
 import random
 import asyncio
-from typing import Optional
+from time import time
 from functools import partial
 from ..bot import Canary
 from .utils.dice_roll import dice_roll
@@ -53,7 +52,7 @@ class Games(commands.Cog):
         self.hm_timeout: int = bot.config.games["hm_timeout"]
         self.hm_locks: dict[discord.TextChannel, asyncio.Lock] = dict()
         with open(f"{os.getcwd()}/data/premade/{hangman_tbl_name}.obj", "rb") as hangman_pkl:
-            self.hangman_dict: dict[str, tuple[list[tuple[str, Optional[str]]], str]] = pickle.load(hangman_pkl)
+            self.hangman_dict: dict[str, tuple[list[tuple[str, str | None]], str]] = pickle.load(hangman_pkl)
 
     def help_str(self):
         cat_list: str = ", ".join(
@@ -74,7 +73,7 @@ class Games(commands.Cog):
         )
 
     @commands.command(aliases=["hm"])
-    async def hangman(self, ctx, command: Optional[str] = None):
+    async def hangman(self, ctx, command: str | None = None):
         """
         play a nice game of hangman with internet strangers!
         guesses must be single letters (interpreted in a case insensitive manner) or the entire correct word.
@@ -120,7 +119,7 @@ class Games(commands.Cog):
 
         game_state = HangmanState("[REDACTED]" if command is None else pretty_name, word_list)
         timeout_dict: dict[discord.Member, float] = {}
-        winner: Optional[discord.Member] = None
+        winner: discord.Member | None = None
         cool_win: bool = False
 
         msg_check = partial(self.hm_msg_check, ctx.message.channel, game_state.lword)

@@ -21,7 +21,7 @@
 import discord
 from discord.ext import commands
 
-from bot import moderator_role, developer_role
+from canary.bot import moderator_role, developer_role
 
 
 def is_moderator():

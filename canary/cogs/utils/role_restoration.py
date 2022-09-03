@@ -23,7 +23,7 @@ from discord.ext import commands
 
 from .paginator import Pages
 from .mock_context import MockContext
-from bot import muted_role as muted_role_name
+from canary.bot import muted_role as muted_role_name
 import datetime
 
 

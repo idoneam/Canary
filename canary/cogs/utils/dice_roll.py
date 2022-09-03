@@ -1,6 +1,4 @@
-# -*- coding: utf-8 -*-
-#
-# Copyright (C) idoneam (2016-2019)
+# Copyright (C) idoneam (2016-2022)
 #
 # This file is part of Canary
 #
@@ -20,7 +18,7 @@
 from random import randint
 
 
-def dice_roll(sides=20, n=1, modifier=0, mpr=False):
+def dice_roll(sides: int = 20, n: int = 1, modifier: int = 0, mpr: bool = False):
     """
     Rolls a die with given parameters
     Set mpr to True to mod each roll, otherwise, only the sum is modified

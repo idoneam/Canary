@@ -3,33 +3,33 @@ import random
 __all__ = ["auto_incorrect"]
 
 
-def _swap(s, i):
+def _swap(s: str, i: int):
     """
     Given string s and index i, it swaps s[i] and s[i+1] and returns
     By @lazho
     """
     si = s[i]
     sj = s[i + 1]
-    s = s[:i] + sj + si + s[i + 2 :]
+    s = s[:i] + sj + si + s[i + 2:]
     return s
 
 
-def _repeat(s, i):
+def _repeat(s: str, i: int):
     """
     By @lazho
     """
     return s[:i] + s[i] + s[i:]
 
 
-def _omit(s, i):
+def _omit(s: str, i: int):
     """
     Given string s and index i, it omits the i-th character.
     By @lazho
     """
-    return s[:i] + s[i + 1 :]
+    return s[:i] + s[i + 1:]
 
 
-REPLACE_CASES = {
+REPLACE_CASES: dict[str, str] = {
     "your": "you're",
     "you're": "your",
     "its": "it's",
@@ -58,7 +58,7 @@ REPLACE_CASES = {
 }
 
 
-def auto_incorrect(input_str):
+def auto_incorrect(input_str: str):
     """
     By @lazho
     """
