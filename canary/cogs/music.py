@@ -606,7 +606,7 @@ class Music(commands.Cog):
         arguments: (float)
         """
 
-        self.volume_level = max(0., min(500., new_vol))
+        self.volume_level = max(0.0, min(500.0, new_vol))
         ctx.voice_client.source.volume = self.volume_level / 100
         await ctx.send(f"changed volume to {self.volume_level}%.")
 

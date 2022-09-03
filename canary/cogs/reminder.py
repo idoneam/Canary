@@ -194,7 +194,7 @@ class Reminder(commands.Cog):
         """
 
         if len(input_segments) > 0 and (input_segments[0] in ("daily", "weekly", "monthly")):
-            await self.__remindme_repeating(ctx, input_segments[0], quote=quote[len(input_segments[0]) + 1:])
+            await self.__remindme_repeating(ctx, input_segments[0], quote=quote[len(input_segments[0]) + 1 :])
             return
 
         for segment in input_segments:
@@ -210,7 +210,7 @@ class Reminder(commands.Cog):
 
         # They probably don't want their reminder nuked of punctuation, spaces
         # and formatting, so extract from original string.
-        reminder = quote[quote.index(first_reminder_segment):]
+        reminder = quote[quote.index(first_reminder_segment) :]
 
         # Date-based reminder triggered by "at" and "on" keywords
         if input_segments[0] in {"at", "on"}:
@@ -236,10 +236,10 @@ class Reminder(commands.Cog):
 
                 # Strips "to" and dates from the reminder message
                 time_input_end = time_result.span()[1]
-                if re.match("to", reminder[time_input_end:time_input_end + 4].strip(), re.IGNORECASE):
-                    reminder = reminder[time_input_end + 3:].strip()
+                if re.match("to", reminder[time_input_end : time_input_end + 4].strip(), re.IGNORECASE):
+                    reminder = reminder[time_input_end + 3 :].strip()
                 else:
-                    reminder = reminder[time_input_end + 1:].strip()
+                    reminder = reminder[time_input_end + 1 :].strip()
 
                 # Add message to database
                 conn = sqlite3.connect(self.bot.config.db_path)

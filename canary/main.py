@@ -29,23 +29,26 @@ from pytz import timezone
 from canary.bot import bot
 from canary.cogs.utils.checks import is_developer, is_moderator
 
-startup = [f"cogs.{c}" for c in (
-    "banner",
-    "currency",
-    "customreactions",
-    "games",
-    "helpers",
-    "images",
-    "info",
-    "memes",
-    "mod",
-    "music",
-    "quotes",
-    "reminder",
-    "roles",
-    "score",
-    "subscribers",  # Do not remove this terminating comma.
-)]
+startup = [
+    f"cogs.{c}"
+    for c in (
+        "banner",
+        "currency",
+        "customreactions",
+        "games",
+        "helpers",
+        "images",
+        "info",
+        "memes",
+        "mod",
+        "music",
+        "quotes",
+        "reminder",
+        "roles",
+        "score",
+        "subscribers",  # Do not remove this terminating comma.
+    )
+]
 
 
 @bot.event

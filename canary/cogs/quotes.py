@@ -101,7 +101,8 @@ class Quotes(commands.Cog):
 
     @commands.command(aliases=["addq"])
     async def add_quotes(
-            self, ctx: commands.Context, member: discord.Member | None = None, *, quote: str | None = None):
+        self, ctx: commands.Context, member: discord.Member | None = None, *, quote: str | None = None
+    ):
         """
         Add a quote to a user's quote database.
         """
@@ -419,11 +420,7 @@ class Quotes(commands.Cog):
                 current_word = np.random.choice(c_words, p=p_dist)
 
                 # Don't allow termination until the minimum length is met, or we don't have any other option.
-                while (
-                    current_word == "TERM"
-                    and len(sentence) < min_length
-                    and len(self.mc_table[old_word].keys()) > 1
-                ):
+                while current_word == "TERM" and len(sentence) < min_length and len(self.mc_table[old_word].keys()) > 1:
                     current_word = np.random.choice(c_words, p=p_dist)
 
                 # Don't allow repeat words too much
