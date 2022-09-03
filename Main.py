@@ -115,18 +115,6 @@ async def sleep(ctx):
 
 
 @bot.command()
-@is_developer()
-async def update(ctx):
-    """
-    Update the bot by pulling changes from the git repository
-    """
-    bot.dev_logger.info("Update Git repository")
-    shell_output = subprocess.check_output("git pull {}".format(bot.config.repository), shell=True)
-    status_message = shell_output.decode("unicode_escape")
-    await ctx.send("`{}`".format(status_message))
-
-
-@bot.command()
 @is_moderator()
 async def backup(ctx):
     """

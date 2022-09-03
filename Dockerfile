@@ -1,8 +1,5 @@
 FROM python:3.10-slim-bullseye
 
-# Add testing to get newer SQLite (ugh)
-RUN echo 'deb http://http.us.debian.org/debian/ testing non-free contrib main' >> /etc/apt/sources.list
-
 # Install base apt dependencies
 RUN apt-get update && apt-get install -y git sqlite3
 
@@ -16,13 +13,16 @@ RUN apt-get install -y \
   ffmpeg \
   gcc
 
-# Configure Git settings for update command
-RUN git config --global user.name "Martlet"
-RUN git config --global user.email "idoneam.collective@gmail.com"
-
 # Install requirements with pip to use Docker cache independent of project metadata
-COPY requirements.txt /mnt/
-RUN pip install -r /mnt/requirements.txt
+COPY requirements.txt /
+RUN pip install -r /requirements.txt
 
-WORKDIR /mnt/canary
+# Copy code to the `canary` directory in the image and run the bot from there
+COPY . /canary
+WORKDIR /canary
+
+# Notes:
+#   Users will have to mount their config.ini in by hand
+#   Users should mount a read/writable volume for /canary/data/runtime
+
 CMD ["python3.10", "Main.py"]

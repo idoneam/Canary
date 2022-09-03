@@ -169,16 +169,23 @@ docker build -t canary:latest .
 
 #### Running the Container
 
+You will need to download and modify Canary's [config.ini](config/config.ini) to your
+liking, so it can be mounted inside the container.
+
 From within the root of the repository:
 
-```
-docker run -v $(pwd):/mnt/canary canary:latest
+```bash
+# Make a folder (if needed) to store database, pickles, etc.
+mkdir -f runtime-data
+
+# Run the container
+docker run -d \
+  -v $(pwd)/config.ini:/canary/config/config.ini:ro \
+  -v $(pwd)/runtime-data:/canary/data/runtime \
+  canary:latest
 ```
 
 Optionally provide the `-d` flag to run the container in detached state.
-
-Note that the current host directory is mounted into the container, any changes to log files, pickles, configuration are reflected
-across the host and the container.
 
 ## Code Linting
 
