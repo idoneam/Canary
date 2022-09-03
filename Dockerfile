@@ -25,4 +25,4 @@ WORKDIR /canary
 #   Users will have to mount their config.ini in by hand
 #   Users should mount a read/writable volume for /canary/data/runtime
 
-CMD ["python3.10", "Main.py"]
+CMD ["python3.10", "-m", "canary.main"]

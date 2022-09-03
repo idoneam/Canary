@@ -17,18 +17,17 @@
 # You should have received a copy of the GNU General Public License
 # along with Canary. If not, see <https://www.gnu.org/licenses/>.
 
-# discord-py requirements
 import discord
-
-# Other utilities
 import os
-import sys
-from datetime import datetime
-from pytz import timezone
-from canary.bot import bot
 import sqlite3
+import sys
 
-from cogs.utils.checks import is_developer, is_moderator
+from datetime import datetime
+from discord.ext.commands import Context
+from pytz import timezone
+
+from canary.bot import bot
+from canary.cogs.utils.checks import is_developer, is_moderator
 
 startup = [f"cogs.{c}" for c in (
     "banner",
@@ -77,22 +76,22 @@ async def load(ctx, extension_name: str):
 
 @bot.command()
 @is_moderator()
-async def unload(ctx, extension_name: str):
+async def unload(ctx: Context, extension_name: str):
     """
     Unload a specific extension. Specify as cogs.<name>
     """
     try:
         bot.unload_extension(extension_name)
     except Exception as e:
-        await ctx.send("```{}: {}\n```".format(type(e).__name__, str(e)))
+        await ctx.send(f"```{type(e).__name__}: {str(e)}\n```")
         return
 
-    await ctx.send("{} unloaded.".format(extension_name))
+    await ctx.send(f"{extension_name} unloaded.")
 
 
 @bot.command()
 @is_developer()
-async def restart(ctx):
+async def restart(ctx: Context):
     """
     Restart the bot
     """
@@ -104,7 +103,7 @@ async def restart(ctx):
 
 @bot.command()
 @is_moderator()
-async def sleep(ctx):
+async def sleep(ctx: Context):
     """
     Shut down the bot
     """
@@ -115,7 +114,7 @@ async def sleep(ctx):
 
 @bot.command()
 @is_moderator()
-async def backup(ctx):
+async def backup(ctx: Context):
     """
     Send the current database file to the owner
     """
