@@ -153,17 +153,18 @@ async def on_user_update(before, after):
 
 
 def main():
+    if os.name == "posix":
+        import uvloop
+        uvloop.install()
+
     for extension in startup:
         try:
             bot.load_extension(extension)
         except Exception as e:
             bot.dev_logger.warning(f"Failed to load extension {extension}\n" f"{type(e).__name__}: {e}")
+
     bot.run(bot.config.discord_key)
 
 
 if __name__ == "__main__":
-    if os.name == "posix":
-        import uvloop
-
-        uvloop.install()
     main()
