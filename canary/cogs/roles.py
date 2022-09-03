@@ -61,7 +61,11 @@ class Roles(commands.Cog):
         await p.paginate()
 
     async def toggle_role(
-        self, ctx, transaction: RoleTransaction, requested_role: Optional[str], categories: Tuple[str, ...]
+        self,
+        ctx: commands.Context,
+        transaction: RoleTransaction,
+        requested_role: Optional[str],
+        categories: Tuple[str, ...],
     ):
         """
         Assigns a single role to a user with no checks from a category of roles

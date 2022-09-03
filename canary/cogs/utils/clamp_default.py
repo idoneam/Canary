@@ -1,6 +1,4 @@
-# -*- coding: utf-8 -*-
-#
-# Copyright (C) idoneam (2016-2019)
+# Copyright (C) idoneam (2016-2022)
 #
 # This file is part of Canary
 #
@@ -17,8 +15,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Canary. If not, see <https://www.gnu.org/licenses/>.
 
+from typing import Any
 
-def clamp_default(val, min_val, max_val, default):
+
+def clamp_default(val: str | int | None, min_val: int, max_val: int, default: Any):
     """
     Enforces a minimum and maximum (closed) bound on an integer.
     Returns a default value if val is not an integer or false-y.

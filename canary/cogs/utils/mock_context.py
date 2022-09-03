@@ -16,7 +16,6 @@
 # along with Canary. If not, see <https://www.gnu.org/licenses/>.
 
 from dataclasses import dataclass
-from typing import Union, Optional
 from discord import User, Member, Guild, ClientUser, Message, VoiceProtocol
 from discord.ext.commands import Bot, Cog, Command
 from discord.abc import Messageable
@@ -26,21 +25,21 @@ from discord.abc import Messageable
 class MockContext:
     """Class that can be used to mock a discord context"""
 
-    args: Optional[list] = None
-    author: Optional[Union[User, Member]] = None
-    bot: Optional[Bot] = None
-    channel: Optional[Union[Messageable]] = None
-    cog: Optional[Cog] = None
-    command: Optional[Command] = None
-    command_failed: Optional[bool] = None
-    guild: Optional[Guild] = None
-    invoked_parents: Optional[list[str]] = None
-    invoked_subcommand: Optional[Command] = None
-    invoked_with: Optional[str] = None
-    kwargs: Optional[dict] = None
-    me: Optional[Union[Member, ClientUser]] = None
-    message: Optional[Message] = None
-    prefix: Optional[str] = None
-    subcommand_passed: Optional[str] = None
-    valid: Optional[bool] = None
-    voice_client: Optional[VoiceProtocol] = None
+    args: list | None = None
+    author: User | Member | None = None
+    bot: Bot | None = None
+    channel: Messageable | None = None
+    cog: Cog | None = None
+    command: Command | None = None
+    command_failed: bool | None = None
+    guild: Guild | None = None
+    invoked_parents: list[str] | None = None
+    invoked_subcommand: Command | None = None
+    invoked_with: str | None = None
+    kwargs: dict | None = None
+    me: Member | ClientUser | None = None
+    message: Message | None = None
+    prefix: str | None = None
+    subcommand_passed: str | None = None
+    valid: bool | None = None
+    voice_client: VoiceProtocol | None = None

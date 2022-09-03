@@ -23,11 +23,13 @@ from discord.ext import commands
 
 from .paginator import Pages
 from .mock_context import MockContext
-from canary.bot import muted_role as muted_role_name
+from canary.bot import Canary, muted_role as muted_role_name
 import datetime
 
 
-def save_existing_roles(bot, user: discord.Member, muted: bool = False, appeal_channel: discord.TextChannel = None):
+async def save_existing_roles(
+    bot: Canary, user: discord.Member, muted: bool = False, appeal_channel: discord.TextChannel = None
+):
     roles_id = [role.id for role in user.roles if role.name not in ("@everyone", muted_role_name)]
 
     if not roles_id and not muted:

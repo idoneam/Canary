@@ -21,6 +21,7 @@ from typing import Iterable
 import yt_dlp
 import discord
 import random
+from discord.ext.commands import Context
 
 
 class MusicArgConvertError(ValueError):
@@ -76,7 +77,7 @@ def insert_converter(arg: str):
 
 def check_playing(func):
     @wraps(func)
-    async def wrapper(self, ctx, *args, **kwargs):
+    async def wrapper(self, ctx: Context, *args, **kwargs):
         if self.playing is None or ctx.voice_client is None or (not self.track_lock.locked()):
             await ctx.send("bot is not currently playing anything to a voice channel.")
         elif (ctx.author.voice is None or ctx.author.voice.channel != ctx.voice_client.channel) and len(
@@ -128,7 +129,7 @@ def parse_time(time_str: str) -> int:
 
 
 def time_func(func):
-    async def wrapper(self, ctx, time_str: str):
+    async def wrapper(self, ctx: Context, time_str: str):
         try:
             parsed = parse_time(time_str)
         except ValueError:
@@ -162,7 +163,7 @@ def mk_change_embed(data, track_list, title_str: str, footer_str: str) -> discor
 
 def check_banned(func):
     @wraps(func)
-    async def wrapper(self, ctx, *args, **kwargs):
+    async def wrapper(self, ctx: Context, *args, **kwargs):
         if discord.utils.get(ctx.author.roles, name=self.ban_role):
             return await ctx.send(f"you have the role `{self.ban_role}`, you are not allowed to do this.")
         return await func(self, ctx, *args, **kwargs)

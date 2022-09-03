@@ -54,7 +54,7 @@ PLACEHOLDERS_ARGS = ("user", "channel", *list(map(str, (range(1, 10)))))
 PLACEHOLDERS_PATTERNS = (re.compile(f"%{arg}%") for arg in PLACEHOLDERS_ARGS)
 
 
-def _convert_choice_list(choice_list_string, to_pattern_str=False):
+def _convert_choice_list(choice_list_string: str, to_pattern_str: bool = False):
     """
     Takes a string with choice list placeholders and converts them to
     either a string where the choices are made (default)
@@ -118,7 +118,7 @@ def _get_pattern_from_string(string, anywhere=False):
 
 
 class PString:
-    def __init__(self, string, user=None, channel=None, groups=[], additional_info=None):
+    def __init__(self, string, user=None, channel=None, groups: list | None = None, additional_info=None):
         """
         A p-string is composed of a string with placeholders in it,
         and values for these placeholders. Printing a p-string will
@@ -151,7 +151,7 @@ class PString:
         self.string = string
         self.user = user
         self.channel = channel
-        self.groups = groups
+        self.groups: list = groups or []
         self.additional_info = additional_info
 
     @property
@@ -169,7 +169,13 @@ class PString:
 
 
 class PStringEncodings:
-    def __init__(self, input_strings, output_strings, anywhere_values, additional_info_list=None):
+    def __init__(
+        self,
+        input_strings: list[str],
+        output_strings: list[str],
+        anywhere_values: bool | list[bool],
+        additional_info_list: list | None = None,
+    ):
         """
         Used to encode a list of input strings with placeholders
         and a list of output strings with placeholders to
@@ -233,7 +239,7 @@ class PStringEncodings:
             for output_string, pattern, additional_info in zip(output_strings, self.patterns, additional_info_list)
         ]
 
-    def parser(self, content, user=None, channel=None):
+    def parser(self, content: str, user=None, channel=None):
         """
         Return either None if the content matches no input pattern,
         or a random corresponding filled output p-string if it matches some

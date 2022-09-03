@@ -149,7 +149,7 @@ class ArgConverter:
 # Default converters
 class IntConverter(commands.Converter):
     @staticmethod
-    async def convert(ctx, argument):
+    async def convert(ctx, argument, **kwargs):
         try:
             return int(argument)
         except ValueError:
@@ -158,7 +158,7 @@ class IntConverter(commands.Converter):
 
 class StrConverter(commands.Converter):
     @staticmethod
-    async def convert(ctx, argument):
+    async def convert(ctx, argument, **kwargs):
         try:
             return str(argument)
         except ValueError:
