@@ -1,6 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-#
 # Copyright (C) idoneam (2016-2022)
 #
 # This file is part of Canary
@@ -24,10 +21,9 @@ from config import parser
 import logging
 import sqlite3
 import traceback
-import requests
 from discord import Webhook, RequestsWebhookAdapter, Intents
 
-__all__ = ["bot", "developer_role", "moderator_role", "muted_role"]
+__all__ = ["Canary", "bot", "developer_role", "moderator_role", "muted_role"]
 
 _parser = parser.Parser()
 command_prefix = _parser.command_prefix
@@ -126,11 +122,11 @@ class Canary(commands.Bot):
             return
 
         elif isinstance(error, commands.DisabledCommand):
-            return await ctx.send("{} has been disabled.".format(ctx.command))
+            return await ctx.send(f"{ctx.command} has been disabled.")
 
         elif isinstance(error, commands.NoPrivateMessage):
             try:
-                return await ctx.author.send("{} can not be used in Private Messages.".format(ctx.command))
+                return await ctx.author.send(f"{ctx.command} can not be used in Private Messages.")
             except Exception:
                 pass
 
@@ -146,7 +142,7 @@ class Canary(commands.Bot):
                 f"per {error.per.name}"
             )
 
-        self.dev_logger.error("Ignoring exception in command {}:".format(ctx.command))
+        self.dev_logger.error(f"Ignoring exception in command {ctx.command}:")
         self.log_traceback(error)
 
 

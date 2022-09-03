@@ -1,4 +1,4 @@
-# Copyright (C) idoneam (2016-2021)
+# Copyright (C) idoneam (2016-2022)
 #
 # This file is part of Canary
 #
@@ -21,10 +21,9 @@ from discord.ext import commands
 import asyncio
 
 # Other utilities
-import random
 import sqlite3
+from ..bot import Canary
 from .utils.paginator import Pages
-import time
 from .utils.p_strings import PStringEncodings
 
 EMOJI = {
@@ -58,11 +57,11 @@ LOADING_EMBED = discord.Embed(title="Loading...")
 
 class CustomReactions(commands.Cog):
     # Written by @le-potate
-    def __init__(self, bot):
-        self.bot = bot
+    def __init__(self, bot: Canary):
+        self.bot: Canary = bot
         self.reaction_list = []
         self.proposal_list = []
-        self.p_strings = None
+        self.p_strings: PStringEncodings | None = None
         self.rebuild_lists()
 
     def rebuild_lists(self):
@@ -93,6 +92,9 @@ class CustomReactions(commands.Cog):
     @commands.Cog.listener()
     async def on_message(self, message):
         if message.author == self.bot.user:
+            return
+
+        if self.p_strings is None:
             return
 
         response = self.p_strings.parser(

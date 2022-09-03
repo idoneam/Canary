@@ -29,20 +29,20 @@ from sympy import preview
 import cv2
 import numpy as np
 import googletrans
-import os
 
 # Other utilities
-import re
-import math
-import time
 import datetime
+import math
 import random
+import re
+import sqlite3
+import time
+from ..bot import Canary
+from .utils.arg_converter import ArgConverter, StrConverter
 from .utils.paginator import Pages
 from .utils.custom_requests import fetch
 from .utils.site_save import site_save
-from .utils.checks import is_moderator, is_developer
-import sqlite3
-from .utils.arg_converter import ArgConverter, StrConverter
+from .utils.checks import is_developer
 from discord.ext.commands import MessageConverter
 
 MCGILL_EXAM_URL = "https://www.mcgill.ca/exams/dates"
@@ -71,8 +71,8 @@ MAIN_WEBHOOKS_PREFIX = "Main webhook for #"
 
 
 class Helpers(commands.Cog):
-    def __init__(self, bot):
-        self.bot = bot
+    def __init__(self, bot: Canary):
+        self.bot: Canary = bot
         self.guild: discord.Guild | None = None
 
     @commands.Cog.listener()
@@ -80,7 +80,7 @@ class Helpers(commands.Cog):
         self.guild = self.bot.get_guild(self.bot.config.server_id)
 
     @commands.command(aliases=["exams"])
-    async def exam(self, ctx):
+    async def exam(self, ctx: commands.Context):
         """Retrieves the exam schedule link from McGill's Exam website."""
         await ctx.trigger_typing()
 
@@ -133,7 +133,7 @@ class Helpers(commands.Cog):
 
     @commands.command()
     @site_save("http://weather.gc.ca/city/pages/qc-147_metric_e.html")
-    async def weather(self, ctx):
+    async def weather(self, ctx: commands.Context):
         """
         Retrieves current weather conditions.
         Data taken from http://weather.gc.ca/city/pages/qc-147_metric_e.html
@@ -216,19 +216,19 @@ class Helpers(commands.Cog):
         await ctx.send(embed=weather_alert)
 
     @commands.command()
-    async def wttr(self, ctx):
+    async def wttr(self, ctx: commands.Context):
         """Retrieves Montreal's weather forecast from wttr.in"""
         await ctx.send(self.bot.config.wttr_in_tpl.format(round(time.time())))
 
     @commands.command(aliases=["wttrmoon"])
-    async def wttr_moon(self, ctx):
+    async def wttr_moon(self, ctx: commands.Context):
         """Retrieves the current moon phase from wttr.in/moon"""
         await ctx.send(WTTR_IN_MOON_URL)
 
     @commands.command()
-    async def course(self, ctx, *, query: str):
+    async def course(self, ctx: commands.Context, *, query: str):
         """Prints a summary of the queried course, taken from the course
-        calendar. ie. ?course comp 206
+        calendar. i.e. ?course comp 206
         Note: Bullet points without colons (':') are not parsed because I have
         yet to see one that actually has useful information.
         """
@@ -274,7 +274,7 @@ class Helpers(commands.Cog):
         await ctx.send(embed=em)
 
     @commands.command()
-    async def keydates(self, ctx):
+    async def keydates(self, ctx: commands.Context):
         """Retrieves the important dates for the current term (Winter from
         January-April, Fall from May-December)."""
 
@@ -334,7 +334,7 @@ class Helpers(commands.Cog):
         await ctx.send(embed=em)
 
     @commands.command()
-    async def urban(self, ctx, *, query):
+    async def urban(self, ctx: commands.Context, *, query: str):
         """Fetches the top definitions from Urban Dictionary"""
 
         await ctx.trigger_typing()
@@ -344,7 +344,7 @@ class Helpers(commands.Cog):
         definitions = definitions["list"][:5]
 
         if not definitions:
-            await ctx.send("No definition found for **%s**." % query)
+            await ctx.send(f"No definition found for **{query}**.")
             return
 
         markdown_url = f"[{definitions[0]['word']}]({url})"
@@ -360,7 +360,7 @@ class Helpers(commands.Cog):
         p = Pages(
             ctx,
             item_list=definitions_list_text,
-            title="Definitions for '{}' from Urban Dictionary:".format(query),
+            title=f"Definitions for '{query}' from Urban Dictionary:",
             display_option=(3, 1),
             editable_content=False,
         )
@@ -413,7 +413,7 @@ class Helpers(commands.Cog):
         await ctx.send(file=discord.File(fp=img_bytes, filename=fn))
 
     @commands.command()
-    async def search(self, ctx, *, query: str):
+    async def search(self, ctx: commands.Context, *, query: str):
         """Shows results for the queried keyword(s) in McGill courses"""
 
         keyword = query.replace(" ", "+")
@@ -455,7 +455,7 @@ class Helpers(commands.Cog):
         await p.paginate()
 
     @commands.command()
-    async def mose(self, ctx, dollar: float):
+    async def mose(self, ctx: commands.Context, dollar: float):
         """Currency conversion. Converts $$$ to the equivalent number of
         samosas, based on holy prices.
         Usage: `?mose <AMOUNT>`
@@ -468,23 +468,23 @@ class Helpers(commands.Cog):
         await ctx.send("${:.2f} is worth {} samosas.".format(dollar, total))
 
     @commands.command()
-    async def tepid(self, ctx):
+    async def tepid(self, ctx: commands.Context):
         """Retrieves the CTF printers' statuses from tepid.science.mcgill.ca"""
         data = await fetch(self.bot.config.tepid_url, "json")
         for key, value in data.items():
             await ctx.send(f"At least one printer in {key} is up!" if value else f"Both printers in {key} are down.")
 
     @commands.command()
-    async def modpow(self, ctx, a, b, m):
+    async def modpow(self, ctx: commands.Context, a, b, m):
         """Calculates a^b mod m, where a, b, c are big integers"""
         try:
             a, b, m = map(int, (a, b, m))
             await ctx.send(pow(a, b, m))
         except ValueError:
-            ctx.send("Input must be integers")
+            await ctx.send("Input must be integers")
 
     @commands.command(aliases=["foodspot", "fs", "food", "foodspotting", "food_spotting"])
-    async def food_spot(self, ctx, *args):
+    async def food_spot(self, ctx: commands.Context, *args):
         # Written by @le-potate
         """Posts a food sale in #foodspotting.
         Use: `?foodspot Samosas in leacock`
@@ -513,7 +513,7 @@ class Helpers(commands.Cog):
         await channel.send(embed=embed)
 
     @commands.command()
-    async def choose(self, ctx, *, input_opts: str):
+    async def choose(self, ctx: commands.Context, *, input_opts: str):
         """
         Randomly chooses one of the given options delimited by semicola or
         commas.
@@ -525,7 +525,7 @@ class Helpers(commands.Cog):
         await ctx.send(embed=embed)
 
     @commands.command(aliases=["color"])
-    async def colour(self, ctx, *, arg: str):
+    async def colour(self, ctx: commands.Context, *, arg: str):
         """Shows a small image filled with the given hex colour.
         Usage: `?colour hex`
         """
@@ -551,7 +551,7 @@ class Helpers(commands.Cog):
         await ctx.send(file=discord.File(fp=buffer, filename=fn))
 
     @commands.command(aliases=["ui", "av", "avi", "userinfo"])
-    async def user_info(self, ctx, user: discord.Member = None):
+    async def user_info(self, ctx: commands.Context, user: discord.Member | None = None):
         """
         Show user info and avatar.
         Displays the information of the user
@@ -576,7 +576,7 @@ class Helpers(commands.Cog):
         await ctx.send(embed=ui_embed)
 
     @commands.command(aliases=["trans"])
-    async def translate(self, ctx, command: str, *, inp_str: str = None):
+    async def translate(self, ctx: commands.Context, command: str, *, inp_str: str | None = None):
         """
         Command used to translate some text from one language to another
         Takes two arguments: the source/target languages and the text to translate
@@ -628,7 +628,6 @@ class Helpers(commands.Cog):
             return
         source = codes[0].lower().strip()
         translator = googletrans.Translator()
-        detection = None
         if source == "":
             detection = translator.detect(inp_str)
             source = detection.lang
@@ -652,7 +651,7 @@ class Helpers(commands.Cog):
     @commands.max_concurrency(1, per=commands.BucketType.user, wait=False)
     @commands.command()
     @is_developer()
-    async def create_main_webhooks(self, ctx):
+    async def create_main_webhooks(self, ctx: commands.Context):
         """
         Create the general-use webhooks for each channel. Ignores channels that already have them
         """
@@ -676,7 +675,7 @@ class Helpers(commands.Cog):
         await ctx.send(f"Ignored {ignored} channel{'s' if ignored == 1 else ''} without bot permissions")
         await ctx.send("Job completed.")
 
-    async def spoilerize_utility(self, ctx, message, reason: str = None, moderator: bool = False):
+    async def spoilerize_utility(self, ctx: commands.Context, message, reason: str = None, moderator: bool = False):
         if not moderator and ctx.author != message.author:
             return
         # get the webhook for this channel
@@ -759,7 +758,7 @@ class Helpers(commands.Cog):
         conn.close()
 
     @commands.command(alias=["spoiler"])
-    async def spoilerize(self, ctx, *args):
+    async def spoilerize(self, ctx: commands.Context, *args):
         """
         Spoilerize a message or a range of messages (max 30 messages)
 

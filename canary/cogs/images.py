@@ -20,16 +20,17 @@ from discord.ext import commands
 
 # misc imports
 import os
+from ..bot import Canary
 from .utils import image_helpers as ih
 
 
 class Images(commands.Cog):
-    def __init__(self, bot):
-        self.bot = bot
-        self.max_size = self.bot.config.images["max_image_size"]
-        self.hist_lim = self.bot.config.images["image_history_limit"]
-        self.max_rad = self.bot.config.images["max_radius"]
-        self.max_itr = self.bot.config.images["max_iterations"]
+    def __init__(self, bot: Canary):
+        self.bot: Canary = bot
+        self.max_size: int = self.bot.config.images["max_image_size"]
+        self.hist_lim: int = self.bot.config.images["image_history_limit"]
+        self.max_rad: int = self.bot.config.images["max_radius"]
+        self.max_itr: int = self.bot.config.images["max_iterations"]
 
     @commands.Cog.listener()
     async def on_ready(self):
@@ -37,63 +38,63 @@ class Images(commands.Cog):
             os.mkdir("./tmp/", mode=0o755)
 
     @commands.command()
-    async def polar(self, ctx):
+    async def polar(self, ctx: commands.Context):
         """
         Transform Cartesian to polar coordinates.
         """
         await ih.filter_image(self.bot.loop, ih.polar, ctx, self.hist_lim, self.max_size)
 
     @commands.command()
-    async def cart(self, ctx):
+    async def cart(self, ctx: commands.Context):
         """
         Transform from polar to Cartesian coordinates.
         """
         await ih.filter_image(self.bot.loop, ih.cart, ctx, self.hist_lim, self.max_size)
 
     @commands.command()
-    async def blur(self, ctx, iterations: int = 1):
+    async def blur(self, ctx: commands.Context, iterations: int = 1):
         """
         Blur the image
         """
         await ih.filter_image(self.bot.loop, ih.blur, ctx, self.hist_lim, self.max_size, iterations, self.max_itr)
 
     @commands.command(aliases=["left", "right"])
-    async def hblur(self, ctx, radius: int = 10):
+    async def hblur(self, ctx: commands.Context, radius: int = 10):
         """
         Blur the image horizontally
         """
         await ih.filter_image(self.bot.loop, ih.hblur, ctx, self.hist_lim, self.max_size, radius, self.max_rad)
 
     @commands.command(aliases=["up", "down"])
-    async def vblur(self, ctx, radius: int = 10):
+    async def vblur(self, ctx: commands.Context, radius: int = 10):
         """
         Blur the image vertically
         """
         await ih.filter_image(self.bot.loop, ih.vblur, ctx, self.hist_lim, self.max_size, radius, self.max_rad)
 
     @commands.command(aliases=["zoom", "radial"])
-    async def rblur(self, ctx, radius: int = 10):
+    async def rblur(self, ctx: commands.Context, radius: int = 10):
         """
         Radial blur
         """
         await ih.filter_image(self.bot.loop, ih.rblur, ctx, self.hist_lim, self.max_size, radius, self.max_rad)
 
     @commands.command(aliases=["circle", "circular", "spin"])
-    async def cblur(self, ctx, radius: int = 10):
+    async def cblur(self, ctx: commands.Context, radius: int = 10):
         """
         Circular blur
         """
         await ih.filter_image(self.bot.loop, ih.cblur, ctx, self.hist_lim, self.max_size, radius, self.max_rad)
 
     @commands.command(aliases=["df", "dfry", "fry"])
-    async def deepfry(self, ctx, iterations: int = 1):
+    async def deepfry(self, ctx: commands.Context, iterations: int = 1):
         """
         Deep fry an image, mhmm
         """
         await ih.filter_image(self.bot.loop, ih.deepfry, ctx, self.hist_lim, self.max_size, iterations, self.max_itr)
 
     @commands.command()
-    async def noise(self, ctx, iterations: int = 1):
+    async def noise(self, ctx: commands.Context, iterations: int = 1):
         """
         Add some noise to tha image!!
         """

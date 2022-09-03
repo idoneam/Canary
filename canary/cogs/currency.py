@@ -1,6 +1,4 @@
-# -*- coding: utf-8 -*-
-#
-# Copyright (C) idoneam (2016-2019)
+# Copyright (C) idoneam (2016-2022)
 #
 # This file is part of Canary
 #
@@ -22,7 +20,7 @@ import discord
 from discord.ext import commands
 
 # For type hinting
-from typing import Dict, List, Optional, Tuple
+from ..bot import Canary
 
 # For DB functionality
 import sqlite3
@@ -69,12 +67,12 @@ TRANSACTION_ACTIONS = (
 
 
 class Currency(commands.Cog):
-    def __init__(self, bot):
-        self.bot = bot
-        self.currency = self.bot.config.currency
-        self.prec = self.currency["precision"]
+    def __init__(self, bot: Canary):
+        self.bot: Canary = bot
+        self.currency: dict = self.bot.config.currency
+        self.prec: int = self.currency["precision"]
 
-    async def fetch_all_balances(self) -> List[Tuple[str, str, Decimal]]:
+    async def fetch_all_balances(self) -> list[tuple[str, str, Decimal]]:
         conn = sqlite3.connect(self.bot.config.db_path)
         c = conn.cursor()
         c.execute(
@@ -102,7 +100,7 @@ class Currency(commands.Cog):
 
         return balance
 
-    async def create_bank_transaction(self, c, user: discord.Member, amount: Decimal, action: str, metadata: Dict):
+    async def create_bank_transaction(self, c, user: discord.Member, amount: Decimal, action: str, metadata: dict):
         # Don't create another connection in this function in order to properly
         # transaction-ify a series of bank "transactions".
 
@@ -117,15 +115,16 @@ class Currency(commands.Cog):
         t = (user.id, self.currency_to_db(amount), action, json.dumps(metadata), now)
         c.execute("INSERT INTO BankTransactions(UserID, Amount, Action, " "Metadata, Date) VALUES(?, ?, ?, ?, ?)", t)
 
-    def parse_currency(self, amount: str, balance: Decimal):
+    @staticmethod
+    def parse_currency(amount: str, balance: Decimal):
         if amount.lower().strip() in CURRENCY_ALL:
             return balance
-        else:
-            try:
-                return Decimal(amount)
-            except InvalidOperation:
-                # Value error (invalid conversion)
-                return None
+
+        try:
+            return Decimal(amount)
+        except InvalidOperation:
+            # Value error (invalid conversion)
+            return None
 
     def currency_to_db(self, amount: Decimal):
         return int(amount * Decimal(10 ** self.currency["precision"]))
@@ -139,7 +138,8 @@ class Currency(commands.Cog):
     def format_symbol_currency(self, amount: Decimal):
         return self.currency["symbol"] + self.format_currency(amount)
 
-    def check_bet(self, balance: Decimal, bet: Decimal) -> Optional[str]:
+    @staticmethod
+    def check_bet(balance: Decimal, bet: Decimal) -> str | None:
         """
         Checks universally invalid betting cases.
         """

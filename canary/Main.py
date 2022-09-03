@@ -1,6 +1,6 @@
 #! /usr/bin/env python3
 #
-# Copyright (C) idoneam (2016-2020)
+# Copyright (C) idoneam (2016-2022)
 #
 # This file is part of Canary
 #
@@ -23,31 +23,30 @@ import discord
 # Other utilities
 import os
 import sys
-import subprocess
 from datetime import datetime
 from pytz import timezone
-from bot import bot
+from canary.bot import bot
 import sqlite3
 
 from cogs.utils.checks import is_developer, is_moderator
 
-startup = [
-    "cogs.banner",
-    "cogs.currency",
-    "cogs.customreactions",
-    "cogs.games",
-    "cogs.helpers",
-    "cogs.images",
-    "cogs.info",
-    "cogs.memes",
-    "cogs.mod",
-    "cogs.music",
-    "cogs.quotes",
-    "cogs.reminder",
-    "cogs.roles",
-    "cogs.score",
-    "cogs.subscribers",  # Do not remove this terminating comma.
-]
+startup = [f"cogs.{c}" for c in (
+    "banner",
+    "currency",
+    "customreactions",
+    "games",
+    "helpers",
+    "images",
+    "info",
+    "memes",
+    "mod",
+    "music",
+    "quotes",
+    "reminder",
+    "roles",
+    "score",
+    "subscribers",  # Do not remove this terminating comma.
+)]
 
 
 @bot.event

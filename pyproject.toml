@@ -6,6 +6,9 @@ license = "GPL-3.0-only"
 repository = "https://github.com/idoneam/Canary"
 readme = "README.md"
 authors = []
+packages = [
+  { include = "canary" },
+]
 
 [tool.poetry.dependencies]
 python = "~3.10.0"

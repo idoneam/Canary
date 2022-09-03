@@ -21,31 +21,36 @@ from discord.ext import commands, tasks
 from discord import utils
 
 # Other utilities
-from io import BytesIO
+import asyncio
 import datetime
+import json
 import sqlite3
 import requests
+from io import BytesIO
 from PIL import Image, UnidentifiedImageError, ImageSequence
-import json
+
+from ..bot import Canary
 from .utils.checks import is_moderator
-import asyncio
 
 
 class Banner(commands.Cog):
     # Written by @le-potate
-    def __init__(self, bot):
+    def __init__(self, bot: Canary):
         self.bot = bot
-        self.guild = None
-        self.banner_reminders_role = None
-        self.banner_of_the_week_channel = None
-        self.banner_submissions_channel = None
-        self.banner_converted_channel = None
-        self.bots_channel = None
-        self.banner_winner_role = None
-        self.banner_vote_emoji = None
-        self.start_datetime = None
-        self.week_name = None
-        self.send_reminder = None
+        self.guild: discord.Guild | None = None
+
+        self.banner_of_the_week_channel: discord.TextChannel | None = None
+        self.banner_submissions_channel: discord.TextChannel | None = None
+        self.banner_converted_channel: discord.TextChannel | None = None
+        self.bots_channel: discord.TextChannel | None = None
+
+        self.banner_reminders_role: discord.Role | None = None
+        self.banner_winner_role: discord.Role | None = None
+        self.banner_vote_emoji: discord.Emoji | None = None
+
+        self.start_datetime: datetime.datetime | None = None
+        self.week_name: str | None = None
+        self.send_reminder: str | None = None
 
     @commands.Cog.listener()
     async def on_ready(self):

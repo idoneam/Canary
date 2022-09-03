@@ -31,6 +31,9 @@ import pickle
 import feedparser
 import requests
 
+# Type hinting
+from ..bot import Canary
+
 # Subscriber decorator
 from .utils.subscribers import canary_subscriber
 
@@ -59,8 +62,8 @@ os.makedirs("./data/runtime", exist_ok=True)
 
 
 class Subscribers(commands.Cog):
-    def __init__(self, bot):
-        self.bot = bot
+    def __init__(self, bot: Canary):
+        self.bot: Canary = bot
 
         # Compiled recall regular expression for filtering
         self._recall_filter = re.compile(self.bot.config.recall_filter, re.IGNORECASE)
@@ -73,8 +76,8 @@ class Subscribers(commands.Cog):
             METRO_BLUE_LINE: METRO_NORMAL_SERVICE_MESSAGE,
         }
 
-        self._recall_channel = None
-        self._metro_status_channel = None
+        self._recall_channel: discord.TextChannel | None = None
+        self._metro_status_channel: discord.TextChannel | None = None
 
     @commands.Cog.listener()
     async def on_ready(self):

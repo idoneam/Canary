@@ -25,6 +25,7 @@ import sqlite3
 import datetime
 
 # Other utilities
+from ..bot import Canary
 from .utils.paginator import Pages
 
 # For remindme functionality
@@ -90,8 +91,8 @@ HM_REGEX = re.compile(r"\b([0-1]?[0-9]|2[0-4]):([0-5][0-9])")
 
 
 class Reminder(commands.Cog):
-    def __init__(self, bot):
-        self.bot = bot
+    def __init__(self, bot: Canary):
+        self.bot: Canary = bot
         self.frequencies = {"daily": 1, "weekly": 7, "monthly": 30}
 
     async def check_reminders(self):
@@ -145,7 +146,7 @@ class Reminder(commands.Cog):
             await asyncio.sleep(60)  # seconds
 
     @commands.command(aliases=["rm", "rem"])
-    async def remindme(self, ctx, *, quote: str = ""):
+    async def remindme(self, ctx: commands.Context, *, quote: str = ""):
         """
         Parses the reminder and adds a one-time reminder to the reminder
         database or calls remindme_repeating to deal with repetitive reminders
@@ -193,7 +194,7 @@ class Reminder(commands.Cog):
         """
 
         if len(input_segments) > 0 and (input_segments[0] in ("daily", "weekly", "monthly")):
-            await self.__remindme_repeating(ctx, input_segments[0], quote=quote[len(input_segments[0]) + 1 :])
+            await self.__remindme_repeating(ctx, input_segments[0], quote=quote[len(input_segments[0]) + 1:])
             return
 
         for segment in input_segments:
@@ -209,7 +210,7 @@ class Reminder(commands.Cog):
 
         # They probably don't want their reminder nuked of punctuation, spaces
         # and formatting, so extract from original string.
-        reminder = quote[quote.index(first_reminder_segment) :]
+        reminder = quote[quote.index(first_reminder_segment):]
 
         # Date-based reminder triggered by "at" and "on" keywords
         if input_segments[0] in {"at", "on"}:
@@ -235,10 +236,10 @@ class Reminder(commands.Cog):
 
                 # Strips "to" and dates from the reminder message
                 time_input_end = time_result.span()[1]
-                if re.match("to", reminder[time_input_end : time_input_end + 4].strip(), re.IGNORECASE):
-                    reminder = reminder[time_input_end + 3 :].strip()
+                if re.match("to", reminder[time_input_end:time_input_end + 4].strip(), re.IGNORECASE):
+                    reminder = reminder[time_input_end + 3:].strip()
                 else:
-                    reminder = reminder[time_input_end + 1 :].strip()
+                    reminder = reminder[time_input_end + 1:].strip()
 
                 # Add message to database
                 conn = sqlite3.connect(self.bot.config.db_path)
@@ -436,7 +437,7 @@ class Reminder(commands.Cog):
         conn.commit()
         conn.close()
 
-    async def __remindme_repeating(self, ctx, freq: str = "", *, quote: str = ""):
+    async def __remindme_repeating(self, ctx: commands.Context, freq: str = "", *, quote: str = ""):
         """
         Called by remindme to add a repeating reminder to the reminder
         database.

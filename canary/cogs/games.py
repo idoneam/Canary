@@ -1,6 +1,4 @@
-# -*- coding: utf-8 -*-
-#
-# Copyright (C) idoneam (2016-2019)
+# Copyright (C) idoneam (2016-2022)
 #
 # This file is part of Canary
 #
@@ -31,6 +29,7 @@ import random
 import asyncio
 from typing import Optional
 from functools import partial
+from ..bot import Canary
 from .utils.dice_roll import dice_roll
 from .utils.clamp_default import clamp_default
 from .utils.hangman import HangmanState
@@ -47,8 +46,8 @@ CATEGORY_SYNONYMS = {
 
 
 class Games(commands.Cog):
-    def __init__(self, bot, hangman_tbl_name: str):
-        self.bot = bot
+    def __init__(self, bot: Canary, hangman_tbl_name: str):
+        self.bot: Canary = bot
         self.hm_cool_win: int = bot.config.games["hm_cool_win"]
         self.hm_norm_win: int = bot.config.games["hm_norm_win"]
         self.hm_timeout: int = bot.config.games["hm_timeout"]

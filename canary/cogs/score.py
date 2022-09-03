@@ -1,6 +1,4 @@
-# -*- coding: utf-8 -*-
-#
-# Copyright (C) idoneam (2016-2021)
+# Copyright (C) idoneam (2016-2022)
 #
 # This file is part of Canary
 #
@@ -22,6 +20,9 @@
 # discord.py requirements
 import discord
 from discord.ext import commands
+
+# For type hinting
+from ..bot import Canary
 
 # For DB functionality
 import sqlite3
@@ -145,11 +146,11 @@ class AfterConverter(commands.Converter):
 
 
 class Score(commands.Cog):
-    def __init__(self, bot):
-        self.bot = bot
-        self.guild = None
-        self.UPMARTLET = None
-        self.DOWNMARTLET = None
+    def __init__(self, bot: Canary):
+        self.bot: Canary = bot
+        self.guild: discord.Guild | None = None
+        self.UPMARTLET: discord.Emoji | None = None
+        self.DOWNMARTLET: discord.Emoji | None = None
 
     @commands.Cog.listener()
     async def on_ready(self):
@@ -332,16 +333,22 @@ class Score(commands.Cog):
 
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload):
+        if self.guild is None:
+            return
+
         if payload.guild_id == self.guild.id:
             await self._add_or_remove_reaction_from_db(payload)
 
     @commands.Cog.listener()
     async def on_raw_reaction_remove(self, payload):
+        if self.guild is None:
+            return
+
         if payload.guild_id == self.guild.id:
             await self._add_or_remove_reaction_from_db(payload, remove=True)
 
     @commands.command()
-    async def score(self, ctx, *args):
+    async def score(self, ctx: commands.Context, *args):
         """Display emoji score
 
         Basic examples:
@@ -355,7 +362,8 @@ class Score(commands.Cog):
             -If @user or User, gives the score for this user.
             -If from and to flags, gives the score given from @userA to @userB. `from:all` and `to:all` can be used.
             -If nothing, gives your score
-            Note that it is possible to give usernames without mention. This is case sensitive. If a username contains a space, the username and flag must be included in quotes, e.g. "to:user name"
+            Note that it is possible to give usernames without mention. This is case sensitive. If a username contains a
+            space, the username and flag must be included in quotes, e.g. "to:user name"
 
         - Optional: `emoji` OR `emojitype:type` OR `emojiname:name` OR `:name:`
             -If emoji, gives the score for this emoji
@@ -381,7 +389,7 @@ class Score(commands.Cog):
         try:
             args_dict = await self._get_converted_args_dict(ctx, args, from_xnor_to=True)
         except commands.BadArgument as err:
-            await ctx.send(err)
+            await ctx.send(str(err))
             return
 
         # get the WHERE conditions and the values
@@ -421,7 +429,8 @@ class Score(commands.Cog):
             -If from flag: gives the score received by every user from this user. `from:all` can be used.
             -If to flag: gives the score received by this user from every user. `to:all` can be used.
             -If nothing, gives the score of every user
-            Note that it is possible to give usernames without mention. This is case sensitive. If a username contains a space, the username and flag must be included in quotes, e.g. "to:user name"
+            Note that it is possible to give usernames without mention. This is case sensitive. If a username contains a
+            space, the username and flag must be included in quotes, e.g. "to:user name"
 
         - Optional: `emoji` OR `emojitype:type` OR `emojiname:name` OR `:name:`
             -If emoji, gives the score for this emoji
@@ -515,7 +524,7 @@ class Score(commands.Cog):
         await p.paginate()
 
     @commands.command()
-    async def emojiranking(self, ctx, *args):
+    async def emojiranking(self, ctx: commands.Context, *args):
         """Ranking of how many times emojis were used
 
         Basic example:
@@ -525,7 +534,8 @@ class Score(commands.Cog):
 
         - Optional: `from:@userA` AND `to:@userB`
             -If from and to flags, gives the score given from @userA to @userB. `from:all` and `to:all` can be used.
-            Note that it is possible to give usernames without mention. If a username contains a space, the username and flag must be included in quotes, e.g. "to:user name"
+            Note that it is possible to give usernames without mention. If a username contains a space, the username and
+            flag must be included in quotes, e.g. "to:user name"
 
         - Optional: `emojitype:type`
             -If emojitype flag, gives the score for this emojitype (see below for types)
@@ -551,7 +561,7 @@ class Score(commands.Cog):
         try:
             args_dict = await self._get_converted_args_dict(ctx, args, from_xnor_to=True, member=False, emoji=False)
         except commands.BadArgument as err:
-            await ctx.send(err)
+            await ctx.send(str(err))
             return
 
         if args_dict["emojitype"] == "score":

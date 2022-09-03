@@ -29,6 +29,7 @@ import re
 
 # Other utils
 import random
+from ..bot import Canary
 from .utils.paginator import Pages
 
 GEN_SPACE_SYMBOLS = re.compile(r"[,“”\".?!]")
@@ -40,9 +41,9 @@ DEFAULT_AVATAR = "https://cdn.discordapp.com/embed/avatars/0.png"
 
 
 class Quotes(commands.Cog):
-    def __init__(self, bot):
-        self.bot = bot
-        self.mc_table = {}
+    def __init__(self, bot: Canary):
+        self.bot: Canary = bot
+        self.mc_table: dict[str, dict] = {}
         self.rebuild_mc()
 
     def rebuild_mc(self):
@@ -55,7 +56,7 @@ class Quotes(commands.Cog):
         c = conn.cursor()
         c.execute("SELECT Quote FROM Quotes")
 
-        lookup = {}
+        lookup: dict[str, dict] = {}
 
         for q in c.fetchall():
             # Skip URL quotes
@@ -99,7 +100,8 @@ class Quotes(commands.Cog):
         conn.close()
 
     @commands.command(aliases=["addq"])
-    async def add_quotes(self, ctx, member: discord.Member = None, *, quote: str = None):
+    async def add_quotes(
+            self, ctx: commands.Context, member: discord.Member | None = None, *, quote: str | None = None):
         """
         Add a quote to a user's quote database.
         """
@@ -239,7 +241,7 @@ class Quotes(commands.Cog):
         await ctx.send(embed=embed)
 
     @commands.command(aliases=["lq"])
-    async def list_quotes(self, ctx, author: discord.Member = None):
+    async def list_quotes(self, ctx: commands.Context, author: discord.Member = None):
         """
         List quotes
         """
@@ -309,7 +311,7 @@ class Quotes(commands.Cog):
         conn.close()
 
     @commands.command(aliases=["allq", "aq"])
-    async def all_quotes(self, ctx, *, query):
+    async def all_quotes(self, ctx: commands.Context, *, query: str):
         """
         List all quotes that contain the query string. Can optionally use regex
         by surrounding the the query with /.../.
@@ -320,7 +322,7 @@ class Quotes(commands.Cog):
         """
 
         if not query:
-            ctx.send("You must provide a query")
+            await ctx.send("You must provide a query")
             return
 
         query_splitted = query.split()
@@ -372,7 +374,7 @@ class Quotes(commands.Cog):
         await p.paginate()
 
     @commands.command(aliases=["gen"])
-    async def generate(self, ctx, seed: str = None, min_length: int = 1):
+    async def generate(self, ctx: commands.Context, seed: str = None, min_length: int = 1):
         """
         Generates a random 'quote' using a Markov Chain. Optionally takes in a
         word to seed the Markov Chain with and (also optionally) a desired
@@ -393,52 +395,54 @@ class Quotes(commands.Cog):
 
         if seed is None:
             await ctx.send("Markov chain table is empty.", delete_after=60)
-        elif seed not in self.mc_table.keys():
+            return
+        if seed not in self.mc_table.keys():
             await ctx.send("Could not generate anything with that seed.", delete_after=60)
-        else:
-            longest_sentence = []
-            retries = 0
+            return
 
-            while len(longest_sentence) < min_length and retries < 200:
-                current_word = seed
-                sentence = [current_word]
+        longest_sentence = []
+        retries = 0
 
-                # Add words to the sentence until a termination condition is
-                # encountered.
-                while True:
-                    choices = [(w, self.mc_table[current_word][w]) for w in self.mc_table[current_word]]
-                    c_words, p_dist = zip(*choices)
+        while len(longest_sentence) < min_length and retries < 200:
+            current_word = seed
+            sentence = [current_word]
 
-                    # Choose a random word and add it to the sentence using the
-                    # probability distribution stored in the word entry.
-                    old_word = current_word
+            # Add words to the sentence until a termination condition is
+            # encountered.
+            while True:
+                choices = [(w, self.mc_table[current_word][w]) for w in self.mc_table[current_word]]
+                c_words, p_dist = zip(*choices)
+
+                # Choose a random word and add it to the sentence using the
+                # probability distribution stored in the word entry.
+                old_word = current_word
+                current_word = np.random.choice(c_words, p=p_dist)
+
+                # Don't allow termination until the minimum length is met
+                # or we don't have any other option.
+                while (
+                    current_word == "TERM"
+                    and len(sentence) < min_length
+                    and len(self.mc_table[old_word].keys()) > 1
+                ):
                     current_word = np.random.choice(c_words, p=p_dist)
 
-                    # Don't allow termination until the minimum length is met
-                    # or we don't have any other option.
-                    while (
-                        current_word == "TERM"
-                        and len(sentence) < min_length
-                        and len(self.mc_table[old_word].keys()) > 1
-                    ):
-                        current_word = np.random.choice(c_words, p=p_dist)
+                # Don't allow repeat words too much
+                while len(sentence) >= 3 and (current_word == sentence[-1] == sentence[-2] == sentence[-3]):
+                    current_word = np.random.choice(c_words, p=p_dist)
 
-                    # Don't allow repeat words too much
-                    while len(sentence) >= 3 and (current_word == sentence[-1] == sentence[-2] == sentence[-3]):
-                        current_word = np.random.choice(c_words, p=p_dist)
+                # Cap sentence at 1000 words, just in case, and terminate
+                # if termination symbol is seen.
+                if current_word == "TERM" or len(sentence) >= 1000:
+                    break
+                sentence.append(current_word)
 
-                    # Cap sentence at 1000 words, just in case, and terminate
-                    # if termination symbol is seen.
-                    if current_word == "TERM" or len(sentence) >= 1000:
-                        break
-                    sentence.append(current_word)
+            if len(longest_sentence) < len(sentence) and len(" ".join(sentence)) <= 2000:
+                longest_sentence = sentence[:]
 
-                if len(longest_sentence) < len(sentence) and len(" ".join(sentence)) <= 2000:
-                    longest_sentence = sentence[:]
+            retries += 1
 
-                retries += 1
-
-            await ctx.send(" ".join(longest_sentence))
+        await ctx.send(" ".join(longest_sentence))
 
 
 def setup(bot):

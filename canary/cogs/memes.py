@@ -1,4 +1,4 @@
-# Copyright (C) idoneam (2016-2021)
+# Copyright (C) idoneam (2016-2022)
 #
 # This file is part of Canary
 #
@@ -20,14 +20,15 @@ from discord.ext import commands
 import discord
 
 # Other utilities
-import random
 import aiohttp
+import random
+from ..bot import Canary
 from .utils.auto_incorrect import auto_incorrect
 
 
 class Memes(commands.Cog):
-    def __init__(self, bot):
-        self.bot = bot
+    def __init__(self, bot: Canary):
+        self.bot: Canary = bot
 
     @commands.command()
     async def bac(self, ctx, *, input_str: str = None):

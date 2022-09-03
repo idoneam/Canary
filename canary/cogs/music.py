@@ -28,6 +28,7 @@ from typing import Callable, Optional, Iterable
 import discord
 import yt_dlp
 from discord.ext import commands
+from ..bot import Canary
 from .utils.music_helpers import (
     FFMPEG_BEFORE_OPTS,
     FFMPEG_OPTS,
@@ -47,8 +48,8 @@ from .utils.music_helpers import (
 
 
 class Music(commands.Cog):
-    def __init__(self, bot):
-        self.bot = bot
+    def __init__(self, bot: Canary):
+        self.bot: Canary = bot
         self.track_queue: deque = deque()
         self.track_history: deque = deque()
         self.looping_queue: bool = False
@@ -124,43 +125,43 @@ class Music(commands.Cog):
     def subc_decision(self, subc: str) -> tuple[Callable, Optional[Callable]]:
         match subc:
             case "play":
-                return (self.play, lambda x: x)
+                return self.play, lambda x: x
             case "playback_speed" | "playbackspeed" | "ps" | "speed":
-                return (self.playback_speed, conv_arg(float, True))
+                return self.playback_speed, conv_arg(float, True)
             case "goto_time" | "gototime" | "gt":
-                return (self.goto_time, conv_arg(lambda x: x, True))
+                return self.goto_time, conv_arg(lambda x: x, True)
             case "forward_time" | "forwardtime" | "ft":
-                return (self.forward_time, conv_arg(lambda x: x, True))
+                return self.forward_time, conv_arg(lambda x: x, True)
             case "backward_time" | "backwardtime" | "bt" | "rewind":
-                return (self.backward_time, conv_arg(lambda x: "30" if x is None else x, False))
+                return self.backward_time, conv_arg(lambda x: "30" if x is None else x, False)
             case "loop":
-                return (self.loop, conv_arg(lambda x: x, True))
+                return self.loop, conv_arg(lambda x: x, True)
             case "print_queue" | "printqueue" | "pq":
-                return (self.print_queue, conv_arg(lambda x: 0 if x is None else int(x), False))
+                return self.print_queue, conv_arg(lambda x: 0 if x is None else int(x), False)
             case "status" | "now_playing" | "nowplaying" | "np":
-                return (self.music_status, None)
+                return self.music_status, None
             case "remove" | "pop":
-                return (self.remove_track, conv_arg(int, True))
+                return self.remove_track, conv_arg(int, True)
             case "insert":
-                return (self.insert_track, conv_arg(insert_converter, True))
+                return self.insert_track, conv_arg(insert_converter, True)
             case "clear_queue" | "clearqueue" | "cq":
-                return (self.clear_queue, None)
+                return self.clear_queue, None
             case "clear_hist" | "clearhist" | "ch":
-                return (self.clear_hist, None)
+                return self.clear_hist, None
             case "queue" | "q":
-                return (self.queue_track, lambda x: x)
+                return self.queue_track, lambda x: x
             case "volume" | "vol" | "v":
-                return (self.volume, conv_arg(lambda x: float(x.strip("%")), True))
+                return self.volume, conv_arg(lambda x: float(x.strip("%")), True)
             case "stop":
-                return (self.stop, None)
+                return self.stop, None
             case "skip" | "next":
-                return (self.skip, conv_arg(lambda x: 0 if x is None else int(x), False))
+                return self.skip, conv_arg(lambda x: 0 if x is None else int(x), False)
             case "back" | "previous":
-                return (self.backtrack, conv_arg(lambda x: None if x is None else int(x), False))
+                return self.backtrack, conv_arg(lambda x: None if x is None else int(x), False)
             case "pause":
-                return (self.pause, None)
+                return self.pause, None
             case "resume":
-                return (self.resume, None)
+                return self.resume, None
             case _:
                 raise ValueError
 
@@ -313,7 +314,8 @@ class Music(commands.Cog):
                 skip_str, delta = self.skip_opts
                 self.play_track(ctx, skip_str=skip_str, delta=delta)
                 if self.pause_start is not None:
-                    ctx.voice_client.pause()
+                    if ctx.voice_client is not None:
+                        await ctx.voice_client.pause()
                     self.pause_start -= delta
                 self.skip_opts = None
 
@@ -604,13 +606,13 @@ class Music(commands.Cog):
         arguments: (float)
         """
 
-        self.volume_level = max(0, min(500, new_vol))
+        self.volume_level = max(0., min(500., new_vol))
         ctx.voice_client.source.volume = self.volume_level / 100
         await ctx.send(f"changed volume to {self.volume_level}%.")
 
     @check_playing
     @check_banned
-    async def stop(self, ctx):
+    async def stop(self, ctx: commands.Context):
         """
         stops and disconnects the bot from voice
         arguments: none
@@ -622,7 +624,7 @@ class Music(commands.Cog):
 
     @check_playing
     @check_banned
-    async def skip(self, ctx, queue_amount: int):
+    async def skip(self, ctx: commands.Context, queue_amount: int):
         """
         skips some amount of songs in the queue
         arguments: (optional: int [defaults to 0, going forward a single track])
@@ -644,7 +646,7 @@ class Music(commands.Cog):
 
     @check_playing
     @check_banned
-    async def backtrack(self, ctx, queue_amount: Optional[int]):
+    async def backtrack(self, ctx: commands.Context, queue_amount: Optional[int]):
         """
         goes backwards in history by some amount of tracks
         arguments: (optional: int [defaults to 0 if track has been playing for more than 10 seconds, otherwise 1])
@@ -672,7 +674,7 @@ class Music(commands.Cog):
 
     @check_playing
     @check_banned
-    async def pause(self, ctx):
+    async def pause(self, ctx: commands.Context):
         """
         pauses currently playing track
         arguments: none
@@ -682,7 +684,7 @@ class Music(commands.Cog):
         self.pause_start = time.perf_counter()
         await ctx.send("paused current track.")
 
-    async def resume(self, ctx):
+    async def resume(self, ctx: commands.Context):
         """
         resumes currently paused track
         arguments: none
