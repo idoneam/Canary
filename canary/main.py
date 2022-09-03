@@ -53,10 +53,11 @@ startup = [
 
 @bot.event
 async def on_ready():
-    if bot.config.dev_log_webhook_id and bot.config.dev_log_webhook_token:
-        webhook_string = " and to the log webhook"
-    else:
-        webhook_string = ""
+    webhook_string = (
+        " and to the log webhook"
+        if bot.config.dev_log_webhook_id and bot.config.dev_log_webhook_token
+        else ""
+    )
     sys.stdout.write(f"Bot is ready, program output will be written to a " f"log file{webhook_string}.\n")
     sys.stdout.flush()
     bot.dev_logger.info(f"Logged in as {bot.user.name} ({bot.user.id})")
@@ -68,12 +69,13 @@ async def load(ctx, extension_name: str):
     """
     Load a specific extension. Specify as cogs.<name>
     """
+
     try:
         bot.load_extension(extension_name)
     except (AttributeError, ImportError) as e:
         await ctx.send(f"```{type(e).__name__}: {str(e)}\n```")
-
         return
+
     await ctx.send(f"{extension_name} loaded.")
 
 
@@ -83,6 +85,7 @@ async def unload(ctx: Context, extension_name: str):
     """
     Unload a specific extension. Specify as cogs.<name>
     """
+
     try:
         bot.unload_extension(extension_name)
     except Exception as e:
@@ -155,6 +158,7 @@ async def on_user_update(before, after):
 def main():
     if os.name == "posix":
         import uvloop
+
         uvloop.install()
 
     for extension in startup:

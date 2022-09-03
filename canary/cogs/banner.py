@@ -14,7 +14,6 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Canary. If not, see <https://www.gnu.org/licenses/>.
-
 # discord-py requirements
 import discord
 from discord.ext import commands, tasks
@@ -175,7 +174,8 @@ class Banner(commands.Cog):
         if date_str.lower() == "quit":
             await ctx.send("Command exited.")
             return
-        elif date_str.lower() == "now":
+
+        if date_str.lower() == "now":
             timestamp = datetime.datetime.now().timestamp()
         else:
             try:
@@ -308,6 +308,7 @@ class Banner(commands.Cog):
                 f"It might have been manually deleted. Exiting command."
             )
             return
+
         try:
             converted_message = await self.banner_converted_channel.fetch_message(converted_message_id)
         except discord.errors.NotFound:
@@ -345,8 +346,7 @@ class Banner(commands.Cog):
             await ctx.send("Command timed out.")
             return
 
-        confirmation_str = confirmation_msg.content
-        if confirmation_str.lower() != "yes":
+        if confirmation_msg.content.lower() != "yes":
             await ctx.send("Exiting without selecting winner.")
             return
 
@@ -397,7 +397,7 @@ class Banner(commands.Cog):
         await ctx.send("Successfully set banner and ended contest.")
 
     @commands.command(aliases=["submitbanner"])
-    async def submit_banner(self, ctx, *args):
+    async def submit_banner(self, ctx: commands.Context, *args):
         """
         Submit a picture for an Banner Picture of the Week contest
 

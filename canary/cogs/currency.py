@@ -396,11 +396,11 @@ class Currency(commands.Cog):
         # Handle invalid cases
 
         if amount_dec is None:
-            await ctx.send("Invalid quantity: '{}'.".format(amount))
+            await ctx.send(f"Invalid quantity: '{amount}'.")
             return
 
         if amount_dec <= 0:
-            await ctx.send("You cannot give {}!".format(self.format_symbol_currency(amount_dec)))
+            await ctx.send(f"You cannot give {self.format_symbol_currency(amount_dec)}!")
             return
 
         if amount_dec > balance:

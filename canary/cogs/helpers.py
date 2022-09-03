@@ -170,12 +170,14 @@ class Helpers(commands.Cog):
 
         feels_like_string = (
             Helpers._calculate_feels_like(**{k: float(v.group()) for k, v in feels_like_values.items()})
-            if all((
-                humidity_string,
-                temperature_string,
-                wind_string,
-                *feels_like_values.values(),
-            ))
+            if all(
+                (
+                    humidity_string,
+                    temperature_string,
+                    wind_string,
+                    *feels_like_values.values(),
+                )
+            )
             else "n/a"
         )
 
@@ -292,10 +294,12 @@ class Helpers(commands.Cog):
             (a, b) = i.get_text().split(":", 1)
             tidbits.append((a.strip(), b.strip()))
 
-        em = discord.Embed(title=title, description=url, colour=0xDA291C)
-        em.add_field(name="Overview", value=overview, inline=False)
-        em.add_field(name="Terms", value=terms, inline=False)
-        em.add_field(name="Instructor(s)", value=instructors, inline=False)
+        em = (
+            discord.Embed(title=title, description=url, colour=0xDA291C)
+            .add_field(name="Overview", value=overview, inline=False)
+            .add_field(name="Terms", value=terms, inline=False)
+            .add_field(name="Instructor(s)", value=instructors, inline=False)
+        )
         for (a, b) in tidbits:
             em.add_field(name=a, value=b, inline=False)
         await ctx.send(embed=em)

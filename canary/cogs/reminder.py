@@ -89,6 +89,7 @@ YMD_REGEX = re.compile(r"(2[0-1][0-9][0-9])[\s./-]((1[0-2]|0?[1-9]))[\s./-]" r"(
 # Regex for time HH:MM
 HM_REGEX = re.compile(r"\b([0-1]?[0-9]|2[0-4]):([0-5][0-9])")
 
+FREQUENCIES = {"daily": 1, "weekly": 7, "monthly": 30}
 
 class Reminder(commands.Cog):
     def __init__(self, bot: Canary):
@@ -104,11 +105,11 @@ class Reminder(commands.Cog):
 
         await self.bot.wait_until_ready()
         while not self.bot.is_closed():
+            if not (guild := self.guild):
+                return
+
             conn = sqlite3.connect(self.bot.config.db_path)
             c = conn.cursor()
-            guild = self.bot.get_guild(self.bot.config.server_id)
-            if not guild:
-                return
             reminders = c.execute("SELECT * FROM Reminders").fetchall()
             for i in range(len(reminders)):
                 member = discord.utils.get(guild.members, id=reminders[i][0])
@@ -132,7 +133,7 @@ class Reminder(commands.Cog):
                 else:
                     last_date = datetime.datetime.strptime(reminders[i][5], "%Y-%m-%d %H:%M:%S.%f")
 
-                    if datetime.datetime.now() - last_date > datetime.timedelta(days=self.frequencies[reminders[i][3]]):
+                    if datetime.datetime.now() - last_date > datetime.timedelta(days=FREQUENCIES[reminders[i][3]]):
                         await member.send(f"Reminding you to {reminders[i][2]}! [{i + 1:d}]")
 
                         c.execute(
@@ -448,7 +449,7 @@ class Reminder(commands.Cog):
         freq = freq.strip()
         quote = quote.strip()
 
-        if freq not in self.frequencies.keys():
+        if freq not in FREQUENCIES.keys():
             await ctx.send(
                 "Please ensure you specify a frequency from the following "
                 "list: `daily`, `weekly`, `monthly`, before your message!"

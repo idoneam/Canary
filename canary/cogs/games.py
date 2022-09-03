@@ -51,6 +51,7 @@ class Games(commands.Cog):
         self.hm_norm_win: int = bot.config.games["hm_norm_win"]
         self.hm_timeout: int = bot.config.games["hm_timeout"]
         self.hm_locks: dict[discord.TextChannel, asyncio.Lock] = dict()
+
         with open(f"{os.getcwd()}/data/premade/{hangman_tbl_name}.obj", "rb") as hangman_pkl:
             self.hangman_dict: dict[str, tuple[list[tuple[str, str | None]], str]] = pickle.load(hangman_pkl)
 
@@ -67,7 +68,8 @@ class Games(commands.Cog):
             "resend this message by typing `?{hm|hangman} help`."
         )
 
-    def hm_msg_check(self, hm_channel: discord.TextChannel, lowered: str, msg: discord.Message):
+    @staticmethod
+    def hm_msg_check(hm_channel: discord.TextChannel, lowered: str, msg: discord.Message):
         return msg.channel == hm_channel and (
             (len(msg.content) == 1 and msg.content.isalpha()) or msg.content.lower() == lowered
         )
@@ -76,7 +78,7 @@ class Games(commands.Cog):
     async def hangman(self, ctx, command: str | None = None):
         """
         play a nice game of hangman with internet strangers!
-        guesses must be single letters (interpreted in a case insensitive manner) or the entire correct word.
+        guesses must be single letters (interpreted in a case-insensitive manner) or the entire correct word.
         can either be called with "?{hm|hangman}" or "?{hm|hangman} x", where x is a valid category argument.
         see all categories by typing "?{hm|hangman} help".
         quit an ongoing game by typing "?{hm|hangman} quit".
@@ -84,7 +86,7 @@ class Games(commands.Cog):
         rules:
             - 5 wrong guesses allowed
             - for a guess to be registered, it must either be the full correct word or a single letter
-            - guesses are interpreted in a case insensitive manner
+            - guesses are interpreted in a case-insensitive manner
         """
 
         await ctx.trigger_typing()

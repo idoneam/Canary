@@ -27,6 +27,7 @@ class Info(commands.Cog):
 
     @commands.command()
     async def version(self, ctx):
+        # TODO: use asyncio.create_subprocess_shell
         version = subprocess.check_output(("git", "describe", "--tags"), universal_newlines=True).strip()
         commit, authored = (
             subprocess.check_output(("git", "log", "-1", "--pretty=format:%h %aI"), universal_newlines=True)
