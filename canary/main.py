@@ -71,10 +71,10 @@ async def load(ctx, extension_name: str):
     try:
         bot.load_extension(extension_name)
     except (AttributeError, ImportError) as e:
-        await ctx.send("```{}: {}\n```".format(type(e).__name__, str(e)))
+        await ctx.send(f"```{type(e).__name__}: {str(e)}\n```")
 
         return
-    await ctx.send("{} loaded.".format(extension_name))
+    await ctx.send(f"{extension_name} loaded.")
 
 
 @bot.command()
