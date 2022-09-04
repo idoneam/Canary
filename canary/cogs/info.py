@@ -30,7 +30,7 @@ class Info(CanaryCog):
             .strip()
             .split(" ")
         )
-        await ctx.send(f"Version: `{version}`\nCommit: `{commit}` " f"authored `{authored}`")
+        await ctx.send(f"Version: `{version}`\nCommit: `{commit}` authored `{authored}`")
 
 
 def setup(bot):

@@ -82,7 +82,7 @@ class Currency(CanaryCog):
         async with self.db() as db:
             c: aiosqlite.Cursor
             async with db.execute(
-                "SELECT IFNULL(SUM(Amount), 0) FROM BankTransactions WHERE " "UserID = ?", (user.id,)
+                "SELECT IFNULL(SUM(Amount), 0) FROM BankTransactions WHERE UserID = ?", (user.id,)
             ) as c:
                 balance = self.db_to_currency((await c.fetchone())[0])
                 if balance is None:
@@ -104,7 +104,7 @@ class Currency(CanaryCog):
         await db.execute("PRAGMA foreign_keys = ON")
         await add_member_if_needed(self, db, user.id)
         await db.execute(
-            "INSERT INTO BankTransactions(UserID, Amount, Action, " "Metadata, Date) VALUES(?, ?, ?, ?, ?)",
+            "INSERT INTO BankTransactions(UserID, Amount, Action, Metadata, Date) VALUES(?, ?, ?, ?, ?)",
             (user.id, self.currency_to_db(amount), action, json.dumps(metadata), now),
         )
 
@@ -168,7 +168,7 @@ class Currency(CanaryCog):
         db: aiosqlite.Connection
         async with self.db() as db:
             async with db.execute(
-                "SELECT IFNULL(MAX(Date), 0) FROM BankTransactions " "WHERE UserID = ? AND Action = ?",
+                "SELECT IFNULL(MAX(Date), 0) FROM BankTransactions WHERE UserID = ? AND Action = ?",
                 (ctx.message.author.id, ACTION_INITIAL_CLAIM),
             ) as c:
                 claim_time = (await c.fetchone())[0]
@@ -208,7 +208,7 @@ class Currency(CanaryCog):
         async with self.db() as db:
             c: aiosqlite.Cursor
             async with db.execute(
-                "SELECT IFNULL(MAX(Date), 0) FROM BankTransactions " "WHERE UserID = ? AND Action = ?",
+                "SELECT IFNULL(MAX(Date), 0) FROM BankTransactions WHERE UserID = ? AND Action = ?",
                 (ctx.message.author.id, ACTION_CLAIM),
             ) as c:
                 last_claimed = datetime.datetime.fromtimestamp((await c.fetchone())[0])
@@ -339,7 +339,7 @@ class Currency(CanaryCog):
         if amount_returned == bet_dec:
             message = "{un} broke even (result was **{re}**)."
         elif amount_returned > bet_dec:
-            message = "Congratulations! {un} won [net] {am} (result was " "**{re}**)."
+            message = "Congratulations! {un} won [net] {am} (result was **{re}**)."
 
         author_name = ctx.message.author.display_name
 
@@ -415,7 +415,7 @@ class Currency(CanaryCog):
         balances = sorted(await self.fetch_all_balances(), reverse=True, key=lambda b: b[2])
 
         if len(balances) == 0:
-            await ctx.send("Leaderboards are not yet available for this server, please " "collect some currency.")
+            await ctx.send("Leaderboards are not yet available for this server, please collect some currency.")
             return
 
         table = []

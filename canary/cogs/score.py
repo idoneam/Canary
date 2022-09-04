@@ -14,7 +14,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Canary. If not, see <https://www.gnu.org/licenses/>.
-import aiosqlite
+
 # Rewritten by @le-potate
 
 # discord.py requirements
@@ -25,6 +25,7 @@ from discord.ext import commands
 from ..bot import Canary
 
 # For DB functionality
+import aiosqlite
 import json
 from .base_cog import CanaryCog
 from .utils.members import add_member_if_needed
@@ -47,7 +48,7 @@ class TotalEmojiConverter(commands.Converter):
         except commands.BadArgument:
             if not any(argument in d.values() for d in EMOJI.values()):
                 raise commands.BadArgument(
-                    "Not in the current list of Discord Unicode Emojis " "and no Custom Emoji found"
+                    "Not in the current list of Discord Unicode Emojis and no Custom Emoji found"
                 )
             return argument
 
@@ -89,7 +90,7 @@ class EmojiTypeConverter(commands.Converter):
         if "emojitype" not in argument.lower():
             raise commands.BadArgument("No `emojitype` flag")
         if len(argument) < 11:
-            raise commands.BadArgument("No argument specified for " "`emojitype` flag")
+            raise commands.BadArgument("No argument specified for `emojitype` flag")
         result = argument[10:].lower()
         if result not in ("all", "unicode", "custom", "here", "nothere", "score"):
             raise commands.BadArgument("Unknown emoji type specified for `emojitype` flag")
@@ -103,7 +104,7 @@ class EmojiNameConverter(commands.Converter):
         if "emojiname" not in argument.lower():
             raise commands.BadArgument("No `emojiname` flag")
         if len(argument) < 11:
-            raise commands.BadArgument("No argument specified for " "`emojiname` flag")
+            raise commands.BadArgument("No argument specified for `emojiname` flag")
         return f":{argument[10:]}:"
 
 
@@ -130,7 +131,7 @@ class BeforeConverter(commands.Converter):
         try:
             return int(argument[7:])
         except ValueError:
-            raise commands.BadArgument("`before` flag should take an " "integer as input")
+            raise commands.BadArgument("`before` flag should take an integer as input")
 
 
 class AfterConverter(commands.Converter):
@@ -142,7 +143,7 @@ class AfterConverter(commands.Converter):
         try:
             return int(argument[6:])
         except ValueError:
-            raise commands.BadArgument("`after` flag should take an " "integer as input")
+            raise commands.BadArgument("`after` flag should take an integer as input")
 
 
 class Score(CanaryCog):
@@ -268,12 +269,12 @@ class Score(CanaryCog):
         elif args_dict["emojitype"] == "custom":
             where_list.append("instr(ReactionName, '<') = 1")
         elif args_dict["emojitype"] == "here":
-            where_list.append(f"ReactionName IN " f"({','.join(['?']*len(guild_emojis))})")
+            where_list.append(f"ReactionName IN ({','.join(['?']*len(guild_emojis))})")
             values_list = values_list + guild_emojis
         elif args_dict["emojitype"] == "nothere":
             # must be a custom react
             where_list.append("instr(ReactionName, '<') = 1")
-            where_list.append(f"ReactionName NOT IN " f"({','.join(['?']*len(guild_emojis))})")
+            where_list.append(f"ReactionName NOT IN ({','.join(['?']*len(guild_emojis))})")
             values_list = values_list + guild_emojis
         # elif args_dict["emojitype"] == "all", there are no restrictions
         # elif args_dict["emojitype"] == "score", this must be dealt with
@@ -400,7 +401,7 @@ class Score(CanaryCog):
             c: aiosqlite.Cursor
 
             if args_dict["emojitype"] != "score":
-                async with db.execute(f"SELECT count(ReacteeID) FROM Reactions " f"WHERE {where_str}", t) as c:
+                async with db.execute(f"SELECT count(ReacteeID) FROM Reactions WHERE {where_str}", t) as c:
                     react_count = (await c.fetchone())[0]
             else:
                 async with db.execute(
@@ -563,7 +564,7 @@ class Score(CanaryCog):
             return
 
         if args_dict["emojitype"] == "score":
-            await ctx.send("Invalid input: Emojitype flag cannot use " "type score for this function")
+            await ctx.send("Invalid input: Emojitype flag cannot use type score for this function")
         # get the WHERE conditions and the values
         where_str, t = self._where_str_and_values_from_args_dict(args_dict)
 

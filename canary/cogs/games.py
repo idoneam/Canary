@@ -112,7 +112,7 @@ class Games(CanaryCog):
 
         if ctx.message.channel in self.hm_locks:
             await ctx.send(
-                "command `hm|hangman` cannot " "be used to start a new game " "while one is already going on"
+                "command `hm|hangman` cannot be used to start a new game while one is already going on"
             )
             return
 
@@ -199,7 +199,7 @@ class Games(CanaryCog):
                         game_state.embed.set_image(url=game_state.img)
                     await ctx.send(embed=game_state.embed)
                     await ctx.send(
-                        f"congratulations `{winner}`, you solved the hangman, " f"earning you {self.hm_norm_win} cheeps"
+                        f"congratulations `{winner}`, you solved the hangman, earning you {self.hm_norm_win} cheeps"
                     )
                     break
             else:

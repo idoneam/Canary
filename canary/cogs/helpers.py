@@ -260,7 +260,7 @@ class Helpers(CanaryCog):
         # cases. Courses across multiple semesters have a suffix like D1/D2.
         result = re.compile(r"([A-Za-z]{3}[A-Za-z0-9])\s*(\d{3}\s*(\w\d)?)", re.IGNORECASE | re.DOTALL).search(query)
         if not result:
-            await ctx.send(":warning: Incorrect format. The correct format is `?course " "<course name>`.")
+            await ctx.send(":warning: Incorrect format. The correct format is `?course <course name>`.")
             return
 
         search_term = re.sub(r"\s+", "", f"{result.group(1)}-{result.group(2)}")
@@ -535,7 +535,7 @@ class Helpers(CanaryCog):
         )
         embed = discord.Embed(title="Food spotted", description=" ".join(args) if args else "\u200b")
         embed.set_footer(
-            text=("Added by {0} • Use '{1}foodspot' or '{1}fs' if you spot " "food (See '{1}help foodspot')").format(
+            text=("Added by {0} • Use '{1}foodspot' or '{1}fs' if you spot food (See '{1}help foodspot')").format(
                 ctx.message.author, self.bot.config.command_prefix[0]
             ),
             icon_url=ctx.message.author.avatar_url,
@@ -660,7 +660,7 @@ class Helpers(CanaryCog):
         # Validation of language codes
         codes = command.replace("_", "-").split(">")
         if len(codes) != 2:
-            await ctx.send(f"Argument `{command}` is not properly formatted. " f"See `?translate help` to learn more.")
+            await ctx.send(f"Argument `{command}` is not properly formatted. See `?translate help` to learn more.")
             return
         source = codes[0].lower().strip()
         translator = googletrans.Translator()
@@ -668,12 +668,12 @@ class Helpers(CanaryCog):
             detection = translator.detect(inp_str)
             source = detection.lang
         elif source not in googletrans.LANGUAGES:
-            await ctx.send(f"`{source}` is not a valid language code. " f"See `?translate codes` for language codes.")
+            await ctx.send(f"`{source}` is not a valid language code. See `?translate codes` for language codes.")
             return
         destination = codes[1].lower().strip()
         if destination not in googletrans.LANGUAGES:
             await ctx.send(
-                f"`{destination}` is not a valid language code. " f"See `?translate codes` for language codes."
+                f"`{destination}` is not a valid language code. See `?translate codes` for language codes."
             )
             return
 

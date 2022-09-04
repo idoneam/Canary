@@ -348,7 +348,7 @@ class Banner(CanaryCog):
 
         try:
             await preview_message.pin(
-                reason=f"Banner of the week winner submitted by {winner} " f"(Approved by {ctx.author})"
+                reason=f"Banner of the week winner submitted by {winner} (Approved by {ctx.author})"
             )
         except discord.errors.HTTPException as e:
             if e.code != 30003:  # Discord API code for full pins
@@ -356,12 +356,12 @@ class Banner(CanaryCog):
             pins = await self.banner_submissions_channel.pins()
             await pins[-1].unpin(reason="#banner_submissions pins are full")
             await preview_message.pin(
-                reason=f"Banner of the week winner submitted by {winner} " f"(Approved by {ctx.author})"
+                reason=f"Banner of the week winner submitted by {winner} (Approved by {ctx.author})"
             )
 
         try:
             await converted_message.pin(
-                reason=f"Banner of the week winner submitted by {winner} " f"(Approved by {ctx.author})"
+                reason=f"Banner of the week winner submitted by {winner} (Approved by {ctx.author})"
             )
         except discord.errors.HTTPException as e:
             if e.code != 30003:
@@ -369,14 +369,14 @@ class Banner(CanaryCog):
             pins = await self.banner_converted_channel.pins()
             await pins[-1].unpin(reason="#converted_banner_submissions pins are full")
             await converted_message.pin(
-                reason=f"Banner of the week winner submitted by {winner} " f"(Approved by {ctx.author})"
+                reason=f"Banner of the week winner submitted by {winner} (Approved by {ctx.author})"
             )
 
         await winner.add_roles(self.banner_winner_role, reason=f"Banner of the week winner (Approved by {ctx.author})")
         converted_read = await converted.read()
         await self.guild.edit(
             banner=converted_read,
-            reason=f"Banner of the week winner submitted by {winner} " f"(Approved by {ctx.author})",
+            reason=f"Banner of the week winner submitted by {winner} (Approved by {ctx.author})",
         )
         await self.reset_banner_contest()
         await ctx.send("Successfully set banner and ended contest.")

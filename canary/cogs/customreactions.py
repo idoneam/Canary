@@ -367,13 +367,12 @@ class CustomReactions(CanaryCog):
                     title = f"Custom reaction successfully added!"
                 else:
                     title = "Custom reaction proposal successfully submitted!"
-                description = f"-Prompt: {prompt_message}\n" f"-Response: {response}"
+                description = f"-Prompt: {prompt_message}\n-Response: {response}"
                 if delete:
                     description = f"{description}\n-Will delete the message that calls the reaction"
                 if anywhere:
                     description = (
-                        f"{description}\n"
-                        f"-Will activate the custom reaction if the prompt is anywhere in a message"
+                        f"{description}\n-Will activate the custom reaction if the prompt is anywhere in a message"
                     )
                 if dm:
                     description = (
@@ -660,11 +659,10 @@ class CustomReactions(CanaryCog):
                 await message.edit(
                     embed=(
                         discord.Embed(
-                            title=f"Modify a {noun_custom}",
-                            description="Please enter the new prompt"
+                            title=f"Modify a {noun_custom}", description="Please enter the new prompt"
                         ).set_footer(
                             text=f"{user} is currently modifying a {noun_custom}. \nWrite '{STOP_TEXT}' to cancel.",
-                            icon_url=user.avatar_url
+                            icon_url=user.avatar_url,
                         )
                     )
                 )
@@ -685,8 +683,7 @@ class CustomReactions(CanaryCog):
 
                 async with self.db() as db:
                     await db.execute(
-                        "UPDATE CustomReactions SET Prompt = ? WHERE CustomReactionID = ?",
-                        (prompt, custom_react_id)
+                        "UPDATE CustomReactions SET Prompt = ? WHERE CustomReactionID = ?", (prompt, custom_react_id)
                     )
                     await db.commit()
 
@@ -703,11 +700,10 @@ class CustomReactions(CanaryCog):
             if reaction.emoji == EMOJI["two"]:
                 await message.edit(
                     embed=discord.Embed(
-                        title=f"Modify a {noun_custom}",
-                        description="Please enter the new response"
+                        title=f"Modify a {noun_custom}", description="Please enter the new response"
                     ).set_footer(
                         text=f"{user} is currently modifying a {noun_custom}. \nWrite '{STOP_TEXT}' to cancel.",
-                        icon_url=user.avatar_url
+                        icon_url=user.avatar_url,
                     )
                 )
 
@@ -728,7 +724,7 @@ class CustomReactions(CanaryCog):
                 async with self.db() as db:
                     await db.execute(
                         "UPDATE CustomReactions SET Response = ? WHERE CustomReactionID = ?",
-                        (response, custom_react_id)
+                        (response, custom_react_id),
                     )
                     await db.commit()
 
@@ -792,7 +788,7 @@ class CustomReactions(CanaryCog):
                         async with self.db() as db:
                             await db.execute(
                                 "UPDATE CustomReactions SET DeletePrompt = ? WHERE CustomReactionID = ?",
-                                (new_value, custom_react_id)
+                                (new_value, custom_react_id),
                             )
                             await db.commit()
                         await self.rebuild_lists()
@@ -831,10 +827,7 @@ class CustomReactions(CanaryCog):
                     )
 
                 except asyncio.TimeoutError:
-                    title = (
-                        f"The modification of the {noun_custom} timed out. "
-                        f"Returning to list of {noun}s..."
-                    )
+                    title = f"The modification of the {noun_custom} timed out. Returning to list of {noun}s..."
                     await message.edit(embed=discord.Embed(title=title))
                     await asyncio.sleep(5)
                     current_options.clear()
@@ -859,7 +852,7 @@ class CustomReactions(CanaryCog):
                         async with self.db() as db:
                             await db.execute(
                                 "UPDATE CustomReactions SET Anywhere = ? WHERE CustomReactionID = ?",
-                                (new_value, custom_react_id)
+                                (new_value, custom_react_id),
                             )
                             await db.commit()
                         await self.rebuild_lists()
@@ -926,7 +919,7 @@ class CustomReactions(CanaryCog):
                         async with self.db() as db:
                             await db.execute(
                                 "UPDATE CustomReactions SET DM = ? WHERE CustomReactionID = ?",
-                                (new_value, custom_react_id)
+                                (new_value, custom_react_id),
                             )
                             await db.commit()
                         await self.rebuild_lists()
@@ -944,27 +937,27 @@ class CustomReactions(CanaryCog):
             if reaction.emoji == EMOJI["white_check_mark"]:
                 async with self.db() as db:
                     await db.execute(
-                        "UPDATE CustomReactions SET Proposal = ? WHERE CustomReactionID = ?",
-                        (0, custom_react_id)
+                        "UPDATE CustomReactions SET Proposal = ? WHERE CustomReactionID = ?", (0, custom_react_id)
                     )
                     await db.commit()
 
                 await self.rebuild_lists()
 
-                await message.edit(embed=discord.Embed(title=(
-                    "Custom reaction proposal successfully approved! "
-                    "Returning to list of current reaction proposals..."
-                )).set_footer(text=f"Approved by {user}.", icon_url=user.avatar_url))
+                await message.edit(
+                    embed=discord.Embed(
+                        title=(
+                            "Custom reaction proposal successfully approved! "
+                            "Returning to list of current reaction proposals..."
+                        )
+                    ).set_footer(text=f"Approved by {user}.", icon_url=user.avatar_url)
+                )
 
                 await asyncio.sleep(5)
 
             # Delete a custom reaction or proposal
             if reaction.emoji == EMOJI["put_litter_in_its_place"] or reaction.emoji == EMOJI["x"]:
                 async with self.db() as db:
-                    await db.execute(
-                        "DELETE FROM CustomReactions WHERE CustomReactionID = ?",
-                        (custom_react_id,)
-                    )
+                    await db.execute("DELETE FROM CustomReactions WHERE CustomReactionID = ?", (custom_react_id,))
                     await db.commit()
                 title = f"Custom {noun} successfully rejected! Returning to list of {noun}s..."
                 footer = f"{'Rejected' if proposals else 'Deleted'} by {user}."

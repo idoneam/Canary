@@ -130,7 +130,7 @@ class Roles(CanaryCog):
 
             elif limit and len(existing_roles) == limit:
                 await ctx.send(
-                    f"You have too many roles in category " f"`{category}` (limit is `{limit}`). " f"Please remove one."
+                    f"You have too many roles in category `{category}` (limit is `{limit}`). Please remove one."
                 )
                 return
 

@@ -140,7 +140,7 @@ class ArgConverter:
         # values or raise commands.BadArgument if they are required
         for key in remaining_vars:
             if len(self._converters_dict[key]) == 1:
-                raise commands.BadArgument(f"Invalid input: Missing required " f"argument {key}")
+                raise commands.BadArgument(f"Invalid input: Missing required argument {key}")
             else:
                 converted_arguments_dict[key] = self._converters_dict[key][1]
         return converted_arguments_dict

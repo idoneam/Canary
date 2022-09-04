@@ -182,7 +182,7 @@ class Quotes(CanaryCog):
                 u_id = mentions[0].id
                 # Query for either user and quote or user only (None)
                 async with db.execute(
-                    "SELECT ID, Name, Quote FROM Quotes WHERE ID = ? AND Quote " "LIKE ?",
+                    "SELECT ID, Name, Quote FROM Quotes WHERE ID = ? AND Quote LIKE ?",
                     (u_id, f"%{str2 if str2 is not None else ''}%"),
                 ) as c:
                     quotes = await c.fetchall()

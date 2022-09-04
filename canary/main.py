@@ -55,7 +55,7 @@ async def on_ready():
     webhook_string = (
         " and to the log webhook" if bot.config.dev_log_webhook_id and bot.config.dev_log_webhook_token else ""
     )
-    sys.stdout.write(f"Bot is ready, program output will be written to a " f"log file{webhook_string}.\n")
+    sys.stdout.write(f"Bot is ready, program output will be written to a log file{webhook_string}.\n")
     sys.stdout.flush()
     bot.dev_logger.info(f"Logged in as {bot.user.name} ({bot.user.id})")
 
@@ -162,7 +162,7 @@ def main():
         try:
             bot.load_extension(extension)
         except Exception as e:
-            bot.dev_logger.warning(f"Failed to load extension {extension}\n" f"{type(e).__name__}: {e}")
+            bot.dev_logger.warning(f"Failed to load extension {extension}\n{type(e).__name__}: {e}")
 
     bot.run(bot.config.discord_key)
 

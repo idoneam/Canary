@@ -85,8 +85,7 @@ class Mod(CanaryCog):
         else:
             # the verification purge info setting has not been added to db yet
             await self.set_settings_key(
-                "last_verification_purge_timestamp",
-                str(self.last_verification_purge_datetime.timestamp())
+                "last_verification_purge_timestamp", str(self.last_verification_purge_datetime.timestamp())
             )
 
         self.check_verification_purge.start()

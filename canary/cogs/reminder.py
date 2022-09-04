@@ -417,8 +417,8 @@ class Reminder(CanaryCog):
 
                     async with self.db() as db:
                         await db.execute(
-                            "DELETE FROM Reminders WHERE ID = ? AND " "Reminder = ?",
-                            (rem_list[index][0], rem_list[index][2])
+                            "DELETE FROM Reminders WHERE ID = ? AND Reminder = ?",
+                            (rem_list[index][0], rem_list[index][2]),
                         )
                         await db.commit()
 

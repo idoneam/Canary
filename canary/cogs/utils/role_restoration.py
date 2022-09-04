@@ -67,9 +67,7 @@ async def fetch_saved_roles(bot: Canary, guild, user: discord.Member, muted: boo
     # Return list of all valid roles restored from the DB
     #  - filter(None, ...) strips false-y elements
     return (
-        list(
-            filter(None, (guild.get_role(int(role_id)) for role_id in fetched_roles[0].split(" ") if role_id != ""))
-        )
+        list(filter(None, (guild.get_role(int(role_id)) for role_id in fetched_roles[0].split(" ") if role_id != "")))
         if fetched_roles
         else None
     )
@@ -161,7 +159,7 @@ async def role_restoring_page(
             )
 
         embed = discord.Embed(
-            title=f"{user.display_name}'s previous roles were " f"successfully added back by {ok_user.display_name}"
+            title=f"{user.display_name}'s previous roles were successfully added back by {ok_user.display_name}"
         )
         await message.edit(embed=embed)
         await message.clear_reaction("◀")
