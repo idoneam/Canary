@@ -1,7 +1,4 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-#
-# Copyright (C) idoneam (2016-2019)
+# Copyright (C) idoneam (2016-2022)
 #
 # This file is part of Canary
 #
@@ -27,9 +24,8 @@ from canary.bot import moderator_role, developer_role
 def is_moderator():
     """Returns True if user has a moderator role, raises an exception otherwise"""
 
-    def predicate(ctx):
-        role = discord.utils.get(ctx.author.roles, name=moderator_role)
-        if role is None:
+    def predicate(ctx: commands.Context):
+        if discord.utils.get(ctx.author.roles, name=moderator_role) is None:
             raise commands.MissingPermissions([moderator_role])
         return True
 
@@ -39,9 +35,8 @@ def is_moderator():
 def is_developer():
     """Returns True if user is a bot developer, raises an exception otherwise"""
 
-    def predicate(ctx):
-        role = discord.utils.get(ctx.author.roles, name=developer_role)
-        if role is None:
+    def predicate(ctx: commands.Context):
+        if discord.utils.get(ctx.author.roles, name=developer_role) is None:
             raise commands.MissingPermissions([developer_role])
         return True
 
