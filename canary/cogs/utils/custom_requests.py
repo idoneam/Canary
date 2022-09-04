@@ -44,6 +44,7 @@ async def fetch(url, type="content"):
                 if type.lower() == "content":
                     return await response.text()
                 elif type.lower() == "json":
-                    return await response.json()
+                    # Disable content type checking since STM sucks and returns json as text/html
+                    return await response.json(content_type=None)
                 else:
                     raise InvalidTypeException
