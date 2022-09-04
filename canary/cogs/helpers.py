@@ -79,7 +79,7 @@ class Helpers(CanaryCog):
 
         r = await fetch(MCGILL_EXAM_URL, "content")
 
-        soup = BeautifulSoup(r, "html.parser")
+        soup = BeautifulSoup(r, "lxml")
 
         if (link_el := soup.find("a", href=re.compile(r"exams/files/exams"))) is None:
             return await ctx.send("Error: could not find exam link on McGill's website")
@@ -140,7 +140,7 @@ class Helpers(CanaryCog):
         await ctx.trigger_typing()
 
         r = await fetch(self.bot.config.gc_weather_url, "content")
-        soup = BeautifulSoup(r, "html.parser")
+        soup = BeautifulSoup(r, "lxml")
 
         def retrieve_string(label):
             if elem := soup.find("dt", string=label).find_next_sibling():
@@ -195,7 +195,7 @@ class Helpers(CanaryCog):
             return discord.Embed(title=title, description="No alerts in effect.", colour=0xFF0000)
 
         r_alert = await fetch(self.bot.config.gc_weather_alert_url, "content")
-        alert_soup = BeautifulSoup(r_alert, "html.parser")
+        alert_soup = BeautifulSoup(r_alert, "lxml")
 
         alert_title = alert_soup.find("h1", string=ALERT_REGEX)
 
@@ -266,7 +266,7 @@ class Helpers(CanaryCog):
         search_term = re.sub(r"\s+", "", f"{result.group(1)}-{result.group(2)}")
         url = self.bot.config.course_tpl.format(search_term)
         r = await fetch(url, "content")
-        soup = BeautifulSoup(r, "html.parser")
+        soup = BeautifulSoup(r, "lxml")
 
         # TODO: brute-force parsing at the moment
         title = soup.find_all("h1", {"id": "page-title"})[0].get_text().strip()
@@ -310,7 +310,7 @@ class Helpers(CanaryCog):
             await ctx.send("Encountered an error while contacting the McGill server.")
             raise e
 
-        soup = BeautifulSoup(content, "html.parser")
+        soup = BeautifulSoup(content, "lxml")
 
         now = datetime.datetime.now()
         current_year, current_month = now.year, now.month
@@ -461,7 +461,7 @@ class Helpers(CanaryCog):
 
         while pagenum < pagelimit:
             r = await fetch(self.bot.config.course_search_tpl.format(keyword, pagenum), "content")
-            soup = BeautifulSoup(r, "html.parser")
+            soup = BeautifulSoup(r, "lxml")
             found = soup.find_all("div", {"class": "views-row"})
 
             if len(found) < 1:

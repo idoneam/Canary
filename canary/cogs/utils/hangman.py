@@ -77,7 +77,7 @@ HANG_LIST: list[str] = [
 
 def mk_animal_list() -> list[tuple[str, str]]:
     animal_list_soup = BeautifulSoup(
-        requests.get("https://en.wikipedia.org/wiki/List_of_animal_names").content, "html.parser"
+        requests.get("https://en.wikipedia.org/wiki/List_of_animal_names").content, "lxml"
     ).find_all("tr")
     animal_list: list[tuple[str, str]] = []
     for i in range(16, len(animal_list_soup)):
@@ -86,7 +86,7 @@ def mk_animal_list() -> list[tuple[str, str]]:
             continue
         animal_name = curr_entry.find("a")
         animal_soup = BeautifulSoup(
-            requests.get(f"https://en.wikipedia.org{animal_name['href']}").content, "html.parser"
+            requests.get(f"https://en.wikipedia.org{animal_name['href']}").content, "lxml"
         )
         img_list = animal_soup.find_all("img")
         img_index = 0
@@ -98,7 +98,7 @@ def mk_animal_list() -> list[tuple[str, str]]:
 
 def mk_country_list() -> list[tuple[str, str]]:
     elem_list_soup = (
-        BeautifulSoup(requests.get("https://en.wikipedia.org/wiki/List_of_sovereign_states").content, "html.parser")
+        BeautifulSoup(requests.get("https://en.wikipedia.org/wiki/List_of_sovereign_states").content, "lxml")
         .find("table", {"class": "sortable wikitable"})
         .find_all("tr")
     )
@@ -117,7 +117,7 @@ def mk_country_list() -> list[tuple[str, str]]:
                 country_name,
                 "https:"
                 + BeautifulSoup(
-                    requests.get(f"https://en.wikipedia.org{country_name_entry['href']}").content, "html.parser"
+                    requests.get(f"https://en.wikipedia.org{country_name_entry['href']}").content, "lxml"
                 )
                 .find("table", {"class": "infobox"})
                 .find("a", {"class": "image"})
@@ -129,7 +129,7 @@ def mk_country_list() -> list[tuple[str, str]]:
 
 def mk_element_list() -> list[tuple[str, Optional[str]]]:
     elem_list_soup = BeautifulSoup(
-        requests.get("https://en.wikipedia.org/wiki/List_of_chemical_elements").content, "html.parser"
+        requests.get("https://en.wikipedia.org/wiki/List_of_chemical_elements").content, "lxml"
     ).find_all("tr")
     elem_list: list[tuple[str, Optional[str]]] = []
     for i in range(4, 118):
@@ -139,7 +139,7 @@ def mk_element_list() -> list[tuple[str, Optional[str]]]:
             elem_img: Optional[str] = (
                 "https:"
                 + BeautifulSoup(
-                    requests.get(f"https://en.wikipedia.org{elem_name_entry['href']}").content, "html.parser"
+                    requests.get(f"https://en.wikipedia.org{elem_name_entry['href']}").content, "lxml"
                 )
                 .find("table", {"class": "infobox"})
                 .find("a")
@@ -153,7 +153,7 @@ def mk_element_list() -> list[tuple[str, Optional[str]]]:
 
 def mk_movie_list() -> list[tuple[str, str]]:
     kino_elem_soup = BeautifulSoup(
-        requests.get("https://en.wikipedia.org/wiki/List_of_years_in_film").content, "html.parser"
+        requests.get("https://en.wikipedia.org/wiki/List_of_years_in_film").content, "lxml"
     ).find_all("i")
     kino_list: list[tuple[str, str]] = []
     for i in range(195, len(kino_elem_soup)):
@@ -162,7 +162,7 @@ def mk_movie_list() -> list[tuple[str, str]]:
             try:
                 kino_img = (
                     "https:"
-                    + BeautifulSoup(requests.get(f"https://en.wikipedia.org{kino_elem['href']}").content, "html.parser")
+                    + BeautifulSoup(requests.get(f"https://en.wikipedia.org{kino_elem['href']}").content, "lxml")
                     .find("table", {"class": "infobox"})
                     .find("a", {"class": "image"})
                     .find("img")["src"]

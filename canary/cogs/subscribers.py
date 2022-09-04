@@ -120,7 +120,7 @@ class Subscribers(commands.Cog):
             new_recalls = True
             recalls[recall_id] = ""
             recall_warning = discord.Embed(title=recall["title"], description=recall["link"])
-            soup = BeautifulSoup(recall["summary"], "html.parser")
+            soup = BeautifulSoup(recall["summary"], "lxml")
 
             try:
                 img_url = soup.img["src"]
