@@ -190,6 +190,10 @@ class CustomReactions(CanaryCog):
             await msg.delete()
             return content
 
+        async def clear_options(message: discord.Message):
+            current_options.clear()
+            await message.clear_reactions()
+
         async def add_multiple_reactions(message: discord.Message, reactions):
             for reaction in reactions:
                 await message.add_reaction(reaction)
@@ -210,31 +214,49 @@ class CustomReactions(CanaryCog):
                 ),
             )
 
-        async def create_assistant(message: discord.Message, is_moderator: bool):
-            if is_moderator:
-                description = (
-                    f"{EMOJI['new']} Add a new custom reaction\n"
-                    f"{EMOJI['mag']} See the list of current reactions "
-                    f"and modify them\n"
-                    f"{EMOJI['pencil']} See the list of proposed reactions "
-                    f"({get_number_of_proposals()}) "
-                    f"and approve or reject them\n"
-                    f"{EMOJI['grey_question']} List of placeholders"
-                )
-            else:
-                description = (
-                    f"{EMOJI['new']} Propose a new custom reaction\n"
-                    f"{EMOJI['mag']} See the list of current reactions\n"
-                    f"{EMOJI['pencil']} See the list of proposed reactions "
-                    f"({get_number_of_proposals()})\n"
-                    f"{EMOJI['grey_question']} List of placeholders"
-                )
-            current_options.extend(
-                (EMOJI["new"], EMOJI["mag"], EMOJI["pencil"], EMOJI["grey_question"], EMOJI["stop_button"])
-            )
-            await add_multiple_reactions(
-                message, (EMOJI["new"], EMOJI["mag"], EMOJI["pencil"], EMOJI["grey_question"], EMOJI["stop_button"])
-            )
+        async def create_assistant(message: discord.Message, is_moderator: bool) -> bool | None:
+            actions = {
+                # Add/Propose a new custom reaction
+                EMOJI["new"]: {
+                    "fn": add_custom_react,
+                    "desc": f"{'Add' if is_moderator else 'Propose'} a new custom reaction",
+                    "kwargs": dict(proposals=not is_moderator),
+                },
+                # List custom reactions
+                EMOJI["mag"]: {
+                    "fn": list_custom_reacts,
+                    "desc": "See the list of current reactions" + (" and modify them" if is_moderator else ""),
+                    "kwargs": dict(proposals=False),
+                },
+                # List proposals
+                EMOJI["pencil"]: {
+                    "fn": list_custom_reacts,
+                    "desc": f"See the list of proposed reactions ({get_number_of_proposals()})" + (
+                        " and approve or reject them" if is_moderator else ""),
+                    "kwargs": dict(proposals=True),
+                },
+                # List placeholders
+                EMOJI["grey_question"]: {
+                    "fn": list_placeholders,
+                    "desc": "List of placeholders",
+                    "kwargs": dict(),
+                },
+                # Stop
+                EMOJI["stop_button"]: {
+                    "fn": leave,
+                    "desc": "",
+                    "kwargs": dict(),
+                    "hidden": True,
+                },
+            }
+
+            description = "\n".join(f"{k} {v['desc']}" for k, v in actions.items() if not v.get("hidden"))
+
+            action_keys = tuple(actions.keys())
+
+            current_options.extend(action_keys)
+            await add_multiple_reactions(message, action_keys)
+
             await message.edit(
                 embed=discord.Embed(title="Custom Reactions", description=description).set_footer(
                     text=f"{main_user}: Click on an emoji to choose an "
@@ -243,37 +265,21 @@ class CustomReactions(CanaryCog):
                     icon_url=main_user.avatar_url,
                 )
             )
+
             try:
                 reaction, user = await wait_for_reaction(message)
             except TypeError:
                 return
-            current_options.clear()
-            await message.clear_reactions()
-            # Add/Propose a new custom reaction
-            if reaction.emoji == EMOJI["new"]:
-                await add_custom_react(message, is_moderator)
-                return
-            # List custom reactions
-            if reaction.emoji == EMOJI["mag"]:
-                await list_custom_reacts(message, proposals=False)
-                return
-            # List proposals
-            if reaction.emoji == EMOJI["pencil"]:
-                await list_custom_reacts(message, proposals=True)
-                return
-            # List placeholders
-            if reaction.emoji == EMOJI["grey_question"]:
-                await list_placeholders(message)
-                return
-            # Stop
-            if reaction.emoji == EMOJI["stop_button"]:
-                await leave(message)
-                return True
 
-        async def add_custom_react(message: discord.Message, is_moderator: bool):
-            status_msg = f"{main_user} is currently {'adding' if is_moderator else 'proposing'} a custom reaction."
+            await clear_options(message)
 
-            title = f"{'Add' if is_moderator else 'Propose'} a custom reaction"
+            if (action := actions.get(reaction.emoji)) is not None:
+                return await action["fn"](message, **action["kwargs"])
+
+        async def add_custom_react(message: discord.Message, proposals: bool):
+            status_msg = f"{main_user} is currently {'proposing' if proposals else 'adding'} a custom reaction."
+
+            title = f"{'Propose' if proposals else 'Add'} a custom reaction"
             footer = f"{status_msg}\nWrite '{STOP_TEXT}' to cancel."
             description = "Write the prompt the bot will react to"
 
@@ -311,20 +317,13 @@ class CustomReactions(CanaryCog):
 
             description = (
                 f"Prompt: {prompt_message}\nResponse: {response}\n"
-                f"React with the options "
-                f"you want and click {EMOJI['ok']} "
-                f"when you are ready\n"
-                f"{EMOJI['one']} Delete the message "
-                f"that calls the reaction\n"
-                f"{EMOJI['two']} Activate the custom "
-                f"reaction if the prompt is "
-                f"anywhere in a message \n"
-                f"{EMOJI['three']} React in the DMs of "
-                f"the user who calls the "
-                f"reaction instead of the channel\n"
+                f"React with the options you want and click {EMOJI['ok']} when you are ready\n"
+                f"{EMOJI['one']} Delete the message that calls the reaction\n"
+                f"{EMOJI['two']} Activate the custom reaction if the prompt is anywhere in a message \n"
+                f"{EMOJI['three']} React in the DMs of the user who calls the reaction instead of the channel\n"
             )
 
-            footer = f"{main_user} is currently {'adding' if is_moderator else 'proposing'} a custom reaction."
+            footer = f"{main_user} is currently {'proposing' if proposals else 'adding'} a custom reaction."
 
             current_options.extend((EMOJI["ok"], EMOJI["stop_button"]))
             await add_multiple_reactions(message, (*NUMBERS[1:4], EMOJI["ok"], EMOJI["stop_button"]))
@@ -354,19 +353,18 @@ class CustomReactions(CanaryCog):
                 db: aiosqlite.Connection
                 async with self.db() as db:
                     await db.execute(
-                        "INSERT INTO CustomReactions(Prompt, Response, UserID, "
-                        "DeletePrompt, Anywhere, DM, Proposal) "
+                        "INSERT INTO CustomReactions(Prompt, Response, UserID, DeletePrompt, Anywhere, DM, Proposal) "
                         "VALUES(?, ?, ?, ?, ?, ?, ?)",
-                        (prompt_message, response, main_user.id, delete, anywhere, dm, not is_moderator),
+                        (prompt_message, response, main_user.id, delete, anywhere, dm, proposals),
                     )
                     await db.commit()
 
                 await self.rebuild_lists()
 
-                if is_moderator:
-                    title = f"Custom reaction successfully added!"
-                else:
+                if proposals:
                     title = "Custom reaction proposal successfully submitted!"
+                else:
+                    title = "Custom reaction successfully added!"
                 description = f"-Prompt: {prompt_message}\n-Response: {response}"
                 if delete:
                     description = f"{description}\n-Will delete the message that calls the reaction"
@@ -386,10 +384,9 @@ class CustomReactions(CanaryCog):
 
             # Stop
             if reaction.emoji == EMOJI["stop_button"]:
-                await leave(message)
-                return True
+                return await leave(message)
 
-        async def list_custom_reacts(message: discord.Message, proposals):
+        async def list_custom_reacts(message: discord.Message, proposals: bool) -> bool | None:
             current_list = self.proposal_list if proposals else self.reaction_list
 
             no_items_msg = f"There are currently no custom reaction{' proposal' if proposals else ''}s in this server"
@@ -402,11 +399,9 @@ class CustomReactions(CanaryCog):
             reaction_dict = {
                 "names": [f"[{i + 1}]" for i in range(len(current_list))],
                 "values": [
-                    f"Prompt: "
-                    f"{reaction[1][:min(len(reaction[1]), 287)]}"
-                    f'{"..." if len(reaction[1]) > 287 else ""}'
-                    f"\nResponse: "
-                    f"{reaction[2][:min(len(reaction[2]), 287)]}"
+                    f"Prompt: {reaction[1][:min(len(reaction[1]), 287)]}"
+                    f'{"..." if len(reaction[1]) > 287 else ""}\n'
+                    f"Response: {reaction[2][:min(len(reaction[2]), 287)]}"
                     f'{"..." if len(reaction[2]) > 287 else ""}'
                     for reaction in current_list
                 ],
@@ -490,22 +485,18 @@ class CustomReactions(CanaryCog):
                     )
 
                 else:
-                    left = await information_on_react(message, current_list, number, proposals)
-                    if left:
-                        return True
+                    if left := await information_on_react(message, current_list, number, proposals):
+                        return left
+
                     if proposals:
                         title = (
                             f"Current custom reaction proposals\n"
-                            f"Click on {EMOJI['ok']} "
-                            f"to approve, reject, edit, or "
-                            f"see more information on one of them"
+                            f"Click on {EMOJI['ok']} to approve, reject, edit, or see more information on one of them"
                         )
                     else:
                         title = (
                             f"Current custom reactions\n"
-                            f"Click on {EMOJI['ok']} "
-                            f"to edit or see more information "
-                            f"on one of them"
+                            f"Click on {EMOJI['ok']} to edit or see more information on one of them"
                         )
 
                     # update dictionary since a custom reaction might have been
@@ -542,7 +533,7 @@ class CustomReactions(CanaryCog):
                 await add_control_reactions(message)
                 user_modifying = await p.paginate()
 
-        async def information_on_react(message: discord.Message, current_list, number, proposals):
+        async def information_on_react(message: discord.Message, current_list, number, proposals) -> bool | None:
             await message.edit(embed=LOADING_EMBED)
 
             custom_react = current_list[number - 1]
@@ -602,8 +593,7 @@ class CustomReactions(CanaryCog):
                     f"current reactions in 40 seconds otherwise)"
                 )
 
-            current_options.clear()
-            await message.clear_reactions()
+            await clear_options(message)
             if proposals:
                 current_options.extend((*NUMBERS[1:6], EMOJI["white_check_mark"], EMOJI["x"], EMOJI["stop_button"]))
             else:
@@ -622,14 +612,12 @@ class CustomReactions(CanaryCog):
                 reaction, user = await self.bot.wait_for(
                     "reaction_add", check=get_reaction_check(moderators=True), timeout=40
                 )
-                left = await edit_custom_react(message, reaction, user, custom_react, proposals)
-                if left:
-                    return True
+                if left := await edit_custom_react(message, reaction, user, custom_react, proposals):
+                    return left
             except asyncio.TimeoutError:
                 pass
 
-            current_options.clear()
-            await message.clear_reactions()
+            await clear_options(message)
 
         async def edit_custom_react(
             message: discord.Message,
@@ -637,11 +625,11 @@ class CustomReactions(CanaryCog):
             user,
             custom_react,
             proposals,
-        ):
+        ) -> bool | None:
             db: aiosqlite.Connection
 
-            current_options.clear()
-            await message.clear_reactions()
+            await clear_options(message)
+
             custom_react_id = custom_react[0]
             delete = custom_react[4]
             anywhere = custom_react[5]
@@ -654,16 +642,25 @@ class CustomReactions(CanaryCog):
             message_modified = f"Option successfully modified! Returning to list of {noun}s..."
             message_time_out = f"The modification of the {noun_custom} timed out. Returning to list of {noun}s..."
 
+            footer_modifying_stop = f"{user} is currently modifying a {noun_custom}. \nWrite '{STOP_TEXT}' to cancel."
+            footer_modified = f"Modified by {user}."
+
+            async def _edit_reaction_and_rebuild(react_id, key, value):
+                db_: aiosqlite.Connection
+                async with self.db() as db_:
+                    await db_.execute(
+                        f"UPDATE CustomReactions SET {key} = ? WHERE CustomReactionID = ?", (value, react_id)
+                    )
+                    await db_.commit()
+                await self.rebuild_lists()
+
             # Edit the prompt
             if reaction.emoji == EMOJI["one"]:
                 await message.edit(
                     embed=(
                         discord.Embed(
                             title=f"Modify a {noun_custom}", description="Please enter the new prompt"
-                        ).set_footer(
-                            text=f"{user} is currently modifying a {noun_custom}. \nWrite '{STOP_TEXT}' to cancel.",
-                            icon_url=user.avatar_url,
-                        )
+                        ).set_footer(text=footer_modifying_stop, icon_url=user.avatar_url)
                     )
                 )
 
@@ -678,21 +675,14 @@ class CustomReactions(CanaryCog):
                 await msg.delete()
 
                 if prompt.lower() == STOP_TEXT:
-                    await leave(message)
-                    return True
+                    return await leave(message)
 
-                async with self.db() as db:
-                    await db.execute(
-                        "UPDATE CustomReactions SET Prompt = ? WHERE CustomReactionID = ?", (prompt, custom_react_id)
-                    )
-                    await db.commit()
-
-                await self.rebuild_lists()
+                await _edit_reaction_and_rebuild(custom_react_id, "Prompt", prompt)
 
                 await message.edit(
                     embed=discord.Embed(
                         title=f"Prompt successfully modified! Returning to list of {noun}s..."
-                    ).set_footer(text=f"Modified by {user}.", icon_url=user.avatar_url)
+                    ).set_footer(text=footer_modified, icon_url=user.avatar_url)
                 )
                 await asyncio.sleep(5)
 
@@ -701,10 +691,7 @@ class CustomReactions(CanaryCog):
                 await message.edit(
                     embed=discord.Embed(
                         title=f"Modify a {noun_custom}", description="Please enter the new response"
-                    ).set_footer(
-                        text=f"{user} is currently modifying a {noun_custom}. \nWrite '{STOP_TEXT}' to cancel.",
-                        icon_url=user.avatar_url,
-                    )
+                    ).set_footer(text=footer_modifying_stop, icon_url=user.avatar_url)
                 )
 
                 try:
@@ -718,20 +705,13 @@ class CustomReactions(CanaryCog):
                 await msg.delete()
 
                 if response.lower() == STOP_TEXT:
-                    await leave(message)
-                    return True
+                    return await leave(message)
 
-                async with self.db() as db:
-                    await db.execute(
-                        "UPDATE CustomReactions SET Response = ? WHERE CustomReactionID = ?",
-                        (response, custom_react_id),
-                    )
-                    await db.commit()
+                await _edit_reaction_and_rebuild(custom_react_id, "Response", response)
 
-                await self.rebuild_lists()
                 title = f"Response successfully modified! Returning to list of {noun}s..."
                 await message.edit(
-                    embed=discord.Embed(title=title).set_footer(text=f"Modified by {user}.", icon_url=user.avatar_url)
+                    embed=discord.Embed(title=title).set_footer(text=footer_modified, icon_url=user.avatar_url)
                 )
                 await asyncio.sleep(5)
 
@@ -774,8 +754,7 @@ class CustomReactions(CanaryCog):
                 await message.clear_reactions()
 
                 if reaction.emoji == EMOJI["stop_button"]:
-                    await leave(message)
-                    return True
+                    return await leave(message)
 
                 if reaction.emoji in (EMOJI["zero"], EMOJI["one"]):
                     # 0: Deactivate the "delete" option
@@ -785,19 +764,11 @@ class CustomReactions(CanaryCog):
                     if delete == new_value:
                         title = message_kept
                     else:
-                        async with self.db() as db:
-                            await db.execute(
-                                "UPDATE CustomReactions SET DeletePrompt = ? WHERE CustomReactionID = ?",
-                                (new_value, custom_react_id),
-                            )
-                            await db.commit()
-                        await self.rebuild_lists()
                         title = message_modified
+                        await _edit_reaction_and_rebuild(custom_react_id, "DeletePrompt", new_value)
 
                     await message.edit(
-                        embed=discord.Embed(title=title).set_footer(
-                            text=f"Modified by {user}.", icon_url=user.avatar_url
-                        )
+                        embed=discord.Embed(title=title).set_footer(text=footer_modified, icon_url=user.avatar_url)
                     )
 
                     await asyncio.sleep(5)
@@ -838,8 +809,7 @@ class CustomReactions(CanaryCog):
                 await message.clear_reactions()
 
                 if reaction.emoji == EMOJI["stop_button"]:
-                    await leave(message)
-                    return True
+                    return await leave(message)
 
                 if reaction.emoji in (EMOJI["zero"], EMOJI["one"]):
                     # 0: Deactivate the "anywhere" option
@@ -849,19 +819,11 @@ class CustomReactions(CanaryCog):
                     if anywhere == new_value:
                         title = message_kept
                     else:
-                        async with self.db() as db:
-                            await db.execute(
-                                "UPDATE CustomReactions SET Anywhere = ? WHERE CustomReactionID = ?",
-                                (new_value, custom_react_id),
-                            )
-                            await db.commit()
-                        await self.rebuild_lists()
                         title = message_modified
+                        await _edit_reaction_and_rebuild(custom_react_id, "Anywhere", new_value)
 
                     await message.edit(
-                        embed=discord.Embed(title=title).set_footer(
-                            text=f"Modified by {user}.", icon_url=user.avatar_url
-                        )
+                        embed=discord.Embed(title=title).set_footer(text=footer_modified, icon_url=user.avatar_url)
                     )
 
                     await asyncio.sleep(5)
@@ -905,8 +867,7 @@ class CustomReactions(CanaryCog):
                 await message.clear_reactions()
 
                 if reaction.emoji == EMOJI["stop_button"]:
-                    await leave(message)
-                    return True
+                    return await leave(message)
 
                 if reaction.emoji in (EMOJI["zero"], EMOJI["one"]):
                     # 0: Deactivate the "dm" option
@@ -916,32 +877,18 @@ class CustomReactions(CanaryCog):
                     if dm == new_value:
                         title = message_kept
                     else:
-                        async with self.db() as db:
-                            await db.execute(
-                                "UPDATE CustomReactions SET DM = ? WHERE CustomReactionID = ?",
-                                (new_value, custom_react_id),
-                            )
-                            await db.commit()
-                        await self.rebuild_lists()
                         title = message_modified
+                        await _edit_reaction_and_rebuild(custom_react_id, "DM", new_value)
 
                     await message.edit(
-                        embed=discord.Embed(title=title).set_footer(
-                            text=f"Modified by {user}.", icon_url=user.avatar_url
-                        )
+                        embed=discord.Embed(title=title).set_footer(text=footer_modified, icon_url=user.avatar_url)
                     )
 
                     await asyncio.sleep(5)
 
             # Approve a custom reaction proposal
             if reaction.emoji == EMOJI["white_check_mark"]:
-                async with self.db() as db:
-                    await db.execute(
-                        "UPDATE CustomReactions SET Proposal = ? WHERE CustomReactionID = ?", (0, custom_react_id)
-                    )
-                    await db.commit()
-
-                await self.rebuild_lists()
+                await _edit_reaction_and_rebuild(custom_react_id, "Proposal", 0)
 
                 await message.edit(
                     embed=discord.Embed(
@@ -967,51 +914,37 @@ class CustomReactions(CanaryCog):
 
             # Stop
             if reaction.emoji == EMOJI["stop_button"]:
-                await leave(message)
-                return True
+                return await leave(message)
 
-        async def list_placeholders(message):
+        async def list_placeholders(message, **_kwargs):
             title = "The following placeholders can be used in prompts and responses:"
             description = (
-                "-%user%: the user who called "
-                "the prompt (can only be used in a response)\n"
-                "-%channel%: the name of "
-                "the channel where the prompt was called "
-                "(can only be used in a response) \n"
-                "-%1%, %2%, etc. up to %9%: Groups. When a "
-                "prompt uses this, anything will match. For "
-                'example, the prompt "i %1% apples" will work '
-                'for any message that starts with "i" and ends '
-                'with "apples", such as "i really like '
-                'apples". Then, the words that match to this '
-                "group can be used in the response. For example, "
-                "keeping the same prompt and using the response "
-                '"i %1% pears" will send '
-                '"i really like pears"\n'
-                "-%[]%: a comma-separated choice list. There are "
-                "two uses for this. The first is that when it is "
-                "used in a prompt, the prompt will accept either "
-                "of the choices. For example, the prompt "
-                '"%[hello, hi, hey]% world" will work if someone '
-                'writes "hello world", "hi world" or '
+                "-%user%: the user who called the prompt (can only be used in a response)\n"
+                "-%channel%: the name of the channel where the prompt was called (can only be used in a response) \n"
+                "-%1%, %2%, etc. up to %9%: Groups. When a prompt uses this, anything will match. For "
+                'example, the prompt "i %1% apples" will work for any message that starts with "i" and ends '
+                'with "apples", such as "i really like apples". Then, the words that match to this '
+                "group can be used in the response. For example, keeping the same prompt and using the response "
+                '"i %1% pears" will send "i really like pears"\n'
+                "-%[]%: a comma-separated choice list. There are two uses for this. The first is that when it is "
+                "used in a prompt, the prompt will accept either of the choices. For example, the prompt "
+                '"%[hello, hi, hey]% world" will work if someone writes "hello world", "hi world" or '
                 '"hey world". The second use is that when it is '
-                "used in a response, a random choice will be "
-                "chosen from the list. For example, the response "
-                '"i %[like, hate]% you" will either send "i '
-                'like you" or "i hate you". All placeholders '
-                "can be used in choice lists (including choice "
-                "lists themselves). If a choice contains commas, "
-                'it can be surrounded by "" to not be split into '
-                "different choices"
+                "used in a response, a random choice will be chosen from the list. For example, the response "
+                '"i %[like, hate]% you" will either send "i like you" or "i hate you". All placeholders '
+                "can be used in choice lists (including choice lists themselves). If a choice contains commas, "
+                'it can be surrounded by "" to not be split into different choices'
             )
             await message.edit(embed=discord.Embed(title=title, description=description))
 
-        async def leave(message):
+        async def leave(message, **_kwargs) -> True:
             await message.delete()
+            return True
 
         initial_message = await ctx.send(embed=LOADING_EMBED)
         is_mod = discord.utils.get(main_user.roles, name=self.bot.config.moderator_role) is not None
-        await create_assistant(initial_message, is_mod)
+
+        return await create_assistant(initial_message, is_mod)
 
 
 def setup(bot):
