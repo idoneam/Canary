@@ -15,30 +15,22 @@
 # You should have received a copy of the GNU General Public License
 # along with Canary. If not, see <https://www.gnu.org/licenses/>.
 
-# discord.py requirements
-import discord
-from discord.ext import commands
-
-# For type hinting
-from ..bot import Canary
-
-# For DB functionality
-import sqlite3
 import datetime
-from .utils.members import add_member_if_needed
 
-# For tables
-from tabulate import tabulate
-from .utils.paginator import Pages
-
-# For general currency shenanigans
-from decimal import Decimal, InvalidOperation
-
-# For betting
+import aiosqlite
+import discord
+import json
 import random
 
-# For other stuff
-import json
+from decimal import Decimal, InvalidOperation
+from discord.ext import commands
+from tabulate import tabulate
+
+from ..bot import Canary
+from .base_cog import CanaryCog
+from .utils.members import add_member_if_needed
+from .utils.paginator import Pages
+
 
 CLAIM_AMOUNT = Decimal(20)
 CLAIM_WAIT_TIME = datetime.timedelta(hours=1)
@@ -66,41 +58,40 @@ TRANSACTION_ACTIONS = (
 )
 
 
-class Currency(commands.Cog):
+class Currency(CanaryCog):
     def __init__(self, bot: Canary):
-        self.bot: Canary = bot
+        super().__init__(bot)
         self.currency: dict = self.bot.config.currency
         self.prec: int = self.currency["precision"]
 
     async def fetch_all_balances(self) -> list[tuple[str, str, Decimal]]:
-        conn = sqlite3.connect(self.bot.config.db_path)
-        c = conn.cursor()
-        c.execute(
-            "SELECT BT.UserID, M.Name, IFNULL(SUM(BT.Amount), 0) "
-            "FROM BankTransactions AS BT, Members as M "
-            "WHERE BT.UserID = M.ID GROUP BY UserID"
-        )
-
-        results = [(user_id, name, self.db_to_currency(balance)) for user_id, name, balance in c.fetchall()]
-
-        conn.close()
-
-        return results
+        db: aiosqlite.Connection
+        async with self.db() as db:
+            c: aiosqlite.Cursor
+            async with db.execute(
+                "SELECT BT.UserID, M.Name, IFNULL(SUM(BT.Amount), 0) "
+                "FROM BankTransactions AS BT, Members as M "
+                "WHERE BT.UserID = M.ID GROUP BY UserID"
+            ) as c:
+                return [
+                    (user_id, name, self.db_to_currency(balance)) for user_id, name, balance in (await c.fetchall())
+                ]
 
     async def fetch_bank_balance(self, user: discord.Member) -> Decimal:
-        conn = sqlite3.connect(self.bot.config.db_path)
-        c = conn.cursor()
-        c.execute("SELECT IFNULL(SUM(Amount), 0) FROM BankTransactions WHERE " "UserID = ?", (user.id,))
+        db: aiosqlite.Connection
+        async with self.db() as db:
+            c: aiosqlite.Cursor
+            async with db.execute(
+                "SELECT IFNULL(SUM(Amount), 0) FROM BankTransactions WHERE " "UserID = ?", (user.id,)
+            ) as c:
+                balance = self.db_to_currency((await c.fetchone())[0])
+                if balance is None:
+                    balance = Decimal(0)
+                return balance
 
-        balance = self.db_to_currency(c.fetchone()[0])
-        if balance is None:
-            balance = Decimal(0)
-
-        conn.close()
-
-        return balance
-
-    async def create_bank_transaction(self, c, user: discord.Member, amount: Decimal, action: str, metadata: dict):
+    async def create_bank_transaction(
+        self, db: aiosqlite.Connection, user: discord.Member, amount: Decimal, action: str, metadata: dict
+    ):
         # Don't create another connection in this function in order to properly
         # transaction-ify a series of bank "transactions".
 
@@ -110,10 +101,12 @@ class Currency(commands.Cog):
 
         now = int(datetime.datetime.now().timestamp())
 
-        c.execute("PRAGMA foreign_keys = ON")
-        await add_member_if_needed(self, c, user.id)
-        t = (user.id, self.currency_to_db(amount), action, json.dumps(metadata), now)
-        c.execute("INSERT INTO BankTransactions(UserID, Amount, Action, " "Metadata, Date) VALUES(?, ?, ?, ?, ?)", t)
+        await db.execute("PRAGMA foreign_keys = ON")
+        await add_member_if_needed(self, db, user.id)
+        await db.execute(
+            "INSERT INTO BankTransactions(UserID, Amount, Action, " "Metadata, Date) VALUES(?, ?, ?, ?, ?)",
+            (user.id, self.currency_to_db(amount), action, json.dumps(metadata), now),
+        )
 
     @staticmethod
     def parse_currency(amount: str, balance: Decimal):
@@ -172,37 +165,33 @@ class Currency(commands.Cog):
         # Start bot typing
         await ctx.trigger_typing()
 
-        conn = sqlite3.connect(self.bot.config.db_path)
-        c = conn.cursor()
+        db: aiosqlite.Connection
+        async with self.db() as db:
+            async with db.execute(
+                "SELECT IFNULL(MAX(Date), 0) FROM BankTransactions " "WHERE UserID = ? AND Action = ?",
+                (ctx.message.author.id, ACTION_INITIAL_CLAIM),
+            ) as c:
+                claim_time = (await c.fetchone())[0]
 
-        c.execute(
-            "SELECT IFNULL(MAX(Date), 0) FROM BankTransactions " "WHERE UserID = ? AND Action = ?",
-            (ctx.message.author.id, ACTION_INITIAL_CLAIM),
-        )
+            author_name = ctx.message.author.display_name
 
-        claim_time = c.fetchone()[0]
+            if claim_time > 0:
+                await ctx.send(f"{author_name} has already claimed their initial currency.")
+                return
 
-        author_name = ctx.message.author.display_name
+            await self.create_bank_transaction(
+                db,
+                ctx.message.author,
+                self.currency["initial_amount"],
+                ACTION_INITIAL_CLAIM,
+                {"channel": ctx.message.channel.id},
+            )
 
-        if claim_time > 0:
-            await ctx.send("{} has already claimed their initial " "currency.".format(author_name))
-            return
-
-        metadata = {"channel": ctx.message.channel.id}
-
-        await self.create_bank_transaction(
-            c, ctx.message.author, self.currency["initial_amount"], ACTION_INITIAL_CLAIM, metadata
-        )
-
-        conn.commit()
+            await db.commit()
 
         await ctx.send(
-            "{} claimed their initial {}!".format(
-                author_name, self.format_symbol_currency(self.currency["initial_amount"])
-            )
+            f"{author_name} claimed their initial {self.format_symbol_currency(self.currency['initial_amount'])}!"
         )
-
-        conn.close()
 
     @commands.command()
     async def claim(self, ctx):
@@ -213,35 +202,28 @@ class Currency(commands.Cog):
         # Start bot typing
         await ctx.trigger_typing()
 
-        conn = sqlite3.connect(self.bot.config.db_path)
-        c = conn.cursor()
-
-        c.execute(
-            "SELECT IFNULL(MAX(Date), 0) FROM BankTransactions " "WHERE UserID = ? AND Action = ?",
-            (ctx.message.author.id, ACTION_CLAIM),
-        )
-
-        last_claimed = datetime.datetime.fromtimestamp(c.fetchone()[0])
         threshold = datetime.datetime.now() - CLAIM_WAIT_TIME
 
-        if last_claimed < threshold:
-            author_name = ctx.message.author.display_name if ctx.message.author else ":b:roken bot"
+        db: aiosqlite.Connection
+        async with self.db() as db:
+            c: aiosqlite.Cursor
+            async with db.execute(
+                "SELECT IFNULL(MAX(Date), 0) FROM BankTransactions " "WHERE UserID = ? AND Action = ?",
+                (ctx.message.author.id, ACTION_CLAIM),
+            ) as c:
+                last_claimed = datetime.datetime.fromtimestamp((await c.fetchone())[0])
 
-            metadata = {"channel": ctx.message.channel.id}
+            if last_claimed < threshold:
+                metadata = {"channel": ctx.message.channel.id}
+                await self.create_bank_transaction(db, ctx.message.author, CLAIM_AMOUNT, ACTION_CLAIM, metadata)
+                await db.commit()
 
-            await self.create_bank_transaction(c, ctx.message.author, CLAIM_AMOUNT, ACTION_CLAIM, metadata)
+                author_name = ctx.message.author.display_name if ctx.message.author else ":b:roken bot"
+                await ctx.send(f"{author_name} claimed {self.format_symbol_currency(CLAIM_AMOUNT)}!")
+                return
 
-            conn.commit()
-
-            await ctx.send("{} claimed {}!".format(author_name, self.format_symbol_currency(CLAIM_AMOUNT)))
-
-        else:
-            time_left = last_claimed - threshold
-            await ctx.send(
-                "Please wait {}h {}m to claim again!".format(time_left.seconds // 3600, time_left.seconds // 60 % 60)
-            )
-
-        conn.close()
+        time_left = last_claimed - threshold
+        await ctx.send(f"Please wait {time_left.seconds // 3600}h {time_left.seconds // 60 % 60}m to claim again!")
 
     @commands.command(aliases=["$", "bal"])
     async def balance(self, ctx, user: discord.Member = None):
@@ -257,7 +239,7 @@ class Currency(commands.Cog):
         author = user if user else ctx.message.author
         amount = self.format_symbol_currency(await self.fetch_bank_balance(author))
 
-        await ctx.send("{} has {} in their account.".format(author.display_name, amount))
+        await ctx.send(f"{author.display_name} has {amount} in their account.")
 
     @commands.command(aliases=["bf"])
     async def bet_flip(self, ctx, bet: str = None, face: str = None):
@@ -290,16 +272,14 @@ class Currency(commands.Cog):
 
         # If all cases pass, perform the gamble
 
-        conn = sqlite3.connect(self.bot.config.db_path)
-        c = conn.cursor()
-
         result = random.choice(COIN_FLIP_CHOICES)
-
         metadata = {"result": result, "channel": ctx.message.channel.id}
-
         amount = bet_dec if choice == result else -bet_dec
-        await self.create_bank_transaction(c, ctx.message.author, amount, ACTION_BET_FLIP, metadata)
-        conn.commit()
+
+        db: aiosqlite.Connection
+        async with self.db() as db:
+            await self.create_bank_transaction(db, ctx.message.author, amount, ACTION_BET_FLIP, metadata)
+            await db.commit()
 
         message = "Sorry! {} lost {} (result was **{}**)."
         if choice == result:
@@ -308,8 +288,6 @@ class Currency(commands.Cog):
         author_name = ctx.message.author.display_name
 
         await ctx.send(message.format(author_name, self.format_symbol_currency(bet_dec), result))
-
-        conn.close()
 
     @commands.command(aliases=["br"])
     async def bet_roll(self, ctx, bet: str = None):
@@ -335,9 +313,6 @@ class Currency(commands.Cog):
 
         # If all cases pass, perform the gamble
 
-        conn = sqlite3.connect(self.bot.config.db_path)
-        c = conn.cursor()
-
         result = random.randrange(1, 101)
         amount_returned = Decimal(0)
 
@@ -353,9 +328,12 @@ class Currency(commands.Cog):
             "channel": ctx.message.channel.id,
         }
 
-        await self.create_bank_transaction(c, ctx.message.author, amount_returned - bet_dec, ACTION_BET_ROLL, metadata)
-
-        conn.commit()
+        db: aiosqlite.Connection
+        async with self.db() as db:
+            await self.create_bank_transaction(
+                db, ctx.message.author, amount_returned - bet_dec, ACTION_BET_ROLL, metadata
+            )
+            await db.commit()
 
         message = "Sorry! {un} lost {am} (result was **{re}**)."
         if amount_returned == bet_dec:
@@ -369,8 +347,6 @@ class Currency(commands.Cog):
         bet_str = self.format_symbol_currency(amount_msg_multiplier * (amount_returned - bet_dec))
 
         await ctx.send(message.format(un=author_name, am=bet_str, re=result))
-
-        conn.close()
 
     @commands.command()
     async def give(self, ctx, user: discord.Member = None, amount: str = None):
@@ -420,18 +396,13 @@ class Currency(commands.Cog):
 
         giftee_metadata = {"gifter": ctx.message.author.id, "channel": ctx.message.channel.id}
 
-        conn = sqlite3.connect(self.bot.config.db_path)
-        c = conn.cursor()
+        db: aiosqlite.Connection
+        async with self.db() as db:
+            await self.create_bank_transaction(db, ctx.message.author, -amount_dec, ACTION_GIFTER, gifter_metadata)
+            await self.create_bank_transaction(db, user, amount_dec, ACTION_GIFTEE, giftee_metadata)
+            await db.commit()
 
-        await self.create_bank_transaction(c, ctx.message.author, -amount_dec, ACTION_GIFTER, gifter_metadata)
-
-        await self.create_bank_transaction(c, user, amount_dec, ACTION_GIFTEE, giftee_metadata)
-
-        conn.commit()
-
-        await ctx.send("{} gave {} to {}!".format(grn, self.format_symbol_currency(amount_dec), gen))
-
-        conn.close()
+        await ctx.send(f"{grn} gave {self.format_symbol_currency(amount_dec)} to {gen}!")
 
     @commands.command(aliases=["lb"])
     async def leaderboard(self, ctx):
