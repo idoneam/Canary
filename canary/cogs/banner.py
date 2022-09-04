@@ -20,23 +20,23 @@ from discord.ext import commands, tasks
 from discord import utils
 
 # Other utilities
+import aiosqlite
 import asyncio
 import datetime
 import json
-import sqlite3
 import requests
 from io import BytesIO
 from PIL import Image, UnidentifiedImageError, ImageSequence
 
 from ..bot import Canary
+from .base_cog import CanaryCog
 from .utils.checks import is_moderator
 
 
-class Banner(commands.Cog):
+class Banner(CanaryCog):
     # Written by @le-potate
     def __init__(self, bot: Canary):
-        self.bot = bot
-        self.guild: discord.Guild | None = None
+        super().__init__(bot)
 
         self.banner_of_the_week_channel: discord.TextChannel | None = None
         self.banner_submissions_channel: discord.TextChannel | None = None
@@ -51,9 +51,13 @@ class Banner(commands.Cog):
         self.week_name: str | None = None
         self.send_reminder: str | None = None
 
-    @commands.Cog.listener()
+    @CanaryCog.listener()
     async def on_ready(self):
-        self.guild = self.bot.get_guild(self.bot.config.server_id)
+        await super().on_ready()
+
+        if not self.guild:
+            return
+
         self.banner_of_the_week_channel = utils.get(
             self.guild.text_channels, name=self.bot.config.banner_of_the_week_channel
         )
@@ -68,18 +72,13 @@ class Banner(commands.Cog):
         self.banner_winner_role = utils.get(self.guild.roles, name=self.bot.config.banner_winner_role)
         self.banner_vote_emoji = utils.get(self.guild.emojis, name=self.bot.config.banner_vote_emoji)
 
-        conn = sqlite3.connect(self.bot.config.db_path)
-        c = conn.cursor()
-        c.execute("SELECT Value FROM Settings WHERE Key = ?", ("BannerContestInfo",))
-        fetched = c.fetchone()
-        if fetched:
-            banner_dict = json.loads(fetched[0])
+        if (banner_contest_info := await self.get_settings_key("BannerContestInfo")) is not None:
+            banner_dict = json.loads(banner_contest_info)
             timestamp = banner_dict["timestamp"]
             if timestamp:
                 self.start_datetime = datetime.datetime.fromtimestamp(timestamp)
                 self.week_name = banner_dict["week_name"]
                 self.send_reminder = banner_dict["send_reminder"]
-        conn.close()
 
         self.check_banner_contest_reminder.start()
 
@@ -92,8 +91,6 @@ class Banner(commands.Cog):
         if datetime.datetime.now() < self.start_datetime or not self.send_reminder:
             return
 
-        conn = sqlite3.connect(self.bot.config.db_path)
-        c = conn.cursor()
         await self.banner_submissions_channel.send(
             f"{self.banner_reminders_role.mention} "
             f"Submissions are now open for the banner picture of the week! "
@@ -101,15 +98,12 @@ class Banner(commands.Cog):
             f"The winner will be chosen in around 12 hours "
             f"(To get these reminders, type `.iam Banner Submissions` in {self.bots_channel.mention})"
         )
-        c.execute("SELECT Value FROM Settings WHERE Key = ?", ("BannerContestInfo",))
-        fetched = c.fetchone()
-        if fetched:
+
+        if (banner_contest_info := await self.get_settings_key("BannerContestInfo")) is not None:
             self.send_reminder = False
-            banner_dict = json.loads(fetched[0])
+            banner_dict = json.loads(banner_contest_info)
             banner_dict["send_reminder"] = False
-            c.execute("REPLACE INTO Settings VALUES (?, ?)", ("BannerContestInfo", json.dumps(banner_dict)))
-            conn.commit()
-        conn.close()
+            await self.set_settings_key("BannerContestInfo", json.dumps(banner_dict))
 
     async def reset_banner_contest(self):
         self.start_datetime = None
@@ -117,12 +111,7 @@ class Banner(commands.Cog):
         self.send_reminder = None
 
         banner_dict = {"timestamp": None, "week_name": None, "send_reminder": None}
-        conn = sqlite3.connect(self.bot.config.db_path)
-        c = conn.cursor()
-        c.execute("REPLACE INTO Settings VALUES (?, ?)", ("BannerContestInfo", json.dumps(banner_dict)))
-        c.execute("DELETE FROM BannerSubmissions")
-        conn.commit()
-        conn.close()
+        await self.set_settings_key("BannerContestInfo", json.dumps(banner_dict))
 
     @commands.command(aliases=["setbannercontest"])
     @is_moderator()
@@ -197,11 +186,9 @@ class Banner(commands.Cog):
         week_name = week_msg.content
 
         banner_dict = {"timestamp": timestamp, "week_name": week_name, "send_reminder": True}
-        conn = sqlite3.connect(self.bot.config.db_path)
-        c = conn.cursor()
-        c.execute("REPLACE INTO Settings VALUES (?, ?)", ("BannerContestInfo", json.dumps(banner_dict)))
-        c.execute("DELETE FROM BannerSubmissions")
-        conn.commit()
+        await self.set_settings_key(
+            "BannerContestInfo", json.dumps(banner_dict), pre_commit=["DELETE FROM BannerSubmissions"]
+        )
 
         self.start_datetime = datetime.datetime.fromtimestamp(timestamp)
         self.week_name = week_name
@@ -211,7 +198,6 @@ class Banner(commands.Cog):
             f"Start time for the banner contest of the week of `{week_name}` successfully set to "
             f"`{self.start_datetime.strftime('%Y-%m-%d %H:%M')}`."
         )
-        conn.close()
 
     @commands.command(aliases=["bannerwinner", "setbannerwinner", "set_banner_winner"])
     @is_moderator()
@@ -287,11 +273,12 @@ class Banner(commands.Cog):
             return
 
         winner_id = winner.id
-        conn = sqlite3.connect(self.bot.config.db_path)
-        c = conn.cursor()
-        c.execute("SELECT * FROM BannerSubmissions WHERE UserID = ?", (winner_id,))
-        fetched = c.fetchone()
-        conn.close()
+
+        db: aiosqlite.Connection
+        async with self.db() as db:
+            c: aiosqlite.Cursor
+            async with db.execute("SELECT * FROM BannerSubmissions WHERE UserID = ?", (winner_id,)) as c:
+                fetched = await c.fetchone()
 
         if not fetched:
             await ctx.send("No submission by this user in database. Exiting command.")
@@ -364,28 +351,26 @@ class Banner(commands.Cog):
                 reason=f"Banner of the week winner submitted by {winner} " f"(Approved by {ctx.author})"
             )
         except discord.errors.HTTPException as e:
-            if e.code == 30003:  # Discord API code for full pins
-                pins = await self.banner_submissions_channel.pins()
-                await pins[-1].unpin(reason="#banner_submissions pins are full")
-                await preview_message.pin(
-                    reason=f"Banner of the week winner submitted by {winner} " f"(Approved by {ctx.author})"
-                )
-            else:
+            if e.code != 30003:  # Discord API code for full pins
                 raise e
+            pins = await self.banner_submissions_channel.pins()
+            await pins[-1].unpin(reason="#banner_submissions pins are full")
+            await preview_message.pin(
+                reason=f"Banner of the week winner submitted by {winner} " f"(Approved by {ctx.author})"
+            )
 
         try:
             await converted_message.pin(
                 reason=f"Banner of the week winner submitted by {winner} " f"(Approved by {ctx.author})"
             )
         except discord.errors.HTTPException as e:
-            if e.code == 30003:
-                pins = await self.banner_converted_channel.pins()
-                await pins[-1].unpin(reason="#converted_banner_submissions pins are full")
-                await converted_message.pin(
-                    reason=f"Banner of the week winner submitted by {winner} " f"(Approved by {ctx.author})"
-                )
-            else:
+            if e.code != 30003:
                 raise e
+            pins = await self.banner_converted_channel.pins()
+            await pins[-1].unpin(reason="#converted_banner_submissions pins are full")
+            await converted_message.pin(
+                reason=f"Banner of the week winner submitted by {winner} " f"(Approved by {ctx.author})"
+            )
 
         await winner.add_roles(self.banner_winner_role, reason=f"Banner of the week winner (Approved by {ctx.author})")
         converted_read = await converted.read()
@@ -408,8 +393,6 @@ class Banner(commands.Cog):
 
         You must be a verified user to use this command.
         """
-        conn = sqlite3.connect(self.bot.config.db_path)
-        c = conn.cursor()
 
         if not (
             discord.utils.get(ctx.author.roles, name=self.bot.config.mcgillian_role)
@@ -422,14 +405,12 @@ class Banner(commands.Cog):
             await ctx.send("You cannot submit banners if you have the Trash Tier Banner Submissions role")
             return
 
-        c.execute("SELECT Value FROM Settings WHERE Key = ?", ("BannerContestInfo",))
-
-        fetched = c.fetchone()
-        if not fetched:
+        banner_contest_info = await self.get_settings_key("BannerContestInfo")
+        if not banner_contest_info:
             await ctx.send("No banner contest is currently set")
             return
 
-        banner_dict = json.loads(fetched[0])
+        banner_dict = json.loads(banner_contest_info)
 
         timestamp = banner_dict["timestamp"]
         if not timestamp:
@@ -542,18 +523,24 @@ class Banner(commands.Cog):
             return
 
         replaced_message = False
-        c.execute("SELECT PreviewMessageID FROM BannerSubmissions WHERE UserID = ?", (ctx.author.id,))
-        fetched = c.fetchone()
-        if fetched:
-            try:
-                message_to_replace = await self.banner_submissions_channel.fetch_message(fetched[0])
-                await message_to_replace.delete()
-            except discord.errors.NotFound:
-                await ctx.send(
-                    f"Could not delete previously posted submission from {self.banner_submissions_channel.mention}. "
-                    f"It might have been manually deleted."
-                )
-            replaced_message = True
+
+        db: aiosqlite.Connection
+        async with self.db() as db:
+            c: aiosqlite.Cursor
+            async with db.execute(
+                "SELECT PreviewMessageID FROM BannerSubmissions WHERE UserID = ?", (ctx.author.id,)
+            ) as c:
+                fetched = await c.fetchone()
+                if fetched:
+                    try:
+                        message_to_replace = await self.banner_submissions_channel.fetch_message(fetched[0])
+                        await message_to_replace.delete()
+                    except discord.errors.NotFound:
+                        await ctx.send(
+                            f"Could not delete previously posted submission from "
+                            f"{self.banner_submissions_channel.mention}. It might have been manually deleted."
+                        )
+                    replaced_message = True
 
         async def send_picture(frames, channel, filename):
             with BytesIO() as image_binary:
@@ -580,11 +567,13 @@ class Banner(commands.Cog):
         )
         await preview_message.add_reaction(self.banner_vote_emoji)
 
-        c.execute(
-            "REPLACE INTO BannerSubmissions VALUES (?, ?, ?)", (ctx.author.id, preview_message.id, converted_message.id)
-        )
-        conn.commit()
-        conn.close()
+        async with self.db() as db:
+            await db.execute(
+                "REPLACE INTO BannerSubmissions VALUES (?, ?, ?)",
+                (ctx.author.id, preview_message.id, converted_message.id),
+            )
+            await db.commit()
+
         await ctx.send(f"Banner successfully {'resubmitted' if replaced_message else 'submitted'}!")
 
 
