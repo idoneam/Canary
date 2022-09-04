@@ -162,7 +162,7 @@ class Helpers(CanaryCog):
         }
 
         feels_like_string = (
-            Helpers._calculate_feels_like(**{k: float(v.group()) for k, v in feels_like_values.items()})
+            Helpers._calculate_feels_like(**{k: float(v.group()) for k, v in feels_like_values.items() if v})
             if all(
                 (
                     humidity_string,

@@ -332,6 +332,10 @@ class Mod(CanaryCog):
 
     async def unmute_utility(self, user: discord.Member, ctx: discord.ext.commands.Context | MockContext | None = None):
         confirmation_channel = ctx.channel if ctx else self.appeals_log_channel
+
+        if not confirmation_channel:
+            return
+
         reason_message = (
             f"{ctx.author} used the unmute function on {user}"
             if ctx
