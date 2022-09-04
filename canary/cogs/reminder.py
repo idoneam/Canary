@@ -15,21 +15,17 @@
 # You should have received a copy of the GNU General Public License
 # along with Canary. If not, see <https://www.gnu.org/licenses/>.
 
-# discord-py requirements
-import discord
-from discord.ext import commands
 import asyncio
-
-# For DB Functionality
-import sqlite3
 import datetime
+import discord
+import re
+import sqlite3
 
-# Other utilities
-from ..bot import Canary
+from discord.ext import commands
+
+from .base_cog import CanaryCog
 from .utils.paginator import Pages
 
-# For remindme functionality
-import re
 
 ONES_NAMES = ("one", "two", "three", "four", "five", "six", "seven", "eight", "nine")
 # Haha English start at 20
@@ -91,11 +87,8 @@ HM_REGEX = re.compile(r"\b([0-1]?[0-9]|2[0-4]):([0-5][0-9])")
 
 FREQUENCIES = {"daily": 1, "weekly": 7, "monthly": 30}
 
-class Reminder(commands.Cog):
-    def __init__(self, bot: Canary):
-        self.bot: Canary = bot
-        self.frequencies = {"daily": 1, "weekly": 7, "monthly": 30}
 
+class Reminder(CanaryCog):
     async def check_reminders(self):
         """
         Co-routine that periodically checks if the bot must issue reminders to
