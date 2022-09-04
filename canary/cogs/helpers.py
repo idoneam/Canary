@@ -424,15 +424,21 @@ class Helpers(CanaryCog):
             tex += "\\[" + sp[2 * i + 1] + "\\]"
 
         buf = BytesIO()
-        preview(
-            tex,
-            preamble=LATEX_PREAMBLE,
-            viewer="BytesIO",
-            outputbuffer=buf,
-            euler=False,
-            dvioptions=["-T", "tight", "-z", "9", "--truecolor", "-D", "600"],
-        )
-        buf.seek(0)
+
+        try:
+            preview(
+                tex,
+                preamble=LATEX_PREAMBLE,
+                viewer="BytesIO",
+                outputbuffer=buf,
+                euler=False,
+                dvioptions=["-T", "tight", "-z", "9", "--truecolor", "-D", "600"],
+            )
+            buf.seek(0)
+        except RuntimeError as e:
+            await ctx.send("Encountered an error while trying to render TeX.")
+            raise e
+
         img_bytes = np.asarray(bytearray(buf.read()), dtype=np.uint8)
         img = cv2.imdecode(img_bytes, cv2.IMREAD_UNCHANGED)
         img2 = cv2.copyMakeBorder(img, 115, 115, 115, 115, cv2.BORDER_CONSTANT, value=(255, 255, 255))
