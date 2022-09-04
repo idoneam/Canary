@@ -21,6 +21,8 @@ class CanaryCog(commands.Cog):
     @commands.Cog.listener()
     async def on_ready(self):
         self.guild = self.bot.get_guild(self.bot.config.server_id)
+
+        # Make temporary directory, used mostly by images cog
         if not os.path.exists("./tmp/"):
             os.mkdir("./tmp/", mode=0o755)
 
