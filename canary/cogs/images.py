@@ -15,27 +15,20 @@
 # You should have received a copy of the GNU General Public License
 # along with Canary. If not, see <https://www.gnu.org/licenses/>.
 
-# imports for Discord
 from discord.ext import commands
 
-# misc imports
-import os
 from ..bot import Canary
+from .base_cog import CanaryCog
 from .utils import image_helpers as ih
 
 
-class Images(commands.Cog):
+class Images(CanaryCog):
     def __init__(self, bot: Canary):
-        self.bot: Canary = bot
+        super().__init__(bot)
         self.max_size: int = self.bot.config.images["max_image_size"]
         self.hist_lim: int = self.bot.config.images["image_history_limit"]
         self.max_rad: int = self.bot.config.images["max_radius"]
         self.max_itr: int = self.bot.config.images["max_iterations"]
-
-    @commands.Cog.listener()
-    async def on_ready(self):
-        if not os.path.exists("./tmp/"):
-            os.mkdir("./tmp/", mode=0o755)
 
     @commands.command()
     async def polar(self, ctx: commands.Context):

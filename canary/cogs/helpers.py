@@ -37,7 +37,8 @@ import random
 import re
 import sqlite3
 import time
-from ..bot import Canary
+
+from .base_cog import CanaryCog
 from .utils.arg_converter import ArgConverter, StrConverter
 from .utils.paginator import Pages
 from .utils.custom_requests import fetch
@@ -70,15 +71,7 @@ LATEX_PREAMBLE = r"""\documentclass[varwidth,12pt]{standalone}
 MAIN_WEBHOOKS_PREFIX = "Main webhook for #"
 
 
-class Helpers(commands.Cog):
-    def __init__(self, bot: Canary):
-        self.bot: Canary = bot
-        self.guild: discord.Guild | None = None
-
-    @commands.Cog.listener()
-    async def on_ready(self):
-        self.guild = self.bot.get_guild(self.bot.config.server_id)
-
+class Helpers(CanaryCog):
     @commands.command(aliases=["exams"])
     async def exam(self, ctx: commands.Context):
         """Retrieves the exam schedule link from McGill's Exam website."""
@@ -341,7 +334,7 @@ class Helpers(commands.Cog):
                 if node.name == "ul":
                     sections.append(node.get_text())
                     previous = node.previous_sibling.previous_sibling
-                    if previous.name == "p":
+                    if previous and previous.name == "p":
                         headers.append(previous.get_text())
                     else:
                         # just in case the layout changes again, at least the whole thing won't break
