@@ -53,7 +53,7 @@ async def save_existing_roles(
         await db.commit()
 
 
-def fetch_saved_roles(bot: Canary, guild, user: discord.Member, muted: bool = False) -> list[discord.Role] | None:
+async def fetch_saved_roles(bot: Canary, guild, user: discord.Member, muted: bool = False) -> list[discord.Role] | None:
     db: aiosqlite.Connection
     c: aiosqlite.Cursor
 

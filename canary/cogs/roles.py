@@ -274,7 +274,7 @@ class Roles(CanaryCog):
             await ctx.send("Cannot restore roles to a muted user")
             return
 
-        valid_roles = fetch_saved_roles(self.bot, ctx.guild, user)
+        valid_roles = await fetch_saved_roles(self.bot, ctx.guild, user)
         await role_restoring_page(self.bot, ctx, user, valid_roles)
 
     @commands.Cog.listener()

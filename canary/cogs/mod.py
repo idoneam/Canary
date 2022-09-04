@@ -337,7 +337,7 @@ class Mod(CanaryCog):
         )
 
         # Restore old roles from the database
-        valid_roles = fetch_saved_roles(self.bot, self.guild, user, muted=True)
+        valid_roles = await fetch_saved_roles(self.bot, self.guild, user, muted=True)
         # for the following, if ctx is provided then the optional bot, guild, channel and restored_by values are ignored
         # if there is no ctx, it means that the user was unmuted because a mod removed the role manually
         # to know which mod did it, we would have to go through the audit log and try the find the log entry. Instead,
