@@ -215,7 +215,7 @@ class Roles(CanaryCog):
         )
 
     @commands.command(aliases=["inrole"])
-    async def in_role(self, ctx: commands.Context, *, query_role):
+    async def in_role(self, ctx: commands.Context, *, query_role: str):
         """Returns list of users in the specified role"""
 
         role = next((role for role in ctx.guild.roles if role.name.lower() == query_role.lower()), None)
@@ -238,7 +238,7 @@ class Roles(CanaryCog):
 
     @commands.command(aliases=["cr", "createrole"])
     @is_moderator()
-    async def create_role(self, ctx: commands.Context, *, role: Optional[str] = None):
+    async def create_role(self, ctx: commands.Context, *, role: str | None = None):
         role = (role or "").strip()
         if not role:
             await ctx.send("Please specify a role name.")
@@ -280,7 +280,7 @@ class Roles(CanaryCog):
     @commands.Cog.listener()
     async def on_member_remove(self, user: discord.Member):
         # If the user is muted, this saves all roles BUT the muted role into the PreviousRoles table
-        await save_existing_roles(self.bot, user, muted=is_in_muted_table(self.bot, user))
+        await save_existing_roles(self.bot, user, muted=await is_in_muted_table(self.bot, user))
 
 
 def setup(bot):
