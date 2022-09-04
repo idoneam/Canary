@@ -16,10 +16,9 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Canary. If not, see <https://www.gnu.org/licenses/>.
-
+import aiosqlite
 import discord
 import os
-import sqlite3
 import sys
 
 from datetime import datetime
@@ -30,7 +29,7 @@ from canary.bot import bot
 from canary.cogs.utils.checks import is_developer, is_moderator
 
 startup = [
-    f"cogs.{c}"
+    f"canary.cogs.{c}"
     for c in (
         "banner",
         "currency",
@@ -54,9 +53,7 @@ startup = [
 @bot.event
 async def on_ready():
     webhook_string = (
-        " and to the log webhook"
-        if bot.config.dev_log_webhook_id and bot.config.dev_log_webhook_token
-        else ""
+        " and to the log webhook" if bot.config.dev_log_webhook_id and bot.config.dev_log_webhook_token else ""
     )
     sys.stdout.write(f"Bot is ready, program output will be written to a " f"log file{webhook_string}.\n")
     sys.stdout.flush()
@@ -134,11 +131,11 @@ async def backup(ctx: Context):
 async def on_member_join(member):
     member_id = member.id
     name = str(member)
-    conn = sqlite3.connect(bot.config.db_path)
-    c = conn.cursor()
-    c.execute("INSERT OR REPLACE INTO Members VALUES (?,?)", (member_id, name))
-    conn.commit()
-    conn.close()
+
+    db: aiosqlite.Connection
+    async with bot.db() as db:
+        await db.execute("INSERT OR REPLACE INTO Members VALUES (?,?)", (member_id, name))
+        await db.commit()
 
 
 @bot.listen()
@@ -148,11 +145,11 @@ async def on_user_update(before, after):
 
     user_id = after.id
     new_name = str(after)
-    conn = sqlite3.connect(bot.config.db_path)
-    c = conn.cursor()
-    c.execute("INSERT OR REPLACE INTO Members VALUES (?,?)", (user_id, new_name))
-    conn.commit()
-    conn.close()
+
+    db: aiosqlite.Connection
+    async with bot.db() as db:
+        await db.execute("INSERT OR REPLACE INTO Members VALUES (?,?)", (user_id, new_name))
+        await db.commit()
 
 
 def main():
