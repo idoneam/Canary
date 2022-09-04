@@ -15,16 +15,12 @@
 # You should have received a copy of the GNU General Public License
 # along with Canary. If not, see <https://www.gnu.org/licenses/>.
 
-# discord-py requirements
-import discord
 import subprocess
 from discord.ext import commands
+from .base_cog import CanaryCog
 
 
-class Info(commands.Cog):
-    def __init__(self, bot):
-        self.bot = bot
-
+class Info(CanaryCog):
     @commands.command()
     async def version(self, ctx):
         # TODO: use asyncio.create_subprocess_shell

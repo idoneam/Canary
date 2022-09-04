@@ -22,14 +22,11 @@ import discord
 # Other utilities
 import aiohttp
 import random
-from ..bot import Canary
+from .base_cog import CanaryCog
 from .utils.auto_incorrect import auto_incorrect
 
 
-class Memes(commands.Cog):
-    def __init__(self, bot: Canary):
-        self.bot: Canary = bot
-
+class Memes(CanaryCog):
     @commands.command()
     async def bac(self, ctx, *, input_str: str = None):
         """

@@ -23,6 +23,7 @@ from enum import Enum
 from typing import Optional, Tuple
 
 from ..bot import Canary
+from .base_cog import CanaryCog
 from .utils.checks import is_moderator
 from .utils.paginator import Pages
 from .utils.role_restoration import save_existing_roles, fetch_saved_roles, is_in_muted_table, role_restoring_page
@@ -33,7 +34,7 @@ class RoleTransaction(Enum):
     REMOVE = "remove"
 
 
-class Roles(commands.Cog):
+class Roles(CanaryCog):
     ALL_CATEGORIES = (
         "pronouns",
         "fields",
@@ -51,7 +52,8 @@ class Roles(commands.Cog):
     }
 
     def __init__(self, bot: Canary):
-        self.bot: Canary = bot
+        super().__init__(bot)
+
         self.roles = self.bot.config.roles
         self.mod_role = self.bot.config.moderator_role
 
