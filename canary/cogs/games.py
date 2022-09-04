@@ -111,9 +111,7 @@ class Games(CanaryCog):
             return
 
         if ctx.message.channel in self.hm_locks:
-            await ctx.send(
-                "command `hm|hangman` cannot be used to start a new game while one is already going on"
-            )
+            await ctx.send("command `hm|hangman` cannot be used to start a new game while one is already going on")
             return
 
         channel_lock = asyncio.Lock()

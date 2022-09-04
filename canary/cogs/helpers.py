@@ -672,9 +672,7 @@ class Helpers(CanaryCog):
             return
         destination = codes[1].lower().strip()
         if destination not in googletrans.LANGUAGES:
-            await ctx.send(
-                f"`{destination}` is not a valid language code. See `?translate codes` for language codes."
-            )
+            await ctx.send(f"`{destination}` is not a valid language code. See `?translate codes` for language codes.")
             return
 
         await ctx.send(
