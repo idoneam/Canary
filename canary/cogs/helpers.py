@@ -14,7 +14,6 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Canary. If not, see <https://www.gnu.org/licenses/>.
-
 # discord-py requirements
 import discord
 from discord.ext import commands
@@ -31,11 +30,11 @@ import numpy as np
 import googletrans
 
 # Other utilities
+import aiosqlite
 import datetime
 import math
 import random
 import re
-import sqlite3
 import time
 
 from .base_cog import CanaryCog
@@ -704,8 +703,11 @@ class Helpers(CanaryCog):
         await ctx.send("Job completed.")
 
     async def spoilerize_utility(self, ctx: commands.Context, message, reason: str = None, moderator: bool = False):
+        db: aiosqlite.Connection
+
         if not moderator and ctx.author != message.author:
             return
+
         # get the webhook for this channel
         webhook = discord.utils.find(
             lambda w: w.user == self.bot.user and w.name[: len(MAIN_WEBHOOKS_PREFIX)] == MAIN_WEBHOOKS_PREFIX,
@@ -756,34 +758,35 @@ class Helpers(CanaryCog):
                 await webhook.send(files=files, username=author.display_name, avatar_url=author.avatar_url, wait=True)
             )
 
-        conn = sqlite3.connect(self.bot.config.db_path)
-        c = conn.cursor()
-        for spoilerized_message in spoilerized_messages:
-            c.execute("REPLACE INTO SpoilerizedMessages VALUES (?, ?)", (spoilerized_message.id, author.id))
-        conn.commit()
-        conn.close()
+        async with self.db() as db:
+            for spoilerized_message in spoilerized_messages:
+                await db.execute("REPLACE INTO SpoilerizedMessages VALUES (?, ?)", (spoilerized_message.id, author.id))
+            await db.commit()
 
         # delete original message
         await message.delete()
 
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload):
+        db: aiosqlite.Connection
+
         if payload.guild_id != self.guild.id or str(payload.emoji) != "🚮":
             return
+
         # if the put_litter_in_its_place react was used check if it was
         # on a spoilerized message by its original author, and if so delete it
-        conn = sqlite3.connect(self.bot.config.db_path)
-        c = conn.cursor()
-        c.execute(
-            "SELECT * From SpoilerizedMessages WHERE MessageID=? AND UserID=?",
-            (int(payload.message_id), int(payload.member.id)),
-        )
-        found = c.fetchone()
+
+        async with self.db() as db:
+            async with db.execute(
+                "SELECT * From SpoilerizedMessages WHERE MessageID=? AND UserID=?",
+                (int(payload.message_id), int(payload.member.id)),
+            ) as c:
+                found = await c.fetchone()
+
         if found:
             channel = utils.get(self.guild.text_channels, id=payload.channel_id)
             message = await channel.fetch_message(payload.message_id)
             await message.delete()
-        conn.close()
 
     @commands.command(alias=["spoiler"])
     async def spoilerize(self, ctx: commands.Context, *args):
