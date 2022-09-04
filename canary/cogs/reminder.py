@@ -21,7 +21,6 @@ import datetime
 import aiosqlite
 import discord
 import re
-import sqlite3
 
 from discord.ext import commands
 
@@ -106,7 +105,7 @@ class Reminder(CanaryCog):
             db: aiosqlite.Connection
             async with self.db() as db:
                 async with db.execute("SELECT * FROM Reminders") as c:
-                    reminders = [tuple(r) for r in await c.fetchall()]
+                    reminders = [tuple(r) for r in (await c.fetchall())]
 
                 for i in range(len(reminders)):
                     member = discord.utils.get(guild.members, id=reminders[i][0])
@@ -129,7 +128,7 @@ class Reminder(CanaryCog):
 
                     else:
                         last_date = datetime.datetime.strptime(reminders[i][5], "%Y-%m-%d %H:%M:%S.%f")
-    
+
                         if datetime.datetime.now() - last_date > datetime.timedelta(days=FREQUENCIES[reminders[i][3]]):
                             await member.send(f"Reminding you to {reminders[i][2]}! [{i + 1:d}]")
                             await db.execute(
@@ -148,6 +147,9 @@ class Reminder(CanaryCog):
         database or calls remindme_repeating to deal with repetitive reminders
         when keyword "daily", "weekly" or "monthly" is found.
         """
+
+        db: aiosqlite.Connection
+        c: aiosqlite.Cursor
 
         if quote == "":
             await ctx.send(
@@ -238,34 +240,31 @@ class Reminder(CanaryCog):
                     reminder = reminder[time_input_end + 1 :].strip()
 
                 # Add message to database
-                conn = sqlite3.connect(self.bot.config.db_path)
-                c = conn.cursor()
-                t = (
-                    ctx.message.author.id,
-                    ctx.message.author.name,
-                    reminder,
-                    "once",
-                    absolute_duedate,
-                    datetime.datetime.now(),
-                )
-
-                c.execute("INSERT INTO Reminders VALUES (?, ?, ?, ?, ?, ?)", t)
-
-                # Send user information and close database
-                reminders = c.execute("SELECT * FROM Reminders WHERE ID =?", (ctx.message.author.id,)).fetchall()
-                await ctx.author.send(
-                    "Hi {}! \nI will remind you to {} on {} at {} unless you "
-                    "send me a message to stop reminding you about it! "
-                    "[{:d}]".format(
-                        ctx.author.name, reminder, date_result.group(0), time_result.group(0), len(reminders) + 1
+                async with self.db() as db:
+                    t = (
+                        ctx.message.author.id,
+                        ctx.message.author.name,
+                        reminder,
+                        "once",
+                        absolute_duedate,
+                        datetime.datetime.now(),
                     )
-                )
+                    await db.execute("INSERT INTO Reminders VALUES (?, ?, ?, ?, ?, ?)", t)
+                    await db.commit()
+
+                    # Send user information and close database
+                    async with db.execute("SELECT * FROM Reminders WHERE ID =?", (ctx.message.author.id,)) as c:
+                        reminders = [tuple(r) for r in (await c.fetchall())]
+
+                    await ctx.author.send(
+                        "Hi {}! \nI will remind you to {} on {} at {} unless you "
+                        "send me a message to stop reminding you about it! "
+                        "[{:d}]".format(
+                            ctx.author.name, reminder, date_result.group(0), time_result.group(0), len(reminders) + 1
+                        )
+                    )
 
                 await ctx.send("Reminder added.")
-
-                conn.commit()
-                conn.close()
-
                 return
 
             # Wrong input feedback depending on what is missing.
@@ -311,13 +310,13 @@ class Reminder(CanaryCog):
 
         # DB: Date will hold TDELTA (When reminder is due), LastReminder will
         # hold datetime.datetime.now()
-        conn = sqlite3.connect(self.bot.config.db_path)
-        c = conn.cursor()
-        t = (ctx.message.author.id, ctx.message.author.name, reminder, "once", reminder_time, time_now)
+        async with self.db() as db:
+            async with db.execute("SELECT * FROM Reminders WHERE ID =?", (ctx.message.author.id,)) as c:
+                reminders = [tuple(r) for r in (await c.fetchall())]
 
-        reminders = c.execute("SELECT * FROM Reminders WHERE ID =?", (ctx.message.author.id,)).fetchall()
-
-        c.execute("INSERT INTO Reminders VALUES (?, ?, ?, ?, ?, ?)", t)
+            t = (ctx.message.author.id, ctx.message.author.name, reminder, "once", reminder_time, time_now)
+            await db.execute("INSERT INTO Reminders VALUES (?, ?, ?, ?, ?, ?)", t)
+            await db.commit()
 
         # Gets reminder date in YYYY-MM-DD format
         due_date = str(datetime.date(reminder_time.year, reminder_time.month, reminder_time.day))
@@ -331,9 +330,6 @@ class Reminder(CanaryCog):
             f"reminding you about it! [{len(reminders)+1}]"
         )
         await ctx.send("Reminder added.")
-
-        conn.commit()
-        conn.close()
 
     @staticmethod
     def formatted_reminder_list(rem_list):
@@ -353,6 +349,9 @@ class Reminder(CanaryCog):
         List reminders
         """
 
+        db: aiosqlite.Connection
+        c: aiosqlite.Cursor
+
         await ctx.trigger_typing()
 
         if not isinstance(ctx.message.channel, discord.DMChannel):
@@ -362,24 +361,20 @@ class Reminder(CanaryCog):
             )
             return
 
-        conn = sqlite3.connect(self.bot.config.db_path)
-        c = conn.cursor()
-
         rem_author = ctx.message.author
-        author_id = rem_author.id
-        c.execute("SELECT * FROM Reminders WHERE ID = ?", (author_id,))
 
-        rem_list = c.fetchall()
+        async with self.db() as db:
+            async with db.execute("SELECT * FROM Reminders WHERE ID = ?", (rem_author.id,)) as c:
+                rem_list = [tuple(r) for r in (await c.fetchall())]
+
         if not rem_list:
             await ctx.send("No reminder found.", delete_after=60)
-            conn.commit()
-            conn.close()
             return
 
         p = Pages(
             ctx,
             item_list=self.formatted_reminder_list(rem_list),
-            title="{}'s reminders".format(rem_author.display_name),
+            title=f"{rem_author.display_name}'s reminders",
         )
 
         await p.paginate()
@@ -388,7 +383,7 @@ class Reminder(CanaryCog):
             try:
                 return (
                     0 <= int(msg.content) <= len(rem_list)
-                    and msg.author.id == author_id
+                    and msg.author.id == rem_author.id
                     and msg.channel == ctx.message.channel
                 )
 
@@ -417,12 +412,15 @@ class Reminder(CanaryCog):
                     await ctx.send("Exit delq.", delete_after=60)
 
                 else:
-                    t = (rem_list[index][0], rem_list[index][2])
                     # Remove deleted reminder from list:
                     del rem_list[index]
 
-                    c.execute("DELETE FROM Reminders WHERE ID = ? AND " "Reminder = ?", t)
-                    conn.commit()
+                    async with self.db() as db:
+                        await db.execute(
+                            "DELETE FROM Reminders WHERE ID = ? AND " "Reminder = ?",
+                            (rem_list[index][0], rem_list[index][2])
+                        )
+                        await db.commit()
 
                     await ctx.send("Reminder deleted", delete_after=60)
 
@@ -430,14 +428,14 @@ class Reminder(CanaryCog):
 
                 await p.paginate()
 
-        conn.commit()
-        conn.close()
-
     async def __remindme_repeating(self, ctx: commands.Context, freq: str = "", *, quote: str = ""):
         """
         Called by remindme to add a repeating reminder to the reminder
         database.
         """
+
+        db: aiosqlite.Connection
+        c: aiosqlite.Cursor
 
         bad_input = False
 
@@ -459,34 +457,28 @@ class Reminder(CanaryCog):
         if bad_input:
             return
 
-        conn = sqlite3.connect(self.bot.config.db_path)
-        c = conn.cursor()
+        async with self.db() as db:
+            async with db.execute(
+                "SELECT * FROM Reminders WHERE Reminder = ? AND ID = ?", (quote, ctx.message.author.id)
+            ) as c:
+                existing_reminder = c.fetchone()
 
-        t = (
-            ctx.message.author.id,
-            ctx.message.author.name,
-            quote,
-            freq,
-            datetime.datetime.now(),
-            datetime.datetime.now(),
-        )
-
-        reminders = c.execute(
-            "SELECT * FROM Reminders WHERE Reminder = ? AND ID = ?", (quote, ctx.message.author.id)
-        ).fetchall()
-
-        if len(reminders) > 0:
+        if existing_reminder is not None:
             await ctx.send(
-                "The reminder `{}` already exists in your database. Please "
-                "specify a unique reminder message!".format(quote)
+                f"The reminder `{quote}` already exists in your database. Please specify a unique reminder message!"
             )
-            conn.commit()
-            conn.close()
             return
 
-        reminders = c.execute("SELECT * FROM Reminders WHERE ID = ?", (ctx.message.author.id,)).fetchall()
+        msg_author = ctx.message.author
+        async with self.db() as db:
+            async with db.execute("SELECT COUNT(*) FROM Reminders WHERE ID = ?", (msg_author.id,)) as c:
+                # noinspection PyRedundantParentheses
+                num_reminders = ((await c.fetchone()) or (0,))[0]
 
-        c.execute("INSERT INTO Reminders VALUES (?, ?, ?, ?, ?, ?)", t)
+            now = datetime.datetime.now()
+            t = (msg_author.id, msg_author.name, quote, freq, now, now)
+            await db.execute("INSERT INTO Reminders VALUES (?, ?, ?, ?, ?, ?)", t)
+            await db.commit()
 
         # Strips the string "to " from reminder messages
         if quote[:3].lower() == "to ":
@@ -494,13 +486,10 @@ class Reminder(CanaryCog):
 
         await ctx.author.send(
             "Hi {}! \nI will remind you to {} {} until you send me a message "
-            "to stop reminding you about it! [{:d}]".format(ctx.author.name, quote, freq, len(reminders) + 1)
+            "to stop reminding you about it! [{:d}]".format(ctx.author.name, quote, freq, num_reminders + 1)
         )
 
         await ctx.send("Reminder added.")
-
-        conn.commit()
-        conn.close()
 
 
 def setup(bot):
