@@ -15,20 +15,19 @@
 # You should have received a copy of the GNU General Public License
 # along with Canary. If not, see <https://www.gnu.org/licenses/>.
 
-# discord-py requirements
+import asyncio
 import discord
-from discord.ext import commands
-
-# Other utilities
-import re
 import os
-import sqlite3
 import pickle
 import random
-import asyncio
+import re
+import sqlite3
+
+from discord.ext import commands
 from time import time
 from functools import partial
-from ..bot import Canary
+
+from .base_cog import CanaryCog
 from .utils.dice_roll import dice_roll
 from .utils.clamp_default import clamp_default
 from .utils.hangman import HangmanState
@@ -44,9 +43,10 @@ CATEGORY_SYNONYMS = {
 }
 
 
-class Games(commands.Cog):
-    def __init__(self, bot: Canary, hangman_tbl_name: str):
-        self.bot: Canary = bot
+class Games(CanaryCog):
+    def __init__(self, bot, hangman_tbl_name: str):
+        super().__init__(bot)
+
         self.hm_cool_win: int = bot.config.games["hm_cool_win"]
         self.hm_norm_win: int = bot.config.games["hm_norm_win"]
         self.hm_timeout: int = bot.config.games["hm_timeout"]
