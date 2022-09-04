@@ -14,7 +14,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Canary. If not, see <https://www.gnu.org/licenses/>.
-
+import aiosqlite
 # Rewritten by @le-potate
 
 # discord.py requirements
@@ -27,6 +27,7 @@ from ..bot import Canary
 # For DB functionality
 import sqlite3
 import json
+from .base_cog import CanaryCog
 from .utils.members import add_member_if_needed
 
 # For argument parsing
@@ -145,16 +146,17 @@ class AfterConverter(commands.Converter):
             raise commands.BadArgument("`after` flag should take an " "integer as input")
 
 
-class Score(commands.Cog):
+class Score(CanaryCog):
     def __init__(self, bot: Canary):
-        self.bot: Canary = bot
-        self.guild: discord.Guild | None = None
+        super().__init__(bot)
+
         self.UPMARTLET: discord.Emoji | None = None
         self.DOWNMARTLET: discord.Emoji | None = None
 
     @commands.Cog.listener()
     async def on_ready(self):
-        self.guild = self.bot.get_guild(self.bot.config.server_id)
+        await super().on_ready()
+
         self.UPMARTLET = discord.utils.get(self.guild.emojis, name=self.bot.config.upvote_emoji)
         self.DOWNMARTLET = discord.utils.get(self.guild.emojis, name=self.bot.config.downvote_emoji)
 
@@ -308,30 +310,29 @@ class Score(commands.Cog):
         except discord.errors.NotFound:
             return
 
-        conn = sqlite3.connect(self.bot.config.db_path)
-        conn.execute("PRAGMA foreign_keys = ON")
-        c = conn.cursor()
+        db: aiosqlite.Connection
+        async with self.db() as db:
+            reacter_id = self.bot.get_user(payload.user_id).id
+            await add_member_if_needed(self, db, reacter_id)
+            reactee_id = message.author.id
+            await add_member_if_needed(self, db, reactee_id)
 
-        reacter_id = self.bot.get_user(payload.user_id).id
-        await add_member_if_needed(self, c, reacter_id)
-        reactee_id = message.author.id
-        await add_member_if_needed(self, c, reactee_id)
+            emoji = payload.emoji
 
-        emoji = payload.emoji
+            if remove:
+                await db.execute(
+                    "DELETE FROM Reactions WHERE ReacterID = ? AND ReacteeID = ? AND ReactionName = ? "
+                    "AND MessageID = ?",
+                    (reacter_id, reactee_id, str(emoji), message_id),
+                )
+            else:
+                await db.execute(
+                    "INSERT OR IGNORE INTO Reactions VALUES (?,?,?,?)", (reacter_id, reactee_id, str(emoji), message_id)
+                )
 
-        if remove:
-            c.execute(
-                "DELETE FROM Reactions WHERE ReacterID = ? AND ReacteeID = ? " "AND ReactionName = ? AND MessageID = ?",
-                (reacter_id, reactee_id, str(emoji), message_id),
-            )
-        else:
-            c.execute(
-                "INSERT OR IGNORE INTO Reactions VALUES (?,?,?,?)", (reacter_id, reactee_id, str(emoji), message_id)
-            )
-        conn.commit()
-        conn.close()
+            await db.commit()
 
-    @commands.Cog.listener()
+    @CanaryCog.listener()
     async def on_raw_reaction_add(self, payload):
         if self.guild is None:
             return
@@ -339,7 +340,7 @@ class Score(commands.Cog):
         if payload.guild_id == self.guild.id:
             await self._add_or_remove_reaction_from_db(payload)
 
-    @commands.Cog.listener()
+    @CanaryCog.listener()
     async def on_raw_reaction_remove(self, payload):
         if self.guild is None:
             return
@@ -394,27 +395,28 @@ class Score(commands.Cog):
 
         # get the WHERE conditions and the values
         where_str, t = self._where_str_and_values_from_args_dict(args_dict)
-        conn = sqlite3.connect(self.bot.config.db_path)
-        c = conn.cursor()
-        if args_dict["emojitype"] != "score":
-            c.execute(f"SELECT count(ReacteeID) FROM Reactions " f"WHERE {where_str}", t)
-            react_count = c.fetchone()[0]
-        else:
-            c.execute(
-                (
-                    f"SELECT COUNT(IIF (ReactionName = ?1, 1, NULL)) - "
-                    f"COUNT(IIF (ReactionName = ?2, 1, NULL)) "
-                    f"FROM Reactions "
-                    f"WHERE {where_str} "
-                    f"AND (ReactionName = ?1 OR ReactionName=?2) "
-                ),
-                (str(self.UPMARTLET), str(self.DOWNMARTLET), *t),
-            )
-            react_count = c.fetchone()[0]
+
+        db: aiosqlite.Connection
+        async with self.db() as db:
+            c: aiosqlite.Cursor
+
+            if args_dict["emojitype"] != "score":
+                async with db.execute(f"SELECT count(ReacteeID) FROM Reactions " f"WHERE {where_str}", t) as c:
+                    react_count = (await c.fetchone())[0]
+            else:
+                async with db.execute(
+                    (
+                        f"SELECT COUNT(IIF (ReactionName = ?1, 1, NULL)) - "
+                        f"COUNT(IIF (ReactionName = ?2, 1, NULL)) "
+                        f"FROM Reactions "
+                        f"WHERE {where_str} "
+                        f"AND (ReactionName = ?1 OR ReactionName=?2) "
+                    ),
+                    (str(self.UPMARTLET), str(self.DOWNMARTLET), *t),
+                ) as c:
+                    react_count = (await c.fetchone())[0]
 
         await ctx.send(react_count)
-
-        conn.close()
 
     @commands.command()
     async def ranking(self, ctx, *args):
@@ -453,8 +455,6 @@ class Score(commands.Cog):
             -"nothere" (All custom emoji not in the server),
             -"score" (The emojis used as upvotes and downvotes)
         """
-        conn = sqlite3.connect(self.bot.config.db_path)
-        c = conn.cursor()
 
         try:
             args_dict = await self._get_converted_args_dict(ctx, args, from_nand_to=True, member=False)
@@ -462,62 +462,63 @@ class Score(commands.Cog):
             await ctx.send(err)
             return
 
-        if not args_dict["to_member"]:
-            select_id = "ReacteeID"
-        else:
-            select_id = "ReacterID"
-        if args_dict["emojitype"] != "score":
-            # get the WHERE conditions and the values
-            where_str, t = self._where_str_and_values_from_args_dict(args_dict)
-            c.execute(
-                (
-                    f"SELECT printf('%d. %s', "
-                    f"ROW_NUMBER() OVER (ORDER BY count(*) DESC), M.Name), "
-                    f"printf('%d %s', count(*), "
-                    f"IIF (count(*)!=1, 'times', 'time')) "
-                    f"FROM Reactions AS R, Members as M "
-                    f"WHERE {where_str} "
-                    f"AND R.{select_id} = M.ID "
-                    f"GROUP BY R.{select_id} "
-                    f"ORDER BY count(*) DESC"
-                ),
-                t,
-            )
+        db: aiosqlite.Connection
+        async with self.db() as db:
+            c: aiosqlite.Cursor
 
-            counts = list(zip(*c.fetchall()))
-            if not counts:
-                await ctx.send(embed=discord.Embed(title="This reaction was never used on this server."))
-                return
-            names, values = counts
+            select_id = "ReacterID" if args_dict["to_member"] else "ReacteeID"
 
-        else:
-            # get the WHERE conditions and the values
-            where_str, t = self._where_str_and_values_from_args_dict(args_dict, prefix="R")
-            c.execute(
-                (
-                    f"SELECT printf('%d. %s', "
-                    f"ROW_NUMBER() OVER (ORDER BY TotalCount DESC), Name), "
-                    f"TotalCount FROM "
-                    f"(SELECT M.Name, "
-                    f"COUNT(IIF (ReactionName = ?1, 1, NULL)) - "
-                    f"COUNT(IIF (ReactionName = ?2, 1, NULL)) "
-                    f"AS TotalCount "
-                    f"FROM Reactions AS R, Members as M "
-                    f"WHERE {where_str} "
-                    f"AND (ReactionName = ?1 OR ReactionName=?2) "
-                    f"AND R.{select_id} = M.ID "
-                    f"GROUP BY R.{select_id})"
-                ),
-                (str(self.UPMARTLET), str(self.DOWNMARTLET), *t),
-            )
-            counts = list(zip(*c.fetchall()))
-            if not counts:
-                await ctx.send(embed=discord.Embed(title="No results found"))
-                return
-            names = counts[0]
-            values = counts[1]
+            if args_dict["emojitype"] != "score":
+                # get the WHERE conditions and the values
+                where_str, t = self._where_str_and_values_from_args_dict(args_dict)
+                async with db.execute(
+                    (
+                        f"SELECT printf('%d. %s', "
+                        f"ROW_NUMBER() OVER (ORDER BY count(*) DESC), M.Name), "
+                        f"printf('%d %s', count(*), "
+                        f"IIF (count(*)!=1, 'times', 'time')) "
+                        f"FROM Reactions AS R, Members as M "
+                        f"WHERE {where_str} "
+                        f"AND R.{select_id} = M.ID "
+                        f"GROUP BY R.{select_id} "
+                        f"ORDER BY count(*) DESC"
+                    ),
+                    t,
+                ) as c:
+                    counts = list(zip(*(await c.fetchall())))
 
-        conn.close()
+                if not counts:
+                    await ctx.send(embed=discord.Embed(title="This reaction was never used on this server."))
+                    return
+
+            else:
+                # get the WHERE conditions and the values
+                where_str, t = self._where_str_and_values_from_args_dict(args_dict, prefix="R")
+                async with db.execute(
+                    (
+                        f"SELECT printf('%d. %s', "
+                        f"ROW_NUMBER() OVER (ORDER BY TotalCount DESC), Name), "
+                        f"TotalCount FROM "
+                        f"(SELECT M.Name, "
+                        f"COUNT(IIF (ReactionName = ?1, 1, NULL)) - "
+                        f"COUNT(IIF (ReactionName = ?2, 1, NULL)) "
+                        f"AS TotalCount "
+                        f"FROM Reactions AS R, Members as M "
+                        f"WHERE {where_str} "
+                        f"AND (ReactionName = ?1 OR ReactionName=?2) "
+                        f"AND R.{select_id} = M.ID "
+                        f"GROUP BY R.{select_id})"
+                    ),
+                    (str(self.UPMARTLET), str(self.DOWNMARTLET), *t),
+                ) as c:
+                    counts = list(zip(*(await c.fetchall())))
+
+                if not counts:
+                    await ctx.send(embed=discord.Embed(title="No results found"))
+                    return
+
+        names, values = counts
+
         paginator_dict = {"names": names, "values": values}
         p = Pages(ctx, item_list=paginator_dict, title="Score ranking", display_option=(2, 9), editable_content=False)
 
@@ -555,8 +556,6 @@ class Score(commands.Cog):
             -"here" (All custom emojis in the server),
             -"nothere" (All custom emoji not in the server)
         """
-        conn = sqlite3.connect(self.bot.config.db_path)
-        c = conn.cursor()
 
         try:
             args_dict = await self._get_converted_args_dict(ctx, args, from_xnor_to=True, member=False, emoji=False)
@@ -568,27 +567,30 @@ class Score(commands.Cog):
             await ctx.send("Invalid input: Emojitype flag cannot use " "type score for this function")
         # get the WHERE conditions and the values
         where_str, t = self._where_str_and_values_from_args_dict(args_dict)
-        c.execute(
-            (
-                f"SELECT printf('%d. %s', "
-                f"ROW_NUMBER() OVER (ORDER BY count(*) DESC), "
-                f"ReactionName), printf('%d %s', count(*), "
-                f"IIF (count(*)!=1, 'times', 'time')) "
-                f"FROM Reactions "
-                f"WHERE {where_str} "
-                f"GROUP BY ReactionName "
-            ),
-            t,
-        )
 
-        counts = list(zip(*c.fetchall()))
+        db: aiosqlite.Connection
+        async with self.db() as db:
+            c: aiosqlite.Cursor
+            async with db.execute(
+                (
+                    f"SELECT printf('%d. %s', "
+                    f"ROW_NUMBER() OVER (ORDER BY count(*) DESC), "
+                    f"ReactionName), printf('%d %s', count(*), "
+                    f"IIF (count(*)!=1, 'times', 'time')) "
+                    f"FROM Reactions "
+                    f"WHERE {where_str} "
+                    f"GROUP BY ReactionName "
+                ),
+                t,
+            ) as c:
+                counts = list(zip(*(await c.fetchall())))
+
         if not counts:
             await ctx.send(embed=discord.Embed(title="No results found"))
             return
-        names = counts[0]
-        values = counts[1]
 
-        conn.close()
+        names, values = counts
+
         paginator_dict = {"names": names, "values": values}
         p = Pages(ctx, item_list=paginator_dict, title="Emoji ranking", display_option=(2, 9), editable_content=False)
 
