@@ -17,9 +17,10 @@
 
 import codecs
 import configparser
-
+import decimal
 import logging
-import decimal  # Currency
+
+from pathlib import Path
 
 LOG_LEVELS = {
     "critical": logging.CRITICAL,
@@ -32,11 +33,11 @@ LOG_LEVELS = {
 
 
 class Parser:
-    def __init__(self):
-        self.configfile = "./config/config.ini"
+    CONFIG_PATH = Path(__file__).parent / "config.ini"
 
+    def __init__(self):
         config = configparser.ConfigParser()
-        config.read_file(codecs.open(self.configfile, "r", "utf-8-sig"))
+        config.read_file(codecs.open(str(Parser.CONFIG_PATH), "r", "utf-8-sig"))
 
         # Discord token
         self.discord_key = config["Discord"]["Key"]
@@ -101,7 +102,6 @@ class Parser:
 
         # DB configuration
         self.db_path = config["DB"]["Path"]
-        self.db_schema_path = config["DB"]["Schema"]
 
         # Helpers configuration
         self.course_tpl = config["Helpers"]["CourseTemplate"]
