@@ -18,17 +18,19 @@
 # TODO: determine and (if possible) fix source of lack of precision in relative time skips
 
 import asyncio
+import discord
 import random
 import time
+import yt_dlp
+
+from collections import deque
+from discord.ext import commands
+from functools import partial
 from itertools import chain
 from inspect import getdoc
-from functools import partial
-from collections import deque
 from typing import Callable, Optional, Iterable
-import discord
-import yt_dlp
-from discord.ext import commands
-from ..bot import Canary
+
+from .base_cog import CanaryCog
 from .utils.music_helpers import (
     FFMPEG_BEFORE_OPTS,
     FFMPEG_OPTS,
@@ -47,9 +49,10 @@ from .utils.music_helpers import (
 )
 
 
-class Music(commands.Cog):
-    def __init__(self, bot: Canary):
-        self.bot: Canary = bot
+class Music(CanaryCog):
+    def __init__(self, bot):
+        super().__init__(bot)
+
         self.track_queue: deque[tuple[dict, str]] = deque()
         self.track_history: deque[tuple[dict, str]] = deque()
         self.looping_queue: bool = False
