@@ -58,6 +58,7 @@ async def on_ready():
     sys.stdout.write(f"Bot is ready, program output will be written to a log file{webhook_string}.\n")
     sys.stdout.flush()
     bot.dev_logger.info(f"Logged in as {bot.user.name} ({bot.user.id})")
+    await bot.health_check()
 
 
 @bot.command()

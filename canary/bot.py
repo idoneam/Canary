@@ -94,6 +94,7 @@ class Canary(commands.Bot):
     async def start(self, *args, **kwargs):  # TODO: discordpy 2.0: use setup_hook for database setup
         await self._start_database()
         await super().start(*args, **kwargs)
+        await self._health_check()
 
     @contextlib.asynccontextmanager
     async def db(self) -> AsyncGenerator[aiosqlite.Connection, None]:
@@ -116,6 +117,11 @@ class Canary(commands.Bot):
                 await db.commit()
 
         self.dev_logger.debug("Database is ready")
+
+    async def health_check(self):
+        guild = self.get_guild(self.config.server_id)
+        if not guild:
+            self.dev_logger.error(f"Could not get guild for bot (specified server ID {self.config.server_id})")
 
     def log_traceback(self, exception):
         self.dev_logger.error("".join(traceback.format_exception(type(exception), exception, exception.__traceback__)))
