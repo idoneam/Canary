@@ -280,7 +280,7 @@ class Roles(CanaryCog):
     @commands.Cog.listener()
     async def on_member_remove(self, user: discord.Member):
         # If the user is muted, this saves all roles BUT the muted role into the PreviousRoles table
-        save_existing_roles(self.bot, user, muted=is_in_muted_table(self.bot, user))
+        await save_existing_roles(self.bot, user, muted=is_in_muted_table(self.bot, user))
 
 
 def setup(bot):

@@ -15,6 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Canary. If not, see <https://www.gnu.org/licenses/>.
 
+import aiosqlite
 import discord
 
 
@@ -32,8 +33,9 @@ async def _get_name_from_id(self, user_id) -> str:
         return str(user_id)
 
 
-async def add_member_if_needed(self, c, user_id) -> None:
-    c.execute("SELECT Name FROM Members WHERE ID = ?", (user_id,))
-    if not c.fetchone():
-        name = await _get_name_from_id(self, user_id)
-        c.execute("INSERT OR IGNORE INTO Members VALUES (?,?)", (user_id, name))
+async def add_member_if_needed(self, db: aiosqlite.Connection, user_id) -> None:
+    c: aiosqlite.Cursor
+    async with db.execute("SELECT Name FROM Members WHERE ID = ?", (user_id,)) as c:
+        if not (await c.fetchone()):
+            name = await _get_name_from_id(self, user_id)
+            await db.execute("INSERT OR IGNORE INTO Members VALUES (?,?)", (user_id, name))
