@@ -50,3 +50,15 @@ class CanaryCog(commands.Cog):
                     await db.execute(s)
 
             await db.commit()
+
+    async def del_settings_key(self, key: str, pre_commit: Iterable | None = None) -> None:
+        db: aiosqlite.Connection
+        async with self.db() as db:
+            c: aiosqlite.Cursor
+            await db.execute("DELETE FROM Settings WHERE Key = ? LIMIT 1", (key,))
+
+            if pre_commit:
+                for s in pre_commit:
+                    await db.execute(s)
+
+            await db.commit()
