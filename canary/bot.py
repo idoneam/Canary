@@ -15,13 +15,15 @@
 # You should have received a copy of the GNU General Public License
 # along with Canary. If not, see <https://www.gnu.org/licenses/>.
 
-from discord.ext import commands
-
-from config import parser
+import aiosqlite
+import contextlib
 import logging
-import sqlite3
 import traceback
+
+from canary.config import parser
 from discord import Webhook, RequestsWebhookAdapter, Intents
+from discord.ext import commands
+from pathlib import Path
 
 __all__ = ["Canary", "bot", "developer_role", "moderator_role", "muted_role"]
 
@@ -52,10 +54,7 @@ _mod_logger.setLevel(logging.INFO)
 
 class _WebhookHandler(logging.Handler):
     def __init__(self, webhook_id, webhook_token, username=None):
-        if not username:
-            self.username = "Bot Logs"
-        else:
-            self.username = username
+        self.username = username or "Bot Logs"
         logging.Handler.__init__(self)
         self.webhook = Webhook.partial(webhook_id, webhook_token, adapter=RequestsWebhookAdapter())
 
@@ -82,26 +81,39 @@ if _parser.mod_log_webhook_id and _parser.mod_log_webhook_token:
 
 
 class Canary(commands.Bot):
+    SCHEMA_PATH = Path(__file__).parent / "Martlet.schema"
+
     def __init__(self, *args, **kwargs):
         super().__init__(command_prefix, *args, **kwargs)
         self.logger = _logger
         self.dev_logger = _dev_logger
         self.mod_logger = _mod_logger
         self.config = _parser
-        self._start_database()
 
-    def _start_database(self):
+    async def start(self, *args, **kwargs):  # TODO: discordpy 2.0: use setup_hook for database setup
+        await self._start_database()
+        await super().start(*args, **kwargs)
+
+    @contextlib.asynccontextmanager
+    async def db(self) -> aiosqlite.Connection:
+        conn: aiosqlite.Connection
+        async with aiosqlite.connect(self.config.db_path) as conn:
+            await conn.execute("PRAGMA foreign_keys = ON")
+            yield conn
+
+    async def _start_database(self):
         if not self.config.db_path:
             self.dev_logger.warning("No path to database configuration file")
             return
 
         self.dev_logger.debug("Initializing SQLite database")
-        conn = sqlite3.connect(self.config.db_path)
-        c = conn.cursor()
-        with open(self.config.db_schema_path) as fp:
-            c.executescript(fp.read())
-        conn.commit()
-        conn.close()
+
+        db: aiosqlite.Connection
+        async with self.db() as db:
+            with open(Canary.SCHEMA_PATH) as fp:
+                await db.executescript(fp.read())
+                await db.commit()
+
         self.dev_logger.debug("Database is ready")
 
     def log_traceback(self, exception):
