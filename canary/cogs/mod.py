@@ -14,7 +14,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Canary. If not, see <https://www.gnu.org/licenses/>.
-import aiosqlite
+
 import discord
 import random
 from bidict import bidict
@@ -54,16 +54,12 @@ class Mod(CanaryCog):
 
         await self.verification_purge_startup()
 
-        db: aiosqlite.Connection
-        c: aiosqlite.Cursor
-        async with self.db() as db:
-            async with db.execute("SELECT * FROM MutedUsers") as c:
-                self.muted_users_to_appeal_channels = bidict(
-                    [
-                        (self.bot.get_user(user_id), self.bot.get_channel(appeal_channel_id))
-                        for (user_id, appeal_channel_id, roles, date) in (await c.fetchall())
-                    ]
-                )
+        self.muted_users_to_appeal_channels = bidict(
+            [
+                (self.bot.get_user(user_id), self.bot.get_channel(appeal_channel_id))
+                for (user_id, appeal_channel_id, roles, date) in (await self.fetch_list("SELECT * FROM MutedUsers"))
+            ]
+        )
 
         self.appeals_log_channel = utils.get(self.guild.text_channels, name=self.bot.config.appeals_log_channel)
         self.muted_role = utils.get(self.guild.roles, name=self.bot.config.muted_role)
@@ -73,7 +69,7 @@ class Mod(CanaryCog):
         if not self.verification_channel:
             return
 
-        # arbitrary min date because choosing dates that predate discord will cause an httpexception
+        # arbitrary min date because choosing dates that predate discord will cause an HTTPException
         # when fetching message history after that date later on
         self.last_verification_purge_datetime = datetime(2018, 1, 1)
 
@@ -451,7 +447,7 @@ class Mod(CanaryCog):
         await self.appeals_log_channel.send(log_message)
 
     @CanaryCog.listener()
-    async def on_message_edit(self, before, after):
+    async def on_message_edit(self, _before, after):
         if after.channel not in self.muted_users_to_appeal_channels.values():
             return
 

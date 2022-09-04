@@ -65,17 +65,15 @@ class Currency(CanaryCog):
         self.prec: int = self.currency["precision"]
 
     async def fetch_all_balances(self) -> list[tuple[str, str, Decimal]]:
-        db: aiosqlite.Connection
-        async with self.db() as db:
-            c: aiosqlite.Cursor
-            async with db.execute(
+        # after
+        return [
+            (user_id, name, self.db_to_currency(balance))
+            for user_id, name, balance in (await self.fetch_list(
                 "SELECT BT.UserID, M.Name, IFNULL(SUM(BT.Amount), 0) "
                 "FROM BankTransactions AS BT, Members as M "
                 "WHERE BT.UserID = M.ID GROUP BY UserID"
-            ) as c:
-                return [
-                    (user_id, name, self.db_to_currency(balance)) for user_id, name, balance in (await c.fetchall())
-                ]
+            ))
+        ]
 
     async def fetch_bank_balance(self, user: discord.Member) -> Decimal:
         db: aiosqlite.Connection

@@ -102,10 +102,8 @@ class Reminder(CanaryCog):
             if not (guild := self.guild):
                 return
 
-            db: aiosqlite.Connection
             async with self.db() as db:
-                async with db.execute("SELECT * FROM Reminders") as c:
-                    reminders = [tuple(r) for r in (await c.fetchall())]
+                reminders = await self.fetch_list("SELECT * FROM Reminders", db=db)
 
                 for i in range(len(reminders)):
                     member = discord.utils.get(guild.members, id=reminders[i][0])
@@ -117,7 +115,7 @@ class Reminder(CanaryCog):
                         # Compute future_date and current_date and if past, means
                         # time is due to remind user.
                         if reminder_activation_date <= datetime.datetime.now():
-                            await member.send("Reminding you to {}!".format(reminders[i][2]))
+                            await member.send(f"Reminding you to {reminders[i][2]}!")
                             # Remove from from DB non-repeating reminder
                             await db.execute(
                                 ("DELETE FROM Reminders WHERE Reminder=? AND ID=?" + " AND DATE=?"),
@@ -252,15 +250,17 @@ class Reminder(CanaryCog):
                     await db.execute("INSERT INTO Reminders VALUES (?, ?, ?, ?, ?, ?)", t)
                     await db.commit()
 
-                    # Send user information and close database
-                    async with db.execute("SELECT * FROM Reminders WHERE ID =?", (ctx.message.author.id,)) as c:
-                        reminders = [tuple(r) for r in (await c.fetchall())]
+                    # Send user information
+
+                    async with db.execute("SELECT COUNT(*) FROM Reminders WHERE ID = ?", (ctx.message.author.id,)) as c:
+                        # noinspection PyRedundantParentheses
+                        num_reminders = ((await c.fetchone()) or (0,))[0]
 
                     await ctx.author.send(
                         "Hi {}! \nI will remind you to {} on {} at {} unless you "
                         "send me a message to stop reminding you about it! "
                         "[{:d}]".format(
-                            ctx.author.name, reminder, date_result.group(0), time_result.group(0), len(reminders) + 1
+                            ctx.author.name, reminder, date_result.group(0), time_result.group(0), num_reminders + 1
                         )
                     )
 
@@ -311,9 +311,7 @@ class Reminder(CanaryCog):
         # DB: Date will hold TDELTA (When reminder is due), LastReminder will
         # hold datetime.datetime.now()
         async with self.db() as db:
-            async with db.execute("SELECT * FROM Reminders WHERE ID =?", (ctx.message.author.id,)) as c:
-                reminders = [tuple(r) for r in (await c.fetchall())]
-
+            reminders = await self.fetch_list("SELECT * FROM Reminders WHERE ID =?", (ctx.message.author.id,), db=db)
             t = (ctx.message.author.id, ctx.message.author.name, reminder, "once", reminder_time, time_now)
             await db.execute("INSERT INTO Reminders VALUES (?, ?, ?, ?, ?, ?)", t)
             await db.commit()
@@ -363,10 +361,7 @@ class Reminder(CanaryCog):
 
         rem_author = ctx.message.author
 
-        async with self.db() as db:
-            async with db.execute("SELECT * FROM Reminders WHERE ID = ?", (rem_author.id,)) as c:
-                rem_list = [tuple(r) for r in (await c.fetchall())]
-
+        rem_list = await self.fetch_list("SELECT * FROM Reminders WHERE ID = ?", (rem_author.id,))
         if not rem_list:
             await ctx.send("No reminder found.", delete_after=60)
             return
@@ -412,14 +407,13 @@ class Reminder(CanaryCog):
                     await ctx.send("Exit delq.", delete_after=60)
 
                 else:
+                    r = rem_list[index]
+
                     # Remove deleted reminder from list:
                     del rem_list[index]
 
                     async with self.db() as db:
-                        await db.execute(
-                            "DELETE FROM Reminders WHERE ID = ? AND Reminder = ?",
-                            (rem_list[index][0], rem_list[index][2]),
-                        )
+                        await db.execute("DELETE FROM Reminders WHERE ID = ? AND Reminder = ?", (r[0], r[2]))
                         await db.commit()
 
                     await ctx.send("Reminder deleted", delete_after=60)
@@ -485,8 +479,8 @@ class Reminder(CanaryCog):
             quote = quote[3:]
 
         await ctx.author.send(
-            "Hi {}! \nI will remind you to {} {} until you send me a message "
-            "to stop reminding you about it! [{:d}]".format(ctx.author.name, quote, freq, num_reminders + 1)
+            f"Hi {ctx.author.name}! \nI will remind you to {quote} {freq} until you send me a message "
+            f"to stop reminding you about it! [{num_reminders+1:d}]"
         )
 
         await ctx.send("Reminder added.")

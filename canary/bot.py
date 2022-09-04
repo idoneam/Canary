@@ -103,6 +103,9 @@ class Canary(commands.Bot):
             await conn.execute("PRAGMA foreign_keys = ON")
             yield conn
 
+    async def db_nocm(self) -> aiosqlite.Connection:
+        return await aiosqlite.connect(self.config.db_path)
+
     async def _start_database(self):
         if not self.config.db_path:
             self.dev_logger.warning("No path to database configuration file")

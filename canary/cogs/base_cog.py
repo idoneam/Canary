@@ -31,6 +31,21 @@ class CanaryCog(commands.Cog):
         async with self.bot.db() as conn:
             yield conn
 
+    async def fetch_list(
+        self,
+        query: str,
+        params: tuple[str | int | float | bool, ...] = (),
+        db: aiosqlite.Connection | None = None,
+    ) -> list[tuple]:
+        if fresh_db := db is None:
+            db = await self.bot.db_nocm()
+        try:
+            async with db.execute(query, params) as c:
+                return [tuple(r) for r in await c.fetchall()]
+        finally:
+            if fresh_db:
+                await db.close()
+
     async def get_settings_key(self, key: str) -> str | None:
         db: aiosqlite.Connection
         async with self.db() as db:

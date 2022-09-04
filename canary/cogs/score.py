@@ -165,9 +165,9 @@ class Score(CanaryCog):
         # this will make an arg_converter with the possible values the
         # score, ranking, and emoji_ranking function can take, then do
         # additional checks to restrict it further
-        # If from_xnor_to, then if there is a from flag there must be a
-        # to flag and vice versa (used by score and emoji_ranking)
-        # If from_nand_to, there can either be a from or a to flag
+        # If from_xnor_to, then if there is a `from` flag there must be a
+        # `to` flag and vice versa (used by score and emoji_ranking)
+        # If from_nand_to, there can either be a `from` or a `to` flag
         # or nothing, not both (used by ranking)
         # If member, then a member can be input (will still look for
         # from/to flags but will raise an exception if both a member and
@@ -278,7 +278,7 @@ class Score(CanaryCog):
             values_list = values_list + guild_emojis
         # elif args_dict["emojitype"] == "all", there are no restrictions
         # elif args_dict["emojitype"] == "score", this must be dealt with
-        # outside of this function as this does not use a where close
+        # outside this function as this does not use a where close
         if not args_dict["self"]:
             where_list.append("ReacterID != ReacteeID")
         if args_dict["before"]:
@@ -363,7 +363,7 @@ class Score(CanaryCog):
             -If @user or User, gives the score for this user.
             -If from and to flags, gives the score given from @userA to @userB. `from:all` and `to:all` can be used.
             -If nothing, gives your score
-            Note that it is possible to give usernames without mention. This is case sensitive. If a username contains a
+            Note that it is possible to give usernames without mention. This is case-sensitive. If a username contains a
             space, the username and flag must be included in quotes, e.g. "to:user name"
 
         - Optional: `emoji` OR `emojitype:type` OR `emojiname:name` OR `:name:`
@@ -431,7 +431,7 @@ class Score(CanaryCog):
             -If from flag: gives the score received by every user from this user. `from:all` can be used.
             -If to flag: gives the score received by this user from every user. `to:all` can be used.
             -If nothing, gives the score of every user
-            Note that it is possible to give usernames without mention. This is case sensitive. If a username contains a
+            Note that it is possible to give usernames without mention. This is case-sensitive. If a username contains a
             space, the username and flag must be included in quotes, e.g. "to:user name"
 
         - Optional: `emoji` OR `emojitype:type` OR `emojiname:name` OR `:name:`
@@ -462,60 +462,54 @@ class Score(CanaryCog):
             await ctx.send(err)
             return
 
-        db: aiosqlite.Connection
-        async with self.db() as db:
-            c: aiosqlite.Cursor
+        select_id = "ReacterID" if args_dict["to_member"] else "ReacteeID"
 
-            select_id = "ReacterID" if args_dict["to_member"] else "ReacteeID"
+        if args_dict["emojitype"] != "score":
+            # get the WHERE conditions and the values
+            where_str, t = self._where_str_and_values_from_args_dict(args_dict)
+            counts = list(zip(*(await self.fetch_list(
+                (
+                    f"SELECT printf('%d. %s', "
+                    f"ROW_NUMBER() OVER (ORDER BY count(*) DESC), M.Name), "
+                    f"printf('%d %s', count(*), "
+                    f"IIF (count(*)!=1, 'times', 'time')) "
+                    f"FROM Reactions AS R, Members as M "
+                    f"WHERE {where_str} "
+                    f"AND R.{select_id} = M.ID "
+                    f"GROUP BY R.{select_id} "
+                    f"ORDER BY count(*) DESC"
+                ),
+                t,
+            ))))
 
-            if args_dict["emojitype"] != "score":
-                # get the WHERE conditions and the values
-                where_str, t = self._where_str_and_values_from_args_dict(args_dict)
-                async with db.execute(
-                    (
-                        f"SELECT printf('%d. %s', "
-                        f"ROW_NUMBER() OVER (ORDER BY count(*) DESC), M.Name), "
-                        f"printf('%d %s', count(*), "
-                        f"IIF (count(*)!=1, 'times', 'time')) "
-                        f"FROM Reactions AS R, Members as M "
-                        f"WHERE {where_str} "
-                        f"AND R.{select_id} = M.ID "
-                        f"GROUP BY R.{select_id} "
-                        f"ORDER BY count(*) DESC"
-                    ),
-                    t,
-                ) as c:
-                    counts = list(zip(*(await c.fetchall())))
+            if not counts:
+                await ctx.send(embed=discord.Embed(title="This reaction was never used on this server."))
+                return
 
-                if not counts:
-                    await ctx.send(embed=discord.Embed(title="This reaction was never used on this server."))
-                    return
+        else:
+            # get the WHERE conditions and the values
+            where_str, t = self._where_str_and_values_from_args_dict(args_dict, prefix="R")
+            counts = list(zip(*(await self.fetch_list(
+                (
+                    f"SELECT printf('%d. %s', "
+                    f"ROW_NUMBER() OVER (ORDER BY TotalCount DESC), Name), "
+                    f"TotalCount FROM "
+                    f"(SELECT M.Name, "
+                    f"COUNT(IIF (ReactionName = ?1, 1, NULL)) - "
+                    f"COUNT(IIF (ReactionName = ?2, 1, NULL)) "
+                    f"AS TotalCount "
+                    f"FROM Reactions AS R, Members as M "
+                    f"WHERE {where_str} "
+                    f"AND (ReactionName = ?1 OR ReactionName=?2) "
+                    f"AND R.{select_id} = M.ID "
+                    f"GROUP BY R.{select_id})"
+                ),
+                (str(self.UPMARTLET), str(self.DOWNMARTLET), *t),
+            ))))
 
-            else:
-                # get the WHERE conditions and the values
-                where_str, t = self._where_str_and_values_from_args_dict(args_dict, prefix="R")
-                async with db.execute(
-                    (
-                        f"SELECT printf('%d. %s', "
-                        f"ROW_NUMBER() OVER (ORDER BY TotalCount DESC), Name), "
-                        f"TotalCount FROM "
-                        f"(SELECT M.Name, "
-                        f"COUNT(IIF (ReactionName = ?1, 1, NULL)) - "
-                        f"COUNT(IIF (ReactionName = ?2, 1, NULL)) "
-                        f"AS TotalCount "
-                        f"FROM Reactions AS R, Members as M "
-                        f"WHERE {where_str} "
-                        f"AND (ReactionName = ?1 OR ReactionName=?2) "
-                        f"AND R.{select_id} = M.ID "
-                        f"GROUP BY R.{select_id})"
-                    ),
-                    (str(self.UPMARTLET), str(self.DOWNMARTLET), *t),
-                ) as c:
-                    counts = list(zip(*(await c.fetchall())))
-
-                if not counts:
-                    await ctx.send(embed=discord.Embed(title="No results found"))
-                    return
+            if not counts:
+                await ctx.send(embed=discord.Embed(title="No results found"))
+                return
 
         names, values = counts
 
@@ -568,22 +562,18 @@ class Score(CanaryCog):
         # get the WHERE conditions and the values
         where_str, t = self._where_str_and_values_from_args_dict(args_dict)
 
-        db: aiosqlite.Connection
-        async with self.db() as db:
-            c: aiosqlite.Cursor
-            async with db.execute(
-                (
-                    f"SELECT printf('%d. %s', "
-                    f"ROW_NUMBER() OVER (ORDER BY count(*) DESC), "
-                    f"ReactionName), printf('%d %s', count(*), "
-                    f"IIF (count(*)!=1, 'times', 'time')) "
-                    f"FROM Reactions "
-                    f"WHERE {where_str} "
-                    f"GROUP BY ReactionName "
-                ),
-                t,
-            ) as c:
-                counts = list(zip(*(await c.fetchall())))
+        counts = list(zip(*(await self.fetch_list(
+            (
+                f"SELECT printf('%d. %s', "
+                f"ROW_NUMBER() OVER (ORDER BY count(*) DESC), "
+                f"ReactionName), printf('%d %s', count(*), "
+                f"IIF (count(*)!=1, 'times', 'time')) "
+                f"FROM Reactions "
+                f"WHERE {where_str} "
+                f"GROUP BY ReactionName "
+            ),
+            t,
+        ))))
 
         if not counts:
             await ctx.send(embed=discord.Embed(title="No results found"))

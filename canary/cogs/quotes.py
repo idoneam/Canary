@@ -53,11 +53,7 @@ class Quotes(CanaryCog):
         Blame David for this code.
         """
 
-        db: aiosqlite.Connection
-        async with self.db() as db:
-            async with db.execute("SELECT Quote FROM Quotes") as c:
-                all_quotes = await c.fetchall()
-
+        all_quotes: list[tuple[str]] = await self.fetch_list("SELECT Quote FROM Quotes")
         lookup: dict[str, dict] = {}
 
         for q in all_quotes:
@@ -136,8 +132,8 @@ class Quotes(CanaryCog):
                 # returns True if all the following is true:
                 # The user who reacted is either the quoter or the quoted person
                 # The user who reacted isn't the bot
-                # The react is the delete emoji
-                # The react is on the "Quote added." message
+                # The reaction is the Delete emoji
+                # The reaction is on the "Quote added." message
                 return (
                     (user == ctx.message.author or user == member)
                     and user != self.bot.user
@@ -167,65 +163,57 @@ class Quotes(CanaryCog):
 
         quotes: list[tuple[int, str, str]]
 
-        db: aiosqlite.Connection
-        c: aiosqlite.Cursor
-        async with self.db() as db:
-            mentions = ctx.message.mentions
+        mentions = ctx.message.mentions
 
-            if str1 is None:  # No argument passed
-                async with db.execute("SELECT ID, Name, Quote FROM Quotes") as c:
-                    quotes = [tuple(r) for r in await c.fetchall()]
+        if str1 is None:  # No argument passed
+            quotes = await self.fetch_list("SELECT ID, Name, Quote FROM Quotes")
 
-            elif mentions and mentions[0].mention == str1:  # Has args
-                u_id = mentions[0].id
-                # Query for either user and quote or user only (None)
-                async with db.execute(
-                    "SELECT ID, Name, Quote FROM Quotes WHERE ID = ? AND Quote LIKE ?",
-                    (u_id, f"%{str2 if str2 is not None else ''}%"),
-                ) as c:
-                    quotes = [tuple(r) for r in await c.fetchall()]
+        elif mentions and mentions[0].mention == str1:  # Has args
+            u_id = mentions[0].id
+            # Query for either user and quote or user only (None)
+            quotes = await self.fetch_list(
+                "SELECT ID, Name, Quote FROM Quotes WHERE ID = ? AND Quote LIKE ?",
+                (u_id, f"%{str2 if str2 is not None else ''}%"),
+            )
 
-            else:  # query for quote only
-                query = str1 if str2 is None else f"{str1} {str2}"
-                if query[0] == "/" and query[-1] == "/":
-                    async with db.execute("SELECT ID, Name, Quote FROM Quotes") as c:
-                        quotes = [tuple(r) for r in await c.fetchall()]
-                    try:
-                        quotes = [q for q in quotes if re.search(query[1:-1], q[2])]
-                    except re.error:
-                        await ctx.send("Invalid regex syntax.")
-                        return
-                else:
-                    async with db.execute(
-                        "SELECT ID, Name, Quote FROM Quotes WHERE Quote LIKE ?",
-                        (f"%{query}%",),
-                    ) as c:
-                        quotes = [tuple(r) for r in await c.fetchall()]
-
-            if not quotes:
-                msg = await ctx.send("Quote not found.\n")
-                await msg.add_reaction("🆗")
-
-                def check(reaction, user):
-                    # returns True if all the following is true:
-                    # The user who reacted isn't the bot
-                    # The react is the ok emoji
-                    # The react is on the "Quote not found." message
-                    return (user == ctx.message.author and user != self.bot.user) and (
-                        str(reaction.emoji) == "🆗" and reaction.message.id == msg.id
-                    )
-
+        else:  # query for quote only
+            query = str1 if str2 is None else f"{str1} {str2}"
+            if query[0] == "/" and query[-1] == "/":
                 try:
-                    await self.bot.wait_for("reaction_add", check=check, timeout=120)
+                    quotes = [
+                        q for q in (await self.fetch_list("SELECT ID, Name, Quote FROM Quotes"))
+                        if re.search(query[1:-1], q[2])
+                    ]
+                except re.error:
+                    await ctx.send("Invalid regex syntax.")
+                    return
+            else:
+                quotes = await self.fetch_list("SELECT ID, Name, Quote FROM Quotes WHERE Quote LIKE ?", (f"%{query}%",))
 
-                except asyncio.TimeoutError:
-                    await msg.remove_reaction("🆗", self.bot.user)
+        if not quotes:
+            msg = await ctx.send("Quote not found.\n")
+            await msg.add_reaction("🆗")
 
-                else:
-                    await ctx.message.delete()
-                    await msg.delete()
+            def check(reaction, user):
+                # returns True if all the following is true:
+                # The user who reacted isn't the bot
+                # The reaction is the ok emoji
+                # The reaction is on the "Quote not found." message
+                return (user == ctx.message.author and user != self.bot.user) and (
+                    str(reaction.emoji) == "🆗" and reaction.message.id == msg.id
+                )
 
-                return
+            try:
+                await self.bot.wait_for("reaction_add", check=check, timeout=120)
+
+            except asyncio.TimeoutError:
+                await msg.remove_reaction("🆗", self.bot.user)
+
+            else:
+                await ctx.message.delete()
+                await msg.delete()
+
+            return
 
         quote_tuple: tuple[int, str, str] = random.choice(quotes)
         author_id = int(quote_tuple[0])
@@ -255,71 +243,68 @@ class Quotes(CanaryCog):
         List quotes
         """
 
+        db: aiosqlite.Connection
+        c: aiosqlite.Cursor
+
         await ctx.trigger_typing()
 
-        db: aiosqlite.Connection
-        async with self.db() as db:
-            c: aiosqlite.Cursor
+        quote_author = author if author else ctx.message.author
+        author_id = quote_author.id
 
-            quote_author = author if author else ctx.message.author
-            author_id = quote_author.id
+        quote_list: list[tuple] = await self.fetch_list("SELECT * FROM Quotes WHERE ID = ?", (author_id,))
+        if not quote_list:
+            await ctx.send("No quote found.", delete_after=60)
+            return
 
-            async with db.execute("SELECT * FROM Quotes WHERE ID = ?", (author_id,)) as c:
-                quote_list: list[aiosqlite.Row] = list(await c.fetchall())
+        quote_list_text = [f"[{i}] {quote[2]}" for i, quote in enumerate(quote_list, 1)]
 
-            if not quote_list:
-                await ctx.send("No quote found.", delete_after=60)
-                return
+        p = Pages(ctx, item_list=quote_list_text, title="Quotes from {}".format(quote_author.display_name))
 
-            quote_list_text = [f"[{i}] {quote[2]}" for i, quote in enumerate(quote_list, 1)]
+        await p.paginate()
 
-            p = Pages(ctx, item_list=quote_list_text, title="Quotes from {}".format(quote_author.display_name))
-
-            await p.paginate()
-
-            def msg_check(msg):
-                try:
-                    return (
-                        0 <= int(msg.content) <= len(quote_list)
-                        and msg.author.id == author_id
-                        and msg.channel == ctx.message.channel
-                    )
-                except ValueError:
-                    return False
-
-            while p.edit_mode:
-                await ctx.send(
-                    "Delete option selected. Enter a number to specify which "
-                    "quote you want to delete, or enter 0 to return.",
-                    delete_after=60,
+        def msg_check(msg):
+            try:
+                return (
+                    0 <= int(msg.content) <= len(quote_list)
+                    and msg.author.id == author_id
+                    and msg.channel == ctx.message.channel
                 )
+            except ValueError:
+                return False
 
-                try:
-                    message = await self.bot.wait_for("message", check=msg_check, timeout=60)
+        while p.edit_mode:
+            await ctx.send(
+                "Delete option selected. Enter a number to specify which "
+                "quote you want to delete, or enter 0 to return.",
+                delete_after=60,
+            )
 
-                except asyncio.TimeoutError:
-                    await ctx.send("Command timeout. You may want to run the command again.", delete_after=60)
-                    break
+            try:
+                message = await self.bot.wait_for("message", check=msg_check, timeout=60)
 
+            except asyncio.TimeoutError:
+                await ctx.send("Command timeout. You may want to run the command again.", delete_after=60)
+                break
+
+            else:
+                index = int(message.content) - 1
+                if index == -1:
+                    await ctx.send("Exit delq.", delete_after=60)
                 else:
-                    index = int(message.content) - 1
-                    if index == -1:
-                        await ctx.send("Exit delq.", delete_after=60)
-                    else:
-                        del quote_list[index]
+                    q = quote_list[index]
 
-                        await db.execute(
-                            "DELETE FROM Quotes WHERE ID = ? AND Quote = ?",
-                            (quote_list[index][0], quote_list[index][2]),
-                        )
+                    del quote_list[index]
+
+                    async with self.db() as db:
+                        await db.execute("DELETE FROM Quotes WHERE ID = ? AND Quote = ?", (q[0], q[2]))
                         await db.commit()
 
-                        await ctx.send("Quote deleted", delete_after=60)
-                        await message.delete()
+                    await ctx.send("Quote deleted", delete_after=60)
+                    await message.delete()
 
-                        p.itemList = [f"[{i}] {quote[2]}" for i, quote in enumerate(quote_list, 1)]
+                    p.itemList = [f"[{i}] {quote[2]}" for i, quote in enumerate(quote_list, 1)]
 
-                    await p.paginate()
+                await p.paginate()
 
     @commands.command(aliases=["allq", "aq"])
     async def all_quotes(self, ctx: commands.Context, *, query: str):
@@ -352,22 +337,17 @@ class Quotes(CanaryCog):
         query = " ".join(query_splitted)
         await ctx.trigger_typing()
 
-        db: aiosqlite.Connection
-        async with self.db() as db:
-            c: aiosqlite.Cursor
-
-            if query[0] == "/" and query[-1] == "/":
-                async with db.execute("SELECT * FROM Quotes") as c:
-                    quotes = list(await c.fetchall())
-
-                try:
-                    quote_list = [q for q in quotes if re.search(query[1:-1], q[2])]
-                except re.error:
-                    await ctx.send("Invalid regex syntax.")
-                    return
-            else:
-                async with db.execute("SELECT * FROM Quotes WHERE Quote LIKE ?", (f"%{query}%",)) as c:
-                    quote_list = list(await c.fetchall())
+        if query[0] == "/" and query[-1] == "/":
+            try:
+                quote_list = [
+                    q for q in (await self.fetch_list("SELECT * FROM Quotes"))
+                    if re.search(query[1:-1], q[2])
+                ]
+            except re.error:
+                await ctx.send("Invalid regex syntax.")
+                return
+        else:
+            quote_list = await self.fetch_list("SELECT * FROM Quotes WHERE Quote LIKE ?", (f"%{query}%",))
 
         if not quote_list:
             await ctx.send("No quote found.", delete_after=60)

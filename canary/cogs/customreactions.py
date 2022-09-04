@@ -74,11 +74,7 @@ class CustomReactions(CanaryCog):
         await self.rebuild_proposal_list()
 
     async def rebuild_reaction_list(self):
-        db: aiosqlite.Connection
-        async with self.db() as db:
-            c: aiosqlite.Cursor
-            async with db.execute("SELECT * FROM CustomReactions WHERE Proposal = 0") as c:
-                self.reaction_list = [tuple(r) for r in (await c.fetchall())]
+        self.reaction_list = await self.fetch_list("SELECT * FROM CustomReactions WHERE Proposal = 0")
 
         prompts = [row[1].lower() for row in self.reaction_list]
         responses = [row[2] for row in self.reaction_list]
@@ -89,11 +85,7 @@ class CustomReactions(CanaryCog):
         )
 
     async def rebuild_proposal_list(self):
-        db: aiosqlite.Connection
-        async with self.db() as db:
-            c: aiosqlite.Cursor
-            async with db.execute("SELECT * FROM CustomReactions WHERE Proposal = 1") as c:
-                self.proposal_list = [tuple(r) for r in (await c.fetchall())]
+        self.proposal_list = await self.fetch_list("SELECT * FROM CustomReactions WHERE Proposal = 1")
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
