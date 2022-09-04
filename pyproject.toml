@@ -32,10 +32,17 @@ yt-dlp = "^2021.12.27"
 Pillow = "^8.3.2"
 uvloop = {version="0.16.0", markers = "sys_platform == 'linux' or sys_platform == 'darwin'"}
 bidict = "^0.22.0"
+aiosqlite = "^0.17.0"
 
 [tool.poetry.dev-dependencies]
-pytest = "^7.0.1"
+pytest = "^7.0.71"
 black = "^22.6"
+mypy = ">=0.971,<0.972"
+types-beautifulsoup4 = "^4.11.5"
+types-regex = "^2022.8.17.0"
+types-requests = "^2.28.9"
+types-pytz = "^2022.2.1.0"
+types-tabulate = "^0.8.11"
 
 [tool.black]
 line-length = 120
