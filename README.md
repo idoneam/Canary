@@ -173,7 +173,7 @@ If you installed all dev dependencies, you can run tests with `poetry run pytest
 ## Running the bot
 
 Run `poetry run canary` in your shell. Ensure that your Discord token is set in the `config.ini` file within the 
-`config` directory.
+`canary/config` directory.
 
 ### Docker Container
 
@@ -206,7 +206,7 @@ mkdir -f runtime-data
 
 # Run the container
 docker run -d \
-  -v $(pwd)/config.ini:/canary/config/config.ini:ro \
+  -v $(pwd)/config.ini:/canary/canary/config/config.ini:ro \
   -v $(pwd)/runtime-data:/canary/data/runtime \
   canary:latest
 ```
