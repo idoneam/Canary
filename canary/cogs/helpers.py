@@ -15,6 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Canary. If not, see <https://www.gnu.org/licenses/>.
 # discord-py requirements
+import aiohttp
 import discord
 from discord.ext import commands
 from discord import utils
@@ -303,7 +304,13 @@ class Helpers(CanaryCog):
 
         await ctx.trigger_typing()
 
-        soup = BeautifulSoup(await fetch(MCGILL_KEY_DATES_URL, "content"), "html.parser")
+        try:
+            content = await fetch(MCGILL_KEY_DATES_URL, "content")
+        except Exception as e:
+            await ctx.send("Encountered an error while contacting the McGill server.")
+            raise e
+
+        soup = BeautifulSoup(content, "html.parser")
 
         now = datetime.datetime.now()
         current_year, current_month = now.year, now.month
