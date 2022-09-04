@@ -105,7 +105,11 @@ async def role_restoring_page(
     roles: list[discord.Role] | None,
     muted: bool = False,
 ):
-    channel = ctx.channel
+    channel: discord.TextChannel | None = ctx.channel  # Can be None from MockContext
+
+    if channel is None:
+        return
+
     if roles is None:
         # No row found in DB, as opposed to empty list
         if not muted:  # don't say anything if this is while unmuting
