@@ -25,7 +25,6 @@ from discord.ext import commands
 from ..bot import Canary
 
 # For DB functionality
-import sqlite3
 import json
 from .base_cog import CanaryCog
 from .utils.members import add_member_if_needed
