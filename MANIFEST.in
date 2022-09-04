@@ -1,0 +1,2 @@
+include canary/config/config.ini
+include canary/Martlet.schema
