@@ -15,8 +15,8 @@
 # You should have received a copy of the GNU General Public License
 # along with Canary. If not, see <https://www.gnu.org/licenses/>.
 
+import aiosqlite
 import discord
-import sqlite3
 
 from discord import utils
 from discord.ext import commands
@@ -35,48 +35,44 @@ async def save_existing_roles(
     if not roles_id and not muted:
         return
 
-    conn = sqlite3.connect(bot.config.db_path)
-    try:
-        c = conn.cursor()
+    db: aiosqlite.Connection
+    async with bot.db() as db:
         # store roles as a string of IDs separated by spaces
         if muted:
             now = datetime.datetime.now()
-            if is_in_muted_table(bot, user):
+            if await is_in_muted_table(bot, user):
                 t = (appeal_channel.id, user.id)
-                c.execute(f"UPDATE MutedUsers SET AppealChannelID = ? WHERE UserID = ?", t)
+                await db.execute(f"UPDATE MutedUsers SET AppealChannelID = ? WHERE UserID = ?", t)
             else:
                 t = (user.id, appeal_channel.id, " ".join(str(e) for e in roles_id), now)
-                c.execute(f"REPLACE INTO MutedUsers VALUES (?, ?, ?, ?)", t)
+                await db.execute(f"REPLACE INTO MutedUsers VALUES (?, ?, ?, ?)", t)
         else:
             t = (user.id, " ".join(str(e) for e in roles_id))
-            c.execute(f"REPLACE INTO PreviousRoles VALUES (?, ?)", t)
-        conn.commit()
-    finally:
-        conn.close()
+            await db.execute(f"REPLACE INTO PreviousRoles VALUES (?, ?)", t)
+
+        await db.commit()
 
 
-def fetch_saved_roles(bot, guild, user: discord.Member, muted: bool = False) -> list[discord.Role] | None:
-    conn = sqlite3.connect(bot.config.db_path)
-    try:
-        c = conn.cursor()
-        if muted:
-            fetched_roles = c.execute(f"SELECT Roles FROM MutedUsers WHERE UserID = ?", (user.id,)).fetchone()
-        else:
-            fetched_roles = c.execute(f"SELECT Roles FROM PreviousRoles WHERE ID = ?", (user.id,)).fetchone()
-        # the above returns a tuple with a string of IDs separated by spaces
+def fetch_saved_roles(bot: Canary, guild, user: discord.Member, muted: bool = False) -> list[discord.Role] | None:
+    db: aiosqlite.Connection
+    c: aiosqlite.Cursor
 
-        # Return list of all valid roles restored from the DB
-        #  - filter(None, ...) strips false-y elements
-        return (
-            list(
-                filter(None, (guild.get_role(int(role_id)) for role_id in fetched_roles[0].split(" ") if role_id != ""))
-            )
-            if fetched_roles
-            else None
+    async with bot.db() as db:
+        q = "SELECT Roles FROM " + ("MutedUsers WHERE UserID = ?" if muted else "PreviousRoles WHERE ID = ?")
+        async with db.execute(q, (user.id,)) as c:
+            fetched_roles = await c.fetchone()
+
+    # the above returns a tuple with a string of IDs separated by spaces
+
+    # Return list of all valid roles restored from the DB
+    #  - filter(None, ...) strips false-y elements
+    return (
+        list(
+            filter(None, (guild.get_role(int(role_id)) for role_id in fetched_roles[0].split(" ") if role_id != ""))
         )
-
-    finally:
-        conn.close()
+        if fetched_roles
+        else None
+    )
 
 
 def has_muted_role(user: discord.Member):
@@ -84,28 +80,23 @@ def has_muted_role(user: discord.Member):
     return muted_role and next((r for r in user.roles if r == muted_role), None) is not None
 
 
-def is_in_muted_table(bot, user: discord.Member):
-    conn = sqlite3.connect(bot.config.db_path)
-    try:
-        c = conn.cursor()
-        muted = c.execute("SELECT * FROM MutedUsers WHERE UserID = ?", (user.id,)).fetchone()
-        return muted is not None
-    finally:
-        conn.close()
+async def is_in_muted_table(bot: Canary, user: discord.Member):
+    db: aiosqlite.Connection
+    c: aiosqlite.Cursor
+    async with bot.db() as db:
+        async with db.execute("SELECT * FROM MutedUsers WHERE UserID = ?", (user.id,)) as c:
+            return (await c.fetchone()) is not None
 
 
-def remove_from_muted_table(bot, user: discord.Member):
-    conn = sqlite3.connect(bot.config.db_path)
-    try:
-        c = conn.cursor()
-        c.execute("DELETE FROM MutedUsers WHERE UserID = ?", (user.id,))
-        conn.commit()
-    finally:
-        conn.close()
+async def remove_from_muted_table(bot: Canary, user: discord.Member):
+    db: aiosqlite.Connection
+    async with bot.db() as db:
+        await db.execute("DELETE FROM MutedUsers WHERE UserID = ?", (user.id,))
+        await db.commit()
 
 
 async def role_restoring_page(
-    bot,
+    bot: Canary,
     ctx: discord.ext.commands.Context | MockContext,
     user: discord.Member,
     roles: list[discord.Role] | None,
