@@ -16,12 +16,13 @@
 # along with Canary. If not, see <https://www.gnu.org/licenses/>.
 
 import asyncio
+
+import aiosqlite
 import discord
 import os
 import pickle
 import random
 import re
-import sqlite3
 
 from discord.ext import commands
 from time import time
@@ -222,16 +223,16 @@ class Games(CanaryCog):
         del self.hm_locks[ctx.message.channel]
 
         if winner is not None:
-            conn = sqlite3.connect(self.bot.config.db_path)
-            await self.bot.get_cog("Currency").create_bank_transaction(
-                conn.cursor(),
-                winner,
-                self.hm_cool_win if cool_win else self.hm_norm_win,
-                HANGMAN_REWARD,
-                {"cool": cool_win},
-            )
-            conn.commit()
-            conn.close()
+            db: aiosqlite.Connection
+            async with self.db() as db:
+                await self.bot.get_cog("Currency").create_bank_transaction(
+                    db,
+                    winner,
+                    self.hm_cool_win if cool_win else self.hm_norm_win,
+                    HANGMAN_REWARD,
+                    {"cool": cool_win},
+                )
+                await db.commit()
 
     @commands.command()
     async def roll(self, ctx, arg: str = "", mpr: str = ""):
