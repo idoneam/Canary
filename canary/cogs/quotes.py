@@ -23,7 +23,6 @@ import random
 import re
 
 from discord.ext import commands
-from typing import Iterable
 
 from ..bot import Canary
 from .base_cog import CanaryCog
@@ -166,17 +165,16 @@ class Quotes(CanaryCog):
         regex by surrounding the the query with /.../.
         """
 
-        quotes: Iterable[aiosqlite.Row]
+        quotes: list[tuple[int, str, str]]
 
         db: aiosqlite.Connection
+        c: aiosqlite.Cursor
         async with self.db() as db:
-            c: aiosqlite.Cursor
-
             mentions = ctx.message.mentions
 
             if str1 is None:  # No argument passed
                 async with db.execute("SELECT ID, Name, Quote FROM Quotes") as c:
-                    quotes = await c.fetchall()
+                    quotes = [tuple(r) for r in await c.fetchall()]
 
             elif mentions and mentions[0].mention == str1:  # Has args
                 u_id = mentions[0].id
@@ -185,13 +183,13 @@ class Quotes(CanaryCog):
                     "SELECT ID, Name, Quote FROM Quotes WHERE ID = ? AND Quote LIKE ?",
                     (u_id, f"%{str2 if str2 is not None else ''}%"),
                 ) as c:
-                    quotes = await c.fetchall()
+                    quotes = [tuple(r) for r in await c.fetchall()]
 
             else:  # query for quote only
                 query = str1 if str2 is None else f"{str1} {str2}"
                 if query[0] == "/" and query[-1] == "/":
                     async with db.execute("SELECT ID, Name, Quote FROM Quotes") as c:
-                        quotes = await c.fetchall()
+                        quotes = [tuple(r) for r in await c.fetchall()]
                     try:
                         quotes = [q for q in quotes if re.search(query[1:-1], q[2])]
                     except re.error:
@@ -202,7 +200,7 @@ class Quotes(CanaryCog):
                         "SELECT ID, Name, Quote FROM Quotes WHERE Quote LIKE ?",
                         (f"%{query}%",),
                     ) as c:
-                        quotes = await c.fetchall()
+                        quotes = [tuple(r) for r in await c.fetchall()]
 
             if not quotes:
                 msg = await ctx.send("Quote not found.\n")
@@ -229,7 +227,7 @@ class Quotes(CanaryCog):
 
                 return
 
-        quote_tuple: tuple[int, str, str] = tuple(random.choice(list(quotes)))
+        quote_tuple: tuple[int, str, str] = random.choice(quotes)
         author_id = int(quote_tuple[0])
         name = quote_tuple[1]
         quote = quote_tuple[2]

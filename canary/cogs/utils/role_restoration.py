@@ -28,7 +28,7 @@ import datetime
 
 
 async def save_existing_roles(
-    bot: Canary, user: discord.Member, muted: bool = False, appeal_channel: discord.TextChannel = None
+    bot: Canary, user: discord.Member, muted: bool = False, appeal_channel: discord.TextChannel | None = None
 ):
     roles_id = [role.id for role in user.roles if role.name not in ("@everyone", muted_role_name)]
 
@@ -39,16 +39,21 @@ async def save_existing_roles(
     async with bot.db() as db:
         # store roles as a string of IDs separated by spaces
         if muted:
-            now = datetime.datetime.now()
+            if not appeal_channel:
+                return
+
             if await is_in_muted_table(bot, user):
-                t = (appeal_channel.id, user.id)
-                await db.execute(f"UPDATE MutedUsers SET AppealChannelID = ? WHERE UserID = ?", t)
+                await db.execute(
+                    f"UPDATE MutedUsers SET AppealChannelID = ? WHERE UserID = ?", (appeal_channel.id, user.id)
+                )
             else:
-                t = (user.id, appeal_channel.id, " ".join(str(e) for e in roles_id), now)
-                await db.execute(f"REPLACE INTO MutedUsers VALUES (?, ?, ?, ?)", t)
+                await db.execute(
+                    f"REPLACE INTO MutedUsers VALUES (?, ?, ?, ?)",
+                    (user.id, appeal_channel.id, " ".join(str(e) for e in roles_id), datetime.datetime.now()),
+                )
+
         else:
-            t = (user.id, " ".join(str(e) for e in roles_id))
-            await db.execute(f"REPLACE INTO PreviousRoles VALUES (?, ?)", t)
+            await db.execute(f"REPLACE INTO PreviousRoles VALUES (?, ?)", (user.id, " ".join(str(e) for e in roles_id)))
 
         await db.commit()
 

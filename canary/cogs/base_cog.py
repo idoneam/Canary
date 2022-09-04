@@ -4,7 +4,7 @@ import discord
 import os
 
 from discord.ext import commands
-from typing import Iterable
+from typing import AsyncGenerator, Iterable
 
 from ..bot import Canary
 
@@ -27,7 +27,7 @@ class CanaryCog(commands.Cog):
             os.mkdir("./tmp/", mode=0o755)
 
     @contextlib.asynccontextmanager
-    async def db(self) -> aiosqlite.Connection:
+    async def db(self) -> AsyncGenerator[aiosqlite.Connection, None]:
         async with self.bot.db() as conn:
             yield conn
 

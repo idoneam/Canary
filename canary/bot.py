@@ -24,6 +24,7 @@ from canary.config import parser
 from discord import Webhook, RequestsWebhookAdapter, Intents
 from discord.ext import commands
 from pathlib import Path
+from typing import AsyncGenerator
 
 __all__ = ["Canary", "bot", "developer_role", "moderator_role", "muted_role"]
 
@@ -95,7 +96,7 @@ class Canary(commands.Bot):
         await super().start(*args, **kwargs)
 
     @contextlib.asynccontextmanager
-    async def db(self) -> aiosqlite.Connection:
+    async def db(self) -> AsyncGenerator[aiosqlite.Connection, None]:
         conn: aiosqlite.Connection
         async with aiosqlite.connect(self.config.db_path) as conn:
             await conn.execute("PRAGMA foreign_keys = ON")

@@ -219,6 +219,10 @@ class Banner(CanaryCog):
         if not self.guild:
             return
 
+        if not self.banner_of_the_week_channel:
+            await ctx.send("No banner of the week channel set.")
+            return
+
         if not self.banner_submissions_channel:
             await ctx.send("No banner submissions channel set.")
             return
@@ -275,8 +279,8 @@ class Banner(CanaryCog):
         winner_id = winner.id
 
         db: aiosqlite.Connection
+        c: aiosqlite.Cursor
         async with self.db() as db:
-            c: aiosqlite.Cursor
             async with db.execute("SELECT * FROM BannerSubmissions WHERE UserID = ?", (winner_id,)) as c:
                 fetched = await c.fetchone()
 
@@ -394,6 +398,10 @@ class Banner(CanaryCog):
         You must be a verified user to use this command.
         """
 
+        if not self.banner_submissions_channel:
+            await ctx.send("No banner submissions channel set.")
+            return
+
         if not (
             discord.utils.get(ctx.author.roles, name=self.bot.config.mcgillian_role)
             or discord.utils.get(ctx.author.roles, name=self.bot.config.honorary_mcgillian_role)
@@ -430,7 +438,7 @@ class Banner(CanaryCog):
 
         stretch = "-stretch" in args or "-stretched" in args
 
-        url = None
+        url: str | None = None
         if (stretch and len(args) == 1) or (not stretch and len(args) == 0):
             try:
                 url = ctx.message.attachments[0].url
@@ -449,6 +457,9 @@ class Banner(CanaryCog):
                 for arg in args:
                     if arg != "-stretch" and arg != "-stretched":
                         url = arg
+
+        if url is None:
+            return
 
         user_image_file = BytesIO(requests.get(url).content)
         if user_image_file.getbuffer().nbytes >= 10000000:

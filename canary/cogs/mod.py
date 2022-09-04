@@ -249,6 +249,9 @@ class Mod(CanaryCog):
         if not self.guild:
             return
 
+        if not self.appeals_log_channel:
+            return
+
         # note that this is made such that if a user is already muted
         # we make sure the user still has the role, is still in the db, and still has a channel
         confirmation_channel = ctx.channel if ctx else self.appeals_log_channel

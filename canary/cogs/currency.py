@@ -84,7 +84,8 @@ class Currency(CanaryCog):
             async with db.execute(
                 "SELECT IFNULL(SUM(Amount), 0) FROM BankTransactions WHERE UserID = ?", (user.id,)
             ) as c:
-                balance = self.db_to_currency((await c.fetchone())[0])
+                # noinspection PyRedundantParentheses
+                balance = self.db_to_currency(((await c.fetchone()) or (0,))[0])
                 if balance is None:
                     balance = Decimal(0)
                 return balance
