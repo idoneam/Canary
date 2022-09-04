@@ -14,7 +14,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Canary. If not, see <https://www.gnu.org/licenses/>.
-
+import aiosqlite
 import discord
 import sqlite3
 import random
@@ -22,6 +22,7 @@ from bidict import bidict
 from discord import utils
 from discord.ext import commands, tasks
 
+from .base_cog import CanaryCog
 from .utils.checks import is_moderator
 from datetime import datetime, timedelta
 from .utils.role_restoration import (
@@ -35,35 +36,36 @@ from .utils.role_restoration import (
 from .utils.mock_context import MockContext
 
 
-class Mod(commands.Cog):
+class Mod(CanaryCog):
     def __init__(self, bot):
-        self.bot = bot
-        self.guild: discord.Guild | None = None
+        super().__init__(bot)
+
         self.verification_channel: discord.TextChannel | None = None
         self.last_verification_purge_datetime: datetime | None = None
         self.muted_users_to_appeal_channels: bidict = bidict()
         self.appeals_log_channel: discord.TextChannel | None = None
         self.muted_role: discord.Role | None = None
 
-    @commands.Cog.listener()
+    @CanaryCog.listener()
     async def on_ready(self):
-        self.guild = self.bot.get_guild(self.bot.config.server_id)
+        await super().on_ready()  # TODO: needed?
 
         if not self.guild:
             return
 
         await self.verification_purge_startup()
 
-        conn = sqlite3.connect(self.bot.config.db_path)
-        c = conn.cursor()
-        c.execute("SELECT * FROM MutedUsers")
-        self.muted_users_to_appeal_channels = bidict(
-            [
-                (self.bot.get_user(user_id), self.bot.get_channel(appeal_channel_id))
-                for (user_id, appeal_channel_id, roles, date) in c.fetchall()
-            ]
-        )
-        conn.close()
+        db: aiosqlite.Connection
+        async with self.db() as db:
+            c: aiosqlite.Cursor
+            async with db.execute("SELECT * FROM MutedUsers") as c:
+                self.muted_users_to_appeal_channels = bidict(
+                    [
+                        (self.bot.get_user(user_id), self.bot.get_channel(appeal_channel_id))
+                        for (user_id, appeal_channel_id, roles, date) in (await c.fetchall())
+                    ]
+                )
+
         self.appeals_log_channel = utils.get(self.guild.text_channels, name=self.bot.config.appeals_log_channel)
         self.muted_role = utils.get(self.guild.roles, name=self.bot.config.muted_role)
 
@@ -312,7 +314,7 @@ class Mod(commands.Cog):
         # save existing roles and add muted user to database (with the attached appeal channel)
         # note that this function is such that if the user was already in the db, only the appeal channel is updated
         # (i.e, the situation where a mod had manually deleted the appeal channel)
-        save_existing_roles(self.bot, user, muted=True, appeal_channel=channel)
+        await save_existing_roles(self.bot, user, muted=True, appeal_channel=channel)
 
         # Remove all roles
         failed_roles: list[str] = []
