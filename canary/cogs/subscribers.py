@@ -29,12 +29,13 @@ import os
 import re
 import pickle
 import feedparser
-import requests
 
 # Type hinting
 from ..bot import Canary
+from .base_cog import CanaryCog
 
 # Subscriber decorator
+from .utils.custom_requests import fetch
 from .utils.subscribers import canary_subscriber
 
 CFIA_FEED_URL = "http://inspection.gc.ca/eng/1388422350443/1388422374046.xml"
@@ -61,9 +62,9 @@ METRO_NORMAL_SERVICE_MESSAGE = "Normal métro service"
 os.makedirs("./data/runtime", exist_ok=True)
 
 
-class Subscribers(commands.Cog):
+class Subscribers(CanaryCog):
     def __init__(self, bot: Canary):
-        self.bot: Canary = bot
+        super().__init__(bot)
 
         # Compiled recall regular expression for filtering
         self._recall_filter = re.compile(self.bot.config.recall_filter, re.IGNORECASE)
@@ -81,13 +82,13 @@ class Subscribers(commands.Cog):
 
     @commands.Cog.listener()
     async def on_ready(self):
-        self._recall_channel = utils.get(
-            self.bot.get_guild(self.bot.config.server_id).text_channels, name=self.bot.config.recall_channel
-        )
+        await super().on_ready()
 
-        self._metro_status_channel = utils.get(
-            self.bot.get_guild(self.bot.config.server_id).text_channels, name=self.bot.config.metro_status_channel
-        )
+        if not self.guild:
+            return
+
+        self._recall_channel = utils.get(self.guild.text_channels, name=self.bot.config.recall_channel)
+        self._metro_status_channel = utils.get(self.guild.text_channels, name=self.bot.config.metro_status_channel)
 
         # Register all subscribers
         self.bot.loop.create_task(self.cfia_rss())
@@ -100,6 +101,9 @@ class Subscribers(commands.Cog):
         Co-routine that periodically checks the CFIA Health Hazard Alerts RSS
          feed for updates.
         """
+
+        if not self._recall_channel:
+            return
 
         newest_recalls = feedparser.parse(CFIA_FEED_URL)["entries"]
 
@@ -158,9 +162,11 @@ class Subscribers(commands.Cog):
         outages.
         """
 
+        if not self._metro_status_channel:
+            return
+
         try:
-            response = requests.get(METRO_STATUS_API)
-            response_data = response.json()
+            response_data = await fetch(METRO_STATUS_API, "json")
         except json.decoder.JSONDecodeError:
             # STM API sometimes returns non-JSON responses
             return
