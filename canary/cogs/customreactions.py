@@ -223,8 +223,8 @@ class CustomReactions(CanaryCog):
                 # List proposals
                 EMOJI["pencil"]: {
                     "fn": list_custom_reacts,
-                    "desc": f"See the list of proposed reactions ({get_number_of_proposals()})" + (
-                        " and approve or reject them" if is_moderator else ""),
+                    "desc": f"See the list of proposed reactions ({get_number_of_proposals()})"
+                    + (" and approve or reject them" if is_moderator else ""),
                     "kwargs": dict(proposals=True),
                 },
                 # List placeholders

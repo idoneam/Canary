@@ -181,7 +181,8 @@ class Quotes(CanaryCog):
             if query[0] == "/" and query[-1] == "/":
                 try:
                     quotes = [
-                        q for q in (await self.fetch_list("SELECT ID, Name, Quote FROM Quotes"))
+                        q
+                        for q in (await self.fetch_list("SELECT ID, Name, Quote FROM Quotes"))
                         if re.search(query[1:-1], q[2])
                     ]
                 except re.error:
@@ -340,8 +341,7 @@ class Quotes(CanaryCog):
         if query[0] == "/" and query[-1] == "/":
             try:
                 quote_list = [
-                    q for q in (await self.fetch_list("SELECT * FROM Quotes"))
-                    if re.search(query[1:-1], q[2])
+                    q for q in (await self.fetch_list("SELECT * FROM Quotes")) if re.search(query[1:-1], q[2])
                 ]
             except re.error:
                 await ctx.send("Invalid regex syntax.")

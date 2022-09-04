@@ -68,11 +68,13 @@ class Currency(CanaryCog):
         # after
         return [
             (user_id, name, self.db_to_currency(balance))
-            for user_id, name, balance in (await self.fetch_list(
-                "SELECT BT.UserID, M.Name, IFNULL(SUM(BT.Amount), 0) "
-                "FROM BankTransactions AS BT, Members as M "
-                "WHERE BT.UserID = M.ID GROUP BY UserID"
-            ))
+            for user_id, name, balance in (
+                await self.fetch_list(
+                    "SELECT BT.UserID, M.Name, IFNULL(SUM(BT.Amount), 0) "
+                    "FROM BankTransactions AS BT, Members as M "
+                    "WHERE BT.UserID = M.ID GROUP BY UserID"
+                )
+            )
         ]
 
     async def fetch_bank_balance(self, user: discord.Member) -> Decimal:

@@ -467,20 +467,26 @@ class Score(CanaryCog):
         if args_dict["emojitype"] != "score":
             # get the WHERE conditions and the values
             where_str, t = self._where_str_and_values_from_args_dict(args_dict)
-            counts = list(zip(*(await self.fetch_list(
-                (
-                    f"SELECT printf('%d. %s', "
-                    f"ROW_NUMBER() OVER (ORDER BY count(*) DESC), M.Name), "
-                    f"printf('%d %s', count(*), "
-                    f"IIF (count(*)!=1, 'times', 'time')) "
-                    f"FROM Reactions AS R, Members as M "
-                    f"WHERE {where_str} "
-                    f"AND R.{select_id} = M.ID "
-                    f"GROUP BY R.{select_id} "
-                    f"ORDER BY count(*) DESC"
-                ),
-                t,
-            ))))
+            counts = list(
+                zip(
+                    *(
+                        await self.fetch_list(
+                            (
+                                f"SELECT printf('%d. %s', "
+                                f"ROW_NUMBER() OVER (ORDER BY count(*) DESC), M.Name), "
+                                f"printf('%d %s', count(*), "
+                                f"IIF (count(*)!=1, 'times', 'time')) "
+                                f"FROM Reactions AS R, Members as M "
+                                f"WHERE {where_str} "
+                                f"AND R.{select_id} = M.ID "
+                                f"GROUP BY R.{select_id} "
+                                f"ORDER BY count(*) DESC"
+                            ),
+                            t,
+                        )
+                    )
+                )
+            )
 
             if not counts:
                 await ctx.send(embed=discord.Embed(title="This reaction was never used on this server."))
@@ -489,23 +495,29 @@ class Score(CanaryCog):
         else:
             # get the WHERE conditions and the values
             where_str, t = self._where_str_and_values_from_args_dict(args_dict, prefix="R")
-            counts = list(zip(*(await self.fetch_list(
-                (
-                    f"SELECT printf('%d. %s', "
-                    f"ROW_NUMBER() OVER (ORDER BY TotalCount DESC), Name), "
-                    f"TotalCount FROM "
-                    f"(SELECT M.Name, "
-                    f"COUNT(IIF (ReactionName = ?1, 1, NULL)) - "
-                    f"COUNT(IIF (ReactionName = ?2, 1, NULL)) "
-                    f"AS TotalCount "
-                    f"FROM Reactions AS R, Members as M "
-                    f"WHERE {where_str} "
-                    f"AND (ReactionName = ?1 OR ReactionName=?2) "
-                    f"AND R.{select_id} = M.ID "
-                    f"GROUP BY R.{select_id})"
-                ),
-                (str(self.UPMARTLET), str(self.DOWNMARTLET), *t),
-            ))))
+            counts = list(
+                zip(
+                    *(
+                        await self.fetch_list(
+                            (
+                                f"SELECT printf('%d. %s', "
+                                f"ROW_NUMBER() OVER (ORDER BY TotalCount DESC), Name), "
+                                f"TotalCount FROM "
+                                f"(SELECT M.Name, "
+                                f"COUNT(IIF (ReactionName = ?1, 1, NULL)) - "
+                                f"COUNT(IIF (ReactionName = ?2, 1, NULL)) "
+                                f"AS TotalCount "
+                                f"FROM Reactions AS R, Members as M "
+                                f"WHERE {where_str} "
+                                f"AND (ReactionName = ?1 OR ReactionName=?2) "
+                                f"AND R.{select_id} = M.ID "
+                                f"GROUP BY R.{select_id})"
+                            ),
+                            (str(self.UPMARTLET), str(self.DOWNMARTLET), *t),
+                        )
+                    )
+                )
+            )
 
             if not counts:
                 await ctx.send(embed=discord.Embed(title="No results found"))
@@ -562,18 +574,24 @@ class Score(CanaryCog):
         # get the WHERE conditions and the values
         where_str, t = self._where_str_and_values_from_args_dict(args_dict)
 
-        counts = list(zip(*(await self.fetch_list(
-            (
-                f"SELECT printf('%d. %s', "
-                f"ROW_NUMBER() OVER (ORDER BY count(*) DESC), "
-                f"ReactionName), printf('%d %s', count(*), "
-                f"IIF (count(*)!=1, 'times', 'time')) "
-                f"FROM Reactions "
-                f"WHERE {where_str} "
-                f"GROUP BY ReactionName "
-            ),
-            t,
-        ))))
+        counts = list(
+            zip(
+                *(
+                    await self.fetch_list(
+                        (
+                            f"SELECT printf('%d. %s', "
+                            f"ROW_NUMBER() OVER (ORDER BY count(*) DESC), "
+                            f"ReactionName), printf('%d %s', count(*), "
+                            f"IIF (count(*)!=1, 'times', 'time')) "
+                            f"FROM Reactions "
+                            f"WHERE {where_str} "
+                            f"GROUP BY ReactionName "
+                        ),
+                        t,
+                    )
+                )
+            )
+        )
 
         if not counts:
             await ctx.send(embed=discord.Embed(title="No results found"))

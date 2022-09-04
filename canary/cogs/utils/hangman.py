@@ -86,9 +86,7 @@ def mk_animal_list() -> list[tuple[str, str]]:
         if curr_entry is None:
             continue
         animal_name = curr_entry.find("a")
-        animal_soup = BeautifulSoup(
-            requests.get(f"https://en.wikipedia.org{animal_name['href']}").content, "lxml"
-        )
+        animal_soup = BeautifulSoup(requests.get(f"https://en.wikipedia.org{animal_name['href']}").content, "lxml")
         img_list = animal_soup.find_all("img")
         img_index = 0
         while str(img_list[img_index]["src"]).endswith(".svg.png"):
@@ -117,9 +115,7 @@ def mk_country_list() -> list[tuple[str, str]]:
             (
                 country_name,
                 "https:"
-                + BeautifulSoup(
-                    requests.get(f"https://en.wikipedia.org{country_name_entry['href']}").content, "lxml"
-                )
+                + BeautifulSoup(requests.get(f"https://en.wikipedia.org{country_name_entry['href']}").content, "lxml")
                 .find("table", {"class": "infobox"})
                 .find("a", {"class": "image"})
                 .find("img")["src"],
@@ -139,9 +135,7 @@ def mk_element_list() -> list[tuple[str, Optional[str]]]:
         try:
             elem_img: Optional[str] = (
                 "https:"
-                + BeautifulSoup(
-                    requests.get(f"https://en.wikipedia.org{elem_name_entry['href']}").content, "lxml"
-                )
+                + BeautifulSoup(requests.get(f"https://en.wikipedia.org{elem_name_entry['href']}").content, "lxml")
                 .find("table", {"class": "infobox"})
                 .find("a")
                 .find("img")["src"]
