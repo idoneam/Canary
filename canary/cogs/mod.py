@@ -233,11 +233,11 @@ class Mod(commands.Cog):
 
     @commands.command()
     @is_moderator()
-    async def verification_purge(self, ctx, id: int = None):
+    async def verification_purge(self, ctx, id_: int = None):
         """
         Manually start the purge of pictures in the verification channel.
 
-        If a message ID is provided, every pictures after that message will be removed.
+        If a message ID is provided, every picture after that message will be removed.
         If no message ID is provided, this will be done for the whole channel (may take time).
         """
 
@@ -256,8 +256,8 @@ class Mod(commands.Cog):
                 return
 
         message = None
-        if id is not None:
-            message = await self.verification_channel.fetch_message(id)
+        if id_ is not None:
+            message = await self.verification_channel.fetch_message(id_)
 
         await self.verification_purge_utility(message)
 
@@ -385,7 +385,7 @@ class Mod(commands.Cog):
 
     @commands.command()
     @is_moderator()
-    async def mute(self, ctx, user: discord.Member):
+    async def mute(self, ctx: commands.Context, user: discord.Member):
         """
         Mute a user and create an appeal channel (mod-only). The user's current roles are saved.
 
@@ -395,7 +395,7 @@ class Mod(commands.Cog):
 
     @commands.command()
     @is_moderator()
-    async def unmute(self, ctx, user: discord.Member):
+    async def unmute(self, ctx: commands.Context, user: discord.Member):
         """
         Unmute a user and delete the appeal channel (mod-only). The user's previous roles are restored after
         confirmation.
