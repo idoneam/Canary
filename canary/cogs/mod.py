@@ -16,7 +16,6 @@
 # along with Canary. If not, see <https://www.gnu.org/licenses/>.
 import aiosqlite
 import discord
-import sqlite3
 import random
 from bidict import bidict
 from discord import utils
@@ -56,8 +55,8 @@ class Mod(CanaryCog):
         await self.verification_purge_startup()
 
         db: aiosqlite.Connection
+        c: aiosqlite.Cursor
         async with self.db() as db:
-            c: aiosqlite.Cursor
             async with db.execute("SELECT * FROM MutedUsers") as c:
                 self.muted_users_to_appeal_channels = bidict(
                     [
@@ -77,22 +76,18 @@ class Mod(CanaryCog):
         # arbitrary min date because choosing dates that predate discord will cause an httpexception
         # when fetching message history after that date later on
         self.last_verification_purge_datetime = datetime(2018, 1, 1)
-        conn = sqlite3.connect(self.bot.config.db_path)
-        c = conn.cursor()
-        c.execute("SELECT Value FROM Settings WHERE Key = ?", ("last_verification_purge_timestamp",))
-        fetched = c.fetchone()
+
+        fetched = await self.get_settings_key("last_verification_purge_timestamp")
         if fetched:
-            last_purge_timestamp = float(fetched[0])
+            last_purge_timestamp = float(fetched)
             if last_purge_timestamp:
                 self.last_verification_purge_datetime = datetime.fromtimestamp(last_purge_timestamp)
         else:
             # the verification purge info setting has not been added to db yet
-            c.execute(
-                "INSERT INTO Settings VALUES (?, ?)",
-                ("last_verification_purge_timestamp", self.last_verification_purge_datetime.timestamp()),
+            await self.set_settings_key(
+                "last_verification_purge_timestamp",
+                str(self.last_verification_purge_datetime.timestamp())
             )
-            conn.commit()
-        conn.close()
 
         self.check_verification_purge.start()
 
@@ -105,19 +100,11 @@ class Mod(CanaryCog):
         if datetime.now() < self.last_verification_purge_datetime + timedelta(days=7):
             return
 
-        conn = sqlite3.connect(self.bot.config.db_path)
-        c = conn.cursor()
         # delete everything since the day of the last purge, including that day itself
         await self.verification_purge_utility(self.last_verification_purge_datetime - timedelta(days=1))
         # update info
-        c.execute("SELECT Value FROM Settings WHERE Key = ?", ("last_verification_purge_timestamp",))
-        fetched = c.fetchone()
-        if fetched:
-            c.execute(
-                "REPLACE INTO Settings VALUES (?, ?)", ("last_verification_purge_timestamp", datetime.now().timestamp())
-            )
-            conn.commit()
-        conn.close()
+        if (await self.get_settings_key("last_verification_purge_timestamp")) is not None:
+            await self.set_settings_key("last_verification_purge_timestamp", str(datetime.now().timestamp()))
 
     @commands.command()
     async def answer(self, ctx: commands.Context, *args):
@@ -153,22 +140,18 @@ class Mod(CanaryCog):
     async def initiate_crabbo(self, ctx: commands.Context):
         """Initiates secret crabbo ceremony"""
 
-        conn = sqlite3.connect(self.bot.config.db_path)
-        c = conn.cursor()
-        c.execute("SELECT Value FROM Settings WHERE Key = ?", ("CrabboMsgID",))
-        if c.fetchone():
+        if (await self.get_settings_key("CrabboMsgID")) is not None:
             await ctx.send("secret crabbo has already been started.")
-            conn.close()
             return
+
         crabbo_msg = await ctx.send(
             "🦀🦀🦀 crabbo time 🦀🦀🦀\n<@&"
             f"{discord.utils.get(ctx.guild.roles, name=self.bot.config.crabbo_role).id}"
             "> react to this message with 🦀 to enter the secret crabbo festival\n"
             "🦀🦀🦀 crabbo time 🦀🦀🦀"
         )
-        c.execute("REPLACE INTO Settings VALUES (?, ?)", ("CrabboMsgID", crabbo_msg.id))
-        conn.commit()
-        conn.close()
+
+        await self.set_settings_key("CrabboMsgID", str(crabbo_msg.id))
         await ctx.message.delete()
 
     @commands.command()
@@ -176,24 +159,24 @@ class Mod(CanaryCog):
     async def finalize_crabbo(self, ctx: commands.Context):
         """Sends crabbos their secret crabbo"""
 
-        conn = sqlite3.connect(self.bot.config.db_path)
-        c = conn.cursor()
-        c.execute("SELECT Value FROM Settings WHERE Key = ?", ("CrabboMsgID",))
-        msg_id = c.fetchone()
-        c.execute("DELETE FROM Settings WHERE Key = ?", ("CrabboMsgID",))
-        conn.commit()
-        conn.close()
+        msg_id = await self.get_settings_key("CrabboMsgId")
+
         if not msg_id:
             await ctx.send("secret crabbo is not currently occurring.")
             return
+
+        await self.del_settings_key("CrabboMsgId")
+
         crabbos = None
-        for react in (await ctx.fetch_message(int(msg_id[0]))).reactions:
+        for react in (await ctx.fetch_message(int(msg_id))).reactions:
             if str(react) == "🦀":
                 crabbos = await react.users().flatten()
                 break
+
         if crabbos is None or (num_crabbos := len(crabbos)) < 2:
             await ctx.send("not enough people participated in the secret crabbo festival.")
             return
+
         random.shuffle(crabbos)
         for index, crabbo in enumerate(crabbos):
             await self.bot.get_user(crabbo.id).send(
@@ -325,6 +308,7 @@ class Mod(CanaryCog):
                 await user.remove_roles(role, reason=reason_message)
             except (discord.Forbidden, discord.HTTPException):
                 failed_roles.append(str(role))
+
         # update dict
         self.muted_users_to_appeal_channels[user] = channel
 
@@ -367,7 +351,7 @@ class Mod(CanaryCog):
         )
 
         # Remove entry from the database
-        remove_from_muted_table(self.bot, user)
+        await remove_from_muted_table(self.bot, user)
 
         # Delete appeal channel
         if user in self.muted_users_to_appeal_channels:
@@ -406,7 +390,7 @@ class Mod(CanaryCog):
         """
         await self.unmute_utility(user, ctx=ctx)
 
-    @commands.Cog.listener()
+    @CanaryCog.listener()
     async def on_member_update(self, before, after):
         muted_role_before = self.muted_role in before.roles
         muted_role_after = self.muted_role in after.roles
@@ -416,7 +400,7 @@ class Mod(CanaryCog):
             not muted_role_before
             and muted_role_after
             and not (
-                is_in_muted_table(self.bot, after)
+                (await is_in_muted_table(self.bot, after))
                 and has_muted_role(after)
                 and after in self.muted_users_to_appeal_channels
                 and self.muted_users_to_appeal_channels[after] in self.guild.text_channels
@@ -429,7 +413,7 @@ class Mod(CanaryCog):
             muted_role_before
             and not muted_role_after
             and (
-                is_in_muted_table(self.bot, after)
+                (await is_in_muted_table(self.bot, after))
                 or has_muted_role(after)
                 or after in self.muted_users_to_appeal_channels
             )
@@ -437,7 +421,7 @@ class Mod(CanaryCog):
             await self.unmute_utility(after)
 
     # the next three functions are used for appeals logging
-    @commands.Cog.listener()
+    @CanaryCog.listener()
     async def on_message(self, message):
         if message.channel not in self.muted_users_to_appeal_channels.values():
             return
@@ -460,7 +444,7 @@ class Mod(CanaryCog):
 
         await self.appeals_log_channel.send(log_message)
 
-    @commands.Cog.listener()
+    @CanaryCog.listener()
     async def on_message_edit(self, before, after):
         if after.channel not in self.muted_users_to_appeal_channels.values():
             return
@@ -483,7 +467,7 @@ class Mod(CanaryCog):
 
         await self.appeals_log_channel.send(log_message)
 
-    @commands.Cog.listener()
+    @CanaryCog.listener()
     async def on_message_delete(self, message):
         if message.channel not in self.muted_users_to_appeal_channels.values():
             return
@@ -503,7 +487,7 @@ class Mod(CanaryCog):
 
         await self.appeals_log_channel.send(log_message)
 
-    @commands.Cog.listener()
+    @CanaryCog.listener()
     async def on_member_join(self, user: discord.Member):
         # If the user was already muted, restore the muted role
         if is_in_muted_table(self.bot, user):
