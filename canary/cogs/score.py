@@ -553,26 +553,17 @@ class Score(CanaryCog):
             await ctx.send("Invalid input: Emojitype flag cannot use type score for this function")
         # get the WHERE conditions and the values
         where_str, t = self._where_str_and_values_from_args_dict(args_dict)
-
-        counts = list(
-            zip(
-                *(
-                    await self.fetch_list(
-                        (
-                            f"SELECT printf('%d. %s', "
-                            f"ROW_NUMBER() OVER (ORDER BY count(*) DESC), "
-                            f"ReactionName), printf('%d %s', count(*), "
-                            f"IIF (count(*)!=1, 'times', 'time')) "
-                            f"FROM Reactions "
-                            f"WHERE {where_str} "
-                            f"GROUP BY ReactionName "
-                        ),
-                        t,
-                    )
-                )
-            )
+        q = (
+            f"SELECT printf('%d. %s', "
+            f"ROW_NUMBER() OVER (ORDER BY count(*) DESC), "
+            f"ReactionName), printf('%d %s', count(*), "
+            f"IIF (count(*)!=1, 'times', 'time')) "
+            f"FROM Reactions "
+            f"WHERE {where_str} "
+            f"GROUP BY ReactionName "
         )
 
+        counts = list(zip(*(await self.fetch_list(q, t))))
         if not counts:
             await ctx.send(embed=discord.Embed(title="No results found"))
             return
