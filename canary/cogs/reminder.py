@@ -118,7 +118,7 @@ class Reminder(CanaryCog):
                             await member.send(f"Reminding you to {reminders[i][2]}!")
                             # Remove from from DB non-repeating reminder
                             await db.execute(
-                                ("DELETE FROM Reminders WHERE Reminder=? AND ID=?" + " AND DATE=?"),
+                                "DELETE FROM Reminders WHERE Reminder=? AND ID=? AND DATE=?",
                                 (reminders[i][2], reminders[i][0], reminder_activation_date),
                             )
                             await db.commit()
@@ -130,7 +130,7 @@ class Reminder(CanaryCog):
                         if datetime.datetime.now() - last_date > datetime.timedelta(days=FREQUENCIES[reminders[i][3]]):
                             await member.send(f"Reminding you to {reminders[i][2]}! [{i + 1:d}]")
                             await db.execute(
-                                ("UPDATE 'Reminders' SET LastReminder=? WHERE " + "Reminder=?"),
+                                "UPDATE 'Reminders' SET LastReminder=? WHERE Reminder=?",
                                 (datetime.datetime.now(), reminders[i][2]),
                             )
                             await db.commit()
