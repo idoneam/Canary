@@ -72,15 +72,24 @@ class Banner(CanaryCog):
         self.banner_winner_role = utils.get(self.guild.roles, name=self.bot.config.banner_winner_role)
         self.banner_vote_emoji = utils.get(self.guild.emojis, name=self.bot.config.banner_vote_emoji)
 
-        if (banner_contest_info := await self.get_settings_key("BannerContestInfo")) is not None:
-            banner_dict = json.loads(banner_contest_info)
-            timestamp = banner_dict["timestamp"]
-            if timestamp:
+        banner_dict: dict | None
+        if (banner_dict := await self.get_banner_contest_info()) is not None:
+            if timestamp := banner_dict["timestamp"]:
                 self.start_datetime = datetime.datetime.fromtimestamp(timestamp)
                 self.week_name = banner_dict["week_name"]
                 self.send_reminder = banner_dict["send_reminder"]
 
         self.check_banner_contest_reminder.start()
+
+    async def get_banner_contest_info(self):
+        return await self.get_settings_key("BannerContestInfo", deserialize=json.loads)
+
+    async def set_banner_contest_info(self, banner_dict: dict, pre_commit: list[str] | None = None):
+        timestamp = banner_dict.get("timestamp")
+        self.start_datetime = datetime.datetime.fromtimestamp(timestamp) if timestamp is not None else None
+        self.week_name = banner_dict.get("week_name")
+        self.send_reminder = banner_dict.get("send_reminder")
+        await self.set_settings_key("BannerContestInfo", banner_dict, serialize=json.dumps, pre_commit=pre_commit)
 
     @tasks.loop(minutes=1.0)
     async def check_banner_contest_reminder(self):
@@ -99,19 +108,12 @@ class Banner(CanaryCog):
             f"(To get these reminders, type `.iam Banner Submissions` in {self.bots_channel.mention})"
         )
 
-        if (banner_contest_info := await self.get_settings_key("BannerContestInfo")) is not None:
-            self.send_reminder = False
-            banner_dict = json.loads(banner_contest_info)
-            banner_dict["send_reminder"] = False
-            await self.set_settings_key("BannerContestInfo", json.dumps(banner_dict))
+        banner_dict: dict | None
+        if (banner_dict := await self.get_banner_contest_info()) is not None:
+            await self.set_banner_contest_info({**banner_dict, "send_reminder": False})
 
     async def reset_banner_contest(self):
-        self.start_datetime = None
-        self.week_name = None
-        self.send_reminder = None
-
-        banner_dict = {"timestamp": None, "week_name": None, "send_reminder": None}
-        await self.set_settings_key("BannerContestInfo", json.dumps(banner_dict))
+        await self.set_banner_contest_info({"timestamp": None, "week_name": None, "send_reminder": None})
 
     @commands.command(aliases=["setbannercontest"])
     @is_moderator()
@@ -183,16 +185,13 @@ class Banner(CanaryCog):
         except asyncio.TimeoutError:
             await ctx.send("Command timed out.")
             return
+
         week_name = week_msg.content
 
-        banner_dict = {"timestamp": timestamp, "week_name": week_name, "send_reminder": True}
-        await self.set_settings_key(
-            "BannerContestInfo", json.dumps(banner_dict), pre_commit=["DELETE FROM BannerSubmissions"]
+        await self.set_banner_contest_info(
+            {"timestamp": timestamp, "week_name": week_name, "send_reminder": True},
+            pre_commit=["DELETE FROM BannerSubmissions"],
         )
-
-        self.start_datetime = datetime.datetime.fromtimestamp(timestamp)
-        self.week_name = week_name
-        self.send_reminder = True
 
         await ctx.send(
             f"Start time for the banner contest of the week of `{week_name}` successfully set to "
@@ -246,8 +245,7 @@ class Banner(CanaryCog):
 
         if not winner:
             await ctx.send(
-                "Please enter the username of the winner "
-                "or `None` to end the contest without any winner.\n"
+                "Please enter the username of the winner or `None` to end the contest without any winner.\n"
                 "Type `quit` to leave."
             )
 
@@ -409,12 +407,10 @@ class Banner(CanaryCog):
             await ctx.send("You cannot submit banners if you have the Trash Tier Banner Submissions role")
             return
 
-        banner_contest_info = await self.get_settings_key("BannerContestInfo")
-        if not banner_contest_info:
+        banner_dict: dict | None = await self.get_banner_contest_info()
+        if banner_dict is None:
             await ctx.send("No banner contest is currently set")
             return
-
-        banner_dict = json.loads(banner_contest_info)
 
         timestamp = banner_dict["timestamp"]
         if not timestamp:
@@ -525,6 +521,7 @@ class Banner(CanaryCog):
                         )
                         preview_user_image.paste(rgba_frame.resize(preview_user_size), preview_mask_user_image_start)
                         preview_frames.append(Image.alpha_composite(preview_user_image, preview_mask))
+
         except UnidentifiedImageError or requests.exceptions.MissingSchema:
             await ctx.send(f"Image couldn't be opened.")
             return

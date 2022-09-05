@@ -4,7 +4,7 @@ import discord
 import os
 
 from discord.ext import commands
-from typing import AsyncGenerator, Iterable
+from typing import Any, AsyncGenerator, Callable, Iterable
 
 from ..bot import Canary
 
@@ -61,19 +61,25 @@ class CanaryCog(commands.Cog):
             if fresh_db:
                 await db.close()
 
-    async def get_settings_key(self, key: str) -> str | None:
+    async def get_settings_key(self, key: str, deserialize: Callable[[str], Any] = str) -> Any | None:
         db: aiosqlite.Connection
         async with self.db() as db:
             c: aiosqlite.Cursor
             async with db.execute("SELECT Value FROM Settings WHERE Key = ?", (key,)) as c:
                 fetched = await c.fetchone()
-                return fetched[0] if fetched is not None else None
+                return deserialize(fetched[0]) if fetched is not None else None
 
-    async def set_settings_key(self, key: str, value: str, pre_commit: Iterable | None = None) -> None:
+    async def set_settings_key(
+        self,
+        key: str,
+        value: Any,
+        serialize: Callable[[Any], str] = str,
+        pre_commit: Iterable | None = None,
+    ) -> None:
         db: aiosqlite.Connection
         async with self.db() as db:
             c: aiosqlite.Cursor
-            await db.execute("REPLACE INTO Settings VALUES (?, ?)", (key, value))
+            await db.execute("REPLACE INTO Settings VALUES (?, ?)", (key, serialize(value)))
 
             if pre_commit:
                 for s in pre_commit:

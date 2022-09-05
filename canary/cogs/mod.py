@@ -73,15 +73,14 @@ class Mod(CanaryCog):
         # when fetching message history after that date later on
         self.last_verification_purge_datetime = datetime(2018, 1, 1)
 
-        fetched = await self.get_settings_key("last_verification_purge_timestamp")
-        if fetched:
-            last_purge_timestamp = float(fetched)
-            if last_purge_timestamp:
+        last_purge_timestamp = await self.get_settings_key("last_verification_purge_timestamp", deserialize=float)
+        if last_purge_timestamp is not None:
+            if last_purge_timestamp:  # Not 0
                 self.last_verification_purge_datetime = datetime.fromtimestamp(last_purge_timestamp)
         else:
             # the verification purge info setting has not been added to db yet
             await self.set_settings_key(
-                "last_verification_purge_timestamp", str(self.last_verification_purge_datetime.timestamp())
+                "last_verification_purge_timestamp", self.last_verification_purge_datetime.timestamp()
             )
 
         self.check_verification_purge.start()
@@ -99,7 +98,7 @@ class Mod(CanaryCog):
         await self.verification_purge_utility(self.last_verification_purge_datetime - timedelta(days=1))
         # update info
         if (await self.get_settings_key("last_verification_purge_timestamp")) is not None:
-            await self.set_settings_key("last_verification_purge_timestamp", str(datetime.now().timestamp()))
+            await self.set_settings_key("last_verification_purge_timestamp", datetime.now().timestamp())
 
     @commands.command()
     async def answer(self, ctx: commands.Context, *args):
@@ -146,7 +145,7 @@ class Mod(CanaryCog):
             "🦀🦀🦀 crabbo time 🦀🦀🦀"
         )
 
-        await self.set_settings_key("CrabboMsgID", str(crabbo_msg.id))
+        await self.set_settings_key("CrabboMsgID", crabbo_msg.id)
         await ctx.message.delete()
 
     @commands.command()
@@ -154,21 +153,21 @@ class Mod(CanaryCog):
     async def finalize_crabbo(self, ctx: commands.Context):
         """Sends crabbos their secret crabbo"""
 
-        msg_id = await self.get_settings_key("CrabboMsgId")
+        msg_id = await self.get_settings_key("CrabboMsgId", deserialize=int)
 
-        if not msg_id:
+        if msg_id is None:
             await ctx.send("secret crabbo is not currently occurring.")
             return
 
         await self.del_settings_key("CrabboMsgId")
 
-        crabbos = None
-        for react in (await ctx.fetch_message(int(msg_id))).reactions:
+        crabbos = []
+        for react in (await ctx.fetch_message(msg_id)).reactions:
             if str(react) == "🦀":
                 crabbos = await react.users().flatten()
                 break
 
-        if crabbos is None or (num_crabbos := len(crabbos)) < 2:
+        if (num_crabbos := len(crabbos)) < 2:
             await ctx.send("not enough people participated in the secret crabbo festival.")
             return
 
@@ -184,13 +183,14 @@ class Mod(CanaryCog):
         if not self.verification_channel:
             return
 
-        # after can be None, a datetime or a discord message
         await self.verification_channel.send("Starting verification purge")
+
         channel = self.verification_channel
         deleted = 0
         async for message in channel.history(oldest_first=True, limit=None, after=after):
             if message.attachments or message.embeds:
                 content = message.content
+
                 if message.embeds:
                     thumbnail_found = False
                     for embed in message.embeds:
@@ -199,11 +199,13 @@ class Mod(CanaryCog):
                             content = content.replace(embed.thumbnail.url, "")
                     if not thumbnail_found:
                         continue
+
                 if content:
                     await channel.send(
                         f"{message.author} sent the following purged message on "
                         f"{message.created_at.strftime('%Y/%m/%d, %H:%M:%S')}: {content}"
                     )
+
                 await message.delete()
                 deleted += 1
 
