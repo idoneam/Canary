@@ -37,7 +37,7 @@ class CanaryCog(commands.Cog):
         params: tuple[str | int | float | bool, ...] = (),
         db: aiosqlite.Connection | None = None,
     ) -> list[tuple]:
-        if fresh_db := db is None:
+        if fresh_db := (db is None):
             db = await self.bot.db_nocm()
         try:
             async with db.execute(query, params) as c:
@@ -52,7 +52,7 @@ class CanaryCog(commands.Cog):
         params: tuple[str | int | float | bool, ...] = (),
         db: aiosqlite.Connection | None = None,
     ) -> tuple | None:
-        if fresh_db := db is None:
+        if fresh_db := (db is None):
             db = await self.bot.db_nocm()
         try:
             async with db.execute(query, params) as c:
