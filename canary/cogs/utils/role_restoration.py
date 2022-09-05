@@ -63,7 +63,7 @@ async def fetch_saved_roles(bot: Canary, guild, user: discord.Member, muted: boo
     c: aiosqlite.Cursor
 
     async with bot.db() as db:
-        q = "SELECT Roles FROM " + ("MutedUsers WHERE UserID = ?" if muted else "PreviousRoles WHERE ID = ?")
+        q = f"SELECT Roles FROM {'MutedUsers WHERE UserID' if muted else 'PreviousRoles WHERE ID'} = ?"
         async with db.execute(q, (user.id,)) as c:
             fetched_roles = await c.fetchone()
 
