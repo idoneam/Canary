@@ -78,17 +78,11 @@ class Currency(CanaryCog):
         ]
 
     async def fetch_bank_balance(self, user: discord.Member) -> Decimal:
-        db: aiosqlite.Connection
-        async with self.db() as db:
-            c: aiosqlite.Cursor
-            async with db.execute(
-                "SELECT IFNULL(SUM(Amount), 0) FROM BankTransactions WHERE UserID = ?", (user.id,)
-            ) as c:
-                # noinspection PyRedundantParentheses
-                balance = self.db_to_currency(((await c.fetchone()) or (0,))[0])
-                if balance is None:
-                    balance = Decimal(0)
-                return balance
+        balance_t = await self.fetch_one(
+            "SELECT IFNULL(SUM(Amount), 0) FROM BankTransactions WHERE UserID = ?",
+            (user.id,)
+        )
+        return self.db_to_currency(balance_t[0]) if balance_t is not None else Decimal(0)
 
     async def create_bank_transaction(
         self, db: aiosqlite.Connection, user: discord.Member, amount: Decimal, action: str, metadata: dict
@@ -157,24 +151,31 @@ class Currency(CanaryCog):
 
         return ""
 
+    async def get_last_claim_time(self, db: aiosqlite.Connection, author: discord.Member | discord.User) -> int | None:
+        claim_time_t = await self.fetch_one(
+            "SELECT IFNULL(MAX(Date), 0) FROM BankTransactions WHERE UserID = ? AND Action = ?",
+            (author.id, ACTION_INITIAL_CLAIM),
+            db=db,
+        )
+        return claim_time_t[0] if claim_time_t is not None else None
+
     @commands.command()
-    async def initial_claim(self, ctx):
+    async def initial_claim(self, ctx: commands.Context):
         """
         Claim's the user's start-up grant currency.
         """
 
-        # Start bot typing
         await ctx.trigger_typing()
+
+        author = ctx.message.author
+        author_name = author.display_name
 
         db: aiosqlite.Connection
         async with self.db() as db:
-            async with db.execute(
-                "SELECT IFNULL(MAX(Date), 0) FROM BankTransactions WHERE UserID = ? AND Action = ?",
-                (ctx.message.author.id, ACTION_INITIAL_CLAIM),
-            ) as c:
-                claim_time = (await c.fetchone())[0]
+            claim_time = await self.get_last_claim_time(db, author)
 
-            author_name = ctx.message.author.display_name
+            if claim_time is None:
+                return
 
             if claim_time > 0:
                 await ctx.send(f"{author_name} has already claimed their initial currency.")
@@ -182,12 +183,11 @@ class Currency(CanaryCog):
 
             await self.create_bank_transaction(
                 db,
-                ctx.message.author,
+                author,
                 self.currency["initial_amount"],
                 ACTION_INITIAL_CLAIM,
                 {"channel": ctx.message.channel.id},
             )
-
             await db.commit()
 
         await ctx.send(
@@ -195,7 +195,7 @@ class Currency(CanaryCog):
         )
 
     @commands.command()
-    async def claim(self, ctx):
+    async def claim(self, ctx: commands.Context):
         """
         Claim's the user's hourly currency.
         """
@@ -203,23 +203,24 @@ class Currency(CanaryCog):
         # Start bot typing
         await ctx.trigger_typing()
 
+        author = ctx.message.author
         threshold = datetime.datetime.now() - CLAIM_WAIT_TIME
 
         db: aiosqlite.Connection
         async with self.db() as db:
-            c: aiosqlite.Cursor
-            async with db.execute(
-                "SELECT IFNULL(MAX(Date), 0) FROM BankTransactions WHERE UserID = ? AND Action = ?",
-                (ctx.message.author.id, ACTION_CLAIM),
-            ) as c:
-                last_claimed = datetime.datetime.fromtimestamp((await c.fetchone())[0])
+            claim_time = await self.get_last_claim_time(db, author)
+
+            if claim_time is None:
+                return
+
+            last_claimed = datetime.datetime.fromtimestamp(claim_time)
 
             if last_claimed < threshold:
                 metadata = {"channel": ctx.message.channel.id}
-                await self.create_bank_transaction(db, ctx.message.author, CLAIM_AMOUNT, ACTION_CLAIM, metadata)
+                await self.create_bank_transaction(db, author, CLAIM_AMOUNT, ACTION_CLAIM, metadata)
                 await db.commit()
 
-                author_name = ctx.message.author.display_name if ctx.message.author else ":b:roken bot"
+                author_name = author.display_name if author else ":b:roken bot"
                 await ctx.send(f"{author_name} claimed {self.format_symbol_currency(CLAIM_AMOUNT)}!")
                 return
 
@@ -303,7 +304,7 @@ class Currency(CanaryCog):
         # Start bot typing
         await ctx.trigger_typing()
 
-        balance = await self.fetch_bank_balance(ctx.message.author)
+        balance: Decimal = await self.fetch_bank_balance(ctx.message.author)
         bet_dec = self.parse_currency(bet, balance)
 
         # Handle invalid cases
@@ -362,7 +363,7 @@ class Currency(CanaryCog):
             await ctx.send("Usage: ?give [user] [amount]")
             return
 
-        balance = await self.fetch_bank_balance(ctx.message.author)
+        balance: Decimal = await self.fetch_bank_balance(ctx.message.author)
 
         if balance <= 0:
             await ctx.send("You're too broke to give anyone anything!")

@@ -15,7 +15,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Canary. If not, see <https://www.gnu.org/licenses/>.
 # discord-py requirements
-import aiohttp
 import discord
 from discord.ext import commands
 from discord import utils
@@ -787,12 +786,10 @@ class Helpers(CanaryCog):
         # if the put_litter_in_its_place react was used check if it was
         # on a spoilerized message by its original author, and if so delete it
 
-        async with self.db() as db:
-            async with db.execute(
-                "SELECT * From SpoilerizedMessages WHERE MessageID=? AND UserID=?",
-                (int(payload.message_id), int(payload.member.id)),
-            ) as c:
-                found = await c.fetchone()
+        found = await self.fetch_one(
+            "SELECT * From SpoilerizedMessages WHERE MessageID=? AND UserID=?",
+            (int(payload.message_id), int(payload.member.id)),
+        )
 
         if found:
             channel = utils.get(self.guild.text_channels, id=payload.channel_id)

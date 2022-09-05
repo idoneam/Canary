@@ -396,27 +396,21 @@ class Score(CanaryCog):
         # get the WHERE conditions and the values
         where_str, t = self._where_str_and_values_from_args_dict(args_dict)
 
-        db: aiosqlite.Connection
-        async with self.db() as db:
-            c: aiosqlite.Cursor
+        if args_dict["emojitype"] != "score":
+            react_count_t = await self.fetch_one(f"SELECT count(ReacteeID) FROM Reactions WHERE {where_str}", t)
+        else:
+            react_count_t = await self.fetch_one(
+                (
+                    f"SELECT COUNT(IIF (ReactionName = ?1, 1, NULL)) - COUNT(IIF (ReactionName = ?2, 1, NULL)) "
+                    f"FROM Reactions WHERE {where_str} AND (ReactionName = ?1 OR ReactionName=?2) "
+                ),
+                (str(self.UPMARTLET), str(self.DOWNMARTLET), *t),
+            )
 
-            if args_dict["emojitype"] != "score":
-                async with db.execute(f"SELECT count(ReacteeID) FROM Reactions WHERE {where_str}", t) as c:
-                    react_count = (await c.fetchone())[0]
-            else:
-                async with db.execute(
-                    (
-                        f"SELECT COUNT(IIF (ReactionName = ?1, 1, NULL)) - "
-                        f"COUNT(IIF (ReactionName = ?2, 1, NULL)) "
-                        f"FROM Reactions "
-                        f"WHERE {where_str} "
-                        f"AND (ReactionName = ?1 OR ReactionName=?2) "
-                    ),
-                    (str(self.UPMARTLET), str(self.DOWNMARTLET), *t),
-                ) as c:
-                    react_count = (await c.fetchone())[0]
+        if react_count_t is None:
+            return
 
-        await ctx.send(react_count)
+        await ctx.send(react_count_t[0])
 
     @commands.command()
     async def ranking(self, ctx, *args):

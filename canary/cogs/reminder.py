@@ -237,11 +237,13 @@ class Reminder(CanaryCog):
                 else:
                     reminder = reminder[time_input_end + 1 :].strip()
 
+                message_author = ctx.message.author
+
                 # Add message to database
                 async with self.db() as db:
                     t = (
-                        ctx.message.author.id,
-                        ctx.message.author.name,
+                        message_author.id,
+                        message_author.name,
                         reminder,
                         "once",
                         absolute_duedate,
@@ -252,17 +254,13 @@ class Reminder(CanaryCog):
 
                     # Send user information
 
-                    async with db.execute("SELECT COUNT(*) FROM Reminders WHERE ID = ?", (ctx.message.author.id,)) as c:
-                        # noinspection PyRedundantParentheses
-                        num_reminders = ((await c.fetchone()) or (0,))[0]
+                    num_reminders = await self.get_num_reminders(db, message_author)
 
-                    await ctx.author.send(
-                        "Hi {}! \nI will remind you to {} on {} at {} unless you "
-                        "send me a message to stop reminding you about it! "
-                        "[{:d}]".format(
-                            ctx.author.name, reminder, date_result.group(0), time_result.group(0), num_reminders + 1
-                        )
-                    )
+                await ctx.author.send(
+                    f"Hi {ctx.author.name}! \nI will remind you to {reminder} on {date_result.group(0)} at "
+                    f"{time_result.group(0)} unless you send me a message to stop reminding you about it! "
+                    f"[{num_reminders + 1:d}]"
+                )
 
                 await ctx.send("Reminder added.")
                 return
@@ -311,7 +309,7 @@ class Reminder(CanaryCog):
         # DB: Date will hold TDELTA (When reminder is due), LastReminder will
         # hold datetime.datetime.now()
         async with self.db() as db:
-            reminders = await self.fetch_list("SELECT * FROM Reminders WHERE ID =?", (ctx.message.author.id,), db=db)
+            num_reminders = await self.get_num_reminders(db, ctx.message.author)
             t = (ctx.message.author.id, ctx.message.author.name, reminder, "once", reminder_time, time_now)
             await db.execute("INSERT INTO Reminders VALUES (?, ?, ?, ?, ?, ?)", t)
             await db.commit()
@@ -325,7 +323,7 @@ class Reminder(CanaryCog):
         await ctx.author.send(
             f"Hi {ctx.author.name}! \nI will remind you to {reminder} on "
             f"{due_date} at {due_time} unless you send me a message to stop "
-            f"reminding you about it! [{len(reminders)+1}]"
+            f"reminding you about it! [{num_reminders+1:d}]"
         )
         await ctx.send("Reminder added.")
 
@@ -451,27 +449,23 @@ class Reminder(CanaryCog):
         if bad_input:
             return
 
-        async with self.db() as db:
-            async with db.execute(
-                "SELECT * FROM Reminders WHERE Reminder = ? AND ID = ?", (quote, ctx.message.author.id)
-            ) as c:
-                existing_reminder = c.fetchone()
-
+        existing_reminder = await self.fetch_one(
+            "SELECT * FROM Reminders WHERE Reminder = ? AND ID = ?", (quote, ctx.message.author.id)
+        )
         if existing_reminder is not None:
             await ctx.send(
                 f"The reminder `{quote}` already exists in your database. Please specify a unique reminder message!"
             )
             return
 
+        now = datetime.datetime.now()
         msg_author = ctx.message.author
         async with self.db() as db:
-            async with db.execute("SELECT COUNT(*) FROM Reminders WHERE ID = ?", (msg_author.id,)) as c:
-                # noinspection PyRedundantParentheses
-                num_reminders = ((await c.fetchone()) or (0,))[0]
-
-            now = datetime.datetime.now()
-            t = (msg_author.id, msg_author.name, quote, freq, now, now)
-            await db.execute("INSERT INTO Reminders VALUES (?, ?, ?, ?, ?, ?)", t)
+            num_reminders = await self.get_num_reminders(db, msg_author)
+            await db.execute(
+                "INSERT INTO Reminders VALUES (?, ?, ?, ?, ?, ?)",
+                (msg_author.id, msg_author.name, quote, freq, now, now)
+            )
             await db.commit()
 
         # Strips the string "to " from reminder messages
@@ -484,6 +478,14 @@ class Reminder(CanaryCog):
         )
 
         await ctx.send("Reminder added.")
+
+    async def get_num_reminders(self, db: aiosqlite.Connection, author: discord.Member | discord.User) -> int:
+        num_reminders_t = await self.fetch_one(
+            "SELECT COUNT(*) FROM Reminders WHERE ID = ?",
+            (author.id,),
+            db=db,
+        )
+        return num_reminders_t[0] if num_reminders_t is not None else 0
 
 
 def setup(bot):

@@ -278,11 +278,7 @@ class Banner(CanaryCog):
 
         winner_id = winner.id
 
-        db: aiosqlite.Connection
-        c: aiosqlite.Cursor
-        async with self.db() as db:
-            async with db.execute("SELECT * FROM BannerSubmissions WHERE UserID = ?", (winner_id,)) as c:
-                fetched = await c.fetchone()
+        fetched = await self.fetch_one("SELECT * FROM BannerSubmissions WHERE UserID = ?", (winner_id,))
 
         if not fetched:
             await ctx.send("No submission by this user in database. Exiting command.")
@@ -535,23 +531,21 @@ class Banner(CanaryCog):
 
         replaced_message = False
 
-        db: aiosqlite.Connection
-        async with self.db() as db:
-            c: aiosqlite.Cursor
-            async with db.execute(
-                "SELECT PreviewMessageID FROM BannerSubmissions WHERE UserID = ?", (ctx.author.id,)
-            ) as c:
-                fetched = await c.fetchone()
-                if fetched:
-                    try:
-                        message_to_replace = await self.banner_submissions_channel.fetch_message(fetched[0])
-                        await message_to_replace.delete()
-                    except discord.errors.NotFound:
-                        await ctx.send(
-                            f"Could not delete previously posted submission from "
-                            f"{self.banner_submissions_channel.mention}. It might have been manually deleted."
-                        )
-                    replaced_message = True
+        fetched = await self.fetch_one(
+            "SELECT PreviewMessageID FROM BannerSubmissions WHERE UserID = ?",
+            (ctx.author.id,),
+        )
+
+        if fetched:
+            try:
+                message_to_replace = await self.banner_submissions_channel.fetch_message(fetched[0])
+                await message_to_replace.delete()
+            except discord.errors.NotFound:
+                await ctx.send(
+                    f"Could not delete previously posted submission from "
+                    f"{self.banner_submissions_channel.mention}. It might have been manually deleted."
+                )
+            replaced_message = True
 
         async def send_picture(frames, channel, filename):
             with BytesIO() as image_binary:

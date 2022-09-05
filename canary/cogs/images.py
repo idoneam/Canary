@@ -82,7 +82,7 @@ class Images(CanaryCog):
     @commands.command(aliases=["df", "dfry", "fry"])
     async def deepfry(self, ctx: commands.Context, iterations: int = 1):
         """
-        Deep fry an image, mhmm
+        Deep-fry an image, mhmm
         """
         await ih.filter_image(self.bot.loop, ih.deepfry, ctx, self.hist_lim, self.max_size, iterations, self.max_itr)
 
