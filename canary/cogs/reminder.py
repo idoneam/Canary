@@ -15,13 +15,12 @@
 # You should have received a copy of the GNU General Public License
 # along with Canary. If not, see <https://www.gnu.org/licenses/>.
 
-import asyncio
-import datetime
-
 import aiosqlite
+import asyncio
 import discord
 import re
 
+from datetime import datetime, timedelta
 from discord.ext import commands
 
 from .base_cog import CanaryCog
@@ -105,34 +104,32 @@ class Reminder(CanaryCog):
             async with self.db() as db:
                 reminders = await self.fetch_list("SELECT * FROM Reminders", db=db)
 
-                for i in range(len(reminders)):
-                    member = discord.utils.get(guild.members, id=reminders[i][0])
+                for i, reminder in enumerate(reminders):
+                    member = discord.utils.get(guild.members, id=reminder[0])
+                    now = datetime.now()
 
                     # If non-repeating reminder is found
-                    if reminders[i][3] == "once":
+                    if reminder[3] == "once":
                         # Check date to remind user
-                        reminder_activation_date = datetime.datetime.strptime(reminders[i][4], "%Y-%m-%d %H:%M:%S.%f")
+                        reminder_activation_date = datetime.strptime(reminder[4], "%Y-%m-%d %H:%M:%S.%f")
                         # Compute future_date and current_date and if past, means
                         # time is due to remind user.
-                        if reminder_activation_date <= datetime.datetime.now():
-                            await member.send(f"Reminding you to {reminders[i][2]}!")
+                        if reminder_activation_date <= now:
+                            await member.send(f"Reminding you to {reminder[2]}!")
                             # Remove from from DB non-repeating reminder
                             await db.execute(
                                 "DELETE FROM Reminders WHERE Reminder=? AND ID=? AND DATE=?",
-                                (reminders[i][2], reminders[i][0], reminder_activation_date),
+                                (reminder[2], reminder[0], reminder_activation_date),
                             )
                             await db.commit()
                             await asyncio.sleep(1)
 
                     else:
-                        last_date = datetime.datetime.strptime(reminders[i][5], "%Y-%m-%d %H:%M:%S.%f")
+                        last_date = datetime.strptime(reminder[5], "%Y-%m-%d %H:%M:%S.%f")
 
-                        if datetime.datetime.now() - last_date > datetime.timedelta(days=FREQUENCIES[reminders[i][3]]):
-                            await member.send(f"Reminding you to {reminders[i][2]}! [{i + 1:d}]")
-                            await db.execute(
-                                "UPDATE 'Reminders' SET LastReminder=? WHERE Reminder=?",
-                                (datetime.datetime.now(), reminders[i][2]),
-                            )
+                        if now - last_date > timedelta(days=FREQUENCIES[reminders[i][3]]):
+                            await member.send(f"Reminding you to {reminder[2]}! [{i + 1:d}]")
+                            await db.execute("UPDATE Reminders SET LastReminder=? WHERE Reminder=?", (now, reminder[2]))
                             await db.commit()
                             await asyncio.sleep(1)
 
@@ -151,9 +148,10 @@ class Reminder(CanaryCog):
 
         if quote == "":
             await ctx.send(
-                "**Usage:** \n`?remindme in 1 hour and 20 minutes and 20 "
-                "seconds to eat` **or** \n `?remindme at 2020-04-30 11:30 to "
-                "graduate` **or** \n`?remindme daily to sleep`"
+                "**Usage:** \n"
+                "`?remindme in 1 hour and 20 minutes and 20 seconds to eat` **or** \n"
+                "`?remindme at 2020-04-30 11:30 to graduate` **or** \n"
+                "`?remindme daily to sleep`"
             )
             return
 
@@ -196,9 +194,9 @@ class Reminder(CanaryCog):
         for segment in input_segments:
             if re.match(TIME_SEPARATOR_REGEX, segment):
                 continue
-            if re.match(f"^{NUMBER_REGEX}$", segment):
+            if re.match(rf"^{NUMBER_REGEX}$", segment):
                 last_number = segment
-            elif re.match(f"^{UNIT_REGEX}$", segment):
+            elif re.match(rf"^{UNIT_REGEX}$", segment):
                 time_segments.append(f"{last_number} {segment}")
             else:
                 first_reminder_segment = segment
@@ -208,6 +206,8 @@ class Reminder(CanaryCog):
         # and formatting, so extract from original string.
         reminder = quote[quote.index(first_reminder_segment) :]
 
+        msg_author = ctx.message.author
+
         # Date-based reminder triggered by "at" and "on" keywords
         if input_segments[0] in {"at", "on"}:
             # Gets YYYY-mm-dd
@@ -215,82 +215,81 @@ class Reminder(CanaryCog):
             # Gets HH:MM
             time_result = re.search(HM_REGEX, original_input_copy)
 
-            # If both a date and a time is found, continue
-            if date_result and time_result:
-                # Compute datetime.Object
-                absolute_duedate = datetime.datetime.strptime(
-                    "{Y}-{m}-{d}-{H}-{M}-{S}".format(
-                        Y=date_result.group(1),
-                        m=date_result.group(2),
-                        d=date_result.group(4),
-                        H=time_result.group(1),
-                        M=time_result.group(2),
-                        S=0.1,
-                    ),
-                    "%Y-%m-%d-%H-%M-%S.%f",
-                )
-
-                # Strips "to" and dates from the reminder message
-                time_input_end = time_result.span()[1]
-                if re.match("to", reminder[time_input_end : time_input_end + 4].strip(), re.IGNORECASE):
-                    reminder = reminder[time_input_end + 3 :].strip()
-                else:
-                    reminder = reminder[time_input_end + 1 :].strip()
-
-                message_author = ctx.message.author
-
-                # Add message to database
-                async with self.db() as db:
-                    t = (
-                        message_author.id,
-                        message_author.name,
-                        reminder,
-                        "once",
-                        absolute_duedate,
-                        datetime.datetime.now(),
-                    )
-                    await db.execute("INSERT INTO Reminders VALUES (?, ?, ?, ?, ?, ?)", t)
-                    await db.commit()
-
-                    # Send user information
-
-                    num_reminders = await self.get_num_reminders(db, message_author)
-
-                await ctx.author.send(
-                    f"Hi {ctx.author.name}! \nI will remind you to {reminder} on {date_result.group(0)} at "
-                    f"{time_result.group(0)} unless you send me a message to stop reminding you about it! "
-                    f"[{num_reminders + 1:d}]"
-                )
-
-                await ctx.send("Reminder added.")
+            if date_result is None or time_result is None:
+                # Wrong input feedback depending on what is missing.
+                await ctx.send("Check your private messages for info on correct syntax!")
+                await ctx.author.send("Please double check the following: ")
+                if not date_result:
+                    await ctx.author.send("Make sure you have specified a date in the format: `YYYY-mm-dd`")
+                if not time_result:
+                    await ctx.author.send("Make sure you have specified a time in the 24H format: `HH:MM`")
+                await ctx.author.send("E.g.: `?remindme on 2020-12-05 at 21:44 to feed Marty`")
                 return
 
-            # Wrong input feedback depending on what is missing.
-            await ctx.send("Check your private messages for info on correct syntax!")
-            await ctx.author.send("Please double check the following: ")
-            if not date_result:
-                await ctx.author.send(("Make sure you have specified a date in the format: " + "`YYYY-mm-dd`"))
-            if not time_result:
-                await ctx.author.send(("Make sure you have specified a time in the 24H format: " + "`HH:MM`"))
-            await ctx.author.send("E.g.: `?remindme on 2020-12-05 at 21:44 to feed Marty`")
+            # Otherwise, both a date and a time are found, so continue
+
+            # Compute datetime.Object
+            absolute_duedate = datetime.strptime(
+                "{Y}-{m}-{d}-{H}-{M}-{S}".format(
+                    Y=date_result.group(1),
+                    m=date_result.group(2),
+                    d=date_result.group(4),
+                    H=time_result.group(1),
+                    M=time_result.group(2),
+                    S=0.1,
+                ),
+                "%Y-%m-%d-%H-%M-%S.%f",
+            )
+
+            # Strips "to" and dates from the reminder message
+            time_input_end = time_result.span()[1]
+            if re.match("to", reminder[time_input_end : time_input_end + 4].strip(), re.IGNORECASE):
+                reminder = reminder[time_input_end + 3 :].strip()
+            else:
+                reminder = reminder[time_input_end + 1 :].strip()
+
+            # Add message to database
+            async with self.db() as db:
+                t = (
+                    msg_author.id,
+                    msg_author.name,
+                    reminder,
+                    "once",
+                    absolute_duedate,
+                    datetime.now(),
+                )
+                await db.execute("INSERT INTO Reminders VALUES (?, ?, ?, ?, ?, ?)", t)
+                await db.commit()
+
+                # Send user information
+
+                num_reminders = await self.get_num_reminders(db, msg_author)
+
+            await ctx.author.send(
+                f"Hi {ctx.author.name}! \nI will remind you to {reminder} on {date_result.group(0)} at "
+                f"{time_result.group(0)} unless you send me a message to stop reminding you about it! "
+                f"[{num_reminders + 1:d}]"
+            )
+
+            await ctx.send("Reminder added.")
             return
 
         # Regex for the number and time units and store in "match"
         for segment in time_segments:
-            match = re.match(r"^({})\s+{}$".format(NUMBER_REGEX, UNIT_REGEX), segment)
+            match = re.match(rf"^({NUMBER_REGEX})\s+{UNIT_REGEX}$", segment)
             number = float(match.group(1))
 
             # Regex potentially misspelled time units and match to proper
             # spelling.
             for regex in REMINDER_UNITS:
-                if re.match("^{}$".format(REMINDER_UNITS[regex]), match.group(3)):
+                if re.match(f"^{REMINDER_UNITS[regex]}$", match.group(3)):
                     time_offset[regex] += number
 
         # Convert years to a unit that datetime will understand
         time_offset["days"] = time_offset["days"] + time_offset["years"] * 365
 
-        time_now = datetime.datetime.now()  # Current time
-        reminder_time = time_now + datetime.timedelta(
+        time_now = datetime.now()  # Current time
+        reminder_time = time_now + timedelta(
             days=time_offset["days"],
             hours=time_offset["hours"],
             seconds=time_offset["seconds"],
@@ -299,7 +298,7 @@ class Reminder(CanaryCog):
         )  # Time to be reminded on
 
         if time_now == reminder_time:  # No time in argument, or it's zero.
-            await ctx.send("Please specify a time! E.g.: `?remindme in 1 hour {}`".format(reminder))
+            await ctx.send(f"Please specify a time! E.g.: `?remindme in 1 hour {reminder}`")
             return
 
         # Strips the string "to " from reminder messages
@@ -309,20 +308,14 @@ class Reminder(CanaryCog):
         # DB: Date will hold TDELTA (When reminder is due), LastReminder will
         # hold datetime.datetime.now()
         async with self.db() as db:
-            num_reminders = await self.get_num_reminders(db, ctx.message.author)
-            t = (ctx.message.author.id, ctx.message.author.name, reminder, "once", reminder_time, time_now)
+            num_reminders = await self.get_num_reminders(db, msg_author)
+            t = (msg_author.id, msg_author.name, reminder, "once", reminder_time, time_now)
             await db.execute("INSERT INTO Reminders VALUES (?, ?, ?, ?, ?, ?)", t)
             await db.commit()
 
-        # Gets reminder date in YYYY-MM-DD format
-        due_date = str(datetime.date(reminder_time.year, reminder_time.month, reminder_time.day))
-
-        # Gets reminder time in HH:MM
-        due_time = str(reminder_time).split()[1].split(":")[0] + ":" + str(reminder_time).split()[1].split(":")[1]
-
         await ctx.author.send(
             f"Hi {ctx.author.name}! \nI will remind you to {reminder} on "
-            f"{due_date} at {due_time} unless you send me a message to stop "
+            f"{reminder_time.strftime('%Y-%m-%d at %H:%M')} unless you send me a message to stop "
             f"reminding you about it! [{num_reminders+1:d}]"
         )
         await ctx.send("Reminder added.")
@@ -427,7 +420,6 @@ class Reminder(CanaryCog):
         """
 
         db: aiosqlite.Connection
-        c: aiosqlite.Cursor
 
         bad_input = False
 
@@ -436,8 +428,8 @@ class Reminder(CanaryCog):
 
         if freq not in FREQUENCIES.keys():
             await ctx.send(
-                "Please ensure you specify a frequency from the following "
-                "list: `daily`, `weekly`, `monthly`, before your message!"
+                "Please ensure you specify a frequency from the following list: "
+                "`daily`, `weekly`, `monthly`, before your message!"
             )
             bad_input = True
 
@@ -449,8 +441,10 @@ class Reminder(CanaryCog):
         if bad_input:
             return
 
+        msg_author = ctx.message.author
+
         existing_reminder = await self.fetch_one(
-            "SELECT * FROM Reminders WHERE Reminder = ? AND ID = ?", (quote, ctx.message.author.id)
+            "SELECT * FROM Reminders WHERE Reminder = ? AND ID = ?", (quote, msg_author.id)
         )
         if existing_reminder is not None:
             await ctx.send(
@@ -458,13 +452,12 @@ class Reminder(CanaryCog):
             )
             return
 
-        now = datetime.datetime.now()
-        msg_author = ctx.message.author
+        now = datetime.now()
         async with self.db() as db:
             num_reminders = await self.get_num_reminders(db, msg_author)
             await db.execute(
                 "INSERT INTO Reminders VALUES (?, ?, ?, ?, ?, ?)",
-                (msg_author.id, msg_author.name, quote, freq, now, now)
+                (msg_author.id, msg_author.name, quote, freq, now, now),
             )
             await db.commit()
 
@@ -480,11 +473,7 @@ class Reminder(CanaryCog):
         await ctx.send("Reminder added.")
 
     async def get_num_reminders(self, db: aiosqlite.Connection, author: discord.Member | discord.User) -> int:
-        num_reminders_t = await self.fetch_one(
-            "SELECT COUNT(*) FROM Reminders WHERE ID = ?",
-            (author.id,),
-            db=db,
-        )
+        num_reminders_t = await self.fetch_one("SELECT COUNT(*) FROM Reminders WHERE ID = ?", (author.id,), db=db)
         return num_reminders_t[0] if num_reminders_t is not None else 0
 
 

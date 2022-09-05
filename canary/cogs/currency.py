@@ -79,8 +79,7 @@ class Currency(CanaryCog):
 
     async def fetch_bank_balance(self, user: discord.Member) -> Decimal:
         balance_t = await self.fetch_one(
-            "SELECT IFNULL(SUM(Amount), 0) FROM BankTransactions WHERE UserID = ?",
-            (user.id,)
+            "SELECT IFNULL(SUM(Amount), 0) FROM BankTransactions WHERE UserID = ?", (user.id,)
         )
         return self.db_to_currency(balance_t[0]) if balance_t is not None else Decimal(0)
 
