@@ -13,13 +13,24 @@ RUN apt-get install -y \
   ffmpeg \
   gcc
 
-# Install requirements with pip to use Docker cache independent of project metadata
-COPY requirements.txt /
-RUN pip install -r /requirements.txt
+WORKDIR /canary
+
+# Install poetry
+RUN pip install poetry==1.2.2
+
+# Copy over files which specify dependencies first, to improve Docker caching
+COPY pyproject.toml pyproject.toml
+COPY poetry.lock poetry.lock
+COPY poetry.toml poetry.toml
+
+# Install dependencies without installing canary module
+RUN poetry install --no-root
 
 # Copy code to the `canary` directory in the image and run the bot from there
-COPY . /canary
-WORKDIR /canary
+COPY . .
+
+# Install canary module
+RUN poetry install
 
 # Notes:
 #   Users will have to mount their config.ini in by hand
