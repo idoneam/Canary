@@ -30,6 +30,7 @@ from itertools import chain
 from inspect import getdoc
 from typing import Callable, Optional, Iterable
 
+from ..bot import Canary
 from .base_cog import CanaryCog
 from .utils.music_helpers import (
     FFMPEG_BEFORE_OPTS,
@@ -50,7 +51,7 @@ from .utils.music_helpers import (
 
 
 class Music(CanaryCog):
-    def __init__(self, bot):
+    def __init__(self, bot: Canary):
         super().__init__(bot)
 
         self.track_queue: deque[tuple[dict, str]] = deque()
@@ -117,7 +118,7 @@ class Music(CanaryCog):
         )
         self.track_start_time = time.perf_counter() - delta
 
-    def from_total(self, idx):
+    def from_total(self, idx: int) -> tuple[deque[tuple[dict, str]], int] | None:
         q_len: int = self.total_len()
         if idx >= q_len or idx < -q_len:
             return None

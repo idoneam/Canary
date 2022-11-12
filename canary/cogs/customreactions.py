@@ -20,11 +20,20 @@ import aiosqlite
 import discord
 
 from discord.ext import commands
+from typing import Callable, Coroutine, Literal, TypedDict
 
 from ..bot import Canary
 from .base_cog import CanaryCog
 from .utils.paginator import Pages
 from .utils.p_strings import PStringEncodings
+
+
+class AssistantAction(TypedDict, total=False):
+    fn: Callable[[discord.Message, bool, ...], Coroutine[None, None, bool]]
+    desc: str
+    kwargs: dict
+    hidden: bool
+
 
 EMOJI = {
     "new": "🆕",
@@ -69,11 +78,11 @@ class CustomReactions(CanaryCog):
         await super().on_ready()
         await self.rebuild_lists()
 
-    async def rebuild_lists(self):
+    async def rebuild_lists(self) -> None:
         await self.rebuild_reaction_list()
         await self.rebuild_proposal_list()
 
-    async def rebuild_reaction_list(self):
+    async def rebuild_reaction_list(self) -> None:
         self.reaction_list = await self.fetch_list("SELECT * FROM CustomReactions WHERE Proposal = 0")
 
         prompts = [row[1].lower() for row in self.reaction_list]
@@ -84,11 +93,11 @@ class CustomReactions(CanaryCog):
             prompts, responses, anywhere_values, additional_info_list=additional_info_list
         )
 
-    async def rebuild_proposal_list(self):
+    async def rebuild_proposal_list(self) -> None:
         self.proposal_list = await self.fetch_list("SELECT * FROM CustomReactions WHERE Proposal = 1")
 
     @commands.Cog.listener()
-    async def on_message(self, message: discord.Message):
+    async def on_message(self, message: discord.Message) -> None:
         if message.author == self.bot.user:
             return
 
@@ -117,10 +126,10 @@ class CustomReactions(CanaryCog):
         main_user = ctx.message.author
         await ctx.message.delete()
 
-        def get_number_of_proposals():
+        def get_number_of_proposals() -> int:
             return len(self.proposal_list)
 
-        def get_reaction_check(moderators=False, reaction_user=None):
+        def get_reaction_check(moderators=False, reaction_user=None) -> Callable:
             def reaction_check(reaction, user):
                 return all(
                     (
@@ -133,7 +142,7 @@ class CustomReactions(CanaryCog):
 
             return reaction_check
 
-        def get_msg_check(msg_user=None):
+        def get_msg_check(msg_user=None) -> Callable:
             def msg_check(msg):
                 if all((not msg_user or msg.author == msg_user, msg.channel == ctx.channel)):
                     if msg.attachments:
@@ -147,7 +156,7 @@ class CustomReactions(CanaryCog):
 
             return msg_check
 
-        def get_number_check(msg_user=None, number_range=None):
+        def get_number_check(msg_user=None, number_range=None) -> Callable:
             def number_check(msg):
                 if msg.content.isdigit():
                     return all(
@@ -171,7 +180,7 @@ class CustomReactions(CanaryCog):
                 return
             return reaction, user
 
-        async def wait_for_message(message: discord.Message):
+        async def wait_for_message(message: discord.Message) -> str | None:
             try:
                 msg = await self.bot.wait_for("message", check=get_msg_check(msg_user=main_user), timeout=60)
             except asyncio.TimeoutError:
@@ -182,18 +191,18 @@ class CustomReactions(CanaryCog):
             await msg.delete()
             return content
 
-        async def clear_options(message: discord.Message):
+        async def clear_options(message: discord.Message) -> None:
             current_options.clear()
             await message.clear_reactions()
 
-        async def add_multiple_reactions(message: discord.Message, reactions):
+        async def add_multiple_reactions(message: discord.Message, reactions) -> None:
             for reaction in reactions:
                 await message.add_reaction(reaction)
 
-        async def add_yes_or_no_reactions(message: discord.Message):
+        async def add_yes_or_no_reactions(message: discord.Message) -> None:
             await add_multiple_reactions(message, (EMOJI["zero"], EMOJI["one"], EMOJI["stop_button"]))
 
-        async def add_control_reactions(message: discord.Message):
+        async def add_control_reactions(message: discord.Message) -> None:
             await add_multiple_reactions(
                 message,
                 (
@@ -206,8 +215,8 @@ class CustomReactions(CanaryCog):
                 ),
             )
 
-        async def create_assistant(message: discord.Message, is_moderator: bool) -> bool | None:
-            actions = {
+        async def create_assistant(message: discord.Message, is_moderator: bool) -> bool:
+            actions: dict[str, AssistantAction] = {
                 # Add/Propose a new custom reaction
                 EMOJI["new"]: {
                     "fn": add_custom_react,
@@ -261,14 +270,14 @@ class CustomReactions(CanaryCog):
             try:
                 reaction, user = await wait_for_reaction(message)
             except TypeError:
-                return
+                return False
 
             await clear_options(message)
 
             if (action := actions.get(reaction.emoji)) is not None:
                 return await action["fn"](message, **action["kwargs"])
 
-        async def add_custom_react(message: discord.Message, proposals: bool):
+        async def add_custom_react(message: discord.Message, proposals: bool) -> bool:
             status_msg = f"{main_user} is currently {'proposing' if proposals else 'adding'} a custom reaction."
 
             title = f"{'Propose' if proposals else 'Add'} a custom reaction"
@@ -287,7 +296,7 @@ class CustomReactions(CanaryCog):
             prompt_message = await wait_for_message(message)
 
             if prompt_message is None:
-                return
+                return False
 
             if prompt_message.lower() == STOP_TEXT:
                 await leave(message)
@@ -299,7 +308,7 @@ class CustomReactions(CanaryCog):
             response = await wait_for_message(message)
 
             if response is None:
-                return
+                return False
 
             if response.lower() == STOP_TEXT:
                 await leave(message)
@@ -324,7 +333,7 @@ class CustomReactions(CanaryCog):
             try:
                 reaction, user = await wait_for_reaction(message)
             except TypeError:
-                return
+                return False
 
             # If the user clicked OK, check if delete/anywhere/dm are checked
             if reaction.emoji == EMOJI["ok"]:
@@ -372,13 +381,15 @@ class CustomReactions(CanaryCog):
 
                 await _refresh_msg()
 
-                return
+                return False
 
             # Stop
             if reaction.emoji == EMOJI["stop_button"]:
                 return await leave(message)
 
-        async def list_custom_reacts(message: discord.Message, proposals: bool) -> bool | None:
+            return False
+
+        async def list_custom_reacts(message: discord.Message, proposals: bool) -> bool:
             current_list = self.proposal_list if proposals else self.reaction_list
 
             no_items_msg = f"There are currently no custom reaction{' proposal' if proposals else ''}s in this server"
@@ -386,7 +397,7 @@ class CustomReactions(CanaryCog):
             if not current_list:
                 title = no_items_msg
                 await message.edit(embed=discord.Embed(title=title), delete_after=60)
-                return
+                return False
 
             reaction_dict = {
                 "names": [f"[{i + 1}]" for i in range(len(current_list))],
@@ -498,7 +509,7 @@ class CustomReactions(CanaryCog):
                     if not current_list:
                         title = no_items_msg
                         await message.edit(embed=discord.Embed(title=title), delete_after=60)
-                        return
+                        return False
 
                     reaction_dict = {
                         "names": [f"[{i + 1}]" for i in range(len(current_list))],
@@ -525,7 +536,9 @@ class CustomReactions(CanaryCog):
                 await add_control_reactions(message)
                 user_modifying = await p.paginate()
 
-        async def information_on_react(message: discord.Message, current_list, number, proposals) -> bool | None:
+            return False
+
+        async def information_on_react(message: discord.Message, current_list, number, proposals) -> bool:
             await message.edit(embed=LOADING_EMBED)
 
             custom_react = current_list[number - 1]
@@ -610,6 +623,7 @@ class CustomReactions(CanaryCog):
                 pass
 
             await clear_options(message)
+            return False
 
         async def edit_custom_react(
             message: discord.Message,
@@ -617,7 +631,7 @@ class CustomReactions(CanaryCog):
             user,
             custom_react,
             proposals,
-        ) -> bool | None:
+        ) -> bool:  # Returns whether to leave the wizard
             db: aiosqlite.Connection
 
             await clear_options(message)
@@ -661,7 +675,7 @@ class CustomReactions(CanaryCog):
                 except asyncio.TimeoutError:
                     await message.edit(embed=discord.Embed(title=message_time_out))
                     await asyncio.sleep(5)
-                    return
+                    return False
 
                 prompt = msg.content
                 await msg.delete()
@@ -691,7 +705,7 @@ class CustomReactions(CanaryCog):
                 except asyncio.TimeoutError:
                     await message.edit(embed=discord.Embed(title=message_time_out))
                     await asyncio.sleep(5)
-                    return
+                    return False
 
                 response = msg.content
                 await msg.delete()
@@ -740,7 +754,7 @@ class CustomReactions(CanaryCog):
                     await asyncio.sleep(5)
                     current_options.clear()
                     await message.clear_reactions()
-                    return
+                    return False
 
                 current_options.clear()
                 await message.clear_reactions()
@@ -795,7 +809,7 @@ class CustomReactions(CanaryCog):
                     await asyncio.sleep(5)
                     current_options.clear()
                     await message.clear_reactions()
-                    return
+                    return False
 
                 current_options.clear()
                 await message.clear_reactions()
@@ -853,7 +867,7 @@ class CustomReactions(CanaryCog):
                     await asyncio.sleep(5)
                     current_options.clear()
                     await message.clear_reactions()
-                    return
+                    return False
 
                 current_options.clear()
                 await message.clear_reactions()
@@ -908,7 +922,9 @@ class CustomReactions(CanaryCog):
             if reaction.emoji == EMOJI["stop_button"]:
                 return await leave(message)
 
-        async def list_placeholders(message, **_kwargs):
+            return False
+
+        async def list_placeholders(message, **_kwargs) -> Literal[False]:
             title = "The following placeholders can be used in prompts and responses:"
             description = (
                 "-%user%: the user who called the prompt (can only be used in a response)\n"
@@ -928,8 +944,9 @@ class CustomReactions(CanaryCog):
                 'it can be surrounded by "" to not be split into different choices'
             )
             await message.edit(embed=discord.Embed(title=title, description=description))
+            return False
 
-        async def leave(message, **_kwargs) -> True:
+        async def leave(message, **_kwargs) -> Literal[True]:
             await message.delete()
             return True
 

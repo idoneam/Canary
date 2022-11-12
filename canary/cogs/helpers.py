@@ -712,7 +712,12 @@ class Helpers(CanaryCog):
         await ctx.send(f"Ignored {ignored} channel{'s' if ignored == 1 else ''} without bot permissions")
         await ctx.send("Job completed.")
 
-    async def spoilerize_utility(self, ctx: commands.Context, message, reason: str = None, moderator: bool = False):
+    async def spoilerize_utility(
+        self, ctx: commands.Context,
+        message: discord.Message,
+        reason: str | None = None,
+        moderator: bool = False
+    ) -> None:
         db: aiosqlite.Connection
 
         if not moderator and ctx.author != message.author:
@@ -777,8 +782,11 @@ class Helpers(CanaryCog):
         await message.delete()
 
     @commands.Cog.listener()
-    async def on_raw_reaction_add(self, payload):
+    async def on_raw_reaction_add(self, payload) -> None:
         db: aiosqlite.Connection
+
+        if not self.guild:
+            return
 
         if payload.guild_id != self.guild.id or str(payload.emoji) != "🚮":
             return

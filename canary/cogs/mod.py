@@ -21,6 +21,7 @@ from bidict import bidict
 from discord import utils
 from discord.ext import commands, tasks
 
+from ..bot import Canary
 from .base_cog import CanaryCog
 from .utils.checks import is_moderator
 from datetime import datetime, timedelta
@@ -36,7 +37,7 @@ from .utils.mock_context import MockContext
 
 
 class Mod(CanaryCog):
-    def __init__(self, bot):
+    def __init__(self, bot: Canary) -> None:
         super().__init__(bot)
 
         self.verification_channel: discord.TextChannel | None = None
@@ -215,7 +216,7 @@ class Mod(CanaryCog):
 
     @commands.command()
     @is_moderator()
-    async def verification_purge(self, ctx, id_: int = None):
+    async def verification_purge(self, ctx: commands.Context, id_: int | None = None):
         """
         Manually start the purge of pictures in the verification channel.
 
@@ -243,7 +244,7 @@ class Mod(CanaryCog):
 
         await self.verification_purge_utility(message)
 
-    async def mute_utility(self, user: discord.Member, ctx=None):
+    async def mute_utility(self, user: discord.Member, ctx: commands.Context | MockContext | None = None):
         if not self.guild:
             return
 
@@ -252,7 +253,7 @@ class Mod(CanaryCog):
 
         # note that this is made such that if a user is already muted
         # we make sure the user still has the role, is still in the db, and still has a channel
-        confirmation_channel = ctx.channel if ctx else self.appeals_log_channel
+        confirmation_channel: discord.TextChannel = ctx.channel if ctx else self.appeals_log_channel
         appeals_category = utils.get(self.guild.categories, name=self.bot.config.appeals_category)
         moderator_role = utils.get(self.guild.roles, name=self.bot.config.moderator_role)
         reason_message = (

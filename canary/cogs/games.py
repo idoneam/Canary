@@ -28,6 +28,7 @@ from discord.ext import commands
 from time import time
 from functools import partial
 
+from ..bot import Canary
 from .base_cog import CanaryCog
 from .utils.dice_roll import dice_roll
 from .utils.clamp_default import clamp_default
@@ -35,7 +36,7 @@ from .utils.hangman import HangmanState
 from .currency import HANGMAN_REWARD
 
 ROLL_PATTERN = re.compile(r"^(\d*)d(\d*)([+-]?\d*)$")
-CATEGORY_SYNONYMS = {
+CATEGORY_SYNONYMS: dict[str, str] = {
     "movies": "movie",
     "kino": "movie",
     "elements": "element",
@@ -45,7 +46,7 @@ CATEGORY_SYNONYMS = {
 
 
 class Games(CanaryCog):
-    def __init__(self, bot, hangman_tbl_name: str):
+    def __init__(self, bot: Canary, hangman_tbl_name: str) -> None:
         super().__init__(bot)
 
         self.hm_cool_win: int = bot.config.games["hm_cool_win"]
@@ -56,7 +57,7 @@ class Games(CanaryCog):
         with open(f"{os.getcwd()}/data/premade/{hangman_tbl_name}.obj", "rb") as hangman_pkl:
             self.hangman_dict: dict[str, tuple[list[tuple[str, str | None]], str]] = pickle.load(hangman_pkl)
 
-    def help_str(self):
+    def help_str(self) -> str:
         cat_list: str = ", ".join(
             f"`{hm_cat}` (length: {len(self.hangman_dict[hm_cat][0])})" for hm_cat in sorted(self.hangman_dict.keys())
         )
@@ -103,7 +104,8 @@ class Games(CanaryCog):
                 await ctx.send("no game is currently being played in this channel")
             return
 
-        category: str = CATEGORY_SYNONYMS.get(command, command) or random.choice(list(self.hangman_dict.keys()))
+        command_str: str = command or ""
+        category: str = CATEGORY_SYNONYMS.get(command_str, command_str) or random.choice(list(self.hangman_dict.keys()))
         try:
             word_list, pretty_name = self.hangman_dict[category]
         except KeyError:

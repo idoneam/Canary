@@ -227,7 +227,7 @@ class Currency(CanaryCog):
         await ctx.send(f"Please wait {time_left.seconds // 3600}h {time_left.seconds // 60 % 60}m to claim again!")
 
     @commands.command(aliases=["$", "bal"])
-    async def balance(self, ctx, user: discord.Member = None):
+    async def balance(self, ctx: commands.Context, user: discord.Member = None):
         """
         Return the user's account balance.
         """
@@ -243,7 +243,7 @@ class Currency(CanaryCog):
         await ctx.send(f"{author.display_name} has {amount} in their account.")
 
     @commands.command(aliases=["bf"])
-    async def bet_flip(self, ctx, bet: str = None, face: str = None):
+    async def bet_flip(self, ctx: commands.Context, bet: str | None = None, face: str | None = None):
         """
         Bets an amount of money on a coin flip.
         Usage: ?bet_flip h 10 or ?bet_flip t 5
@@ -291,7 +291,7 @@ class Currency(CanaryCog):
         await ctx.send(message.format(author_name, self.format_symbol_currency(bet_dec), result))
 
     @commands.command(aliases=["br"])
-    async def bet_roll(self, ctx, bet: str = None):
+    async def bet_roll(self, ctx: commands.Context, bet: str | None = None):
         """
         Bets an amount of currency on a D100 roll.
         Usage: ?bet_roll 100 or ?br all
@@ -350,7 +350,7 @@ class Currency(CanaryCog):
         await ctx.send(message.format(un=author_name, am=bet_str, re=result))
 
     @commands.command()
-    async def give(self, ctx, user: discord.Member = None, amount: str = None):
+    async def give(self, ctx: commands.Context, user: discord.Member | None = None, amount: str | None = None):
         """
         Gives some amount of currency to another user.
         """

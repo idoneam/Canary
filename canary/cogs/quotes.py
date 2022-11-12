@@ -155,7 +155,7 @@ class Quotes(CanaryCog):
                 await ctx.send("`Quote deleted.`", delete_after=60)
 
     @commands.command(aliases=["q"])
-    async def quotes(self, ctx, str1: str = None, *, str2: str = None):
+    async def quotes(self, ctx, str1: str | None = None, *, str2: str | None = None):
         """
         Retrieve a quote with a specified keyword / mention. Can optionally use
         regex by surrounding the the query with /.../.
@@ -366,7 +366,7 @@ class Quotes(CanaryCog):
         await p.paginate()
 
     @commands.command(aliases=["gen"])
-    async def generate(self, ctx: commands.Context, seed: str = None, min_length: int = 1):
+    async def generate(self, ctx: commands.Context, seed: str | None = None, min_length: int = 1):
         """
         Generates a random 'quote' using a Markov Chain. Optionally takes in a
         word to seed the Markov Chain with and (also optionally) a desired
@@ -396,8 +396,8 @@ class Quotes(CanaryCog):
         retries = 0
 
         while len(longest_sentence) < min_length and retries < 200:
-            current_word = seed
-            sentence = [current_word]
+            current_word: str = seed
+            sentence: list[str] = [current_word]
 
             # Add words to the sentence until a termination condition is
             # encountered.
@@ -407,7 +407,7 @@ class Quotes(CanaryCog):
 
                 # Choose a random word and add it to the sentence using the
                 # probability distribution stored in the word entry.
-                old_word = current_word
+                old_word: str = current_word
                 current_word = np.random.choice(c_words, p=p_dist)
 
                 # Don't allow termination until the minimum length is met, or we don't have any other option.

@@ -28,7 +28,7 @@ from .utils.auto_incorrect import auto_incorrect
 
 class Memes(CanaryCog):
     @commands.command()
-    async def bac(self, ctx, *, input_str: str = None):
+    async def bac(self, ctx: commands.Context, *, input_str: str | None = None):
         """
         Purposefully auto-incorrects inputted sentences
         Inputted text is either the content of the message to
@@ -98,7 +98,7 @@ class Memes(CanaryCog):
         await ctx.send("CHEEP CHEEP")
 
     @commands.command()
-    async def mix(self, ctx, *, input_str: str = None):
+    async def mix(self, ctx, *, input_str: str | None = None):
         """Alternates upper/lower case for input string.
         Inputted text is either the content of the message to
         after the command or the content of the message to which
@@ -147,7 +147,7 @@ class Memes(CanaryCog):
         await ctx.send(f"**\n{msg}**")
 
     @commands.command()
-    async def xkcd(self, ctx, command: str = None):
+    async def xkcd(self, ctx, command: str | None = None):
         """
         Enjoy a nice xkcd comic with some strangers on the internet!
         If no issue number is passed, returns a random xkcd.

@@ -63,11 +63,11 @@ def auto_incorrect(input_str: str):
     By @lazho
     """
     chance = 99
-    input_str = input_str.split()
+    input_split: list[str] = input_str.split()
 
     output_str = ""
 
-    for w in input_str:
+    for w in input_split:
         output_str += " "
 
         # Idiots don't use shift or capslock
