@@ -15,29 +15,29 @@ canary = "canary.main:main"
 
 [tool.poetry.dependencies]
 python = "~3.10.0"
-beautifulsoup4 = "==4.10.0"
-sympy = "^1.9"
-requests = ">=2.20.0"
-tabulate = "==0.8.9"
-"discord.py" = {extras = ["voice"], version = "~1.6.0"}
-opencv-python = "==4.6.0.66"
-pytz = ">=2020.5"
-numpy = "^1.21.1"
 aiohttp = "~3.7.4"
-urllib3 = ">=1.25.3"
-feedparser = "^6.0.8"
-regex = "^2021.11.10"
-googletrans = "==4.0.0rc1"
-yt-dlp = "^2021.12.27"
-Pillow = "^8.3.2"
-uvloop = {version="0.16.0", markers = "sys_platform == 'linux' or sys_platform == 'darwin'"}
-bidict = "^0.22.0"
 aiosqlite = "^0.17.0"
+beautifulsoup4 = "==4.10.0"
+bidict = "^0.22.0"
+"discord.py" = {extras = ["voice"], version = "~1.6.0"}
+feedparser = "^6.0.8"
+googletrans = "==4.0.0rc1"
 lxml = "^4.9.1"
+numpy = "^1.23.2"
+opencv-python = "==4.6.0.66"
+Pillow = "^9.3.0"
+pytz = ">=2022.6"
+regex = "^2022.10.31"
+requests = ">=2.20.0"
+sympy = "^1.11.1"
+tabulate = "==0.8.9"
+urllib3 = ">=1.25.3"
+uvloop = {version="0.16.0", markers = "sys_platform == 'linux' or sys_platform == 'darwin'"}
+yt-dlp = "^2021.12.27"
 
 [tool.poetry.dev-dependencies]
-pytest = "^7.0.71"
-black = "^22.6"
+pytest = "^7.1.0"
+black = "^22.6.0"
 mypy = ">=0.971,<0.972"
 types-beautifulsoup4 = "^4.11.5"
 types-regex = "^2022.8.17.0"
@@ -47,4 +47,3 @@ types-tabulate = "^0.8.11"
 
 [tool.black]
 line-length = 120
-
