@@ -20,7 +20,6 @@ from discord.ext import commands, tasks
 from discord import utils
 
 # Other utilities
-import aiosqlite
 import asyncio
 import datetime
 import json
@@ -200,13 +199,13 @@ class Banner(CanaryCog):
 
     @commands.command(aliases=["bannerwinner", "setbannerwinner", "set_banner_winner"])
     @is_moderator()
-    async def banner_winner(self, ctx, winner: discord.Member = None):
+    async def banner_winner(self, ctx: commands.Context, winner: discord.Member = None):
         """
         Select the winner for an ongoing Banner Picture of the Week contest
 
-        The winning picture is then set as the server's Banner and the submission is published on the Banner of the week channel.
-        The winning user receives the Banner of the Week Winner role, and the submission previews are pinned in the
-        Banner Submissions and Converted Banner Submissions channels.
+        The winning picture is then set as the server's Banner and the submission is published on the Banner of the week
+        channel. The winning user receives the Banner of the Week Winner role, and the submission previews are pinned in
+        the Banner Submissions and Converted Banner Submissions channels.
 
         This command can be used with a user as argument. Otherwise, a prompt will ask for the user.
         The user must have submitted a banner using the submitbanner command during the contest.
@@ -382,11 +381,13 @@ class Banner(CanaryCog):
     @commands.command(aliases=["submitbanner"])
     async def submit_banner(self, ctx: commands.Context, *args):
         """
-        Submit a picture for an Banner Picture of the Week contest
+        Submit a picture for a Banner Picture of the Week contest
 
-        There must be an ongoing Banner contest to use this command; check the Banner of the Week channel for more information.
-        This command can be used in a picture caption or with a url as argument.
-        The image will be scaled to maximum fit and centered; you can add -stretch to the command for the image to be stretched instead.
+        There must be an ongoing Banner contest to use this command; check the Banner of the Week channel for more
+        information.
+        This command can be used in a picture caption or with a URL as an argument.
+        The image will be scaled to maximum fit and centered; you can add -stretch to the command for the image to be
+        stretched instead.
         For better results, your picture must be at least 960x540 pixels in a 16:9 aspect ratio.
 
         You must be a verified user to use this command.

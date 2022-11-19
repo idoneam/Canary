@@ -59,7 +59,7 @@ class Memes(CanaryCog):
         await ctx.message.delete()
 
     @commands.command()
-    async def lenny(self, ctx):
+    async def lenny(self, ctx: commands.Context):
         """
         Lenny face
         """
@@ -67,7 +67,7 @@ class Memes(CanaryCog):
         await ctx.message.delete()
 
     @commands.command()
-    async def license(self, ctx):
+    async def license(self, ctx: commands.Context):
         """
         License
         """
@@ -93,12 +93,12 @@ class Memes(CanaryCog):
         await ctx.message.delete()
 
     @commands.command()
-    async def cheep(self, ctx):
+    async def cheep(self, ctx: commands.Context):
         """:^)"""
         await ctx.send("CHEEP CHEEP")
 
     @commands.command()
-    async def mix(self, ctx, *, input_str: str | None = None):
+    async def mix(self, ctx: commands.Context, *, input_str: str | None = None):
         """Alternates upper/lower case for input string.
         Inputted text is either the content of the message to
         after the command or the content of the message to which
@@ -128,14 +128,14 @@ class Memes(CanaryCog):
         await ctx.message.delete()
 
     @commands.command(aliases=["boot"])
-    async def pyramid(self, ctx, num: int = 2, emoji: str = "👢"):
+    async def pyramid(self, ctx: commands.Context, num: int = 2, emoji: str = "👢"):
         """
         Draws a pyramid of boots, default is 2 unless user specifies an integer
         number of levels of boots between -8 and 8. Also accepts any other
         emoji, word or multiword (in quotes) string.
         """
 
-        def pyramidy(n, m):
+        def pyramidy(n: int, m: int) -> str:
             # Limit emoji/string to 8 characters or Discord/potate mald
             return f"{' ' * ((m - n) * 3)}{(emoji[:8] + ' ') * n}"
 
@@ -147,7 +147,7 @@ class Memes(CanaryCog):
         await ctx.send(f"**\n{msg}**")
 
     @commands.command()
-    async def xkcd(self, ctx, command: str | None = None):
+    async def xkcd(self, ctx: commands.Context, command: str | None = None):
         """
         Enjoy a nice xkcd comic with some strangers on the internet!
         If no issue number is passed, returns a random xkcd.
