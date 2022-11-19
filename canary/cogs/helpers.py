@@ -713,10 +713,7 @@ class Helpers(CanaryCog):
         await ctx.send("Job completed.")
 
     async def spoilerize_utility(
-        self, ctx: commands.Context,
-        message: discord.Message,
-        reason: str | None = None,
-        moderator: bool = False
+        self, ctx: commands.Context, message: discord.Message, reason: str | None = None, moderator: bool = False
     ) -> None:
         db: aiosqlite.Connection
 
