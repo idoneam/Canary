@@ -33,6 +33,13 @@ from .utils.checks import is_moderator
 
 
 class Banner(CanaryCog):
+    CONVERTER_FILE = "./data/premade/banner_converter.png"
+    PREVIEW_FILE = "./data/premade/banner_preview.png"
+
+    PREVIEW_MASK_USER_CANVAS_SIZE = (240, 135)
+    PREVIEW_MASK_USER_BOX_START = (5, 5)
+    TRANSPARENT = (0, 0, 0, 0)
+
     # Written by @le-potate
     def __init__(self, bot: Canary):
         super().__init__(bot)
@@ -255,19 +262,20 @@ class Banner(CanaryCog):
                 return
 
             winner_str = winner_msg.content
-            if winner_str.lower() == "none":
-                await self.reset_banner_contest()
-                await ctx.send("Successfully ended banner contest.")
-                return
-            elif winner_str.lower() == "quit":
-                await ctx.send("Command exited.")
-                return
-            else:
-                try:
-                    winner = await commands.MemberConverter().convert(ctx, winner_str)
-                except commands.BadArgument:
-                    await ctx.send("Could not find user.")
+            match winner_str.lower():
+                case "none":
+                    await self.reset_banner_contest()
+                    await ctx.send("Successfully ended banner contest.")
                     return
+                case "quit":
+                    await ctx.send("Command exited.")
+                    return
+                case _:
+                    try:
+                        winner = await commands.MemberConverter().convert(ctx, winner_str)
+                    except commands.BadArgument:
+                        await ctx.send("Could not find user.")
+                        return
 
         if "BANNER" not in self.guild.features:
             await ctx.send("This server cannot upload and use a banner")
@@ -378,6 +386,10 @@ class Banner(CanaryCog):
         await self.reset_banner_contest()
         await ctx.send("Successfully set banner and ended contest.")
 
+    @staticmethod
+    def calc_ratio_max(canvas_dims: tuple[int, int], frame: Image) -> float:
+        return max(canvas_dims[0] / frame.size[0], canvas_dims[1] / frame.size[1])
+
     @commands.command(aliases=["submitbanner"])
     async def submit_banner(self, ctx: commands.Context, *args):
         """
@@ -417,9 +429,8 @@ class Banner(CanaryCog):
         if not timestamp:
             await ctx.send("No banner contest is currently set")
             return
-        start_datetime = datetime.datetime.fromtimestamp(timestamp)
 
-        if datetime.datetime.now() < start_datetime:
+        if datetime.datetime.now() < (start_datetime := datetime.datetime.fromtimestamp(timestamp)):
             await ctx.send(f"You must wait for {start_datetime.strftime('%Y-%m-%d %H:%M')} to submit!")
             return
 
@@ -429,7 +440,7 @@ class Banner(CanaryCog):
             )
             return
 
-        stretch = "-stretch" in args or "-stretched" in args
+        stretch: bool = "-stretch" in args or "-stretched" in args
 
         url: str | None = None
         if (stretch and len(args) == 1) or (not stretch and len(args) == 0):
@@ -446,10 +457,11 @@ class Banner(CanaryCog):
             if stretch and len(args) > 2 or not stretch and len(args) > 1:
                 await ctx.send("Too many arguments or misspelled flag")
                 return
-            else:
-                for arg in args:
-                    if arg != "-stretch" and arg != "-stretched":
-                        url = arg
+
+            # If the arguments look good: pull the URL out (a non-flag argument)
+            for arg in args:
+                if arg != "-stretch" and arg != "-stretched":
+                    url = arg
 
         if url is None:
             return
@@ -460,68 +472,67 @@ class Banner(CanaryCog):
             return
 
         try:
-            with Image.open("./data/premade/banner_converter.png") as overlay_mask, Image.open(
-                "./data/premade/banner_preview.png"
-            ) as preview_mask, Image.open(user_image_file) as user_image:
+            with Image.open(Banner.CONVERTER_FILE) as overlay_mask, Image.open(
+                    Banner.PREVIEW_FILE) as preview_mask, Image.open(user_image_file) as user_image:
 
                 animated = user_image.is_animated
 
                 overlay_mask_user_canvas_size = overlay_mask.size
-                preview_mask_user_canvas_size = (240, 135)
-                preview_mask_user_box_start = (5, 5)
 
-                overlay_frames = []
-                preview_frames = []
+                overlay_frames: list[Image] = []
+                preview_frames: list[Image] = []
+                durations: list[float] = []
+
                 if animated:
-                    durations = []
                     await ctx.send("Converting animated banner, this may take some time...")
 
                 for frame in ImageSequence.Iterator(user_image):
                     if animated:
                         durations.append(frame.info["duration"])
+
                     frame = frame.copy()
                     rgba_frame = frame.convert("RGBA")
+
+                    # If we're stretching the banner, things are a bit easier for us, as we don't have to find a
+                    # good 'fit' for the image.
                     if stretch:
                         overlay_frames.append(
                             Image.alpha_composite(rgba_frame.resize(overlay_mask_user_canvas_size), overlay_mask)
                         )
-                        preview_user_image = Image.new("RGBA", preview_mask.size, (0, 0, 0, 0))
+                        preview_user_image = Image.new("RGBA", preview_mask.size, Banner.TRANSPARENT)
                         preview_user_image.paste(
-                            rgba_frame.resize(preview_mask_user_canvas_size), preview_mask_user_box_start
+                            rgba_frame.resize(Banner.PREVIEW_MASK_USER_CANVAS_SIZE),
+                            Banner.PREVIEW_MASK_USER_BOX_START
                         )
                         preview_frames.append(Image.alpha_composite(preview_user_image, preview_mask))
-                    else:
-                        overlay_ratio = max(
-                            overlay_mask_user_canvas_size[0] / rgba_frame.size[0],
-                            overlay_mask_user_canvas_size[1] / rgba_frame.size[1],
-                        )
-                        overlay_user_image = Image.new("RGBA", overlay_mask_user_canvas_size, (0, 0, 0, 0))
-                        overlay_user_size = (
-                            int(rgba_frame.size[0] * overlay_ratio),
-                            int(rgba_frame.size[1] * overlay_ratio),
-                        )
-                        overlay_mask_user_image_start = (
-                            int(overlay_mask_user_canvas_size[0] / 2 - overlay_user_size[0] / 2),
-                            int(overlay_mask_user_canvas_size[1] / 2 - overlay_user_size[1] / 2),
-                        )
-                        overlay_user_image.paste(rgba_frame.resize(overlay_user_size), overlay_mask_user_image_start)
-                        overlay_frames.append(Image.alpha_composite(overlay_user_image, overlay_mask))
+                        continue
 
-                        preview_ratio = max(
-                            preview_mask_user_canvas_size[0] / rgba_frame.size[0],
-                            preview_mask_user_canvas_size[1] / rgba_frame.size[1],
-                        )
-                        preview_user_image = Image.new("RGBA", preview_mask.size, (0, 0, 0, 0))
-                        preview_user_size = (
-                            int(rgba_frame.size[0] * preview_ratio),
-                            int(rgba_frame.size[1] * preview_ratio),
-                        )
-                        preview_mask_user_image_start = (
-                            5 + int(preview_mask_user_canvas_size[0] / 2 - preview_user_size[0] / 2),
-                            5 + int(preview_mask_user_canvas_size[1] / 2 - preview_user_size[1] / 2),
-                        )
-                        preview_user_image.paste(rgba_frame.resize(preview_user_size), preview_mask_user_image_start)
-                        preview_frames.append(Image.alpha_composite(preview_user_image, preview_mask))
+                    # Otherwise, we have to fit the image nicely into the frame
+                    overlay_ratio: float = Banner.calc_ratio_max(overlay_mask_user_canvas_size, rgba_frame)
+                    overlay_user_image: Image = Image.new("RGBA", overlay_mask_user_canvas_size, Banner.TRANSPARENT)
+                    overlay_user_size: tuple[int, int] = (
+                        int(rgba_frame.size[0] * overlay_ratio),
+                        int(rgba_frame.size[1] * overlay_ratio),
+                    )
+                    overlay_mask_user_image_start: tuple[int, int] = (
+                        int(overlay_mask_user_canvas_size[0] / 2 - overlay_user_size[0] / 2),
+                        int(overlay_mask_user_canvas_size[1] / 2 - overlay_user_size[1] / 2),
+                    )
+                    overlay_user_image.paste(rgba_frame.resize(overlay_user_size), overlay_mask_user_image_start)
+                    overlay_frames.append(Image.alpha_composite(overlay_user_image, overlay_mask))
+
+                    preview_ratio: float = Banner.calc_ratio_max(Banner.PREVIEW_MASK_USER_CANVAS_SIZE, rgba_frame)
+                    preview_user_image: Image = Image.new("RGBA", preview_mask.size, Banner.TRANSPARENT)
+                    preview_user_size: tuple[int, int] = (
+                        int(rgba_frame.size[0] * preview_ratio),
+                        int(rgba_frame.size[1] * preview_ratio),
+                    )
+                    preview_mask_user_image_start: tuple[int, int] = (
+                        5 + int(Banner.PREVIEW_MASK_USER_CANVAS_SIZE[0] / 2 - preview_user_size[0] / 2),
+                        5 + int(Banner.PREVIEW_MASK_USER_CANVAS_SIZE[1] / 2 - preview_user_size[1] / 2),
+                    )
+                    preview_user_image.paste(rgba_frame.resize(preview_user_size), preview_mask_user_image_start)
+                    preview_frames.append(Image.alpha_composite(preview_user_image, preview_mask))
 
         except UnidentifiedImageError or requests.exceptions.MissingSchema:
             await ctx.send(f"Image couldn't be opened.")
@@ -529,7 +540,7 @@ class Banner(CanaryCog):
 
         replaced_message = False
 
-        fetched = await self.fetch_one(
+        fetched: tuple[int] | None = await self.fetch_one(
             "SELECT PreviewMessageID FROM BannerSubmissions WHERE UserID = ?",
             (ctx.author.id,),
         )
@@ -545,7 +556,7 @@ class Banner(CanaryCog):
                 )
             replaced_message = True
 
-        async def send_picture(frames, channel, filename):
+        async def send_picture(frames: list, channel: discord.TextChannel, filename: str) -> discord.Message:
             with BytesIO() as image_binary:
                 if animated:
                     frames[0].save(
@@ -561,11 +572,11 @@ class Banner(CanaryCog):
                 )
                 return message
 
-        filetype = "gif" if animated else "png"
-        converted_message = await send_picture(
+        filetype: str = "gif" if animated else "png"
+        converted_message: discord.Message = await send_picture(
             overlay_frames, self.banner_converted_channel, f"converted_banner.{filetype}"
         )
-        preview_message = await send_picture(
+        preview_message: discord.Message = await send_picture(
             preview_frames, self.banner_submissions_channel, f"banner_preview.{filetype}"
         )
         await preview_message.add_reaction(self.banner_vote_emoji)
