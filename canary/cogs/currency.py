@@ -85,7 +85,7 @@ class Currency(CanaryCog):
 
     async def create_bank_transaction(
         self, db: aiosqlite.Connection, user: discord.Member, amount: Decimal, action: str, metadata: dict
-    ):
+    ) -> None:
         # Don't create another connection in this function in order to properly
         # transaction-ify a series of bank "transactions".
 
@@ -103,7 +103,7 @@ class Currency(CanaryCog):
         )
 
     @staticmethod
-    def parse_currency(amount: str, balance: Decimal):
+    def parse_currency(amount: str, balance: Decimal) -> Decimal | None:
         if amount.lower().strip() in CURRENCY_ALL:
             return balance
 
@@ -113,16 +113,16 @@ class Currency(CanaryCog):
             # Value error (invalid conversion)
             return None
 
-    def currency_to_db(self, amount: Decimal):
+    def currency_to_db(self, amount: Decimal) -> int:
         return int(amount * Decimal(10 ** self.currency["precision"]))
 
-    def db_to_currency(self, amount: int):
+    def db_to_currency(self, amount: int) -> Decimal:
         return Decimal(amount) / Decimal(10 ** self.currency["precision"])
 
-    def format_currency(self, amount: Decimal):
+    def format_currency(self, amount: Decimal) -> str:
         return ("{:." + str(self.prec) + "f}").format(amount)
 
-    def format_symbol_currency(self, amount: Decimal):
+    def format_symbol_currency(self, amount: Decimal) -> str:
         return self.currency["symbol"] + self.format_currency(amount)
 
     @staticmethod
@@ -147,8 +147,6 @@ class Currency(CanaryCog):
 
         if bet > balance:
             return "You're too broke to bet that much!"
-
-        return ""
 
     async def get_last_claim_time(self, db: aiosqlite.Connection, author: discord.Member | discord.User) -> int | None:
         claim_time_t = await self.fetch_one(
@@ -261,8 +259,7 @@ class Currency(CanaryCog):
 
         # Handle invalid cases
 
-        error = self.check_bet(balance, bet_dec)
-        if error != "":
+        if (error := self.check_bet(balance, bet_dec)) is not None:
             await ctx.send(error)
             return
 
@@ -307,8 +304,7 @@ class Currency(CanaryCog):
         bet_dec = self.parse_currency(bet, balance)
 
         # Handle invalid cases
-        error = self.check_bet(balance, bet_dec)
-        if error != "":
+        if (error := self.check_bet(balance, bet_dec)) != "":
             await ctx.send(error)
             return
 
@@ -336,18 +332,19 @@ class Currency(CanaryCog):
             )
             await db.commit()
 
-        message = "Sorry! {un} lost {am} (result was **{re}**)."
         if amount_returned == bet_dec:
-            message = "{un} broke even (result was **{re}**)."
+            message_tpl = "{un} broke even (result was **{re}**)."
         elif amount_returned > bet_dec:
-            message = "Congratulations! {un} won [net] {am} (result was **{re}**)."
+            message_tpl = "Congratulations! {un} won [net] {am} (result was **{re}**)."
+        else:
+            message_tpl = "Sorry! {un} lost {am} (result was **{re}**)."
 
         author_name = ctx.message.author.display_name
 
         amount_msg_multiplier = -1 if amount_returned < bet_dec else 1
         bet_str = self.format_symbol_currency(amount_msg_multiplier * (amount_returned - bet_dec))
 
-        await ctx.send(message.format(un=author_name, am=bet_str, re=result))
+        await ctx.send(message_tpl.format(un=author_name, am=bet_str, re=result))
 
     @commands.command()
     async def give(self, ctx: commands.Context, user: discord.Member | None = None, amount: str | None = None):
@@ -394,7 +391,6 @@ class Currency(CanaryCog):
         gen = user.display_name
 
         gifter_metadata = {"giftee": user.id, "channel": ctx.message.channel.id}
-
         giftee_metadata = {"gifter": ctx.message.author.id, "channel": ctx.message.channel.id}
 
         db: aiosqlite.Connection

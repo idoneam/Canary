@@ -433,7 +433,6 @@ class Banner(CanaryCog):
         if not timestamp:
             await ctx.send("No banner contest is currently set")
             return
-
         if datetime.datetime.now() < (start_datetime := datetime.datetime.fromtimestamp(timestamp)):
             await ctx.send(f"You must wait for {start_datetime.strftime('%Y-%m-%d %H:%M')} to submit!")
             return
