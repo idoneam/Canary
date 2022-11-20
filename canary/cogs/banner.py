@@ -414,8 +414,8 @@ class Banner(CanaryCog):
 
         # TODO: this is not portable to other server setups
         if not (
-            discord.utils.get(ctx.author.roles, name=self.bot.config.mcgillian_role) or
-            discord.utils.get(ctx.author.roles, name=self.bot.config.honorary_mcgillian_role)
+            discord.utils.get(ctx.author.roles, name=self.bot.config.mcgillian_role)
+            or discord.utils.get(ctx.author.roles, name=self.bot.config.honorary_mcgillian_role)
         ):
             await ctx.send("You must be a verified user.")
             return
@@ -476,7 +476,8 @@ class Banner(CanaryCog):
 
         try:
             with Image.open(Banner.CONVERTER_FILE) as overlay_mask, Image.open(
-                    Banner.PREVIEW_FILE) as preview_mask, Image.open(user_image_file) as user_image:
+                Banner.PREVIEW_FILE
+            ) as preview_mask, Image.open(user_image_file) as user_image:
 
                 animated = user_image.is_animated
 
@@ -504,8 +505,7 @@ class Banner(CanaryCog):
                         )
                         preview_user_image = Image.new("RGBA", preview_mask.size, Banner.TRANSPARENT)
                         preview_user_image.paste(
-                            rgba_frame.resize(Banner.PREVIEW_MASK_USER_CANVAS_SIZE),
-                            Banner.PREVIEW_MASK_USER_BOX_START
+                            rgba_frame.resize(Banner.PREVIEW_MASK_USER_CANVAS_SIZE), Banner.PREVIEW_MASK_USER_BOX_START
                         )
                         preview_frames.append(Image.alpha_composite(preview_user_image, preview_mask))
                         continue
