@@ -134,11 +134,13 @@ class Banner(CanaryCog):
 
         You must be a moderator to use this command.
         """
+
         if "BANNER" not in self.guild.features:
             await ctx.send(
                 "Warning: This server cannot currently upload and use a banner. "
                 "You may still set the next banner contest."
             )
+
         if self.start_datetime:
             if datetime.datetime.now() < self.start_datetime:
                 await ctx.send(
@@ -166,13 +168,14 @@ class Banner(CanaryCog):
         except asyncio.TimeoutError:
             await ctx.send("Command timed out.")
             return
-        date_str = date_msg.content
 
-        if date_str.lower() == "quit":
+        date_str = date_msg.content.lower()
+
+        if date_str == "quit":
             await ctx.send("Command exited.")
             return
 
-        if date_str.lower() == "now":
+        if date_str == "now":
             timestamp = datetime.datetime.now().timestamp()
         else:
             try:
@@ -409,9 +412,10 @@ class Banner(CanaryCog):
             await ctx.send("No banner submissions channel set.")
             return
 
+        # TODO: this is not portable to other server setups
         if not (
-            discord.utils.get(ctx.author.roles, name=self.bot.config.mcgillian_role)
-            or discord.utils.get(ctx.author.roles, name=self.bot.config.honorary_mcgillian_role)
+            discord.utils.get(ctx.author.roles, name=self.bot.config.mcgillian_role) or
+            discord.utils.get(ctx.author.roles, name=self.bot.config.honorary_mcgillian_role)
         ):
             await ctx.send("You must be a verified user.")
             return
