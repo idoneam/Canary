@@ -74,6 +74,7 @@ class Parser:
         self.verification_channel = config["Channels"]["VerificationChannel"]
         self.appeals_log_channel = config["Channels"]["AppealsLogChannel"]
         self.appeals_category = config["Channels"]["AppealsCategory"]
+        self.lobby_channel = config["Channels"]["LobbyChannel"]
 
         # Meta
         self.repository = config["Meta"]["Repository"]

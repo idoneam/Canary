@@ -23,11 +23,18 @@ import discord
 import random
 import aiohttp
 from .utils.auto_incorrect import auto_incorrect
-
+import json
+import re
 
 class Memes(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        self.pokedex = json.load(open('data/premade/pokedex.json', encoding='utf-8'))
+        self.lobby_channel: discord.TextChannel | None = None
+
+    @commands.Cog.listener()
+    async def on_ready(self):
+        self.lobby_channel = self.bot.get_guild(self.bot.config.server_id).get_channel(self.bot.config.lobby_channel)
 
     @commands.command()
     async def bac(self, ctx, *, input_str: str = None):
@@ -200,6 +207,12 @@ class Memes(commands.Cog):
             .set_footer(text=data["alt"])
         )
 
+    @commands.Cog.listener()
+    async def on_member_join(self, user: discord.Member):
+        key = re.sub('[^A-Za-z0-9]+', '', user.name).trim().lower()
+        if key in self.pokedex:
+            await with self.lobby_channel.typing():
+                await self.lobby_channel.send(f"Wild {self.pokedex[key]} has appeared!")
 
 def setup(bot):
     bot.add_cog(Memes(bot))
