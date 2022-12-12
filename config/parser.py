@@ -103,6 +103,8 @@ class Parser:
         self.db_path = config["DB"]["Path"]
         self.db_schema_path = config["DB"]["Schema"]
 
+        self.exam_schedule_path = config["ExamSchedule"]["Path"]
+
         # Helpers configuration
         self.course_tpl = config["Helpers"]["CourseTemplate"]
         self.course_search_tpl = config["Helpers"]["CourseSearchTemplate"]

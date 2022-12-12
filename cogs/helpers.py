@@ -29,7 +29,6 @@ from sympy import preview
 import cv2
 import numpy as np
 import googletrans
-import os
 
 # Other utilities
 import re
@@ -44,6 +43,10 @@ from .utils.checks import is_moderator, is_developer
 import sqlite3
 from .utils.arg_converter import ArgConverter, StrConverter
 from discord.ext.commands import MessageConverter
+import tabula
+import pandas
+from datetime import datetime
+from os import path
 
 MCGILL_EXAM_URL = "https://www.mcgill.ca/exams/dates"
 
@@ -79,8 +82,8 @@ class Helpers(commands.Cog):
     async def on_ready(self):
         self.guild = self.bot.get_guild(self.bot.config.server_id)
 
-    @commands.command(aliases=["exams"])
-    async def exam(self, ctx):
+    @commands.command()
+    async def exams(self, ctx):
         """Retrieves the exam schedule link from McGill's Exam website."""
         await ctx.trigger_typing()
 
@@ -95,6 +98,114 @@ class Helpers(commands.Cog):
         exam_schedule = discord.Embed(title="Latest Exam Schedule", description="{}".format(link))
 
         await ctx.send(embed=exam_schedule)
+
+    @commands.command()
+    async def load_exam_schedule(self, ctx):
+        """Retrieves the exam schedule link from McGill's Exam website."""
+        await ctx.trigger_typing()
+
+        r = await fetch(MCGILL_EXAM_URL, "content")
+
+        soup = BeautifulSoup(r, "html.parser")
+        link = soup.find("a", href=re.compile("exams/files/exams"))["href"]
+
+        if link[:2] == "//":
+            link = "https:" + link
+
+        description = link
+
+        try:
+            tabula.read_pdf(
+                link, pages="all", output_format="dataframe", output_path=self.bot.config.exam_schedule_path
+            )
+        except:
+            description = "Loading exam schedule failed."
+
+        exam_schedule = discord.Embed(title="Latest Exam Schedule", description=description)
+
+        await ctx.send(embed=exam_schedule)
+
+    @commands.command()
+    async def exam(self, ctx, *, query: str):
+        """Prints a summary of the queried course, taken from the course
+        calendar. ie. ?course comp 206
+        Note: Bullet points without colons (':') are not parsed because I have
+        yet to see one that actually has useful information.
+        """
+        await ctx.trigger_typing()
+
+        # Course codes are in the format AAAA 000, or AAA1 000 in some rare
+        # cases. Courses across multiple semesters have a suffix like D1/D2.
+        result = re.compile(r"([A-Za-z]{3}[A-Za-z0-9])\s*(\d{3}\s*(\w\d)?)", re.IGNORECASE | re.DOTALL).search(query)
+        if not result:
+            await ctx.send(":warning: Incorrect format. The correct format is `?course " "<course name>`.")
+            return
+
+        df = pandas.read_csv(
+            self.bot.config.exam_schedule_path,
+            names=[
+                "Course",
+                "Section",
+                "Course Title",
+                "Exam Type",
+                "Exam Start Date & Time",
+                "Exam End Date & Time",
+                "Building",
+                "Room",
+                "Row(s)",
+                "From",
+                "To",
+            ],
+        )
+
+        exams = df.loc[df["Course"] == query.upper()].values
+
+        print(exams)
+
+        if exams is None or len(exams) == 0:
+            await ctx.send("No exam found for {}.".format(query))
+            return
+
+        ems = []
+
+        for exam in exams:
+            course_url = self.bot.config.course_tpl.format(exam[0].replace(" ", "-"))
+            exam_type = exam[3].split(" - ")
+
+            em = discord.Embed(title=f"{exam[0]} {exam[2]}", url=course_url, colour=0xDA291C)
+
+            em.add_field(name="Section", value=exam[1], inline=False)
+
+            em.add_field(name="Occurring", value=exam_type[0].title(), inline=True)
+            em.add_field(name="Type", value=exam_type[1].title(), inline=True)
+            em.add_field(
+                name=("Alotted Time" if exam_type[0] == "ONLINE" else "Campus"),
+                value=exam_type[2].replace("-", " ").title(),
+                inline=True,
+            )
+
+            em.add_field(name="Starting At", value=exam[4].replace("-", " "), inline=True)
+            em.add_field(name="Ending At", value=exam[5].replace("-", " "), inline=True)
+            em.add_field(name="\u200b", value="\u200b", inline=True)
+
+            em.add_field(name="Building", value=exam[6].title(), inline=True)
+            em.add_field(name="Room", value=exam[7].title(), inline=True)
+            em.add_field(name="Row(s)", value=exam[8], inline=True)
+
+            em.add_field(name="From", value=exam[9], inline=True)
+            em.add_field(name="To", value=exam[10], inline=True)
+            em.add_field(name="\u200b", value="\u200b", inline=True)
+
+            date = datetime.fromtimestamp(path.getctime(self.bot.config.exam_schedule_path)).strftime("%b %d %Y")
+            em.set_footer(text=f"The exam schedule was last reloaded on {date}")
+
+            ems.append(em)
+
+        print(ems)
+
+        pages = Pages(ctx, item_list=ems, display_option=(6, 0), editable_content=False)
+
+        await pages.paginate()
 
     @staticmethod
     def _calculate_feels_like(temp: float, humidity: float, ws_kph: float) -> str:
