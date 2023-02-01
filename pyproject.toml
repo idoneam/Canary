@@ -9,7 +9,7 @@ authors = []
 
 [tool.poetry.dependencies]
 python = "~3.10.0"
-beautifulsoup4 = "==4.10.0"
+beautifulsoup4 = "==4.11.2"
 sympy = "^1.9"
 requests = ">=2.20.0"
 tabulate = "==0.8.9"
