@@ -63,7 +63,7 @@ async def on_ready():
 
 @bot.command()
 @is_moderator()
-async def load(ctx, extension_name: str):
+async def load(ctx: Context, extension_name: str):
     """
     Load a specific extension. Specify as cogs.<name>
     """
