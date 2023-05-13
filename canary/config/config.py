@@ -19,8 +19,10 @@ import codecs
 import configparser
 import decimal
 import logging
+import os
 
 from pathlib import Path
+from pydantic import BaseModel, BaseSettings
 
 LOG_LEVELS = {
     "critical": logging.CRITICAL,
@@ -32,18 +34,119 @@ LOG_LEVELS = {
 }
 
 
-class Parser:
+class CurrencyModel(BaseModel):
+    name: str = "cheeps"
+    symbol: str = "ʧ"
+    precision: int = 2
+    initial: int = 1000
+
+    # TODO: Finish
+
+
+class MusicModel(BaseModel):
+    ban_role: str = "tone deaf"
+    start_vol: float = "100.0"
+
+
+class Settings(BaseSettings):
+    # Discord token
+    discord_key: str
+
+    # Server configs
+    server_id: int
+    command_prefix: str = "?"
+    bot_name: str = "Marty"
+
+    # Emoji
+    upvote_emoji: str = "upmartlet"
+    downvote_emoji: str = "downmartlet"
+    banner_vote_emoji: str = "redchiken"
+
+    # Roles
+    moderator_role: str = "Discord Moderator"
+    developer_role: str = "idoneam"
+    mcgillian_role: str = "McGillian"
+    honorary_mcgillian_role: str = "Honorary McGillian"
+    banner_reminders_role: str = "Banner Submissions"
+    banner_winner_role: str = "Banner of the Week Winner"
+    trash_tier_banner_role: str = "Trash Tier Banner Submissions"
+    no_food_spotting_role: str = "Trash Tier Foodspotting"
+    muted_role: str = "Muted"
+    crabbo_role: str = "Secret Crabbo"
+
+    # Channels
+    reception_channel: str = "martys_dm"
+    banner_of_the_week_channel: str = "banner_of_the_week"
+    banner_submissions_channel: str = "banner_submissions"
+    banner_converted_channel: str = "converted_banner_submissions"
+    food_spotting_channel: str = "foodspotting"
+    metro_status_channel: str = "stm_alerts"
+    bots_channel: str = "bots"
+    verification_channel: str = "verification_log"
+    appeals_log_channel: str = "appeals_log"
+    appeals_category: str = "appeals"
+
+    # Meta
+    repository: str = "https://github.com/idoneam/Canary.git"
+
+    # Logging
+    dev_log_webhook_id: int | None = None
+    dev_log_webhook_token: str | None = None
+    mod_log_webhook_id: int | None = None
+    mod_log_webhook_token: str | None = None
+
+    # Welcome + Farewell messages
+    # NOT PORTED FROM OLD CONFIG SETUP.
+
+    # DB configuration
+    db_path: str = "./data/runtime/Martlet.db"
+
+    # Helpers configuration
+    course_tpl: str = "http://www.mcgill.ca/study/2022-2023/courses/{}"
+    course_search_tpl: str = (
+        "http://www.mcgill.ca/study/2022-2023/courses/search?search_api_views_fulltext={}&sort_by=field_subject_code"
+        "&page={}"
+    )
+    gc_weather_url: str = "http://weather.gc.ca/city/pages/qc-147_metric_e.html"
+    gc_weather_alert_url: str = "https://weather.gc.ca/warnings/report_e.html?qc67"
+    wttr_in_tpl: str = "http://wttr.in/Montreal_2mpq_lang=en.png?_m"
+    tepid_url: str = "https://tepid.science.mcgill.ca:8443/tepid/screensaver/queues/status"
+
+    # Subscription configuration
+    recall_channel: str = "food"
+    recall_filter: str = "Quebec|National"
+
+    # Currency configuration
+    currency: CurrencyModel
+
+    # Music configuration
+    music: MusicModel
+
+    # Assignable Roles
+    # TODO
+
+    class Config:
+        env_file = ".env"
+        env_prefix = "CANARY_"
+        env_nested_delimiter = "__"
+
+
+class Config:
     CONFIG_PATH = Path(__file__).parent / "config.ini"
 
     def __init__(self):
         config = configparser.ConfigParser()
-        config.read_file(codecs.open(str(Parser.CONFIG_PATH), "r", "utf-8-sig"))
+        config.read_file(codecs.open(str(Config.CONFIG_PATH), "r", "utf-8-sig"))
 
         # Discord token
-        self.discord_key = config["Discord"]["Key"]
+        # Try to get from environment; if not found, then
+        self.discord_key = os.environ.get("CANARY_DISCORD_KEY", config["Discord"].get("Key"))
+
+        if self.discord_key is None:
+            raise Exception("Missing discord key; please specify with CANARY_DISCORD_KEY environment variable.")
 
         # Server configs
-        self.server_id = int(config["Server"]["ServerID"])
+        self.server_id = int(os.environ.get("CANARY_SERVER_ID", config["Server"].get("ServerID")))
         self.command_prefix = [s for s in config["Server"]["CommandPrefix"].strip().split(",")]
         self.bot_name = config["Server"]["BotName"]
 

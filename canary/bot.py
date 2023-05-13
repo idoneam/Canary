@@ -20,7 +20,7 @@ import contextlib
 import logging
 import traceback
 
-from canary.config import parser
+from canary.config import Config
 from discord import Webhook, RequestsWebhookAdapter, Intents
 from discord.ext import commands
 from pathlib import Path
@@ -28,29 +28,29 @@ from typing import AsyncGenerator
 
 __all__ = ["Canary", "bot", "developer_role", "moderator_role", "muted_role"]
 
-_parser = parser.Parser()
-command_prefix = _parser.command_prefix
+config = Config()
+command_prefix = config.command_prefix
 
 # Create parent logger, which will send all logs from the "sub-loggers"
 # to the specified log file
-_logger = logging.getLogger("Canary")
-_logger.setLevel(_parser.log_level)
-_file_handler = logging.FileHandler(filename=_parser.log_file, encoding="utf-8", mode="a")
-_file_handler.setFormatter(logging.Formatter("[%(levelname)s] %(asctime)s: %(message)s"))
-_logger.addHandler(_file_handler)
+logger = logging.getLogger("Canary")
+logger.setLevel(config.log_level)
+file_handler = logging.FileHandler(filename=config.log_file, encoding="utf-8", mode="a")
+file_handler.setFormatter(logging.Formatter("[%(levelname)s] %(asctime)s: %(message)s"))
+logger.addHandler(file_handler)
 
 # Create dev (sub-)logger, which is where errors and messages are logged
 # If a dev webhook is specified, logs sent to the dev logger will be
 # sent to the webhook
-_dev_logger = logging.getLogger("Canary.Dev")
-_dev_logger.setLevel(_parser.log_level)
+dev_logger = logging.getLogger("Canary.Dev")
+dev_logger.setLevel(config.log_level)
 
 # Create mod (sub-)logger, where info for mods will be logged
 # If a mod webhook is specified, logs sent to the mod logger will be
 # sent to the webhook. This is always set to the INFO level, since this is
 # where info for mods is logged
-_mod_logger = logging.getLogger("Canary.Mod")
-_mod_logger.setLevel(logging.INFO)
+mod_logger = logging.getLogger("Canary.Mod")
+mod_logger.setLevel(logging.INFO)
 
 
 class _WebhookHandler(logging.Handler):
@@ -64,21 +64,21 @@ class _WebhookHandler(logging.Handler):
         self.webhook.send(f"```\n{msg}```", username=self.username)
 
 
-if _parser.dev_log_webhook_id and _parser.dev_log_webhook_token:
-    _dev_webhook_username = f"{_parser.bot_name} Dev Logs"
-    _dev_webhook_handler = _WebhookHandler(
-        _parser.dev_log_webhook_id, _parser.dev_log_webhook_token, username=_dev_webhook_username
+if config.dev_log_webhook_id and config.dev_log_webhook_token:
+    dev_webhook_username = f"{config.bot_name} Dev Logs"
+    dev_webhook_handler = _WebhookHandler(
+        config.dev_log_webhook_id, config.dev_log_webhook_token, username=dev_webhook_username
     )
-    _dev_webhook_handler.setFormatter(logging.Formatter("[%(levelname)s] %(asctime)s:\n%(message)s"))
-    _dev_logger.addHandler(_dev_webhook_handler)
+    dev_webhook_handler.setFormatter(logging.Formatter("[%(levelname)s] %(asctime)s:\n%(message)s"))
+    dev_logger.addHandler(dev_webhook_handler)
 
-if _parser.mod_log_webhook_id and _parser.mod_log_webhook_token:
-    _mod_webhook_username = f"{_parser.bot_name} Mod Logs"
-    _mod_webhook_handler = _WebhookHandler(
-        _parser.mod_log_webhook_id, _parser.mod_log_webhook_token, username=_mod_webhook_username
+if config.mod_log_webhook_id and config.mod_log_webhook_token:
+    mod_webhook_username = f"{config.bot_name} Mod Logs"
+    mod_webhook_handler = _WebhookHandler(
+        config.mod_log_webhook_id, config.mod_log_webhook_token, username=mod_webhook_username
     )
-    _mod_webhook_handler.setFormatter(logging.Formatter("[%(levelname)s] %(asctime)s:\n%(message)s"))
-    _mod_logger.addHandler(_mod_webhook_handler)
+    mod_webhook_handler.setFormatter(logging.Formatter("[%(levelname)s] %(asctime)s:\n%(message)s"))
+    mod_logger.addHandler(mod_webhook_handler)
 
 
 class Canary(commands.Bot):
@@ -86,15 +86,15 @@ class Canary(commands.Bot):
 
     def __init__(self, *args, **kwargs):
         super().__init__(command_prefix, *args, **kwargs)
-        self.logger = _logger
-        self.dev_logger = _dev_logger
-        self.mod_logger = _mod_logger
-        self.config = _parser
+        self.logger = logger
+        self.dev_logger = dev_logger
+        self.mod_logger = mod_logger
+        self.config = config
 
     async def start(self, *args, **kwargs):  # TODO: discordpy 2.0: use setup_hook for database setup
         await self._start_database()
         await super().start(*args, **kwargs)
-        await self._health_check()
+        await self.health_check()
 
     @contextlib.asynccontextmanager
     async def db(self) -> AsyncGenerator[aiosqlite.Connection, None]:
