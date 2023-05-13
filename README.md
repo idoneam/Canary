@@ -3,7 +3,8 @@
  [![Discord](https://img.shields.io/discord/236668784948019202.svg)](https://discord.gg/HDHvv58)
  [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
-Canary is a Python3 bot designed for the McGill University Community Discord Server. The bot provides helper functions to users, as well as fun functions, a quote database and custom greeting messages.
+Canary is a Python3 bot designed for the McGill University Community Discord Server. The bot provides helper functions 
+to users, as well as fun functions, a quote database and custom greeting messages.
 
 ## Build Statuses
 
@@ -18,7 +19,7 @@ Canary is a Python3 bot designed for the McGill University Community Discord Ser
    git clone https://github.com/idoneam/Canary
    ```
 
-2. Dependencies are managed with poetry which can be installed via pip with:
+2. Dependencies are managed with `poetry` (1.4+), which can be installed via `pip` with:
 
    ```bash
    python3 -m pip install poetry
