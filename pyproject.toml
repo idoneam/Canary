@@ -14,7 +14,7 @@ packages = [
 canary = "canary.main:main"
 
 [tool.poetry.dependencies]
-python = "~3.10.0"
+python = ">=3.10.0,<3.12"
 beautifulsoup4 = "^4.12.2"
 sympy = "^1.9"
 requests = ">=2.30.0,<3"
