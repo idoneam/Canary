@@ -27,6 +27,7 @@ from discord.ext import commands
 from tabulate import tabulate
 
 from ..bot import Canary
+from ..config.config import CurrencyModel
 from .base_cog import CanaryCog
 from .utils.members import add_member_if_needed
 from .utils.paginator import Pages
@@ -61,8 +62,11 @@ TRANSACTION_ACTIONS = (
 class Currency(CanaryCog):
     def __init__(self, bot: Canary):
         super().__init__(bot)
-        self.currency: dict = self.bot.config.currency
-        self.prec: int = self.currency["precision"]
+        self.currency: CurrencyModel = self.bot.config.currency
+
+        self.symbol: str = self.currency.symbol
+        self.prec: int = self.currency.precision
+        self.initial: Decimal = Decimal(self.currency.initial)
 
     async def fetch_all_balances(self) -> list[tuple[str, str, Decimal]]:
         # after
@@ -114,16 +118,16 @@ class Currency(CanaryCog):
             return None
 
     def currency_to_db(self, amount: Decimal) -> int:
-        return int(amount * Decimal(10 ** self.currency["precision"]))
+        return int(amount * Decimal(10 ** self.prec))
 
     def db_to_currency(self, amount: int) -> Decimal:
-        return Decimal(amount) / Decimal(10 ** self.currency["precision"])
+        return Decimal(amount) / Decimal(10 ** self.prec)
 
     def format_currency(self, amount: Decimal) -> str:
         return ("{:." + str(self.prec) + "f}").format(amount)
 
     def format_symbol_currency(self, amount: Decimal) -> str:
-        return self.currency["symbol"] + self.format_currency(amount)
+        return self.symbol + self.format_currency(amount)
 
     @staticmethod
     def check_bet(balance: Decimal, bet: Decimal) -> str | None:
@@ -181,14 +185,14 @@ class Currency(CanaryCog):
             await self.create_bank_transaction(
                 db,
                 author,
-                self.currency["initial_amount"],
+                self.initial,
                 ACTION_INITIAL_CLAIM,
                 {"channel": ctx.message.channel.id},
             )
             await db.commit()
 
         await ctx.send(
-            f"{author_name} claimed their initial {self.format_symbol_currency(self.currency['initial_amount'])}!"
+            f"{author_name} claimed their initial {self.format_symbol_currency(self.initial)}!"
         )
 
     @commands.command()

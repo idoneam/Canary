@@ -26,15 +26,23 @@ from discord.ext import commands
 from pathlib import Path
 from typing import AsyncGenerator
 
-__all__ = ["Canary", "bot", "developer_role", "moderator_role", "muted_role"]
+__all__ = ["Canary", "bot"]
 
-config = Config()
-command_prefix = config.command_prefix
+LOG_LEVELS = {
+    "critical": logging.CRITICAL,
+    "error": logging.ERROR,
+    "warning": logging.WARNING,
+    "info": logging.INFO,
+    "debug": logging.DEBUG,
+    "notset": logging.NOTSET,
+}
+
+config: Config = Config()
 
 # Create parent logger, which will send all logs from the "sub-loggers"
 # to the specified log file
 logger = logging.getLogger("Canary")
-logger.setLevel(config.log_level)
+logger.setLevel(LOG_LEVELS[config.log_level])
 file_handler = logging.FileHandler(filename=config.log_file, encoding="utf-8", mode="a")
 file_handler.setFormatter(logging.Formatter("[%(levelname)s] %(asctime)s: %(message)s"))
 logger.addHandler(file_handler)
@@ -85,7 +93,7 @@ class Canary(commands.Bot):
     SCHEMA_PATH = Path(__file__).parent / "Martlet.schema"
 
     def __init__(self, *args, **kwargs):
-        super().__init__(command_prefix, *args, **kwargs)
+        super().__init__(config.command_prefix, *args, **kwargs)
         self.logger = logger
         self.dev_logger = dev_logger
         self.mod_logger = mod_logger
@@ -168,11 +176,7 @@ class Canary(commands.Bot):
         self.log_traceback(error)
 
 
-# predefined variables to be imported
 intents = Intents.default()
 intents.members = True
 intents.presences = True
 bot = Canary(case_insensitive=True, intents=intents)
-moderator_role = bot.config.moderator_role
-developer_role = bot.config.developer_role
-muted_role = bot.config.muted_role

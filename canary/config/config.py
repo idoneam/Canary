@@ -18,20 +18,18 @@
 import codecs
 import configparser
 import decimal
-import logging
 import os
 
 from pathlib import Path
 from pydantic import BaseModel, BaseSettings
 
-LOG_LEVELS = {
-    "critical": logging.CRITICAL,
-    "error": logging.ERROR,
-    "warning": logging.WARNING,
-    "info": logging.INFO,
-    "debug": logging.DEBUG,
-    "notset": logging.NOTSET,
-}
+from typing import Literal
+
+__all__ = [
+    "CurrencyModel",
+    "MusicModel",
+    "Config",
+]
 
 
 class CurrencyModel(BaseModel):
@@ -48,7 +46,11 @@ class MusicModel(BaseModel):
     start_vol: float = "100.0"
 
 
-class Settings(BaseSettings):
+class Config(BaseSettings):
+    # Logging
+    log_level: Literal["critical", "error", "warning", "info", "debug", "notset"] = "info"
+    log_file: Path = Path.cwd() / "canary.log"
+
     # Discord token
     discord_key: str
 
@@ -125,18 +127,18 @@ class Settings(BaseSettings):
     # Assignable Roles
     # TODO
 
-    class Config:
+    class Config:  # Pydantic config for our own Config class
         env_file = ".env"
         env_prefix = "CANARY_"
         env_nested_delimiter = "__"
 
 
-class Config:
+class ConfigOld:
     CONFIG_PATH = Path(__file__).parent / "config.ini"
 
     def __init__(self):
         config = configparser.ConfigParser()
-        config.read_file(codecs.open(str(Config.CONFIG_PATH), "r", "utf-8-sig"))
+        config.read_file(codecs.open(str(ConfigOld.CONFIG_PATH), "r", "utf-8-sig"))
 
         # Discord token
         # Try to get from environment; if not found, then
@@ -184,8 +186,8 @@ class Config:
 
         # Logging
         self.log_file = config["Logging"]["LogFile"]
-        loglevel = config["Logging"]["LogLevel"].lower()
-        self.log_level = LOG_LEVELS.get(loglevel, logging.WARNING)
+        # loglevel = config["Logging"]["LogLevel"].lower()
+        # self.log_level = LOG_LEVELS.get(loglevel, logging.WARNING)
         if config["Logging"]["DevLogWebhookID"] and config["Logging"]["DevLogWebhookToken"]:
             self.dev_log_webhook_id = int(config["Logging"]["DevLogWebhookID"])
             self.dev_log_webhook_token = config["Logging"]["DevLogWebhookToken"]
