@@ -317,7 +317,7 @@ class Currency(CanaryCog):
         result = random.randrange(1, 101)
         amount_returned = Decimal(0)
 
-        for case, amount in self.currency["bet_roll_cases"]:
+        for case, amount in zip(self.currency.bet_roll_cases, self.currency.bet_roll_returns):
             if result <= case:
                 amount_returned = bet_dec * amount
                 break

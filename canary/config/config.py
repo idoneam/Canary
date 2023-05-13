@@ -38,6 +38,9 @@ class CurrencyModel(BaseModel):
     precision: int = 2
     initial: int = 1000
 
+    bet_roll_cases: tuple[int, ...] = (66, 90, 99, 100)  # d100 roll threshold
+    bet_roll_returns: tuple[int, ...] = (0, 2, 4, 10)  # multiplication factorys
+
     # TODO: Finish
 
 
