@@ -130,7 +130,6 @@ class Games(CanaryCog):
         await ctx.send(embed=game_state.embed)
 
         while True:
-
             msg_task = asyncio.create_task(self.bot.wait_for("message", check=msg_check, timeout=self.hm_timeout))
             quit_task = asyncio.create_task(channel_lock.acquire())
             done, _ = await asyncio.wait([msg_task, quit_task], return_when=asyncio.FIRST_COMPLETED)

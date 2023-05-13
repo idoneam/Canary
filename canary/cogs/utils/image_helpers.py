@@ -29,7 +29,6 @@ def apply_transform(transform, buffer, size, max_size, ext, is_png, *args):
 
 
 async def filter_image(loop, transform, ctx, history_limit, max_size, *args):
-
     att = await get_attachment(ctx, history_limit)
     if att is None:
         await ctx.send(

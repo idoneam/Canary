@@ -288,7 +288,6 @@ class Music(CanaryCog):
                 break
 
             if self.skip_opts is None:
-
                 if ctx.voice_client is None:
                     break
 

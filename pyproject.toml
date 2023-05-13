@@ -49,4 +49,3 @@ types-tabulate = "^0.8.11"
 
 [tool.black]
 line-length = 120
-

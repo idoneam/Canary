@@ -13,5 +13,4 @@ jobs:
       - uses: actions/setup-python@v4
       - uses: psf/black@stable
         with:
-          options: "--diff --check -t py311 --fast"
-
+          options: "--diff --check -t py311"

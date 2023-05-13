@@ -292,7 +292,7 @@ class Helpers(CanaryCog):
             .add_field(name="Terms", value=terms, inline=False)
             .add_field(name="Instructor(s)", value=instructors, inline=False)
         )
-        for (a, b) in tidbits:
+        for a, b in tidbits:
             em.add_field(name=a, value=b, inline=False)
         await ctx.send(embed=em)
 
@@ -460,8 +460,7 @@ class Helpers(CanaryCog):
 
         while pagenum < pagelimit:
             r = await fetch(
-                self.bot.config.course_search_tpl.format(self.bot.config.course_year_range, keyword, pagenum),
-                "content"
+                self.bot.config.course_search_tpl.format(self.bot.config.course_year_range, keyword, pagenum), "content"
             )
             soup = BeautifulSoup(r, "lxml")
             found = soup.find_all("div", {"class": "views-row"})

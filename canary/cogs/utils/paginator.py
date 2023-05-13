@@ -234,7 +234,7 @@ class Pages:
                 self.message = await self.channel.send(
                     embed=self.pagesToSend[self.currentPage], delete_after=self.timeout
                 )
-            for (emoji, _) in self.actions:
+            for emoji, _ in self.actions:
                 await self.message.add_reaction(emoji)
             return
 
@@ -262,7 +262,7 @@ class Pages:
             return False
         if reaction.message.id != self.message.id:
             return False
-        for (emoji, action) in self.actions:
+        for emoji, action in self.actions:
             if reaction.emoji != emoji:
                 continue
             self.user = user

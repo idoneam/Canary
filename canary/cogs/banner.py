@@ -478,7 +478,6 @@ class Banner(CanaryCog):
             with Image.open(Banner.CONVERTER_FILE) as overlay_mask, Image.open(
                 Banner.PREVIEW_FILE
             ) as preview_mask, Image.open(user_image_file) as user_image:
-
                 animated = user_image.is_animated
 
                 overlay_mask_user_canvas_size = overlay_mask.size

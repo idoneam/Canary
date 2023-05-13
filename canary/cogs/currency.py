@@ -118,10 +118,10 @@ class Currency(CanaryCog):
             return None
 
     def currency_to_db(self, amount: Decimal) -> int:
-        return int(amount * Decimal(10 ** self.prec))
+        return int(amount * Decimal(10**self.prec))
 
     def db_to_currency(self, amount: int) -> Decimal:
-        return Decimal(amount) / Decimal(10 ** self.prec)
+        return Decimal(amount) / Decimal(10**self.prec)
 
     def format_currency(self, amount: Decimal) -> str:
         return ("{:." + str(self.prec) + "f}").format(amount)
@@ -191,9 +191,7 @@ class Currency(CanaryCog):
             )
             await db.commit()
 
-        await ctx.send(
-            f"{author_name} claimed their initial {self.format_symbol_currency(self.initial)}!"
-        )
+        await ctx.send(f"{author_name} claimed their initial {self.format_symbol_currency(self.initial)}!")
 
     @commands.command()
     async def claim(self, ctx: commands.Context):
@@ -423,7 +421,7 @@ class Currency(CanaryCog):
         table_list = []
         counter = 1
 
-        for (_user_id, name, balance) in balances:
+        for _user_id, name, balance in balances:
             table.append((counter, name, self.format_symbol_currency(balance)))
             if counter % 7 == 0 or counter == len(balances):
                 table_list.append(tabulate(table[:counter], headers=["Rank", "Name", "Balance"], tablefmt="fancy_grid"))
