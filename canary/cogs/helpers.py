@@ -878,13 +878,15 @@ class Helpers(CanaryCog):
 
             if limit_reached:
                 await ctx.send(
-                    "Could not spoilerize all messages: Max 30 at the same time (this message will be deleted in 15 seconds).",
+                    "Could not spoilerize all messages: Max 30 at the same time (this message will be deleted in 15 "
+                    "seconds).",
                     delete_after=15,
                 )
             else:
                 if moderator:
                     await ctx.send(
-                        f"Completed spoilerization of {len(messages)} messages (this message will be deleted in 15 seconds).",
+                        f"Completed spoilerization of {len(messages)} messages (this message will be deleted in 15 "
+                        f"seconds).",
                         delete_after=15,
                     )
                 else:
