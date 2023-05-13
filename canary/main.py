@@ -1,6 +1,6 @@
 #! /usr/bin/env python3
 #
-# Copyright (C) idoneam (2016-2022)
+# Copyright (C) idoneam (2016-2023)
 #
 # This file is part of Canary
 #
