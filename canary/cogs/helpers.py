@@ -263,7 +263,7 @@ class Helpers(CanaryCog):
             return
 
         search_term = re.sub(r"\s+", "", f"{result.group(1)}-{result.group(2)}")
-        url = self.bot.config.course_tpl.format(search_term)
+        url = self.bot.config.course_tpl.format(self.bot.config.course_year_range, search_term)
         r = await fetch(url, "content")
         soup = BeautifulSoup(r, "lxml")
 
@@ -459,15 +459,18 @@ class Helpers(CanaryCog):
         await ctx.trigger_typing()
 
         while pagenum < pagelimit:
-            r = await fetch(self.bot.config.course_search_tpl.format(keyword, pagenum), "content")
+            r = await fetch(
+                self.bot.config.course_search_tpl.format(self.bot.config.course_year_range, keyword, pagenum),
+                "content"
+            )
             soup = BeautifulSoup(r, "lxml")
             found = soup.find_all("div", {"class": "views-row"})
 
             if len(found) < 1:
                 break
-            else:
-                courses = courses + found
-                pagenum += 1
+
+            courses = courses + found
+            pagenum += 1
 
         if len(courses) < 1:
             await ctx.send("No course found for: {}.".format(query))
@@ -483,7 +486,7 @@ class Helpers(CanaryCog):
         p = Pages(
             ctx,
             item_list=course_list,
-            title="Courses found for {}".format(query),
+            title=f"Courses found for {query}",
             display_option=(2, 10),
             editable_content=False,
         )

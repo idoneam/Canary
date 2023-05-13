@@ -104,9 +104,11 @@ class Config(BaseSettings):
     db_path: str = "./data/runtime/Martlet.db"
 
     # Helpers configuration
-    course_tpl: str = "http://www.mcgill.ca/study/2022-2023/courses/{}"
+    course_year_range: str = "2023-2024"
+    course_tpl: str = "http://www.mcgill.ca/study/{course_year_range}/courses/{}"
     course_search_tpl: str = (
-        "http://www.mcgill.ca/study/2022-2023/courses/search?search_api_views_fulltext={}&sort_by=field_subject_code"
+        "http://www.mcgill.ca/study/{course_year_range}/courses/search?search_api_views_fulltext={}"
+        "&sort_by=field_subject_code"
         "&page={}"
     )
     gc_weather_url: str = "http://weather.gc.ca/city/pages/qc-147_metric_e.html"
