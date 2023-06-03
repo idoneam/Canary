@@ -38,11 +38,12 @@ LOG_LEVELS = {
 }
 
 config: Config = Config()
+log_level = LOG_LEVELS[config.log_level]
 
 # Create parent logger, which will send all logs from the "sub-loggers"
 # to the specified log file
 logger = logging.getLogger("Canary")
-logger.setLevel(LOG_LEVELS[config.log_level])
+logger.setLevel(log_level)
 file_handler = logging.FileHandler(filename=config.log_file, encoding="utf-8", mode="a")
 file_handler.setFormatter(logging.Formatter("[%(levelname)s] %(asctime)s: %(message)s"))
 logger.addHandler(file_handler)
@@ -51,7 +52,7 @@ logger.addHandler(file_handler)
 # If a dev webhook is specified, logs sent to the dev logger will be
 # sent to the webhook
 dev_logger = logging.getLogger("Canary.Dev")
-dev_logger.setLevel(config.log_level)
+dev_logger.setLevel(log_level)
 
 # Create mod (sub-)logger, where info for mods will be logged
 # If a mod webhook is specified, logs sent to the mod logger will be
