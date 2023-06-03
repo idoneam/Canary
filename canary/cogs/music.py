@@ -60,12 +60,12 @@ class Music(CanaryCog):
         self.track_lock: asyncio.Lock = asyncio.Lock()
         self.playing: tuple[dict, str] | None = None
         self.looping_track: bool = False
-        self.volume_level: float = self.bot.config.music["start_vol"]
+        self.volume_level: float = self.bot.config.music.start_vol
         self.speed_flag: str = "atempo=1"
         self.speed_val: float = 1.0
         self.skip_opts: Optional[tuple[str, int]] = None
         self.track_start_time: float = 0.0
-        self.ban_role: str = self.bot.config.music["ban_role"]
+        self.ban_role: str = self.bot.config.music.ban_role
         self.pause_start: float | None = None
 
     async def get_info(self, url: str):
@@ -337,7 +337,7 @@ class Music(CanaryCog):
 
         self.playing = None
         self.track_lock.release()
-        self.volume_level = self.bot.config.music["start_vol"]
+        self.volume_level: float = self.bot.config.music.start_vol
         self.speed_flag = "atempo=1"
 
     @check_playing
