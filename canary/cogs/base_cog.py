@@ -56,7 +56,7 @@ class CanaryCog(commands.Cog):
             db = await self.bot.db_nocm()
         try:
             async with db.execute(query, params) as c:
-                return c.fetchone()
+                return await c.fetchone()
         finally:
             if fresh_db:
                 await db.close()
