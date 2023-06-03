@@ -227,7 +227,7 @@ class Currency(CanaryCog):
         await ctx.send(f"Please wait {time_left.seconds // 3600}h {time_left.seconds // 60 % 60}m to claim again!")
 
     @commands.command(aliases=["$", "bal"])
-    async def balance(self, ctx: commands.Context, user: discord.Member = None):
+    async def balance(self, ctx: commands.Context, user: discord.Member | None = None):
         """
         Return the user's account balance.
         """
@@ -243,13 +243,13 @@ class Currency(CanaryCog):
         await ctx.send(f"{author.display_name} has {amount} in their account.")
 
     @commands.command(aliases=["bf"])
-    async def bet_flip(self, ctx: commands.Context, bet: str | None = None, face: str | None = None):
+    async def bet_flip(self, ctx: commands.Context, bet: str = "", face: str = ""):
         """
         Bets an amount of money on a coin flip.
-        Usage: ?bet_flip h 10 or ?bet_flip t 5
+        Usage: ?bet_flip 10 h or ?bet_flip 5 t
         """
 
-        if face is None or bet is None:
+        if bet == "" or face == "":
             return
 
         # Start bot typing
@@ -290,13 +290,13 @@ class Currency(CanaryCog):
         await ctx.send(message.format(author_name, self.format_symbol_currency(bet_dec), result))
 
     @commands.command(aliases=["br"])
-    async def bet_roll(self, ctx: commands.Context, bet: str | None = None):
+    async def bet_roll(self, ctx: commands.Context, bet: str = ""):
         """
         Bets an amount of currency on a D100 roll.
         Usage: ?bet_roll 100 or ?br all
         """
 
-        if bet is None:
+        if bet == "":
             return
 
         # Start bot typing
@@ -306,7 +306,7 @@ class Currency(CanaryCog):
         bet_dec = self.parse_currency(bet, balance)
 
         # Handle invalid cases
-        if (error := self.check_bet(balance, bet_dec)) != "":
+        if (error := self.check_bet(balance, bet_dec)) is not None:
             await ctx.send(error)
             return
 
@@ -349,7 +349,7 @@ class Currency(CanaryCog):
         await ctx.send(message_tpl.format(un=author_name, am=bet_str, re=result))
 
     @commands.command()
-    async def give(self, ctx: commands.Context, user: discord.Member | None = None, amount: str | None = None):
+    async def give(self, ctx: commands.Context, user: discord.Member, amount: str = ""):
         """
         Gives some amount of currency to another user.
         """
@@ -357,7 +357,7 @@ class Currency(CanaryCog):
         # Start bot typing
         await ctx.trigger_typing()
 
-        if not user or amount is None:
+        if amount == "":
             await ctx.send("Usage: ?give [user] [amount]")
             return
 
@@ -404,7 +404,7 @@ class Currency(CanaryCog):
         await ctx.send(f"{grn} gave {self.format_symbol_currency(amount_dec)} to {gen}!")
 
     @commands.command(aliases=["lb"])
-    async def leaderboard(self, ctx):
+    async def leaderboard(self, ctx: commands.Context):
         """
         Currency rankings
         """
