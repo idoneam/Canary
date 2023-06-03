@@ -3,7 +3,7 @@ name: formatting check
 on:
   push:
     paths:
-      "**.py"
+      - "**.py"
 
 jobs:
   lint:
@@ -13,4 +13,4 @@ jobs:
       - uses: actions/setup-python@v4
       - uses: psf/black@stable
         with:
-          options: "--diff --check -t py311"
+          options: "--diff --check -t py311 canary"
