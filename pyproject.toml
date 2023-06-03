@@ -19,7 +19,7 @@ beautifulsoup4 = "^4.12.2"
 sympy = "^1.9"
 requests = ">=2.30.0,<3"
 tabulate = "~0.8.9"
-"discord.py" = {extras = ["voice"], version = "~1.6.0"}
+"discord.py" = {version = "~1.7.3", extras = ["voice"]}
 opencv-python = "==4.6.0.66"
 pytz = ">=2020.5"
 numpy = "^1.21.1"
