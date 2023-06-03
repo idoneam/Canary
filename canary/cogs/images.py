@@ -25,10 +25,10 @@ from .utils import image_helpers as ih
 class Images(CanaryCog):
     def __init__(self, bot: Canary):
         super().__init__(bot)
-        self.max_size: int = self.bot.config.images["max_image_size"]
-        self.hist_lim: int = self.bot.config.images["image_history_limit"]
-        self.max_rad: int = self.bot.config.images["max_radius"]
-        self.max_itr: int = self.bot.config.images["max_iterations"]
+        self.max_size: int = self.bot.config.images.max_image_size
+        self.hist_lim: int = self.bot.config.images.image_history_limit
+        self.max_rad: int = self.bot.config.images.max_radius
+        self.max_itr: int = self.bot.config.images.max_iterations
 
     @commands.command()
     async def polar(self, ctx: commands.Context):

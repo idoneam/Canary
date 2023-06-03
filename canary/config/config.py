@@ -49,6 +49,13 @@ class MusicModel(BaseModel):
     start_vol: float = "100.0"
 
 
+class ImagesModel(BaseModel):
+    max_image_size: int = 8000000
+    image_history_limit: int = 50
+    max_radius: int = 500
+    max_iterations: int = 20
+
+
 class Config(BaseSettings):
     # Logging
     log_level: Literal["critical", "error", "warning", "info", "debug", "notset"] = "info"
@@ -128,6 +135,9 @@ class Config(BaseSettings):
 
     # Music configuration
     music: MusicModel = MusicModel()
+
+    # Images configuration
+    images: ImagesModel = ImagesModel()
 
     # Assignable Roles
     # TODO
