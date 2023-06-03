@@ -66,7 +66,7 @@ class Roles(CanaryCog):
         self,
         ctx: commands.Context,
         transaction: RoleTransaction,
-        requested_role: Optional[str],
+        requested_role: str,
         categories: Tuple[str, ...],
     ):
         """
@@ -156,7 +156,7 @@ class Roles(CanaryCog):
         return await self.toggle_role(ctx, RoleTransaction.ADD, requested_role, categories)
 
     @commands.command(aliases=["pronouns"])
-    async def pronoun(self, ctx: commands.Context, *, pronoun: Optional[str] = None):
+    async def pronoun(self, ctx: commands.Context, *, pronoun: str = ""):
         """
         Self-assign a pronoun role to a user.
         If no argument is given, returns a list of roles that can be used with this command.
@@ -164,7 +164,7 @@ class Roles(CanaryCog):
         await self.add_role(ctx, pronoun, ("pronouns",))
 
     @commands.command(aliases=["fields", "program", "programs", "major", "majors"])
-    async def field(self, ctx: commands.Context, *, field: Optional[str] = None):
+    async def field(self, ctx: commands.Context, *, field: str = ""):
         """
         Self-assign a field of study role to a user.
         If no argument is given, returns a list of roles that can be used with this command.
@@ -172,7 +172,7 @@ class Roles(CanaryCog):
         await self.add_role(ctx, field, ("fields",))
 
     @commands.command(aliases=["faculties"])
-    async def faculty(self, ctx: commands.Context, *, faculty: Optional[str] = None):
+    async def faculty(self, ctx: commands.Context, *, faculty: str = ""):
         """
         Self-assign a faculty of study role to a user.
         If no argument is given, returns a list of roles that can be used with this command.
@@ -180,7 +180,7 @@ class Roles(CanaryCog):
         await self.add_role(ctx, faculty, ("faculties",))
 
     @commands.command(aliases=["years"])
-    async def year(self, ctx, year: Optional[str] = None):
+    async def year(self, ctx, year: str = ""):
         """
         Self-assign a year of study role to a user.
         If no argument is given, returns a list of roles that can be used with this command.
@@ -188,7 +188,7 @@ class Roles(CanaryCog):
         await Roles.add_role(self, ctx, year, ("years",))
 
     @commands.command(aliases=["iam", "generic", "generics"])
-    async def i_am(self, ctx: commands.Context, *, role: Optional[str]):
+    async def i_am(self, ctx: commands.Context, *, role: str = ""):
         """
         Self-assign a generic role to a user.
         If no argument is given, returns a list of roles that can be used with this command.
@@ -196,14 +196,14 @@ class Roles(CanaryCog):
         await self.add_role(ctx, role, Roles.ALL_CATEGORIES)
 
     @commands.command(aliases=["iamn"])
-    async def i_am_not(self, ctx: commands.Context, *, role: Optional[str]):
+    async def i_am_not(self, ctx: commands.Context, *, role: str = ""):
         """
         Self-unassign a generic role to a user.
         """
         await self.toggle_role(ctx, RoleTransaction.REMOVE, role, Roles.ALL_CATEGORIES)
 
     @commands.command()
-    async def roles(self, ctx, user: discord.Member = None):
+    async def roles(self, ctx, user: discord.Member):
         """Returns list of all roles in server or
         the list of a specific user's roles"""
         role_names = [
@@ -240,8 +240,8 @@ class Roles(CanaryCog):
 
     @commands.command(aliases=["cr", "createrole"])
     @is_moderator()
-    async def create_role(self, ctx: commands.Context, *, role: str | None = None):
-        role = (role or "").strip()
+    async def create_role(self, ctx: commands.Context, *, role: str = ""):
+        role = role.strip()
         if not role:
             await ctx.send("Please specify a role name.")
             return

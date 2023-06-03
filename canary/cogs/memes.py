@@ -28,7 +28,7 @@ from .utils.auto_incorrect import auto_incorrect
 
 class Memes(CanaryCog):
     @commands.command()
-    async def bac(self, ctx: commands.Context, *, input_str: str | None = None):
+    async def bac(self, ctx: commands.Context, *, input_str: str = ""):
         """
         Purposefully auto-incorrects inputted sentences
         Inputted text is either the content of the message to
@@ -38,7 +38,7 @@ class Memes(CanaryCog):
         well. Invoking message will be deleted.
         """
         replying: bool = ctx.message.reference and ctx.message.reference.resolved
-        if input_str is None:
+        if input_str == "":
             if not replying:
                 return
             input_str = ctx.message.reference.resolved.content
@@ -89,7 +89,7 @@ class Memes(CanaryCog):
         await ctx.send("CHEEP CHEEP")
 
     @commands.command()
-    async def mix(self, ctx: commands.Context, *, input_str: str | None = None):
+    async def mix(self, ctx: commands.Context, *, input_str: str = ""):
         """Alternates upper/lower case for input string.
         Inputted text is either the content of the message to
         after the command or the content of the message to which
@@ -99,7 +99,7 @@ class Memes(CanaryCog):
         """
 
         replying: bool = ctx.message.reference and ctx.message.reference.resolved
-        if input_str is None:
+        if input_str == "":
             if not replying:
                 return
             input_str = ctx.message.reference.resolved.content
@@ -142,7 +142,7 @@ class Memes(CanaryCog):
         await ctx.send(f"**\n{msg}**")
 
     @commands.command()
-    async def xkcd(self, ctx: commands.Context, command: str | None = None):
+    async def xkcd(self, ctx: commands.Context, command: str = ""):
         """
         Enjoy a nice xkcd comic with some strangers on the internet!
         If no issue number is passed, returns a random xkcd.
@@ -153,7 +153,7 @@ class Memes(CanaryCog):
         await ctx.trigger_typing()
 
         async with aiohttp.ClientSession() as session:
-            if command is None:
+            if command == "":
                 async with session.get("https://c.xkcd.com/comic/random") as r:
                     if r.status != 200:
                         await ctx.send(f"failure: random xkcd request returned `{r.status}`")
