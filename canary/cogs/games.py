@@ -49,9 +49,9 @@ class Games(CanaryCog):
     def __init__(self, bot: Canary, hangman_tbl_name: str) -> None:
         super().__init__(bot)
 
-        self.hm_cool_win: int = bot.config.games["hm_cool_win"]
-        self.hm_norm_win: int = bot.config.games["hm_norm_win"]
-        self.hm_timeout: int = bot.config.games["hm_timeout"]
+        self.hm_cool_win: int = bot.config.games.hm_cool_win
+        self.hm_norm_win: int = bot.config.games.hm_norm_win
+        self.hm_timeout: int = bot.config.games.hm_timeout
         self.hm_locks: dict[discord.TextChannel, asyncio.Lock] = dict()
 
         with open(f"{os.getcwd()}/data/premade/{hangman_tbl_name}.obj", "rb") as hangman_pkl:

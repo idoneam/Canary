@@ -56,6 +56,12 @@ class ImagesModel(BaseModel):
     max_iterations: int = 20
 
 
+class GamesModel(BaseModel):
+    hm_norm_win: int = 10
+    hm_cool_win: int = 20
+    hm_timeout: int = 600
+
+
 class Config(BaseSettings):
     # Logging
     log_level: Literal["critical", "error", "warning", "info", "debug", "notset"] = "info"
@@ -138,6 +144,9 @@ class Config(BaseSettings):
 
     # Images configuration
     images: ImagesModel = ImagesModel()
+
+    # Games configuration
+    games: GamesModel = GamesModel()
 
     # Assignable Roles
     # TODO
