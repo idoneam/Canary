@@ -406,7 +406,7 @@ class Mod(CanaryCog):
             and muted_role_after
             and not (
                 (await is_in_muted_table(self.bot, after))
-                and has_muted_role(after)
+                and has_muted_role(self.bot, after)
                 and after in self.muted_users_to_appeal_channels
                 and self.muted_users_to_appeal_channels[after] in self.guild.text_channels
             )
@@ -419,7 +419,7 @@ class Mod(CanaryCog):
             and not muted_role_after
             and (
                 (await is_in_muted_table(self.bot, after))
-                or has_muted_role(after)
+                or has_muted_role(self.bot, after)
                 or after in self.muted_users_to_appeal_channels
             )
         ):
