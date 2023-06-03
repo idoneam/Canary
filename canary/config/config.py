@@ -160,6 +160,11 @@ class Config(BaseSettings):
     log_level: Literal["critical", "error", "warning", "info", "debug", "notset"] = "info"
     log_file: Path = Path.cwd() / "canary.log"
 
+    dev_log_webhook_id: int | None = None
+    dev_log_webhook_token: str | None = None
+    mod_log_webhook_id: int | None = None
+    mod_log_webhook_token: str | None = None
+
     # Discord token
     discord_key: str
 
@@ -199,12 +204,6 @@ class Config(BaseSettings):
 
     # Meta
     repository: str = "https://github.com/idoneam/Canary.git"
-
-    # Logging
-    dev_log_webhook_id: int | None = None
-    dev_log_webhook_token: str | None = None
-    mod_log_webhook_id: int | None = None
-    mod_log_webhook_token: str | None = None
 
     # Welcome + Farewell messages
     # NOT PORTED FROM OLD CONFIG SETUP.
