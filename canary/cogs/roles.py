@@ -203,7 +203,7 @@ class Roles(CanaryCog):
         await self.toggle_role(ctx, RoleTransaction.REMOVE, role, Roles.ALL_CATEGORIES)
 
     @commands.command()
-    async def roles(self, ctx, user: discord.Member):
+    async def roles(self, ctx, user: discord.Member = None):  # bad type hinting, but needed for discord.py conversion
         """Returns list of all roles in server or
         the list of a specific user's roles"""
         role_names = [
