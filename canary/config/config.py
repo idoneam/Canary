@@ -124,10 +124,10 @@ class Config(BaseSettings):
     recall_filter: str = "Quebec|National"
 
     # Currency configuration
-    currency: CurrencyModel
+    currency: CurrencyModel = CurrencyModel()
 
     # Music configuration
-    music: MusicModel
+    music: MusicModel = MusicModel()
 
     # Assignable Roles
     # TODO
