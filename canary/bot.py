@@ -28,7 +28,6 @@ from typing import AsyncGenerator
 
 __all__ = [
     "config",  # Some functions/mixins use global config instead of some form of DI
-
     "Canary",
     "bot",
 ]

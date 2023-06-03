@@ -62,6 +62,99 @@ class GamesModel(BaseModel):
     hm_timeout: int = 600
 
 
+class RolesModel(BaseModel):
+    pronouns: tuple[str, ...] = ("She/Her", "He/Him", "They/Them")
+    fields: tuple[str, ...] = (
+        "Accounting",
+        "Agriculture",
+        "Anatomy and Cell Biology",
+        "Anthropology",
+        "Architecture",
+        "Biochemistry",
+        "Bioengineering",
+        "Biology",
+        "Bioresource Engineering",
+        "Chemical Engineering",
+        "Chemistry",
+        "Civil Engineering",
+        "Classics",
+        "cogito",
+        "Commerce",
+        "Computer Engineering",
+        "Computer Science",
+        "Computer Science/Biology",
+        "Cultural Studies",
+        "Desautels",
+        "Economics",
+        "Electrical Engineering",
+        "English",
+        "Experimental Medicine",
+        "Finance",
+        "Geography",
+        "History",
+        "Human Genetics",
+        "Indigenous Studies",
+        "International Development Studies",
+        "Jewish Studies",
+        "linguini",
+        "mac kid",
+        "Materials Engineering",
+        "Math",
+        "MBA",
+        "Mechanical Engineering",
+        "Medicine",
+        "Microbiology and Immunology",
+        "Neuroscience",
+        "Nursing",
+        "Pharmacology",
+        "Philosophy",
+        "Physical Therapy",
+        "Physics",
+        "Physiology",
+        "Political Science",
+        "Psychiatry",
+        "Psychology",
+        "Public Health",
+        "Social Work",
+        "Sociology",
+        "Software Engineering",
+        "Statistics",
+        "Theology",
+        "Urban Systems",
+    )
+    faculties: tuple[str, ...] = (
+        "Science",
+        "Engineering",
+        "Management",
+        "art you glad you're not in arts",
+        "ArtSci",
+        "Agriculture and Environment",
+        "Continuing Studies",
+        "Law",
+        "Education",
+        "Dentistry",
+        "Music",
+    )
+    years: tuple[str, ...] = ("U0", "U1", "U2", "U3", "U4", "grad student", "workhere", "wenthere")
+    generics: tuple[str, ...] = (
+        "weeb",
+        "weeb stomper",
+        "crosswords",
+        "stm_alertee",
+        "Stardew",
+        "R6",
+        "CS:GO Popflash",
+        "CS:GO Comp",
+        "Minecraft",
+        "Among Us",
+        "Pokemon Go",
+        "Secret Crabbo",
+        "Warzone",
+        "Monster Hunter",
+        "undersad",
+    )
+
+
 class Config(BaseSettings):
     # Logging
     log_level: Literal["critical", "error", "warning", "info", "debug", "notset"] = "info"
@@ -149,7 +242,7 @@ class Config(BaseSettings):
     games: GamesModel = GamesModel()
 
     # Assignable Roles
-    # TODO
+    roles: RolesModel = RolesModel()
 
     class Config:  # Pydantic config for our own Config class
         env_file = ".env"

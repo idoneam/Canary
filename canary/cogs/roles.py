@@ -77,7 +77,7 @@ class Roles(CanaryCog):
         if not requested_role:
             roles = []
             for c in categories:
-                roles += self.roles[c]  # All roles in the category
+                roles += getattr(self.roles, c)  # All roles in the category
 
             # If no role is specified, list what is available in all possible
             # categories for the command.
@@ -87,12 +87,14 @@ class Roles(CanaryCog):
         # If a role is specified, narrow the category down to the one with the
         # role in it to impose a proper limit.
         try:
-            category = next((c for c in categories if requested_role.lower() in {r.lower() for r in self.roles[c]}))
+            category = next(
+                (c for c in categories if requested_role.lower() in {r.lower() for r in getattr(self.roles, c)})
+            )
         except StopIteration:
             await ctx.send(f"Invalid role for {fcategory} `{', '.join(categories)}`.")
             return
 
-        roles = self.roles[category]
+        roles = getattr(self.roles, category)
 
         roles_lower = [r.lower() for r in roles]
         requested_role = roles[roles_lower.index(requested_role.lower())]
