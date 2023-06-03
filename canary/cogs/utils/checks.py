@@ -18,15 +18,15 @@
 import discord
 from discord.ext import commands
 
-from canary.bot import moderator_role, developer_role
+from canary.bot import config
 
 
 def is_moderator():
     """Returns True if user has a moderator role, raises an exception otherwise"""
 
     def predicate(ctx: commands.Context):
-        if discord.utils.get(ctx.author.roles, name=moderator_role) is None:
-            raise commands.MissingPermissions([moderator_role])
+        if discord.utils.get(ctx.author.roles, name=config.moderator_role) is None:
+            raise commands.MissingPermissions([config.moderator_role])
         return True
 
     return commands.check(predicate)
@@ -36,8 +36,8 @@ def is_developer():
     """Returns True if user is a bot developer, raises an exception otherwise"""
 
     def predicate(ctx: commands.Context):
-        if discord.utils.get(ctx.author.roles, name=developer_role) is None:
-            raise commands.MissingPermissions([developer_role])
+        if discord.utils.get(ctx.author.roles, name=config.developer_role) is None:
+            raise commands.MissingPermissions([config.developer_role])
         return True
 
     return commands.check(predicate)

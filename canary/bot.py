@@ -26,7 +26,12 @@ from discord.ext import commands
 from pathlib import Path
 from typing import AsyncGenerator
 
-__all__ = ["Canary", "bot"]
+__all__ = [
+    "config",  # Some functions/mixins use global config instead of some form of DI
+
+    "Canary",
+    "bot",
+]
 
 LOG_LEVELS = {
     "critical": logging.CRITICAL,
