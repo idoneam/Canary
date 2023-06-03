@@ -46,7 +46,7 @@ class CurrencyModel(BaseModel):
 
 class MusicModel(BaseModel):
     ban_role: str = "tone deaf"
-    start_vol: float = "100.0"
+    start_vol: float = 100.0
 
 
 class ImagesModel(BaseModel):
