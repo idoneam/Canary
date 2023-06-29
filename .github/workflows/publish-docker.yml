@@ -11,10 +11,10 @@ jobs:
       packages: write
       contents: read
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-python@v2
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
         with:
-          python-version: '3.10'
+          python-version: '3.11'
       - run: pip install poetry && poetry update && poetry export -f requirements.txt > requirements.txt
       - uses: docker/metadata-action@v3
         id: meta

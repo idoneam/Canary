@@ -1,4 +1,4 @@
-config/config.ini
+canary/config/config.ini
 env/
 tests/
 venv/
