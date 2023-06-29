@@ -16,10 +16,13 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Canary. If not, see <https://www.gnu.org/licenses/>.
+import io
+
 import aiosqlite
 import discord
 import os
 import sys
+import aiofiles
 
 from datetime import datetime
 from discord.ext.commands import Context
@@ -123,8 +126,20 @@ async def backup(ctx: Context):
     Send the current database file to the owner
     """
     current_time = datetime.now(tz=timezone("America/New_York")).strftime("%Y%m%d-%H:%M")
-    backup_filename = "Martlet{}.db".format(current_time)
-    await ctx.send(content="Here you go", file=discord.File(fp=bot.config.db_path, filename=backup_filename))
+
+    async with aiofiles.open(bot.config.db_path, "br") as f:
+        contents: bytes = await f.read(26214400)
+        part: int = 1
+        while len(contents) != 0:
+            backup_filename = f"marty_db_backup_{current_time}_part_{part}.db"
+
+            await ctx.trigger_typing()
+            await ctx.send(content=f"here you go (part {part})",
+                           file=discord.File(fp=io.BytesIO(contents), filename=backup_filename))
+
+            part += 1
+            contents = await f.read(26214400)
+
     bot.dev_logger.info("Database backup")
 
 
