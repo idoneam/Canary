@@ -134,8 +134,10 @@ async def backup(ctx: Context):
             backup_filename = f"marty_db_backup_{current_time}_part_{part}.db"
 
             await ctx.trigger_typing()
-            await ctx.send(content=f"here you go (part {part})",
-                           file=discord.File(fp=io.BytesIO(contents), filename=backup_filename))
+            await ctx.send(
+                content=f"here you go (part {part})",
+                file=discord.File(fp=io.BytesIO(contents), filename=backup_filename),
+            )
 
             part += 1
             contents = await f.read(26214400)
