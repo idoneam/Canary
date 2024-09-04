@@ -214,7 +214,7 @@ class Config(BaseSettings):
     db_path: str = "./data/runtime/Martlet.db"
 
     # Helpers configuration
-    course_year_range: str = "2023-2024"
+    course_year_range: str = "2024-2025"
     course_tpl: str = "http://www.mcgill.ca/study/{course_year_range}/courses/{}"
     course_search_tpl: str = (
         "http://www.mcgill.ca/study/{course_year_range}/courses/search?search_api_views_fulltext={}"
