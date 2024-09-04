@@ -97,7 +97,7 @@ class Quotes(CanaryCog):
         self.mc_table = lookup
 
     @commands.command(aliases=["addq"])
-    async def add_quotes(
+    async def add_quote(
         self, ctx: commands.Context, member: discord.Member | None = None, *, quote: str | None = None
     ):
         """
