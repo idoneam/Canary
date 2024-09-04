@@ -24,15 +24,15 @@ class Pages:
     def __init__(
         self,
         ctx,
-        current_page=1,
-        msg=None,
+        current_page: int = 1,
+        msg: discord.Message | None = None,
         item_list=[],
-        title="Paginator",
+        title: str = "Paginator",
         display_option=(1, 0),
-        editable_content=True,
-        editable_content_emoji="🚮",
-        return_user_on_edit=False,
-        timeout=300,
+        editable_content: bool = True,
+        editable_content_emoji: str = "🚮",
+        return_user_on_edit: bool = False,
+        timeout: int = 300,
     ):
         """Creates a paginator.
 
@@ -96,7 +96,7 @@ class Pages:
         self.guild = ctx.guild
         self.channel = ctx.channel
         self.user = ctx.author
-        self.message = msg
+        self.message: discord.Message | None = msg
         self.itemList = item_list
         self.title = title
         self.displayOption = display_option
@@ -111,7 +111,7 @@ class Pages:
         if editable_content:
             self.actions.append((editable_content_emoji, self._edit))
         self.currentPage = current_page
-        self.edit_mode = False
+        self.edit_mode: bool = False
         self.return_user_on_edit = return_user_on_edit
         self.timeout = timeout
 
@@ -211,7 +211,7 @@ class Pages:
 
     async def _show_page(self, page):
         self.currentPage = max(0, min(page, self.lastPage))
-        if self.message:
+        if self.message is not None:
             if self.currentPage == 0:
                 try:
                     await self.message.delete()
