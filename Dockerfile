@@ -1,4 +1,4 @@
-FROM python:3.11-slim-bullseye
+FROM python:3.11-slim-bookworm
 
 # Install base apt dependencies
 RUN apt-get update && apt-get install -y git sqlite3
@@ -13,16 +13,25 @@ RUN apt-get install -y \
   ffmpeg \
   gcc
 
-# Install requirements with pip to use Docker cache independent of project metadata
-COPY requirements.txt /
-RUN pip install -r /requirements.txt
+# Update pip, install poetry
+RUN pip install --no-cache-dir -U pip; \
+    pip install --no-cache-dir poetry==1.8.3
 
-# Copy code to the `canary` directory in the image and run the bot from there
-COPY . /canary
-WORKDIR /canary
+COPY pyproject.toml .
+COPY poetry.lock .
+RUN poetry config virtualenvs.create false && \
+    poetry --no-cache install --no-root --without dev
+
+# Copy code and pre-made data to the /app directory, where the bot will be run from
+WORKDIR /app
+COPY canary canary
+COPY data data
+
+RUN pip install -e .
 
 # Notes:
-#   Users will have to mount their config.ini in by hand
-#   Users should mount a read/writable volume for /canary/data/runtime
+#   Users will have to configure their instance using environment variables, described by the Pydantic settings object
+#     in /app/canary/config/config.py
+#   Users should mount a read/writable volume for /app/data/runtime
 
-CMD ["python3.11", "-m", "canary.main"]
+CMD ["canary"]
