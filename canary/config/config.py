@@ -221,9 +221,8 @@ class Config(BaseSettings):
         "&sort_by=field_subject_code"
         "&page={}"
     )
-    gc_weather_url: str = "http://weather.gc.ca/city/pages/qc-147_metric_e.html"
+    gc_weather_url: str = "https://dd.weather.gc.ca/citypage_weather/xml/QC/s0000635_e.xml"
     gc_weather_alert_url: str = "https://weather.gc.ca/warnings/report_e.html?qc67"
-    wttr_in_tpl: str = "http://wttr.in/Montreal_2mpq_lang=en.png?_m"
     tepid_url: str = "https://tepid.science.mcgill.ca:8443/tepid/screensaver/queues/status"
 
     # Subscription configuration

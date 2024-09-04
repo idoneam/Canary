@@ -51,8 +51,6 @@ CFIA_FEED_URL = "http://inspection.gc.ca/eng/1388422350443/1388422374046.xml"
 
 MCGILL_KEY_DATES_URL = "https://www.mcgill.ca/importantdates/key-dates"
 
-WTTR_IN_MOON_URL = "http://wttr.in/moon.png"
-
 URBAN_DICT_TEMPLATE = "http://api.urbandictionary.com/v0/define?term={}"
 
 LMGTFY_TEMPLATE = "https://letmegooglethat.com/?q={}"
@@ -130,29 +128,46 @@ class Helpers(CanaryCog):
         return f"{round(feels_like, 1)}°C"
 
     @commands.command()
-    @site_save("http://weather.gc.ca/city/pages/qc-147_metric_e.html")
+    @site_save("https://dd.weather.gc.ca/citypage_weather/xml/QC/s0000635_e.xml")
     async def weather(self, ctx: commands.Context):
         """
         Retrieves current weather conditions.
-        Data taken from http://weather.gc.ca/city/pages/qc-147_metric_e.html
+        Data taken from https://dd.weather.gc.ca/citypage_weather/xml/QC/s0000635_e.xml
         """
         await ctx.trigger_typing()
 
         r = await fetch(self.bot.config.gc_weather_url, "content")
-        soup = BeautifulSoup(r, "lxml")
+        soup = BeautifulSoup(r, features="xml")
 
-        def retrieve_string(label):
-            if elem := soup.find("dt", string=label).find_next_sibling():
+        # We only care about the current conditions, rest can be discarded
+        soup = soup.currentConditions
+
+        # Getting the wind specifically, because otherwise it starts being ugly very quickly
+        wind = soup.find("wind")
+
+        def retrieve_string(label, search=None, search_soup=soup):
+            if elem := search_soup.find(label, string=search):
                 return elem.get_text().strip()
             return None
 
-        observed_string = retrieve_string("Date: ")
-        temperature_string = retrieve_string("Temperature:")
-        condition_string = retrieve_string("Condition:")
-        pressure_string = retrieve_string("Pressure:")
-        tendency_string = retrieve_string("Tendency:")
-        wind_string = retrieve_string("Wind:")
-        humidity_string = retrieve_string("Humidity:")
+        def retrieve_attribute(label, key, search_soup=soup):
+            if attr := search_soup.find(label)[key]:
+                return attr.strip()
+            return None
+
+        observed_string = retrieve_string("textSummary", re.compile("(EST|EDT)"))
+        temperature_string = retrieve_string("temperature") + "°C"
+        condition_string = retrieve_string("condition")
+        pressure_string = retrieve_string("pressure") + " kPa"
+        tendency_string = retrieve_attribute("pressure", "tendency")
+        wind_string = (
+            retrieve_string("direction", search_soup=wind)
+            + " "
+            + retrieve_string("speed", search_soup=wind)
+            + " "
+            + retrieve_attribute("speed", "units", wind)
+        )
+        humidity_string = retrieve_string("relativeHumidity")
 
         feels_like_values = {
             "temp": re.search(r"-?\d+\.\d", temperature_string),
@@ -175,7 +190,7 @@ class Helpers(CanaryCog):
 
         weather_now = discord.Embed(
             title="Current Weather",
-            description=f"Conditions observed at {observed_string or '[REDACTED]'}",
+            description=f"Conditions observed on {observed_string or '[REDACTED]'}",
             colour=0x7EC0EE,
         )
         weather_now.add_field(name="Temperature", value=temperature_string or "n/a", inline=True)
@@ -235,16 +250,6 @@ class Helpers(CanaryCog):
 
         # Sending final message
         await ctx.send(embed=weather_alert)
-
-    @commands.command()
-    async def wttr(self, ctx: commands.Context):
-        """Retrieves Montreal's weather forecast from wttr.in"""
-        await ctx.send(self.bot.config.wttr_in_tpl.format(round(time.time())))
-
-    @commands.command(aliases=["wttrmoon"])
-    async def wttr_moon(self, ctx: commands.Context):
-        """Retrieves the current moon phase from wttr.in/moon"""
-        await ctx.send(WTTR_IN_MOON_URL)
 
     @commands.command()
     async def course(self, ctx: commands.Context, *, query: str):
