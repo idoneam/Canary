@@ -23,6 +23,7 @@ import random
 import re
 
 from discord.ext import commands
+from typing import Optional
 
 from ..bot import Canary
 from .base_cog import CanaryCog
@@ -98,12 +99,14 @@ class Quotes(CanaryCog):
 
     @commands.command(aliases=["addq"])
     async def add_quote(
-        self, ctx: commands.Context, member: discord.Member | None = None, *, quote: str | None = None
+        self, ctx: commands.Context, member: Optional[discord.Member] = None, *, quote: Optional[str]
     ):
         """
         Add a quote to a user's quote database.
         """
+        
         replying: bool = ctx.message.reference and ctx.message.reference.resolved
+
         if quote is None:
             if not replying:
                 return
@@ -239,7 +242,7 @@ class Quotes(CanaryCog):
         await ctx.send(embed=embed)
 
     @commands.command(aliases=["lq"])
-    async def list_quotes(self, ctx: commands.Context, author: discord.Member = None):
+    async def list_quotes(self, ctx: commands.Context, author: Optional[discord.Member] = None):
         """
         List quotes
         """

@@ -25,6 +25,7 @@ import random
 from decimal import Decimal, InvalidOperation
 from discord.ext import commands
 from tabulate import tabulate
+from typing import Optional
 
 from ..bot import Canary
 from ..config.config import CurrencyModel
@@ -227,7 +228,7 @@ class Currency(CanaryCog):
         await ctx.send(f"Please wait {time_left.seconds // 3600}h {time_left.seconds // 60 % 60}m to claim again!")
 
     @commands.command(aliases=["$", "bal"])
-    async def balance(self, ctx: commands.Context, user: discord.Member | None = None):
+    async def balance(self, ctx: commands.Context, user: Optional[discord.Member] = None):
         """
         Return the user's account balance.
         """
