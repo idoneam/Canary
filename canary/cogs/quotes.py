@@ -98,13 +98,11 @@ class Quotes(CanaryCog):
         self.mc_table = lookup
 
     @commands.command(aliases=["addq"])
-    async def add_quote(
-        self, ctx: commands.Context, member: Optional[discord.Member] = None, *, quote: Optional[str]
-    ):
+    async def add_quote(self, ctx: commands.Context, member: Optional[discord.Member] = None, *, quote: Optional[str]):
         """
         Add a quote to a user's quote database.
         """
-        
+
         replying: bool = ctx.message.reference and ctx.message.reference.resolved
 
         if quote is None:
