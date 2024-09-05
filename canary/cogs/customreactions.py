@@ -693,7 +693,7 @@ class CustomReactions(CanaryCog):
                 await asyncio.sleep(5)
 
             # Edit the response
-            if reaction.emoji == EMOJI["two"]:
+            elif reaction.emoji == EMOJI["two"]:
                 await message.edit(
                     embed=discord.Embed(
                         title=f"Modify a {noun_custom}", description="Please enter the new response"
@@ -722,7 +722,7 @@ class CustomReactions(CanaryCog):
                 await asyncio.sleep(5)
 
             # Edit the "delete" option
-            if reaction.emoji == EMOJI["three"]:
+            elif reaction.emoji == EMOJI["three"]:
                 await message.edit(embed=LOADING_EMBED)
                 description = (
                     f"Should the message that calls the reaction be deleted?\n"
@@ -780,7 +780,7 @@ class CustomReactions(CanaryCog):
                     await asyncio.sleep(5)
 
             # Edit the "anywhere" option
-            if reaction.emoji == EMOJI["four"]:
+            elif reaction.emoji == EMOJI["four"]:
                 await message.edit(embed=LOADING_EMBED)
                 title = f"Modify a {noun_custom}. React with the option you want"
                 footer = f"{user} is currently modifying a {noun_custom}. \n"
@@ -835,7 +835,7 @@ class CustomReactions(CanaryCog):
                     await asyncio.sleep(5)
 
             # Edit "dm" option
-            if reaction.emoji == EMOJI["five"]:
+            elif reaction.emoji == EMOJI["five"]:
                 await message.edit(embed=LOADING_EMBED)
                 title = f"Modify a {noun_custom}. React with the option you want"
                 footer = f"{user} is currently modifying a {noun_custom}. \n"
@@ -893,7 +893,7 @@ class CustomReactions(CanaryCog):
                     await asyncio.sleep(5)
 
             # Approve a custom reaction proposal
-            if reaction.emoji == EMOJI["white_check_mark"]:
+            elif reaction.emoji == EMOJI["white_check_mark"]:
                 await _edit_reaction_and_rebuild(custom_react_id, "Proposal", 0)
 
                 await message.edit(
@@ -908,7 +908,7 @@ class CustomReactions(CanaryCog):
                 await asyncio.sleep(5)
 
             # Delete a custom reaction or proposal
-            if reaction.emoji == EMOJI["put_litter_in_its_place"] or reaction.emoji == EMOJI["x"]:
+            elif reaction.emoji == EMOJI["put_litter_in_its_place"] or reaction.emoji == EMOJI["x"]:
                 async with self.db() as db:
                     await db.execute("DELETE FROM CustomReactions WHERE CustomReactionID = ?", (custom_react_id,))
                     await db.commit()
@@ -919,7 +919,7 @@ class CustomReactions(CanaryCog):
                 await asyncio.sleep(5)
 
             # Stop
-            if reaction.emoji == EMOJI["stop_button"]:
+            elif reaction.emoji == EMOJI["stop_button"]:
                 return await leave(message)
 
             return False
