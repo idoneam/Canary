@@ -469,7 +469,8 @@ class Helpers(CanaryCog):
                     course_year_range=self.bot.config.course_year_range,
                     search=keyword,
                     page=pagenum,
-                ), "content"
+                ),
+                "content",
             )
             soup = BeautifulSoup(r, "lxml")
             found = soup.find_all("div", {"class": "views-row"})
