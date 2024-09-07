@@ -31,7 +31,7 @@ ONES_NAMES = ("one", "two", "three", "four", "five", "six", "seven", "eight", "n
 # Haha English start at 20
 TENS_NAMES = ("twenty", "thirty", "forty", "fifty")
 
-REMINDER_LETTER_REPLACEMENTS = (
+REMINDER_LETTER_REPLACEMENTS: list[tuple[str, str]] = (
     [(rf"{TENS_NAMES[t-2]}[-\s]{ONES_NAMES[o-1]}", str((t * 10) + o)) for t in range(2, 6) for o in range(1, 10)]
     + [(TENS_NAMES[t - 2], str(t * 10)) for t in range(2, 6)]
     + [
@@ -43,7 +43,7 @@ REMINDER_LETTER_REPLACEMENTS = (
         ("no", "0"),
         ("none", "0"),
         ("zero", "0"),
-        *zip(ONES_NAMES, range(1, 10)),
+        *zip(ONES_NAMES, map(str, range(1, 10))),
         ("ten", "10"),
         ("eleven", "11"),
         ("twelve", "12"),
