@@ -6,7 +6,7 @@ on:
 
   push:
     branches:
-      - master
+      - dev
 
 jobs:
   publish:
@@ -17,8 +17,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up master (edge) image metadata
-        id: meta-master
+      - name: Set up dev (edge) image metadata
+        id: meta-dev
         uses: docker/metadata-action@v5
         if: ${{ github.event_name != 'release' }}
         with:
@@ -27,7 +27,7 @@ jobs:
           flavor: |
             latest=false
           tags: |
-            type=raw,value=master,enable={{is_default_branch}}
+            type=raw,value=dev,enable={{is_default_branch}}
             type=sha,prefix=sha-
 
       - name: Set up release image metadata
@@ -51,13 +51,13 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and push master (edge) image
+      - name: Build and push dev (edge) image
         uses: docker/build-push-action@v6
         if: ${{ github.event_name != 'release' }}
         with:
           context: .
           push: true
-          tags: ${{ steps.meta-master.outputs.tags }}
+          tags: ${{ steps.meta-dev.outputs.tags }}
 
       - uses: docker/build-push-action@v6
         if: ${{ github.event_name == 'release' }}
