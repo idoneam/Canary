@@ -268,7 +268,7 @@ class Helpers(CanaryCog):
             return
 
         search_term = re.sub(r"\s+", "", f"{result.group(1)}-{result.group(2)}")
-        url = self.bot.config.course_tpl.format(self.bot.config.course_year_range, search_term)
+        url = self.bot.config.course_tpl.format(course_year_range=self.bot.config.course_year_range, course=search_term)
         r = await fetch(url, "content")
         soup = BeautifulSoup(r, "lxml")
 
@@ -465,7 +465,12 @@ class Helpers(CanaryCog):
 
         while pagenum < pagelimit:
             r = await fetch(
-                self.bot.config.course_search_tpl.format(self.bot.config.course_year_range, keyword, pagenum), "content"
+                self.bot.config.course_search_tpl.format(
+                    course_year_range=self.bot.config.course_year_range,
+                    search=keyword,
+                    page=pagenum,
+                ),
+                "content",
             )
             soup = BeautifulSoup(r, "lxml")
             found = soup.find_all("div", {"class": "views-row"})

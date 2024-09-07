@@ -215,11 +215,11 @@ class Config(BaseSettings):
 
     # Helpers configuration
     course_year_range: str = "2024-2025"
-    course_tpl: str = "http://www.mcgill.ca/study/{course_year_range}/courses/{}"
+    course_tpl: str = "http://www.mcgill.ca/study/{course_year_range}/courses/{course}"
     course_search_tpl: str = (
-        "http://www.mcgill.ca/study/{course_year_range}/courses/search?search_api_views_fulltext={}"
+        "http://www.mcgill.ca/study/{course_year_range}/courses/search?search_api_views_fulltext={search}"
         "&sort_by=field_subject_code"
-        "&page={}"
+        "&page={page}"
     )
     gc_weather_url: str = "https://dd.weather.gc.ca/citypage_weather/xml/QC/s0000635_e.xml"
     gc_weather_alert_url: str = "https://weather.gc.ca/warnings/report_e.html?qc67"
