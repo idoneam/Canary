@@ -1,17 +1,18 @@
 FROM python:3.11-slim-bookworm
 
-# Install base apt dependencies
-RUN apt-get update && apt-get install -y git sqlite3
-
-# Install auxiliary dependencies (for GL, Tex, etc.)
-RUN apt-get install -y \
-  libgl1-mesa-glx \
-  texlive-latex-extra \
-  texlive-fonts-extra \
-  texlive-lang-greek \
-  dvipng \
-  ffmpeg \
-  gcc
+# Install base apt dependencies + auxiliary dependencies (for GL, Tex, etc.)
+RUN apt-get update && \
+    apt-get install -y  \
+      git \
+      sqlite3 \
+      libgl1-mesa-glx \
+      texlive-latex-extra \
+      texlive-fonts-extra \
+      texlive-lang-greek \
+      dvipng \
+      ffmpeg \
+      gcc && \
+    rm -rf /var/lib/apt/lists/*
 
 # Update pip, install poetry
 RUN pip install --no-cache-dir -U pip; \
