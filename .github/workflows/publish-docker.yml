@@ -22,8 +22,7 @@ jobs:
         uses: docker/metadata-action@v5
         if: ${{ github.event_name != 'release' }}
         with:
-          images: |
-            ${{ inputs.image-name }}
+          images: ghcr.io/idoneam/Canary
           flavor: |
             latest=false
           tags: |
