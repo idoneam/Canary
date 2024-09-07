@@ -156,7 +156,7 @@ class Quotes(CanaryCog):
                 await ctx.send("`Quote deleted.`", delete_after=60)
 
     @commands.command(aliases=["q"])
-    async def quotes(self, ctx, str1: str | None = None, *, str2: str | None = None):
+    async def quotes(self, ctx, str1: Optional[str] = None, *, str2: Optional[str] = None):
         """
         Retrieve a quote with a specified keyword / mention. Can optionally use
         regex by surrounding the the query with /.../.
