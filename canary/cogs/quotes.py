@@ -159,7 +159,7 @@ class Quotes(CanaryCog):
     async def quotes(self, ctx, str1: Optional[str] = None, *, str2: Optional[str] = None):
         """
         Retrieve a quote with a specified keyword / mention. Can optionally use
-        regex by surrounding the the query with /.../.
+        regex by surrounding the query with /.../.
         """
 
         quotes: list[tuple[int, str, str]]
@@ -309,10 +309,10 @@ class Quotes(CanaryCog):
                 await p.paginate()
 
     @commands.command(aliases=["allq", "aq"])
-    async def all_quotes(self, ctx: commands.Context, *, query: str):
+    async def all_quotes(self, ctx: commands.Context, *, query: Optional[str] = None):
         """
         List all quotes that contain the query string. Can optionally use regex
-        by surrounding the the query with /.../.
+        by surrounding the query with /.../.
         Usage: ?all_quotes [-p pagenum] query
 
         Optional arguments:
