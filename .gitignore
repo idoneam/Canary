@@ -103,6 +103,7 @@ ENV/
 
 # configuration files
 **/*.ini
+poetry.toml
 
 # other
 *~

@@ -1,4 +1,6 @@
-config/config.ini
+canary/config/config.ini
+data/runtime/*.db
+data/runtime/*.obj
 env/
 tests/
 venv/
