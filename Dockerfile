@@ -23,6 +23,8 @@ WORKDIR /app
 COPY LICENSE.txt .
 COPY pyproject.toml .
 COPY poetry.lock .
+
+# Install dependencies (minus package) to cache this layer
 RUN poetry config virtualenvs.create false && \
     poetry --no-cache install --no-root --without dev
 
@@ -30,7 +32,8 @@ RUN poetry config virtualenvs.create false && \
 COPY canary canary
 COPY data data
 
-RUN pip install -e .
+# Install the package locally
+RUN poetry install --without dev
 
 # Notes:
 #   Users will have to configure their instance using environment variables, described by the Pydantic settings object
