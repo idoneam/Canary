@@ -18,6 +18,7 @@
 import aiosqlite
 import contextlib
 import logging
+import sys
 import traceback
 
 from canary.config import Config
@@ -71,10 +72,22 @@ class _WebhookHandler(logging.Handler):
         self.username = username or "Bot Logs"
         logging.Handler.__init__(self)
         self.webhook = Webhook.partial(webhook_id, webhook_token, adapter=RequestsWebhookAdapter())
+        self.max_webhook_payload_size: int = 1800
 
     def emit(self, record):
         msg = self.format(record)
-        self.webhook.send(f"```\n{msg}```", username=self.username)
+        try:
+            self.webhook.send(
+                f"```\n{msg[:self.max_webhook_payload_size]}"
+                f"{'[...]' if len(msg) > self.max_webhook_payload_size else ''}```",
+                username=self.username,
+            )
+        except Exception as e:
+            logger.critical(
+                "An exception (%s) was encountered while trying to send a log message to a webhook:", str(e)
+            )
+            logger.critical(traceback.format_exc())
+            logger.critical("The attempted log message was: %s", msg)
 
 
 if config.dev_log_webhook_id and config.dev_log_webhook_token:
