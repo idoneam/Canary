@@ -18,13 +18,15 @@ RUN apt-get update && \
 RUN pip install --no-cache-dir -U pip; \
     pip install --no-cache-dir poetry==1.8.3
 
+WORKDIR /app
+
+COPY LICENSE.txt .
 COPY pyproject.toml .
 COPY poetry.lock .
 RUN poetry config virtualenvs.create false && \
     poetry --no-cache install --no-root --without dev
 
 # Copy code and pre-made data to the /app directory, where the bot will be run from
-WORKDIR /app
 COPY canary canary
 COPY data data
 

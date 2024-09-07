@@ -9,6 +9,9 @@ authors = []
 packages = [
   { include = "canary" },
 ]
+include = [
+    "canary/Martlet.schema",
+]
 
 [tool.poetry.scripts]
 canary = "canary.main:main"
