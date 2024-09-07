@@ -40,4 +40,4 @@ RUN poetry install --without dev
 #     in /app/canary/config/config.py
 #   Users should mount a read/writable volume for /app/data/runtime
 
-CMD ["poetry", "run", "canary"]
+CMD ["poetry", "run", "python", "-m", "canary.main"]

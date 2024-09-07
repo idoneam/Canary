@@ -25,8 +25,9 @@ import random
 import re
 
 from discord.ext import commands
-from time import time
 from functools import partial
+from time import time
+from typing import Optional
 
 from ..bot import Canary
 from .base_cog import CanaryCog
@@ -77,7 +78,7 @@ class Games(CanaryCog):
         )
 
     @commands.command(aliases=["hm"])
-    async def hangman(self, ctx, command: str | None = None):
+    async def hangman(self, ctx, command: Optional[str] = None):
         """
         play a nice game of hangman with internet strangers!
         guesses must be single letters (interpreted in a case-insensitive manner) or the entire correct word.
