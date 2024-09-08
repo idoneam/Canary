@@ -17,14 +17,16 @@
 
 import discord
 import random
+
 from bidict import bidict
+from datetime import datetime, timedelta
 from discord import utils
 from discord.ext import commands, tasks
+from typing import Optional
 
 from ..bot import Canary
 from .base_cog import CanaryCog
 from .utils.checks import is_moderator
-from datetime import datetime, timedelta
 from .utils.role_restoration import (
     save_existing_roles,
     fetch_saved_roles,
@@ -216,7 +218,7 @@ class Mod(CanaryCog):
 
     @commands.command()
     @is_moderator()
-    async def verification_purge(self, ctx: commands.Context, id_: int | None = None):
+    async def verification_purge(self, ctx: commands.Context, id_: Optional[int] = None):
         """
         Manually start the purge of pictures in the verification channel.
 

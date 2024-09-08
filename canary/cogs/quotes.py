@@ -367,7 +367,7 @@ class Quotes(CanaryCog):
         await p.paginate()
 
     @commands.command(aliases=["gen"])
-    async def generate(self, ctx: commands.Context, seed: str | None = None, min_length: int = 1):
+    async def generate(self, ctx: commands.Context, seed: Optional[str] = None, min_length: int = 1):
         """
         Generates a random 'quote' using a Markov Chain. Optionally takes in a
         word to seed the Markov Chain with and (also optionally) a desired

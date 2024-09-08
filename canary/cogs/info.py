@@ -22,7 +22,7 @@ from .base_cog import CanaryCog
 
 class Info(CanaryCog):
     @commands.command()
-    async def version(self, ctx):
+    async def version(self, ctx: commands.Context):
         # TODO: use asyncio.create_subprocess_shell
         version = subprocess.check_output(("git", "describe", "--tags"), universal_newlines=True).strip()
         commit, authored = (

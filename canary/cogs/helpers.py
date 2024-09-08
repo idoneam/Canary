@@ -35,7 +35,8 @@ import datetime
 import math
 import random
 import re
-import time
+
+from typing import Optional
 
 from .base_cog import CanaryCog
 from .utils.arg_converter import ArgConverter, StrConverter
@@ -408,7 +409,7 @@ class Helpers(CanaryCog):
         await ctx.send(url)
 
     @commands.command()
-    async def tex(self, ctx: commands.Context, *, query: str):
+    async def tex(self, ctx: commands.Context):
         """Parses and prints LaTeX equations."""
         await ctx.trigger_typing()
 
@@ -526,7 +527,7 @@ class Helpers(CanaryCog):
         """Calculates a^b mod m, where a, b, c are big integers"""
         try:
             a, b, m = map(int, (a, b, m))
-            await ctx.send(pow(a, b, m))
+            await ctx.send(str(pow(a, b, m)))
         except ValueError:
             await ctx.send("Input must be integers")
 
@@ -598,14 +599,18 @@ class Helpers(CanaryCog):
         await ctx.send(file=discord.File(fp=buffer, filename=fn))
 
     @commands.command(aliases=["ui", "av", "avi", "userinfo"])
-    async def user_info(self, ctx: commands.Context, user: discord.Member | None = None):
+    async def user_info(self, ctx: commands.Context, user: Optional[discord.Member] = None):
         """
         Show user info and avatar.
         Displays the information of the user
         that called the command, or another member's
         if one is passed as an optional argument."""
+
+        await ctx.trigger_typing()
+
         if user is None:
             user = ctx.author
+
         ui_embed = discord.Embed(colour=(user.id - sum(ord(char) for char in user.name)) % 0xFFFFFF)
         ui_embed.add_field(name="username", value=str(user))
         ui_embed.add_field(name="display name", value=user.display_name)
@@ -623,7 +628,7 @@ class Helpers(CanaryCog):
         await ctx.send(embed=ui_embed)
 
     @commands.command(aliases=["trans"])
-    async def translate(self, ctx: commands.Context, command: str, *, inp_str: str | None = None):
+    async def translate(self, ctx: commands.Context, command: str, *, inp_str: Optional[str] = None):
         """
         Command used to translate some text from one language to another
         Takes two arguments: the source/target languages and the text to translate
@@ -638,6 +643,9 @@ class Helpers(CanaryCog):
         taken from the message to which the invoking message was replying to, or if the
         invoking message is not a reply, then to the rest of the message after the first argument.
         """
+
+        await ctx.trigger_typing()
+
         if command == "help":
             await ctx.send(
                 "Command used to translate text.\n"
@@ -725,7 +733,7 @@ class Helpers(CanaryCog):
         await ctx.send("Job completed.")
 
     async def spoilerize_utility(
-        self, ctx: commands.Context, message: discord.Message, reason: str | None = None, moderator: bool = False
+        self, ctx: commands.Context, message: discord.Message, reason: Optional[str] = None, moderator: bool = False
     ) -> None:
         db: aiosqlite.Connection
 
