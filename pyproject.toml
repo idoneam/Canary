@@ -38,7 +38,7 @@ bidict = "^0.22.0"
 aiosqlite = "^0.19.0"
 lxml = "^4.9.1"
 python-dotenv = "^0.21.0"
-pydantic = "^1.10.2"
+pydantic = "^2.9.2"
 
 [tool.poetry.dev-dependencies]
 pytest = "^7.3.1"
