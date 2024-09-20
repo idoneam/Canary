@@ -131,7 +131,7 @@ class Currency(CanaryCog):
         return self.symbol + self.format_currency(amount)
 
     @staticmethod
-    def check_bet(balance: Decimal, bet: Decimal) -> str | None:
+    def check_bet(balance: Decimal, bet: Decimal | None) -> str | None:
         """
         Checks universally invalid betting cases.
         """
@@ -152,6 +152,8 @@ class Currency(CanaryCog):
 
         if bet > balance:
             return "You're too broke to bet that much!"
+
+        return None
 
     async def get_last_claim_time(self, db: aiosqlite.Connection, author: discord.Member | discord.User) -> int | None:
         claim_time_t = await self.fetch_one(
