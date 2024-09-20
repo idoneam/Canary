@@ -497,7 +497,7 @@ class Mod(CanaryCog):
     @CanaryCog.listener()
     async def on_member_join(self, user: discord.Member):
         # If the user was already muted, restore the muted role
-        if is_in_muted_table(self.bot, user):
+        if await is_in_muted_table(self.bot, user):
             await user.add_roles(self.muted_role, reason="Restored muted status")
 
 
