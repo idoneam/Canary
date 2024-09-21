@@ -18,7 +18,6 @@
 import aiosqlite
 import contextlib
 import logging
-import sys
 import traceback
 
 from canary.config import Config
@@ -68,13 +67,13 @@ mod_logger.setLevel(logging.INFO)
 
 
 class _WebhookHandler(logging.Handler):
-    def __init__(self, webhook_id, webhook_token, username=None):
-        self.username = username or "Bot Logs"
+    def __init__(self, webhook_id: int, webhook_token: str, username: str | None = None):
+        self.username: str = username or "Bot Logs"
         logging.Handler.__init__(self)
         self.webhook = Webhook.partial(webhook_id, webhook_token, adapter=RequestsWebhookAdapter())
         self.max_webhook_payload_size: int = 1800
 
-    def emit(self, record):
+    def emit(self, record: logging.LogRecord) -> None:
         msg = self.format(record)
         try:
             self.webhook.send(
@@ -117,7 +116,7 @@ class Canary(commands.Bot):
         self.mod_logger = mod_logger
         self.config = config
 
-    async def start(self, *args, **kwargs):  # TODO: discordpy 2.0: use setup_hook for database setup
+    async def start(self, *args, **kwargs) -> None:  # TODO: discordpy 2.0: use setup_hook for database setup
         await self._start_database()
         await super().start(*args, **kwargs)
         await self.health_check()
@@ -132,7 +131,7 @@ class Canary(commands.Bot):
     async def db_nocm(self) -> aiosqlite.Connection:
         return await aiosqlite.connect(self.config.db_path)
 
-    async def _start_database(self):
+    async def _start_database(self) -> None:
         if not self.config.db_path:
             self.dev_logger.warning("No path to database configuration file")
             return
@@ -147,12 +146,12 @@ class Canary(commands.Bot):
 
         self.dev_logger.debug("Database is ready")
 
-    async def health_check(self):
+    async def health_check(self) -> None:
         guild = self.get_guild(self.config.server_id)
         if not guild:
             self.dev_logger.error(f"Could not get guild for bot (specified server ID {self.config.server_id})")
 
-    def log_traceback(self, exception):
+    def log_traceback(self, exception: Exception):
         self.dev_logger.error("".join(traceback.format_exception(type(exception), exception, exception.__traceback__)))
 
     async def on_command_error(self, ctx, error):

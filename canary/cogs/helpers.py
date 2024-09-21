@@ -146,12 +146,12 @@ class Helpers(CanaryCog):
         # Getting the wind specifically, because otherwise it starts being ugly very quickly
         wind = soup.find("wind")
 
-        def retrieve_string(label, search=None, search_soup=soup):
+        def retrieve_string(label, search=None, search_soup=soup) -> str | None:
             if elem := search_soup.find(label, string=search):
                 return elem.get_text().strip()
             return None
 
-        def retrieve_attribute(label, key, search_soup=soup):
+        def retrieve_attribute(label, key, search_soup=soup) -> str | None:
             if attr := search_soup.find(label)[key]:
                 return attr.strip()
             return None
