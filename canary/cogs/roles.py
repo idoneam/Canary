@@ -272,7 +272,7 @@ class Roles(CanaryCog):
         A moderator can click the OK react on the message to give these roles back
         """
 
-        if is_in_muted_table(self.bot, user):
+        if await is_in_muted_table(self.bot, user):
             await ctx.send("Cannot restore roles to a muted user")
             return
 
