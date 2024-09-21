@@ -36,7 +36,7 @@ Pillow = "^9.5.0"
 uvloop = {version="~0.20.0", markers = "sys_platform == 'linux' or sys_platform == 'darwin'"}
 bidict = "^0.22.0"
 aiosqlite = "^0.19.0"
-lxml = "^4.9.1"
+lxml = "^5.3.0"
 python-dotenv = "^0.21.0"
 pydantic = "^1.10.2"
 
