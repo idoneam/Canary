@@ -29,7 +29,7 @@ import datetime
 
 async def save_existing_roles(
     bot: Canary, user: discord.Member, muted: bool = False, appeal_channel: discord.TextChannel | None = None
-):
+) -> None:
     roles_id = [role.id for role in user.roles if role.name not in ("@everyone", bot.config.muted_role)]
 
     if not roles_id and not muted:
@@ -78,12 +78,12 @@ async def fetch_saved_roles(bot: Canary, guild, user: discord.Member, muted: boo
     )
 
 
-def has_muted_role(bot: Canary, user: discord.Member):
+def has_muted_role(bot: Canary, user: discord.Member) -> bool:
     muted_role = utils.get(user.guild.roles, name=bot.config.muted_role)
     return muted_role and next((r for r in user.roles if r == muted_role), None) is not None
 
 
-async def is_in_muted_table(bot: Canary, user: discord.Member):
+async def is_in_muted_table(bot: Canary, user: discord.Member) -> bool:
     db: aiosqlite.Connection
     c: aiosqlite.Cursor
     async with bot.db() as db:
@@ -104,7 +104,7 @@ async def role_restoring_page(
     user: discord.Member,
     roles: list[discord.Role] | None,
     muted: bool = False,
-):
+) -> None:
     channel: discord.TextChannel | None = ctx.channel  # Can be None from MockContext
 
     if channel is None:
